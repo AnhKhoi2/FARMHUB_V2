@@ -11,6 +11,9 @@ import streakRoutes from "./routes/streaks.js";
 import aiRoutes from "./routes/ai.js";
 import weatherRoutes from "./routes/weather.js";
 import testRoute from "./routes/test.js";
+import guidesRoute from "./routes/guides.js";
+import path from "path";
+import { fileURLToPath } from 'url';
 
 
 const PORT = process.env.PORT || 5000;
@@ -31,6 +34,12 @@ app.use("/admin/streaks", streakRoutes);
 app.use("/ai", aiRoutes);
 app.use("/admin/weather", weatherRoutes);
 app.use("/test", testRoute);
+app.use("/guides", guidesRoute);
+
+// Serve uploaded files from /uploads (make sure you save images there)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.listen(PORT, () => {
   console.log(`Server is running on  ${PORT}`);
