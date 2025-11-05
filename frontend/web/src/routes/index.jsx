@@ -4,6 +4,13 @@ import Register from "../pages/register_v1.jsx";
 import Home from "../pages/Home";
 import ExpertHome from "../pages/ExpertHome";
 import PrivateRoute from "./PrivateRoute";
+import AdminDashboard from "../pages/AdminDashboard";
+import AdminRoute from "./AdminRoute";
+import AdminDiseases from "../pages/AdminDiseases";
+import AdminCategories from "../pages/AdminCategories";
+import Diagnose from "../pages/Diagnose";
+import AdminWeather from "../pages/AdminWeather";
+import AdminLeaderboard from "../pages/AdminLeaderboard";
 import ExpertRoutes from "./ExpertRoutes";
 import ManagerGuides from "../pages/ManagerGuides";
 import GuideDetail from "../pages/GuideDetail";
@@ -33,6 +40,60 @@ export default function AppRoutes() {
           }
         />
 
+        <Route
+          path="/diagnose"
+          element={
+            <PrivateRoute>
+              <Diagnose />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Admin Dashboard */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/diseases"
+          element={
+            <AdminRoute>
+              <AdminDiseases />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/disease-categories"
+          element={
+            <AdminRoute>
+              <AdminCategories />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/weather"
+          element={
+            <AdminRoute>
+              <AdminWeather />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/leaderboard"
+          element={
+            <AdminRoute>
+              <AdminLeaderboard />
+            </AdminRoute>
+          }
+        />
         {/* Expert area (nested routes under /expert) */}
         <Route path="/expert/*" element={<ExpertRoutes />} />
 

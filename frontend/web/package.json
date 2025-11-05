@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.10.0",
-    "axios": "^1.13.1",
+    "axios": "^1.13.2",
     "lucide-react": "^0.552.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -20,8 +20,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
-    "@types/react": "^19.1.16",
-    "@types/react-dom": "^19.1.9",
+    
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "babel-plugin-react-compiler": "^19.1.0-rc.3",

@@ -3,6 +3,7 @@ import * as authService from "../services/authService.js";
 import * as emailService from "../services/emailService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ok } from "../utils/ApiResponse.js";
+import * as userStreakService from "../services/userStreakService.js";
 
 export const authController = {
   register: asyncHandler(async (req, res) => {
@@ -37,7 +38,10 @@ export const authController = {
       path: "/",
     });
 
-    return ok(res, { user, accessToken });
+    // record streak (best-effort, non-blocking errors will propagate via asyncHandler)
+    const streakResult = await userStreakService.recordLogin(user._id);
+
+    return ok(res, { user, accessToken, streak: streakResult });
   }),
 
   refresh: asyncHandler(async (req, res) => {
