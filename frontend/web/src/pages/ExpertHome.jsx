@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import "../css/ExpertHome.css"
-import { MessageCircle, Plus, Leaf, BarChart3, User, Bell, Settings, LogOut } from "lucide-react"
+import { MessageCircle, Leaf, BarChart3, User, Bell, Settings, LogOut } from "lucide-react"
 
 function ExpertHome({
   onChatClick,
@@ -12,6 +13,7 @@ function ExpertHome({
   userProfile = null,
 }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const navigate = useNavigate()
 
   const mockProfile = userProfile || {
     name: "Nguyen Van A",
@@ -42,10 +44,20 @@ function ExpertHome({
               <span>Chat</span>
             </button>
 
-            {/* Component 2: Add Guide */}
-            <button className="nav-button nav-button-add" onClick={onAddGuideClick} title="Add growing guide">
-              <Plus size={20} />
-              <span>Add Guide</span>
+            {/* Component 2: Manage Guides */}
+            <button
+              className="nav-button nav-button-add"
+              onClick={() => {
+                try {
+                  if (onAddGuideClick) onAddGuideClick()
+                } catch (e) {
+                  /* ignore handler errors */
+                }
+                navigate("/managerguides")
+              }}
+              title="Manage Guides"
+            >
+              <span>Manager Guides</span>
             </button>
 
             {/* Component 3: Dashboard */}

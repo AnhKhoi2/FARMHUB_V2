@@ -5,6 +5,9 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import {connectDB} from "./config/db.js";
 import authRoute from "./routes/auth.js";
+import guidesRoute from "./routes/guides.js";
+import path from "path";
+import { fileURLToPath } from 'url';
 
 
 const PORT = process.env.PORT || 5000;
@@ -19,6 +22,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/auth", authRoute);
+app.use("/guides", guidesRoute);
+
+// Serve uploaded files from /uploads (make sure you save images there)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.listen(PORT, () => {
   console.log(`Server is running on  ${PORT}`);
