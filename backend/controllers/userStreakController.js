@@ -23,4 +23,11 @@ export const userStreakController = {
     const data = await userStreakService.getByUser(id);
     return ok(res, { item: data });
   }),
+  // top leaderboard
+  top: asyncHandler(async (req, res) => {
+    const limit = req.query.limit || 10;
+    const sortBy = req.query.sortBy || 'total_points';
+    const items = await userStreakService.topList({ limit, sortBy });
+    return ok(res, { items });
+  }),
 };

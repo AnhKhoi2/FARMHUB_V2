@@ -9,6 +9,7 @@ import AdminDiseases from "../pages/AdminDiseases";
 import AdminCategories from "../pages/AdminCategories";
 import Diagnose from "../pages/Diagnose";
 import AdminWeather from "../pages/AdminWeather";
+import AdminLeaderboard from "../pages/AdminLeaderboard";
 
 export default function AppRoutes() {
   return (
@@ -73,6 +74,15 @@ export default function AppRoutes() {
           element={
             <AdminRoute>
               <AdminWeather />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/leaderboard"
+          element={
+            <AdminRoute>
+              <AdminLeaderboard />
             </AdminRoute>
           }
         />

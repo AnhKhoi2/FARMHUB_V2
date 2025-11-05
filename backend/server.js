@@ -10,6 +10,7 @@ import diseaseCategoryRoutes from "./routes/diseaseCategories.js";
 import streakRoutes from "./routes/streaks.js";
 import aiRoutes from "./routes/ai.js";
 import weatherRoutes from "./routes/weather.js";
+import testRoute from "./routes/test.js";
 
 
 const PORT = process.env.PORT || 5000;
@@ -29,6 +30,7 @@ app.use("/admin/disease-categories", diseaseCategoryRoutes);
 app.use("/admin/streaks", streakRoutes);
 app.use("/ai", aiRoutes);
 app.use("/admin/weather", weatherRoutes);
+app.use("/test", testRoute);
 
 app.listen(PORT, () => {
   console.log(`Server is running on  ${PORT}`);

@@ -24,6 +24,7 @@ export default function AdminLayout({ children }) {
           <NavLink to="/admin/diseases" className={({isActive})=>"nav-link text-white py-2" + (isActive? ' active bg-white bg-opacity-10 rounded':'')}>Diseases</NavLink>
           <NavLink to="/admin/disease-categories" className={({isActive})=>"nav-link text-white py-2" + (isActive? ' active bg-white bg-opacity-10 rounded':'')}>Categories</NavLink>
           <NavLink to="/admin/weather" className={({isActive})=>"nav-link text-white py-2" + (isActive? ' active bg-white bg-opacity-10 rounded':'')}>Weather</NavLink>
+          <NavLink to="/admin/leaderboard" className={({isActive})=>"nav-link text-white py-2" + (isActive? ' active bg-white bg-opacity-10 rounded':'')}>Leaderboard</NavLink>
         </nav>
 
         <div className="mt-auto pt-3">

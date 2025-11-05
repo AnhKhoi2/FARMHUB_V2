@@ -1,7 +1,9 @@
-import axiosClient from './axiosClient';
+import axiosClient from "./axiosClient";
 
-export function getWeather(q) {
-  return axiosClient.get(`/admin/weather?q=${encodeURIComponent(q)}`);
+function getWeather(q) {
+  return axiosClient.get("/admin/weather", { params: { q } });
 }
 
-export default { getWeather };
+const weatherApi = { getWeather };
+
+export default weatherApi;

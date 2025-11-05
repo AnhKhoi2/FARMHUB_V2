@@ -124,3 +124,13 @@ export const listPaginated = async ({ page = 1, limit = 20, q = "" }) => {
     pages: Math.ceil(total / Number(limit) || 1),
   };
 };
+
+export const topList = async ({ limit = 10, sortBy = 'total_points' } = {}) => {
+  const sortField = sortBy === 'current_streak' ? { current_streak: -1 } : { total_points: -1 };
+  const items = await UserStreak.find({})
+    .sort(sortField)
+    .limit(Number(limit))
+    .populate('user', 'username email role');
+
+  return items;
+};

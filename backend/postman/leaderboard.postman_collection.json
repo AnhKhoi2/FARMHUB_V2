@@ -1,0 +1,122 @@
+{
+  "info": {
+    "name": "FarmHub - Leaderboard Tests",
+    "_postman_id": "f3b8d2a2-0000-4000-8000-000000000001",
+    "description": "Collection to test leaderboard endpoints (public and protected). Update environment variables before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Login (get JWT)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "name": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{test_user_email}}\",\n  \"password\": \"{{test_user_password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Save returned token to environment variable 'auth_token' for protected requests",
+              "if (pm.response.code === 200) {",
+              "  var json = pm.response.json();",
+              "  // adjust path to token depending on your API response structure",
+              "  var token = json.data && json.data.accessToken ? json.data.accessToken : (json.accessToken || json.token || null);",
+              "  if (token) {",
+              "    pm.environment.set('auth_token', token);",
+              "    console.log('Saved auth_token');",
+              "  } else {",
+              "    console.warn('Login succeeded but token not found in response. Response JSON:', json);",
+              "  }",
+              "} else {",
+              "  console.warn('Login returned status', pm.response.code);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public - Leaderboard (no auth)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/test/leaderboard?limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "test",
+            "leaderboard"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Protected - Leaderboard (admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/streaks/top?limit=10&sortBy=total_points",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "streaks",
+            "top"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "sortBy",
+              "value": "total_points"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

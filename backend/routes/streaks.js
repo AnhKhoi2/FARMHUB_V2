@@ -9,6 +9,7 @@ router.post("/record", verifyToken, userStreakController.recordForUser);
 
 // Admin routes
 router.get("/", verifyToken, requireAdmin, userStreakController.list);
+router.get("/top", verifyToken, requireAdmin, userStreakController.top);
 router.get("/:id", verifyToken, requireAdmin, userStreakController.getById);
 
 export default router;

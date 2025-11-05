@@ -12,8 +12,10 @@ export default function AdminWeather() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await weatherApi.getWeather(q);
-      setData(data);
+      const res = await weatherApi.getWeather(q);
+      // backend responses use ApiResponse: { success: true, data: { ... } }
+      const payload = res?.data?.data || res?.data || null;
+      setData(payload);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Error');
     } finally {
