@@ -21,6 +21,9 @@ const GuideSchema = new mongoose.Schema(
     ],
     // plantTags: tags describing plant types / suitability (e.g., rau củ, trái cây ngắn hạn, suitable for apartment)
     plantTags: [{ type: String }],
+  // soft delete flag
+  deleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
     // status enum
     status: { type: String, enum: ["draft", "pending", "published"], default: "draft" },
   },
