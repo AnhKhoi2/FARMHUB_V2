@@ -2,6 +2,7 @@
 import * as authService from "../services/authService.js";
 import * as emailService from "../services/emailService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ok } from "../utils/ApiResponse.js";
 
 export const authController = {
   register: asyncHandler(async (req, res) => {

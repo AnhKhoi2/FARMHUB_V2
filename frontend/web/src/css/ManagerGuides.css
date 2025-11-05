@@ -1,0 +1,197 @@
+/* Manager Guides styles - designed to match the provided screenshot */
+.manager-guides-page {
+	padding: 18px;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.mg-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 18px;
+}
+
+.mg-title {
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.mg-create-btn {
+	background: linear-gradient(180deg,#0d6efd,#0b5ed7);
+	color: #fff;
+	border: none;
+	padding: 6px 12px;
+	border-radius: 6px;
+	cursor: pointer;
+	box-shadow: 0 2px 6px rgba(13,110,253,0.2);
+}
+
+/* Toolbar / search styles */
+.mg-toolbar { display: flex; gap: 12px; align-items: center; }
+.mg-search-box { display: flex; gap: 8px; align-items: center; background: #fff; padding: 6px; border-radius: 8px; border: 1px solid #e6eef6; }
+.mg-search-btn { background: linear-gradient(180deg, #10b981, #059669); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.mg-clear-btn { background: #fff; border: 1px solid #e6eef6; color: #374151; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.mg-select { padding: 8px 10px; border-radius: 8px; border: 1px solid #e6eef6; background: #fff; }
+.mg-search-input { padding: 8px 10px; border-radius: 6px; border: 1px solid #eef6ff; min-width: 220px; }
+.mg-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 14px;
+}
+
+.mg-card {
+	background: #fff;
+	border: 1px solid #eee;
+	border-radius: 6px;
+	overflow: hidden;
+	box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.mg-thumb {
+	background-size: cover;
+	background-position: center;
+	width: 100%;
+	height: 140px;
+}
+
+.mg-card-body {
+	padding: 10px 12px;
+	flex: 1 1 auto;
+}
+
+.mg-card-title {
+	font-size: 16px;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.mg-card-sub {
+	font-size: 13px;
+	color: #777;
+	min-height: 36px;
+}
+
+.mg-card-actions {
+	display: flex;
+	gap: 8px;
+	padding: 10px 12px;
+	border-top: 1px solid #f1f1f1;
+	background: #fafafa;
+	justify-content: flex-start;
+}
+
+.mg-btn {
+	padding: 6px 10px;
+	border-radius: 6px;
+	border: 1px solid #dcdcdc;
+	background: #fff;
+	cursor: pointer;
+	font-size: 13px;
+}
+
+.mg-btn-view { color: #0d6efd; border-color: rgba(13,110,253,0.15); }
+.mg-btn-edit { color: #333; }
+.mg-btn-delete { color: #dc3545; border-color: rgba(220,53,69,0.12); }
+
+.mg-loading, .mg-empty { text-align: center; padding: 24px; color: #666; }
+
+.mg-pagination {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 12px;
+	margin-top: 18px;
+}
+
+.mg-page-btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+.mg-page-info { color: #555; }
+
+/* small screens adjustments */
+@media (max-width: 640px) {
+	.mg-grid { grid-template-columns: repeat(2, 1fr); }
+	.mg-thumb { height: 110px; }
+}
+
+@media (max-width: 420px) {
+	.mg-grid { grid-template-columns: 1fr; }
+}
+
+/* Guide edit form styles (professional / Tiwin-like) */
+.guide-edit-container{
+	padding: 28px;
+	max-width: 1100px;
+	margin: 0 auto;
+}
+.guide-card{
+	background:#fff;
+	border-radius:10px;
+	box-shadow: 0 10px 30px rgba(31,45,61,0.06);
+	border: 1px solid #eef2f6;
+	overflow: hidden;
+}
+.guide-header{
+	padding:20px 24px;
+	border-bottom:1px solid #f3f6f9;
+}
+.guide-header h2{ margin:0; font-size:20px; }
+.guide-sub{ margin-top:6px; color:#6b7280; font-size:13px }
+
+.guide-form{ padding:20px 24px 28px; }
+.form-grid{ display:grid; grid-template-columns: 1fr 340px; gap:24px; align-items:start }
+.form-left{ min-width:0 }
+.form-right{ min-width:0 }
+.field{ margin-bottom:14px }
+.field-label{ display:block; font-size:13px; color:#374151; margin-bottom:8px }
+.mg-input{ width:100%; padding:10px 12px; border-radius:8px; border:1px solid #e6eef6; background:#fbfdff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); font-size:14px }
+.mg-textarea{ width:100%; padding:10px 12px; min-height:96px; border-radius:8px; border:1px solid #e6eef6; background:#fbfdff; font-size:14px; resize:vertical }
+
+.preview-box{ border:1px dashed #e6eef6; padding:12px; border-radius:8px; text-align:center; background:#fcfdff }
+.preview-image{ width:100%; height:200px; background-size:cover; background-position:center; border-radius:6px }
+.preview-caption{ margin-top:10px; font-size:13px; color:#6b7280 }
+
+.mg-create-btn{ background: linear-gradient(180deg,#0d6efd,#0b5ed7); color:#fff; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600 }
+.mg-btn.mg-cancel{ background:#fff; border:1px solid #e6eef6; color:#374151 }
+
+@media (max-width: 880px){ .form-grid{ grid-template-columns: 1fr; } .form-right{ order:2 } }
+
+.steps-list { margin-top:6px }
+.step-item { background: #fcfdff }
+.step-item .step-header { font-weight:600; margin-bottom:8px }
+
+.back-btn { background: #fff; border:1px solid #e6eef6; padding:8px 10px; border-radius:8px; cursor:pointer; color:#374151 }
+.header-actions { display:flex; gap:8px; align-items:center }
+
+.tag-chip{ padding:6px 10px; border-radius:999px; border:1px solid #e6eef6; background:#fff; cursor:pointer; font-size:13px }
+.tag-chip.selected{ background: linear-gradient(180deg,#ecfdf5,#d1fae5); border-color:#bbf7d0; color:#065f46 }
+
+/* Guide detail styles */
+.guide-detail-wrapper{ max-width:1100px; margin: 20px auto; padding: 0 18px }
+.guide-card-detail{ background:#fff; border-radius:12px; overflow:hidden; box-shadow: 0 12px 30px rgba(15,23,42,0.06); border:1px solid #eef3f8 }
+.guide-body{ padding:20px 24px }
+.guide-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px }
+.guide-title{ margin:0; font-size:24px }
+.guide-meta{ color:#6b7280; margin-top:6px }
+.guide-actions{ display:flex; gap:8px }
+.plant-tags{ margin-top:12px }
+.plant-chip{ display:inline-block; margin-right:8px; padding:6px 12px; background:#f0f9ff; color:#054f77; border-radius:999px }
+.guide-summary{ margin-top:16px; color:#374151; line-height:1.6 }
+.muted{ color:#6b7280 }
+
+.guide-steps{ margin-top:20px }
+.steps-grid{ display:flex; flex-direction:column; gap:12px }
+.step-card{ display:grid; grid-template-columns:40px 140px 1fr; gap:12px; align-items:start; padding:12px; border-radius:8px; background:#fff; border:1px solid #eef6ff }
+.step-index{ width:36px; height:36px; border-radius:50%; background:linear-gradient(180deg,#e6f4ff,#dff1ff); display:flex; align-items:center; justify-content:center; font-weight:700 }
+.step-thumb{ width:140px; height:90px; background-size:cover; background-position:center; border-radius:6px }
+.step-title{ font-weight:700; margin-bottom:6px }
+.step-text{ color:#374151 }
+
+@media (max-width:880px){
+	.step-card{ grid-template-columns:36px 100px 1fr }
+	.step-thumb{ width:100px; height:70px }
+}
+
+
