@@ -5,6 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import authApi from "../api/authApi";
 import { loginSuccess } from "../redux/authSlice.js";
 import "../css/Login.css";
+import StreakPopup from "../components/StreakPopup";
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -14,6 +15,9 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [streakInfo, setStreakInfo] = useState(null);
+  const [showStreak, setShowStreak] = useState(false);
+  const [redirectRole, setRedirectRole] = useState(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,10 +26,26 @@ const Login = () => {
 
     try {
       const res = await authApi.loginApi({ username, password });
-      dispatch(loginSuccess({ user: res.data.user, token: res.data.accessToken }));
-      localStorage.setItem("token", res.data.accessToken);
-      alert("Đăng nhập thành công!");
-      navigate("/home");
+      // Backend responses use the ApiResponse wrapper: { success: true, data: { user, accessToken } }
+      const { user, accessToken } = res.data?.data || {};
+      if (!accessToken) throw new Error("Không nhận được access token từ server");
+
+      // Update redux + localStorage with correct shapes
+      dispatch(loginSuccess({ user, token: accessToken }));
+      localStorage.setItem("token", accessToken);
+
+      // Check streak info returned from backend
+      const streak = res.data?.data?.streak ?? null;
+      if (streak) {
+        // show popup first, then navigate after user closes
+        setStreakInfo(streak);
+        setShowStreak(true);
+        setRedirectRole(user?.role || "user");
+      } else {
+        // no streak info: continue to redirect
+        const role = user?.role || "user";
+        if (role === "admin") navigate("/admin/dashboard"); else navigate("/");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Sai tài khoản hoặc mật khẩu!");
     } finally {
@@ -81,6 +101,17 @@ const Login = () => {
             </div>
           </form>
         </div>
+      {showStreak && (
+        <StreakPopup
+          streak={streakInfo}
+          onClose={() => {
+            setShowStreak(false);
+            // after closing, navigate
+            const role = redirectRole || "user";
+            if (role === "admin") navigate("/admin/dashboard"); else navigate("/");
+          }}
+        />
+      )}
       </div>
     </div>
   );
