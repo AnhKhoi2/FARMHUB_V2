@@ -1,7 +1,7 @@
 // src/routes/ExpertRoutes.jsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import ExpertHome from "../pages/ExpertHome"; // corrected path to pages
+import ExpertHome from "../../pages/expert/ExpertHome"; // corrected path to pages
 
 export default function ExpertRoutes() {
   return (

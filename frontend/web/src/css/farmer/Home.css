@@ -1,0 +1,309 @@
+/* Homepage Styles */
+.homepage {
+    min-height: 100vh;
+    background: #f8f9fa;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Hero Carousel */
+.hero-section {
+    position: relative;
+    margin-bottom: 3rem;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+}
+
+.carousel-inner {
+    height: 600px;
+}
+
+.carousel-item {
+    height: 600px;
+}
+
+.carousel-item img {
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.carousel-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+}
+
+.carousel-caption {
+    z-index: 2;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.carousel-caption h2 {
+    animation: fadeInUp 1s ease-in-out;
+}
+
+.carousel-caption p {
+    animation: fadeInUp 1.2s ease-in-out;
+}
+
+.carousel-caption .btn {
+    animation: fadeInUp 1.4s ease-in-out;
+}
+
+/* Recently Visited Section */
+.recently-visited {
+    padding: 2rem 0;
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #2d3748;
+    display: flex;
+    align-items: center;
+}
+
+.hover-card {
+    transition: all 0.3s ease;
+    border: none;
+    overflow: hidden;
+}
+
+.hover-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.hover-card .card-img-top {
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.hover-card:hover .card-img-top {
+    transform: scale(1.1);
+}
+
+/* Products Section */
+.our-products {
+    padding: 3rem 0;
+}
+
+.product-tabs {
+    margin-bottom: 2rem;
+}
+
+.product-tabs .btn {
+    margin: 0.25rem;
+    border-radius: 25px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.product-tabs .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hover-card .card-img-top {
+    height: 250px;
+    object-fit: cover;
+}
+
+.hover-card .badge {
+    z-index: 10;
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+}
+
+/* Services Section */
+.services-section {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 15px;
+    padding: 4rem 2rem !important;
+}
+
+.services-section .card {
+    border: none;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.services-section .card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+.services-section .card:hover .text-success {
+    transform: scale(1.2);
+    transition: transform 0.3s ease;
+}
+
+/* Promo Banners */
+.promo-banners {
+    padding: 2rem 0;
+}
+
+.promo-card {
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.promo-card:hover {
+    transform: scale(1.02);
+}
+
+.promo-card .badge {
+    width: fit-content;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* User Section */
+.user-section .card {
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+/* Falling Leaves Animation */
+.falling-leaves {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.leaf {
+    position: absolute;
+    top: -50px;
+    font-size: 2rem;
+    animation: fall linear infinite;
+    opacity: 0.7;
+}
+
+.leaf:nth-child(1) {
+    left: 10%;
+    animation-duration: 15s;
+}
+
+.leaf:nth-child(2) {
+    left: 30%;
+    animation-duration: 18s;
+    animation-delay: 2s;
+}
+
+.leaf:nth-child(3) {
+    left: 50%;
+    animation-duration: 20s;
+    animation-delay: 4s;
+}
+
+.leaf:nth-child(4) {
+    left: 70%;
+    animation-duration: 17s;
+    animation-delay: 6s;
+}
+
+.leaf:nth-child(5) {
+    left: 90%;
+    animation-duration: 19s;
+    animation-delay: 8s;
+}
+
+@keyframes fall {
+    0% {
+        top: -50px;
+        transform: translateX(0) rotate(0deg);
+    }
+
+    100% {
+        top: 100vh;
+        transform: translateX(100px) rotate(360deg);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+
+    .carousel-inner,
+    .carousel-item {
+        height: 400px;
+    }
+
+    .carousel-caption h2 {
+        font-size: 1.5rem;
+    }
+
+    .carousel-caption p {
+        font-size: 0.9rem;
+    }
+
+    .services-section {
+        padding: 2rem 1rem !important;
+    }
+
+    .promo-card {
+        min-height: 250px;
+        padding: 2rem !important;
+    }
+
+    .hero-section {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+
+    .carousel-inner,
+    .carousel-item {
+        height: 300px;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .carousel-caption h2 {
+        font-size: 1.2rem;
+    }
+
+    .carousel-caption p {
+        font-size: 0.8rem;
+    }
+
+    .product-tabs .btn {
+        font-size: 0.85rem;
+        padding: 0.4rem 1rem;
+    }
+}

@@ -1,0 +1,143 @@
+/* Footer Styles */
+.footer {
+    background: linear-gradient(135deg, #1a3a0f 0%, #2d5016 100%);
+    color: white;
+    padding: 3rem 0 1rem;
+    margin-top: 5rem;
+    width: 100%;
+}
+
+.headfooter {
+    margin-bottom: 2rem;
+}
+
+.footer h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #ffd700;
+}
+
+.footer h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.footer p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+
+.footer ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer ul li {
+    margin-bottom: 0.75rem;
+}
+
+.footer ul li a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.footer ul li a:hover {
+    color: #ffd700;
+    padding-left: 5px;
+}
+
+/* Social Icons */
+.iconfooter {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.social-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.social-icon:hover {
+    background: #ffd700;
+    color: #1a3a0f;
+    transform: translateY(-5px);
+}
+
+/* Divider */
+.footer hr {
+    border-color: rgba(255, 255, 255, 0.2);
+    margin: 2rem 0;
+}
+
+/* Copyright */
+.footer .text-center p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.footer .text-warning {
+    color: #ffd700 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .footer {
+        padding: 2rem 0 1rem;
+        margin-top: 3rem;
+    }
+
+    .headfooter {
+        text-align: center;
+    }
+
+    .footer h5,
+    .footer h6 {
+        font-size: 1rem;
+    }
+
+    .footer p {
+        font-size: 0.9rem;
+    }
+
+    .iconfooter {
+        justify-content: center;
+    }
+
+    .footer ul li {
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .footer {
+        padding: 1.5rem 0 1rem;
+    }
+
+    .footer .col-md-4,
+    .footer .col-md-2 {
+        margin-bottom: 2rem;
+    }
+
+    .social-icon {
+        width: 35px;
+        height: 35px;
+    }
+}

@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import authApi from "../api/authApi";
+import authApi from "../../api/shared/authApi";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -38,9 +37,11 @@ const Register = () => {
         <div className="form-box register">
           <h2>Registration</h2>
           <form onSubmit={handleRegister}>
-          {error && <div className="error-message">{error}</div>}
+            {error && <div className="error-message">{error}</div>}
             <div className="input-box">
-              <span className="icon"><ion-icon name="person"></ion-icon></span>
+              <span className="icon">
+                <ion-icon name="person"></ion-icon>
+              </span>
               <input
                 type="text"
                 required
@@ -51,7 +52,9 @@ const Register = () => {
             </div>
 
             <div className="input-box">
-              <span className="icon"><ion-icon name="mail"></ion-icon></span>
+              <span className="icon">
+                <ion-icon name="mail"></ion-icon>
+              </span>
               <input
                 type="email"
                 required
@@ -62,7 +65,9 @@ const Register = () => {
             </div>
 
             <div className="input-box">
-              <span className="icon"><ion-icon name="lock-closed"></ion-icon></span>
+              <span className="icon">
+                <ion-icon name="lock-closed"></ion-icon>
+              </span>
               <input
                 type="password"
                 required
@@ -71,8 +76,6 @@ const Register = () => {
               />
               <label>Password</label>
             </div>
-
-            
 
             <div className="remember-forgot">
               <label>
