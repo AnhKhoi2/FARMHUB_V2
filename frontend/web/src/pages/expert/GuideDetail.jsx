@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosClient from "../api/axiosClient";
-import "../css/ManagerGuides.css";
-import placeholderImg from "../assets/placeholder.svg";
+import axiosClient from "../../api/shared/axiosClient";
+import "../../css/expert/ManagerGuides.css";
+import placeholderImg from "../../assets/placeholder.svg";
 
 export default function GuideDetail() {
   const { id } = useParams();
@@ -36,32 +36,63 @@ export default function GuideDetail() {
   return (
     <div className="manager-guides-page">
       <div className="guide-detail-wrapper">
-        <button onClick={() => navigate(-1)} className="mg-btn back-btn small" style={{marginBottom:12}}>Quay lại</button>
+        <button
+          onClick={() => navigate(-1)}
+          className="mg-btn back-btn small"
+          style={{ marginBottom: 12 }}
+        >
+          Quay lại
+        </button>
 
         <div className="guide-card-detail">
           <div className="guide-body">
             <div className="guide-head">
               <div>
                 <h1 className="guide-title">{guide.title}</h1>
-                <div className="guide-meta">Tác giả: <strong>{guide.expert_id?.username || 'Unknown'}</strong> • {new Date(guide.createdAt).toLocaleString()}</div>
+                <div className="guide-meta">
+                  Tác giả:{" "}
+                  <strong>{guide.expert_id?.username || "Unknown"}</strong> •{" "}
+                  {new Date(guide.createdAt).toLocaleString()}
+                </div>
               </div>
               <div className="guide-actions">
-                <button className="mg-btn" onClick={()=> navigate(`/managerguides/edit/${guide._id}`)}>Chỉnh sửa</button>
-                <button className="mg-btn" style={{marginLeft:8}} onClick={()=> navigate('/managerguides')}>Danh sách</button>
+                <button
+                  className="mg-btn"
+                  onClick={() => navigate(`/managerguides/edit/${guide._id}`)}
+                >
+                  Chỉnh sửa
+                </button>
+                <button
+                  className="mg-btn"
+                  style={{ marginLeft: 8 }}
+                  onClick={() => navigate("/managerguides")}
+                >
+                  Danh sách
+                </button>
               </div>
             </div>
 
             {guide.plantTags && guide.plantTags.length > 0 && (
               <div className="plant-tags">
-                {guide.plantTags.map(t=> <span key={t} className="plant-chip">{t}</span>)}
+                {guide.plantTags.map((t) => (
+                  <span key={t} className="plant-chip">
+                    {t}
+                  </span>
+                ))}
               </div>
             )}
 
             <div className="guide-summary">
               {guide.content || guide.summary ? (
-                <div dangerouslySetInnerHTML={{ __html: guide.content || guide.summary }} />
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: guide.content || guide.summary,
+                  }}
+                />
               ) : (
-                <p className="muted">Không có nội dung chính — xem các bước bên dưới.</p>
+                <p className="muted">
+                  Không có nội dung chính — xem các bước bên dưới.
+                </p>
               )}
             </div>
 
@@ -71,11 +102,21 @@ export default function GuideDetail() {
                 <div className="steps-grid">
                   {guide.steps.map((s, idx) => (
                     <article key={idx} className="step-card">
-                      <div className="step-index">{idx+1}</div>
-                      <div className="step-thumb" style={{backgroundImage:`url(${s.image || placeholderImg})`}} />
+                      <div className="step-index">{idx + 1}</div>
+                      <div
+                        className="step-thumb"
+                        style={{
+                          backgroundImage: `url(${s.image || placeholderImg})`,
+                        }}
+                      />
                       <div className="step-content">
-                        <div className="step-title">{s.title || `Bước ${idx+1}`}</div>
-                        <div className="step-text" dangerouslySetInnerHTML={{ __html: s.text || '' }} />
+                        <div className="step-title">
+                          {s.title || `Bước ${idx + 1}`}
+                        </div>
+                        <div
+                          className="step-text"
+                          dangerouslySetInnerHTML={{ __html: s.text || "" }}
+                        />
                       </div>
                     </article>
                   ))}

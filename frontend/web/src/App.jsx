@@ -1,5 +1,5 @@
 import AppRoutes from "./routes";
-import ExpertHome from "./pages/ExpertHome";
+import ExpertHome from "./pages/expert/ExpertHome";
 
 export default function App() {
   // ExpertHome is imported here so it can be referenced or tested directly if needed.

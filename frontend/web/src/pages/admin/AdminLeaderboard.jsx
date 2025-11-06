@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import AdminLayout from '../components/AdminLayout';
-import streakApi from '../api/streakApi';
+import React, { useEffect, useState } from "react";
+import AdminLayout from "../../components/admin/AdminLayout";
+import streakApi from "../../api/shared/streakApi";
 
 export default function AdminLeaderboard() {
   const [items, setItems] = useState([]);
@@ -16,13 +16,15 @@ export default function AdminLeaderboard() {
       const items = res?.data?.data?.items || res?.data?.items || [];
       setItems(items);
     } catch (err) {
-      setError(err?.response?.data?.message || err.message || 'Error');
+      setError(err?.response?.data?.message || err.message || "Error");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   return (
     <AdminLayout>
@@ -43,19 +45,25 @@ export default function AdminLeaderboard() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={5}>Loading...</td></tr>
+                  <tr>
+                    <td colSpan={5}>Loading...</td>
+                  </tr>
                 ) : items.length ? (
                   items.map((it, idx) => (
                     <tr key={it._id}>
                       <td>{idx + 1}</td>
-                      <td>{it.user?.username || it.user?.email || it.user?._id}</td>
+                      <td>
+                        {it.user?.username || it.user?.email || it.user?._id}
+                      </td>
                       <td>{it.current_streak}</td>
                       <td>{it.max_streak}</td>
                       <td>{it.total_points}</td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={5}>No data</td></tr>
+                  <tr>
+                    <td colSpan={5}>No data</td>
+                  </tr>
                 )}
               </tbody>
             </table>

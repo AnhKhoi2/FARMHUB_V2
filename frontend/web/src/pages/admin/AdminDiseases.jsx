@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import AdminLayout from "../components/AdminLayout";
-import PortalModal from "../components/PortalModal";
-import axiosClient from "../api/axiosClient";
+import AdminLayout from "../../components/admin/AdminLayout";
+import PortalModal from "../../components/shared/PortalModal";
+import axiosClient from "../../api/shared/axiosClient";
 
 export default function AdminDiseases() {
   const [items, setItems] = useState([]);
@@ -23,7 +23,9 @@ export default function AdminDiseases() {
     }
   };
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => {
+    fetchItems();
+  }, []);
 
   const handleCreate = async (payload) => {
     await axiosClient.post("/admin/diseases", payload);
@@ -50,7 +52,12 @@ export default function AdminDiseases() {
       <div className="container-fluid">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h3>Diseases</h3>
-          <button className="btn btn-sm btn-primary" onClick={() => setShowCreate(true)}>Add disease</button>
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => setShowCreate(true)}
+          >
+            Add disease
+          </button>
         </div>
 
         <div className="card">
@@ -68,9 +75,13 @@ export default function AdminDiseases() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={5}>Loading...</td></tr>
+                    <tr>
+                      <td colSpan={5}>Loading...</td>
+                    </tr>
                   ) : items.length === 0 ? (
-                    <tr><td colSpan={5}>No records</td></tr>
+                    <tr>
+                      <td colSpan={5}>No records</td>
+                    </tr>
                   ) : (
                     items.map((it) => (
                       <tr key={it._id}>
@@ -79,8 +90,24 @@ export default function AdminDiseases() {
                         <td>{(it.plantTypes || []).join(", ")}</td>
                         <td>{it.severity}</td>
                         <td>
-                          <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setCurrent(it); setShowEdit(true); }}>Edit</button>
-                          <button className="btn btn-sm btn-outline-danger" onClick={() => { setCurrent(it); setShowConfirm(true); }}>Delete</button>
+                          <button
+                            className="btn btn-sm btn-outline-primary me-2"
+                            onClick={() => {
+                              setCurrent(it);
+                              setShowEdit(true);
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => {
+                              setCurrent(it);
+                              setShowConfirm(true);
+                            }}
+                          >
+                            Delete
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -93,19 +120,49 @@ export default function AdminDiseases() {
 
         {showCreate && (
           <PortalModal onClose={() => setShowCreate(false)}>
-            <DiseaseModal title="Create Disease" onClose={() => setShowCreate(false)} onSubmit={handleCreate} />
+            <DiseaseModal
+              title="Create Disease"
+              onClose={() => setShowCreate(false)}
+              onSubmit={handleCreate}
+            />
           </PortalModal>
         )}
 
         {showEdit && current && (
-          <PortalModal onClose={() => { setShowEdit(false); setCurrent(null); }}>
-            <DiseaseModal title="Edit Disease" initial={current} onClose={() => { setShowEdit(false); setCurrent(null); }} onSubmit={(data) => handleEdit(current._id, data)} />
+          <PortalModal
+            onClose={() => {
+              setShowEdit(false);
+              setCurrent(null);
+            }}
+          >
+            <DiseaseModal
+              title="Edit Disease"
+              initial={current}
+              onClose={() => {
+                setShowEdit(false);
+                setCurrent(null);
+              }}
+              onSubmit={(data) => handleEdit(current._id, data)}
+            />
           </PortalModal>
         )}
 
         {showConfirm && current && (
-          <PortalModal onClose={() => { setShowConfirm(false); setCurrent(null); }}>
-            <ConfirmModal title="Delete disease" message={`Bạn có chắc muốn xóa "${current.name}" không?`} onCancel={() => { setShowConfirm(false); setCurrent(null); }} onConfirm={() => handleDelete(current._id)} />
+          <PortalModal
+            onClose={() => {
+              setShowConfirm(false);
+              setCurrent(null);
+            }}
+          >
+            <ConfirmModal
+              title="Delete disease"
+              message={`Bạn có chắc muốn xóa "${current.name}" không?`}
+              onCancel={() => {
+                setShowConfirm(false);
+                setCurrent(null);
+              }}
+              onConfirm={() => handleDelete(current._id)}
+            />
           </PortalModal>
         )}
       </div>
@@ -118,35 +175,67 @@ function DiseaseModal({ title, initial = {}, onClose, onSubmit }) {
   const [slug, setSlug] = useState(initial.slug || "");
   const [category, setCategory] = useState(initial.category || "");
   const [severity, setSeverity] = useState(initial.severity || "low");
-  const [plantTypes, setPlantTypes] = useState((initial.plantTypes || []).join(", "));
+  const [plantTypes, setPlantTypes] = useState(
+    (initial.plantTypes || []).join(", ")
+  );
 
   const submit = () => {
-    const payload = { name, slug, category, severity, plantTypes: plantTypes.split(",").map(s => s.trim()).filter(Boolean) };
+    const payload = {
+      name,
+      slug,
+      category,
+      severity,
+      plantTypes: plantTypes
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    };
     onSubmit(payload);
   };
   return (
     <div>
       <div className="modal-header">
         <h5 className="modal-title">{title}</h5>
-        <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
+        <button
+          type="button"
+          className="btn-close"
+          aria-label="Close"
+          onClick={onClose}
+        ></button>
       </div>
       <div className="modal-body">
         <div className="row g-3">
           <div className="col-md-6">
             <label className="form-label">Name</label>
-            <input className="form-control form-control-sm" value={name} onChange={(e) => setName(e.target.value)} />
+            <input
+              className="form-control form-control-sm"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
           <div className="col-md-6">
             <label className="form-label">Slug</label>
-            <input className="form-control form-control-sm" value={slug} onChange={(e) => setSlug(e.target.value)} />
+            <input
+              className="form-control form-control-sm"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+            />
           </div>
           <div className="col-md-6">
             <label className="form-label">Category</label>
-            <input className="form-control form-control-sm" value={category} onChange={(e) => setCategory(e.target.value)} />
+            <input
+              className="form-control form-control-sm"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            />
           </div>
           <div className="col-md-6">
             <label className="form-label">Severity</label>
-            <select className="form-select form-select-sm" value={severity} onChange={(e) => setSeverity(e.target.value)}>
+            <select
+              className="form-select form-select-sm"
+              value={severity}
+              onChange={(e) => setSeverity(e.target.value)}
+            >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
@@ -154,13 +243,21 @@ function DiseaseModal({ title, initial = {}, onClose, onSubmit }) {
           </div>
           <div className="col-12">
             <label className="form-label">Plant types (comma separated)</label>
-            <input className="form-control form-control-sm" value={plantTypes} onChange={(e) => setPlantTypes(e.target.value)} />
+            <input
+              className="form-control form-control-sm"
+              value={plantTypes}
+              onChange={(e) => setPlantTypes(e.target.value)}
+            />
           </div>
         </div>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onClose}>Cancel</button>
-        <button className="btn btn-sm btn-primary" onClick={submit}>Save</button>
+        <button className="btn btn-sm btn-secondary" onClick={onClose}>
+          Cancel
+        </button>
+        <button className="btn btn-sm btn-primary" onClick={submit}>
+          Save
+        </button>
       </div>
     </div>
   );
@@ -171,14 +268,23 @@ function ConfirmModal({ title, message, onCancel, onConfirm }) {
     <div>
       <div className="modal-header">
         <h5 className="modal-title">{title}</h5>
-        <button type="button" className="btn-close" aria-label="Close" onClick={onCancel}></button>
+        <button
+          type="button"
+          className="btn-close"
+          aria-label="Close"
+          onClick={onCancel}
+        ></button>
       </div>
       <div className="modal-body">
         <p>{message}</p>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onCancel}>Cancel</button>
-        <button className="btn btn-sm btn-danger" onClick={onConfirm}>Delete</button>
+        <button className="btn btn-sm btn-secondary" onClick={onCancel}>
+          Cancel
+        </button>
+        <button className="btn btn-sm btn-danger" onClick={onConfirm}>
+          Delete
+        </button>
       </div>
     </div>
   );

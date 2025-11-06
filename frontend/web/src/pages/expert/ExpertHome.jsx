@@ -1,9 +1,17 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import "../css/ExpertHome.css"
-import { MessageCircle, Leaf, BarChart3, User, Bell, Settings, LogOut } from "lucide-react"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "../../css/expert/ExpertHome.css";
+import {
+  MessageCircle,
+  Leaf,
+  BarChart3,
+  User,
+  Bell,
+  Settings,
+  LogOut,
+} from "lucide-react";
 
 function ExpertHome({
   onChatClick,
@@ -12,8 +20,8 @@ function ExpertHome({
   onAnalyticsClick,
   userProfile = null,
 }) {
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
-  const navigate = useNavigate()
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const navigate = useNavigate();
 
   const mockProfile = userProfile || {
     name: "Nguyen Van A",
@@ -21,7 +29,7 @@ function ExpertHome({
     role: "Agricultural Expert",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=expert",
     notifications: 3,
-  }
+  };
 
   return (
     <div className="expert-home">
@@ -39,7 +47,11 @@ function ExpertHome({
           {/* 4 Component Buttons */}
           <nav className="header-nav">
             {/* Component 1: Chat */}
-            <button className="nav-button nav-button-chat" onClick={onChatClick} title="Chat with users">
+            <button
+              className="nav-button nav-button-chat"
+              onClick={onChatClick}
+              title="Chat with users"
+            >
               <MessageCircle size={20} />
               <span>Chat</span>
             </button>
@@ -49,11 +61,11 @@ function ExpertHome({
               className="nav-button nav-button-add"
               onClick={() => {
                 try {
-                  if (onAddGuideClick) onAddGuideClick()
+                  if (onAddGuideClick) onAddGuideClick();
                 } catch (e) {
                   /* ignore handler errors */
                 }
-                navigate("/managerguides")
+                navigate("/managerguides");
               }}
               title="Manage Guides"
             >
@@ -61,13 +73,21 @@ function ExpertHome({
             </button>
 
             {/* Component 3: Dashboard */}
-            <button className="nav-button nav-button-dashboard" onClick={onDashboardClick} title="Dashboard">
+            <button
+              className="nav-button nav-button-dashboard"
+              onClick={onDashboardClick}
+              title="Dashboard"
+            >
               <Leaf size={20} />
               <span>Garden</span>
             </button>
 
             {/* Component 4: Analytics */}
-            <button className="nav-button nav-button-analytics" onClick={onAnalyticsClick} title="Analytics">
+            <button
+              className="nav-button nav-button-analytics"
+              onClick={onAnalyticsClick}
+              title="Analytics"
+            >
               <BarChart3 size={20} />
               <span>Analytics</span>
             </button>
@@ -78,13 +98,24 @@ function ExpertHome({
             {/* Notifications */}
             <button className="notification-btn">
               <Bell size={20} />
-              {mockProfile.notifications > 0 && <span className="notification-badge">{mockProfile.notifications}</span>}
+              {mockProfile.notifications > 0 && (
+                <span className="notification-badge">
+                  {mockProfile.notifications}
+                </span>
+              )}
             </button>
 
             {/* Avatar & Profile Menu */}
             <div className="profile-section">
-              <button className="avatar-btn" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                <img src={mockProfile.avatar || "/placeholder.svg"} alt={mockProfile.name} className="avatar-image" />
+              <button
+                className="avatar-btn"
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+              >
+                <img
+                  src={mockProfile.avatar || "/placeholder.svg"}
+                  alt={mockProfile.name}
+                  className="avatar-image"
+                />
               </button>
 
               {/* Profile Dropdown Menu */}
@@ -132,8 +163,12 @@ function ExpertHome({
       <main className="expert-main">
         <div className="content-container">
           <section className="welcome-section">
-            <h2 className="welcome-title">Welcome, {mockProfile.name.split(" ")[1]}! 👋</h2>
-            <p className="welcome-subtitle">Manage growing guides and communicate with users</p>
+            <h2 className="welcome-title">
+              Welcome, {mockProfile.name.split(" ")[1]}! 👋
+            </h2>
+            <p className="welcome-subtitle">
+              Manage growing guides and communicate with users
+            </p>
           </section>
 
           {/* Quick Stats */}
@@ -183,13 +218,15 @@ function ExpertHome({
           <section className="content-area">
             <div className="content-placeholder">
               <p>Main content will be displayed here</p>
-              <p className="subtitle">Select one of the 4 buttons above to get started</p>
+              <p className="subtitle">
+                Select one of the 4 buttons above to get started
+              </p>
             </div>
           </section>
         </div>
       </main>
     </div>
-  )
+  );
 }
 
-export default ExpertHome
+export default ExpertHome;

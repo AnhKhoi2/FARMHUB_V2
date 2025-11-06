@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
-import axiosClient from "../api/axiosClient";
+import React, { useState } from "react";
+import axiosClient from "../../api/shared/axiosClient";
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axiosClient.post('/auth/password/forgot', { email });
+      const response = await axiosClient.post("/auth/password/forgot", {
+        email,
+      });
       setMessage(response.data.message);
     } catch (error) {
-      setMessage(error.response.data.message || 'Có lỗi xảy ra!');
+      setMessage(error.response.data.message || "Có lỗi xảy ra!");
     }
   };
 

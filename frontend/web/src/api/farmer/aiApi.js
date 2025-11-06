@@ -1,4 +1,4 @@
-import axiosClient from "./axiosClient";
+import axiosClient from "../shared/axiosClient";
 
 // diagnose: { description, symptoms, extra }
 function diagnose(payload) {
