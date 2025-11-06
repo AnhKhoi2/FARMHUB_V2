@@ -2,6 +2,9 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import ExpertHome from "../pages/ExpertHome"; // corrected path to pages
+import ExpertPlantModels from "../pages/ExpertPlantModels";
+import PlantModelEdit from "../pages/PlantModelEdit";
+import PlantModelDetail from "../pages/PlantModelDetail";
 
 export default function ExpertRoutes() {
   return (
@@ -11,6 +14,10 @@ export default function ExpertRoutes() {
 
       {/* /expert/home */}
       <Route path="home" element={<ExpertHome />} />
+  <Route path="plantmodels" element={<ExpertPlantModels />} />
+  <Route path="plantmodels/create" element={<PlantModelEdit />} />
+  <Route path="plantmodels/edit/:id" element={<PlantModelEdit />} />
+  <Route path="plantmodels/:id" element={<PlantModelDetail />} />
 
       {/* mọi path lạ dưới /expert → /expert/home */}
       <Route path="*" element={<Navigate to="home" replace />} />

@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import {connectDB} from "./config/db.js";
 import authRoute from "./routes/auth.js";
 import guidesRoute from "./routes/guides.js";
+import plantModelsRouter from "./routes/plantModels.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 
@@ -23,6 +24,7 @@ app.use(cookieParser());
 
 app.use("/auth", authRoute);
 app.use("/guides", guidesRoute);
+app.use("/plant-models", plantModelsRouter);
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
