@@ -3,11 +3,11 @@ import Login from "../pages/Login";
 import Register from "../pages/register_v1.jsx";
 import Home from "../pages/Home";
 import ExpertHome from "../pages/ExpertHome";
-import PrivateRoute from "./PrivateRoute";
-import ExpertRoutes from "./ExpertRoutes";
+import ExpertPlantModels from "../pages/ExpertPlantModels";
 import ManagerGuides from "../pages/ManagerGuides";
 import GuideDetail from "../pages/GuideDetail";
-import GuideEdit from "../pages/GuideEdit";
+import PrivateRoute from "./PrivateRoute";
+import ExpertRoutes from "./ExpertRoutes";
 
 export default function AppRoutes() {
   return (
@@ -37,13 +37,13 @@ export default function AppRoutes() {
 
   {/* Direct expert home route for quick access/testing */}
   <Route path="/experthome" element={<ExpertHome />} />
-  {/* Manager guides page (protected) */}
-  <Route path="/managerguides" element={<PrivateRoute><ManagerGuides /></PrivateRoute>} />
-  <Route path="/managerguides/create" element={<PrivateRoute><GuideEdit /></PrivateRoute>} />
+
+  {/* Public route for Plant Models manager (CRUD) */}
+  <Route path="/plantmodels" element={<ExpertPlantModels />} />
+
+  {/* Manager Guides pages */}
+  <Route path="/managerguides" element={<ManagerGuides />} />
   <Route path="/guides/:id" element={<GuideDetail />} />
-  <Route path="/managerguides/edit/:id" element={<PrivateRoute><GuideEdit /></PrivateRoute>} />
-  {/* legacy/shortcut route to support /createguides if linked elsewhere */}
-  <Route path="/createguides" element={<Navigate to="/managerguides/create" replace />} />
 
         {/* Bắt mọi route khác về /login (tuỳ chọn) */}
         <Route path="*" element={<Navigate to="/login" replace />} />

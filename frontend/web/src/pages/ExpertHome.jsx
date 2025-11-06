@@ -39,43 +39,40 @@ function ExpertHome({
           {/* 4 Component Buttons */}
           <nav className="header-nav">
             {/* Component 1: Chat */}
-            <button className="nav-button nav-button-chat" onClick={onChatClick} title="Chat with users">
+            <button className="nav-button nav-button-chat" onClick={onChatClick} title="Trò chuyện với người dùng">
               <MessageCircle size={20} />
-              <span>Chat</span>
+              <span>Trò chuyện</span>
             </button>
 
             {/* Component 2: Manage Guides */}
-            <button
-              className="nav-button nav-button-add"
-              onClick={() => {
-                try {
-                  if (onAddGuideClick) onAddGuideClick()
-                } catch (e) {
-                  /* ignore handler errors */
-                }
-                navigate("/managerguides")
-              }}
-              title="Manage Guides"
-            >
-              <span>Manager Guides</span>
+            <button className="nav-button nav-button-add" onClick={() => navigate('/managerguides')} title="Quản lý hướng dẫn">
+              <span>Quản lý hướng dẫn</span>
             </button>
 
-            {/* Component 3: Dashboard */}
-            <button className="nav-button nav-button-dashboard" onClick={onDashboardClick} title="Dashboard">
+            {/* Component 3: Plant Model */}
+            <button
+              className="nav-button nav-button-dashboard"
+              onClick={() => {
+                if (typeof onDashboardClick === "function") return onDashboardClick()
+                // navigate to plant models management page under expert routes
+                navigate("/expert/plantmodels")
+              }}
+              title="Mô hình trồng"
+            >
               <Leaf size={20} />
-              <span>Garden</span>
+              <span>Mô hình trồng</span>
             </button>
 
             {/* Component 4: Analytics */}
-            <button className="nav-button nav-button-analytics" onClick={onAnalyticsClick} title="Analytics">
+            <button className="nav-button nav-button-analytics" onClick={onAnalyticsClick} title="Phân tích">
               <BarChart3 size={20} />
-              <span>Analytics</span>
+              <span>Phân tích</span>
             </button>
           </nav>
 
           {/* Right Section: Notifications & Avatar */}
           <div className="header-right">
-            {/* Notifications */}
+            {/* Thông báo */}
             <button className="notification-btn">
               <Bell size={20} />
               {mockProfile.notifications > 0 && <span className="notification-badge">{mockProfile.notifications}</span>}
@@ -105,21 +102,22 @@ function ExpertHome({
 
                   <div className="profile-divider"></div>
 
+
                   <button className="profile-menu-item">
                     <User size={18} />
-                    <span>Profile</span>
+                    <span>Hồ sơ</span>
                   </button>
 
                   <button className="profile-menu-item">
                     <Settings size={18} />
-                    <span>Settings</span>
+                    <span>Cài đặt</span>
                   </button>
 
                   <div className="profile-divider"></div>
 
                   <button className="profile-menu-item logout">
                     <LogOut size={18} />
-                    <span>Logout</span>
+                    <span>Đăng xuất</span>
                   </button>
                 </div>
               )}
@@ -132,8 +130,8 @@ function ExpertHome({
       <main className="expert-main">
         <div className="content-container">
           <section className="welcome-section">
-            <h2 className="welcome-title">Welcome, {mockProfile.name.split(" ")[1]}! 👋</h2>
-            <p className="welcome-subtitle">Manage growing guides and communicate with users</p>
+            <h2 className="welcome-title">Xin chào, {mockProfile.name.split(" ")[1]}! 👋</h2>
+            <p className="welcome-subtitle">Quản lý hướng dẫn canh tác và liên lạc với người dùng</p>
           </section>
 
           {/* Quick Stats */}
@@ -143,7 +141,7 @@ function ExpertHome({
                 <Leaf />
               </div>
               <div className="stat-content">
-                <h3>Guides</h3>
+                <h3>Hướng dẫn</h3>
                 <p className="stat-value">24</p>
               </div>
             </div>
@@ -153,7 +151,7 @@ function ExpertHome({
                 <MessageCircle />
               </div>
               <div className="stat-content">
-                <h3>Messages</h3>
+                <h3>Tin nhắn</h3>
                 <p className="stat-value">156</p>
               </div>
             </div>
@@ -163,7 +161,7 @@ function ExpertHome({
                 <User />
               </div>
               <div className="stat-content">
-                <h3>Users</h3>
+                <h3>Người dùng</h3>
                 <p className="stat-value">342</p>
               </div>
             </div>
@@ -173,7 +171,7 @@ function ExpertHome({
                 <BarChart3 />
               </div>
               <div className="stat-content">
-                <h3>Interactions</h3>
+                <h3>Tương tác</h3>
                 <p className="stat-value">1.2K</p>
               </div>
             </div>
@@ -182,8 +180,8 @@ function ExpertHome({
           {/* Content Placeholder */}
           <section className="content-area">
             <div className="content-placeholder">
-              <p>Main content will be displayed here</p>
-              <p className="subtitle">Select one of the 4 buttons above to get started</p>
+              <p>Nội dung chính sẽ hiển thị ở đây</p>
+              <p className="subtitle">Chọn một trong 4 nút ở trên để bắt đầu</p>
             </div>
           </section>
         </div>
