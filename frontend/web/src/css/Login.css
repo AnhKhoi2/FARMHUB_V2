@@ -33,7 +33,7 @@
     background-color:#e9ecef;
     overflow: hidden;
     border-bottom-left-radius:20px;
-    cursor: pointer;
+    cursor: default;
     z-index: 1;
     padding: 20px; /* thêm padding để wrapper mở rộng theo nội dung */
 }
@@ -67,9 +67,19 @@
 }
 
 .form-box h2 {
-    font-size: 2m;
+    font-size: 1.6rem;
     color: #162938;
     text-align: center;
+    margin: 0 0 8px 0;
+}
+
+.login-page .wrapper::before{
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(233,236,239,0.85));
+    z-index: -1;
+    border-radius: 18px;
 }
 
 .input-box {

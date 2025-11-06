@@ -621,3 +621,317 @@ body {
 .expert-main::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent-green);
 }
+
+/* ========================
+  Plant Models / Manager UI
+  ========================
+  Notes:
+  - .panel is a wrapper used by ExpertPlantModels.jsx (class .panel)
+  - .manager-grid creates two main columns: form (fixed) + list (flex)
+  - .form-grid is a vertical single-column form layout
+  - .table-wrap ensures table scrolls horizontally on small screens
+*/
+
+.panel {
+  width: 100%;
+}
+
+/* Ensure content-area doesn't center panels which causes overlap; align to top */
+.content-area {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.manager-grid {
+  /* Stack vertically by default so the form is full-width above the list
+     This prevents any accidental overlap between the two cards and keeps
+     the form flow simple and readable. On very wide screens a two-column
+     layout can be re-introduced later if desired. */
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.manager-grid .card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* make left form card render above the right list to avoid being overlapped */
+.manager-grid .card:first-child {
+  position: relative;
+  z-index: 3;
+}
+.manager-grid .card:nth-child(2) {
+  position: relative;
+  z-index: 1;
+}
+
+.panel .card { overflow: visible; }
+
+.manager-grid .card { min-height: 260px; width: 100%; }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.form-grid {
+  display: block;
+}
+
+.form-grid > div {
+  margin-bottom: 14px;
+}
+
+.form-grid label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--color-text-dark);
+}
+
+.form-grid input,
+.form-grid textarea,
+.form-grid select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  font-size: 0.95rem;
+  color: var(--color-text-dark);
+  box-sizing: border-box;
+}
+
+.form-grid textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.cta-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.btn-primary {
+  background: var(--color-primary-green);
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tab-switcher .btn {
+  padding: 6px 10px;
+  margin-right: 6px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+/* make tab-switcher horizontal and tidy */
+.tab-switcher {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tab-switcher .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-trash {
+  background: transparent;
+  border: 1px dashed rgba(211,47,47,0.15);
+  color: var(--color-error);
+}
+
+.trash-badge {
+  display: inline-block;
+  background: var(--color-error);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  margin-left: 6px;
+}
+
+.search-input input {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  width: 240px;
+  box-sizing: border-box;
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+.plant-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.plant-table th,
+.plant-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.action-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 28px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  /* keep the stacked layout on smaller screens */
+  .manager-grid { flex-direction: column; }
+  .search-input input { width: 100%; }
+}
+
+/* Optional two-column layout for very wide screens */
+@media (min-width: 1100px) {
+  .manager-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* single column list-only layout */
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .action-btns .btn { padding: 6px 10px; }
+
+/* small tweak: ensure cards stack nicely inside panel */
+.panel .card { margin-bottom: 12px; }
+
+/* Modal styles for plant model form */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 24px;
+}
+.modal-content {
+  background: var(--color-white);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 760px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+}
+
+/* Force all common button variants to show filled (solid) backgrounds
+   so buttons appear with full color regardless of other component CSS. */
+.btn {
+  background-color: var(--color-primary-green) !important;
+  color: var(--color-white) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+
+.btn-primary {
+  background-color: var(--ColorPrimary, var(--color-primary-green)) !important;
+  color: var(--color-white) !important;
+}
+
+/* Secondary: use a warm earth tone to fit the theme */
+.btn-secondary {
+  background-color: var(--color-earth) !important;
+  color: var(--color-white) !important;
+  border: 1px solid transparent !important;
+}
+
+/* Danger buttons should be clearly red */
+.btn-danger {
+  background-color: var(--color-error) !important;
+  color: var(--color-white) !important;
+  border: 1px solid transparent !important;
+}
+
+/* Small buttons inherit filled styles but with smaller padding */
+.btn-sm {
+  padding: 6px 8px !important;
+  font-size: 0.9rem !important;
+}
+
+/* Trash / outline variants: keep outline look but also provide a filled fallback */
+.btn-trash {
+  background-color: rgba(211,47,47,0.06) !important;
+  color: var(--color-error) !important;
+  border: 1px dashed rgba(211,47,47,0.25) !important;
+}
+
+.btn-outline {
+  background-color: transparent !important;
+  color: var(--color-primary-green) !important;
+  border: 1px solid var(--color-primary-green) !important;
+}
+
+/* Action buttons column: make sure danger/secondary used here are filled */
+.action-btns .btn {
+  min-width: 92px;
+  text-align: center;
+}
+
+
+/* Ensure forms inside modals are stacked vertically and full-width.
+   This overrides other page-level .form-grid rules (e.g., ManagerGuides.css)
+   so the modal form fields don't render in two columns. */
+.modal-content .form-grid {
+  display: block !important;
+}
+.modal-content .form-grid > div {
+  width: 100% !important;
+  margin-bottom: 12px !important;
+}
+.modal-content .form-grid label {
+  display: block;
+  margin-bottom: 6px;
+}
+.modal-content .form-grid input,
+.modal-content .form-grid textarea,
+.modal-content .form-grid select {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+.modal-content .cta-row {
+  display: flex !important;
+  gap: 8px;
+  justify-content: flex-end !important;
+  margin-top: 8px !important;
+}
+
+

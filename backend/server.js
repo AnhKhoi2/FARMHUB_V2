@@ -12,6 +12,7 @@ import aiRoutes from "./routes/ai.js";
 import weatherRoutes from "./routes/weather.js";
 import testRoute from "./routes/test.js";
 import guidesRoute from "./routes/guides.js";
+import plantModelsRoute from "./routes/plantModels.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 
@@ -35,6 +36,7 @@ app.use("/ai", aiRoutes);
 app.use("/admin/weather", weatherRoutes);
 app.use("/test", testRoute);
 app.use("/guides", guidesRoute);
+app.use("/plant-models", plantModelsRoute);
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);

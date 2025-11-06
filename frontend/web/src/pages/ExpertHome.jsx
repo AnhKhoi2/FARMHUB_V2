@@ -60,10 +60,21 @@ function ExpertHome({
               <span>Manager Guides</span>
             </button>
 
-            {/* Component 3: Dashboard */}
-            <button className="nav-button nav-button-dashboard" onClick={onDashboardClick} title="Dashboard">
+            {/* Component 3: Plant Models (was Dashboard/Garden) */}
+            <button
+              className="nav-button nav-button-dashboard"
+              onClick={() => {
+                try {
+                  if (onDashboardClick) onDashboardClick()
+                } catch (e) {
+                  /* ignore */
+                }
+                navigate('/plantmodels')
+              }}
+              title="Plant Models"
+            >
               <Leaf size={20} />
-              <span>Garden</span>
+              <span>Plant Model</span>
             </button>
 
             {/* Component 4: Analytics */}

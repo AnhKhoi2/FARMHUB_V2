@@ -61,23 +61,35 @@ const Login = () => {
         </span>
 
         <div className="form-box login">
-          <h2>Login</h2>
+          <h2>Đăng nhập</h2>
           <form onSubmit={handleLogin}>
-          {error && <div className="error-message">{error}</div>}
+            {error && <div className="error-message">{error}</div>}
             <div className="input-box">
               <span className="icon">
                 <ion-icon name="person"></ion-icon>
               </span>
-              <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} />
-              <label>Username</label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder=""
+              />
+              <label>Tên đăng nhập</label>
             </div>
 
             <div className="input-box">
               <span className="icon">
                 <ion-icon name="lock-closed"></ion-icon>
               </span>
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-              <label>Password</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder=""
+              />
+              <label>Mật khẩu</label>
             </div>
 
             
@@ -85,18 +97,18 @@ const Login = () => {
             <div className="remember-forgot">
               <label>
                 <input type="checkbox" />
-                Remember me
+                Ghi nhớ đăng nhập
               </label>
-              <a href="/forgot-password">Forgot Password?</a>
+              <a href="/forgot-password">Quên mật khẩu?</a>
             </div>
 
             <button type="submit" className="btn" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
 
             <div className="login-register">
               <p>
-                Don't have an account? <Link to="/register" className="register-link">Register</Link>
+                Chưa có tài khoản? <Link to="/register" className="register-link">Đăng ký</Link>
               </p>
             </div>
           </form>

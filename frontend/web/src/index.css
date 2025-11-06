@@ -66,3 +66,42 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Make all buttons show full (filled) color using theme variables from ExpertHome.css.
+   This forces buttons and common btn classes to use the primary green and white text
+   so they appear with full color across the app. Use !important to override inline
+   or component-specific styles when necessary. */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn,
+.btn-primary {
+  background-color: var(--color-primary-green, #2d8659) !important;
+  color: var(--color-white, #ffffff) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+
+button:not(:disabled):hover,
+.btn:not(:disabled):hover,
+input[type="submit"]:not(:disabled):hover {
+  background-color: var(--color-accent-green, #4caf50) !important;
+}
+
+/* Outline/secondary buttons keep transparent background but use primary color */
+.btn-outline,
+.outline,
+button.btn-outline {
+  background-color: transparent !important;
+  color: var(--color-primary-green, #2d8659) !important;
+  border: 1px solid var(--color-primary-green, #2d8659) !important;
+}
+
+button:disabled,
+.btn[disabled],
+input[disabled] {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
