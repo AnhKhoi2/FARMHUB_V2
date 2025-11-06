@@ -15,31 +15,16 @@ export default function ManagerGuides() {
   const [totalPages, setTotalPages] = useState(1);
 
   const [search, setSearch] = useState("");
-  // search by plant name
-  const [plantSearch, setPlantSearch] = useState("");
-  // filter by plant type
   const [category, setCategory] = useState("");
-
-  const availablePlantTags = [
-    'Rau củ dễ chăm',
-    'Trái cây ngắn hạn',
-    'Cây gia vị',
-    'Trồng trong chung cư',
-    'Ít thời gian chăm sóc',
-    'Cây leo nhỏ',
-  ];
 
   const fetchGuides = useCallback(
     async (p = page) => {
       setLoading(true);
       setError(null);
       try {
-      const params = { page: p, limit };
-          if (search) params.search = search;
-          if (plantSearch) params.plant = plantSearch;
-          if (category) params.category = category;
-      console.debug('[ManagerGuides] fetch params:', params);
-          const res = await axiosClient.get("/guides", { params });
+        const res = await axiosClient.get("/guides", {
+          params: { page: p, limit, search, category },
+        });
 
   const data = res.data || {};
   // API shape: { success: true, data: [...], meta: { page, limit, total, pages } }
@@ -56,37 +41,17 @@ export default function ManagerGuides() {
         setLoading(false);
       }
     },
-    [page, limit, search, category, plantSearch]
+    [page, limit, search, category]
   );
 
   useEffect(() => {
     fetchGuides(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, category, plantSearch]);
-
-  // if user clears plantSearch or category, fetch all guides immediately
-  useEffect(() => {
-    if ((plantSearch === '' || plantSearch === null) && (category === '' || category === null)) {
-      // ensure we fetch page 1 when filters cleared
-      fetchGuides(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plantSearch, category]);
+  }, [page, search, category]);
 
   function onSearchSubmit(e) {
     e.preventDefault();
     setPage(1);
-  }
-
-  function onPlantSearchSubmit(e) {
-    e.preventDefault();
-    setPage(1);
-    // ensure immediate fetch even if page already equals 1
-    try {
-      fetchGuides(1);
-    } catch (e) {
-      // ignore
-    }
   }
 
   function gotoPage(p) {
@@ -107,51 +72,15 @@ export default function ManagerGuides() {
 
   function onDelete(id) {
     if (!window.confirm("Bạn có chắc chắn muốn xóa hướng dẫn này?")) return;
-    (async () => {
-      try {
-        setLoading(true);
-        await axiosClient.delete(`/guides/${id}`);
-        // refetch current page
-        // if after deletion current page might be empty and page > 1, go to previous page
-        const remaining = guides.length - 1;
-        if (remaining <= 0 && page > 1) {
-          setPage(page - 1);
-          fetchGuides(page - 1);
-        } else {
-          fetchGuides(page);
-        }
-      } catch (err) {
-        console.error('Delete guide failed', err);
-        alert('Xóa không thành công. Vui lòng thử lại.');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    // TODO: call DELETE /guides/:id then refetch
+    alert("Xóa (demo): " + id);
   }
 
   return (
     <div className="manager-guides-page">
       <header className="mg-header">
         <h2 className="mg-title">Danh sách hướng dẫn</h2>
-        <div className="mg-toolbar">
-          <form onSubmit={onPlantSearchSubmit} className="mg-search-box">
-            <input className="mg-input mg-search-input" placeholder="Tìm theo tên cây hoặc tiêu đề" value={plantSearch} onChange={e=>setPlantSearch(e.target.value)} />
-            <button className="mg-search-btn" type="submit">Tìm</button>
-          </form>
-
-          <div>
-            <select value={category} onChange={e=>{ setCategory(e.target.value); setPage(1); }} className="mg-select">
-              <option value="">-- Lọc theo loại cây --</option>
-              {availablePlantTags.map(t=> <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <button className="mg-clear-btn" onClick={() => { setPlantSearch(''); setCategory(''); setPage(1); fetchGuides(1); }}>Xóa bộ lọc</button>
-            <button className="mg-clear-btn" onClick={() => navigate('/managerguides/trash')}>Thùng rác</button>
-            <button className="mg-create-btn" onClick={onCreate}>Tạo mới</button>
-          </div>
-        </div>
+        <button className="mg-create-btn" onClick={onCreate}>Tạo mới</button>
       </header>
 
       <div className="mg-grid-container">

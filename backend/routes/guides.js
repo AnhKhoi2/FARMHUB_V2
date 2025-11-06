@@ -1,5 +1,5 @@
 import express from "express";
-import { getGuides, createGuide, getGuideById, deleteGuide, updateGuide, getTrashedGuides, restoreGuide, permanentDeleteGuide } from "../controllers/guidesController.js";
+import { getGuides, createGuide, getGuideById, deleteGuide, updateGuide } from "../controllers/guidesController.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -34,15 +34,6 @@ const upload = multer({ storage });
 // Public list endpoint with pagination/search/filter
 router.get("/", getGuides);
 
-// Trash endpoints (admin) - register BEFORE any param route like '/:id' so '/trash' is not treated as an id
-router.get('/trash', getTrashedGuides);
-router.post('/:id/restore', restoreGuide);
-router.delete('/:id/permanent', permanentDeleteGuide);
-
-// Create guide (for dev/testing) - in production protect with auth
-// accept multipart/form-data for main image and per-step images
-router.post("/", upload.any(), createGuide);
-
 // Single guide
 router.get("/:id", getGuideById);
 
@@ -50,6 +41,10 @@ router.get("/:id", getGuideById);
 // accept 'image' (single) and 'stepImages' (multiple files for steps)
 // use upload.any() so frontend can send per-step files with field names like 'stepImage_0'
 router.put('/:id', upload.any(), updateGuide);
+
+// Create guide (for dev/testing) - in production protect with auth
+// accept multipart/form-data for main image and per-step images
+router.post("/", upload.any(), createGuide);
 
 // Delete guide (dev) - protect in production
 router.delete("/:id", deleteGuide);

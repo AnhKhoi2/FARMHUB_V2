@@ -8,7 +8,6 @@ import ExpertRoutes from "./ExpertRoutes";
 import ManagerGuides from "../pages/ManagerGuides";
 import GuideDetail from "../pages/GuideDetail";
 import GuideEdit from "../pages/GuideEdit";
-import TrashGuides from "../pages/TrashGuides";
 
 export default function AppRoutes() {
   return (
@@ -42,7 +41,6 @@ export default function AppRoutes() {
   <Route path="/managerguides" element={<PrivateRoute><ManagerGuides /></PrivateRoute>} />
   <Route path="/managerguides/create" element={<PrivateRoute><GuideEdit /></PrivateRoute>} />
   <Route path="/guides/:id" element={<GuideDetail />} />
-  <Route path="/managerguides/trash" element={<PrivateRoute><TrashGuides /></PrivateRoute>} />
   <Route path="/managerguides/edit/:id" element={<PrivateRoute><GuideEdit /></PrivateRoute>} />
   {/* legacy/shortcut route to support /createguides if linked elsewhere */}
   <Route path="/createguides" element={<Navigate to="/managerguides/create" replace />} />

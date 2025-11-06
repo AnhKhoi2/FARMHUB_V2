@@ -11,40 +11,19 @@ const __dirname = path.dirname(__filename);
 export const getGuides = async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.max(1, parseInt(req.query.limit) || 10);
-  const search = req.query.search || ""; // generic text search
-  const plant = (req.query.plant || "").trim(); // search by plant name (title or plantTags)
-  const category = req.query.category || req.query.tag || req.query.plantTag; // filter by plant type
+  const search = req.query.search || "";
+  const tag = req.query.tag;
 
   const filter = {};
-  // exclude soft-deleted guides by default
-  filter.deleted = { $ne: true };
-  // text search on title and summary
   if (search) {
+    // text search on title and summary
     filter.$or = [
       { title: { $regex: search, $options: "i" } },
       { summary: { $regex: search, $options: "i" } },
     ];
   }
-
-  // search by plant name: match title or plantTags (partial, case-insensitive)
-  if (plant) {
-    // escape user input for safe regex
-    const esc = plant.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const plantRegexOp = { $regex: esc, $options: "i" };
-    // match title or any element in plantTags (regex against array elements)
-    filter.$or = filter.$or || [];
-    filter.$or.push({ title: plantRegexOp }, { plantTags: plantRegexOp });
-  }
-
-  // filter by explicit category / plantTag
-  if (category) {
-    // allow comma-separated list
-    const vals = typeof category === 'string' ? category.split(',').map(s=>s.trim()).filter(Boolean) : category;
-    if (Array.isArray(vals)) {
-      filter.plantTags = { $in: vals };
-    } else {
-      filter.plantTags = vals;
-    }
+  if (tag) {
+    filter.tags = tag;
   }
 
   const skip = (page - 1) * limit;
@@ -173,7 +152,7 @@ export const createGuide = async (req, res) => {
 export const getGuideById = async (req, res) => {
   const id = req.params.id;
   // populate and lean to normalize
-  const guideRaw = await Guide.findOne({ _id: id, deleted: { $ne: true } }).populate("expert_id", "username email").lean();
+  const guideRaw = await Guide.findById(id).populate("expert_id", "username email").lean();
   if (!guideRaw) return res.status(404).json({ success: false, message: "Guide not found" });
 
   const guide = { ...guideRaw };
@@ -254,86 +233,8 @@ export const getGuideById = async (req, res) => {
 // DELETE /guides/:id
 export const deleteGuide = async (req, res) => {
   const id = req.params.id;
-  // soft delete: mark deleted = true and set deletedAt
-  const guide = await Guide.findByIdAndUpdate(id, { $set: { deleted: true, deletedAt: new Date() } }, { new: true, lean: true });
+  const guide = await Guide.findByIdAndDelete(id);
   if (!guide) return res.status(404).json({ success: false, message: "Guide not found" });
-  return ok(res, { deletedId: id });
-};
-
-
-// GET /guides/trash - list soft-deleted guides
-export const getTrashedGuides = async (req, res) => {
-  const page = Math.max(1, parseInt(req.query.page) || 1);
-  const limit = Math.max(1, parseInt(req.query.limit) || 10);
-  const skip = (page - 1) * limit;
-
-  // only deleted = true
-  const filter = { deleted: true };
-  const [total, rawGuides] = await Promise.all([
-    Guide.countDocuments(filter),
-    Guide.find(filter).sort({ deletedAt: -1 }).skip(skip).limit(limit).lean(),
-  ]);
-
-  // reuse normalization from getGuides
-  const guides = rawGuides.map((g) => {
-    const out = { ...g };
-    if (!out.image) {
-      if (out.images && out.images.length) {
-        const first = out.images[0];
-        if (typeof first === "string") out.image = first;
-        else if (first && (first.url || first.path)) out.image = first.url || first.path;
-      }
-    }
-    if (out.image && !/^https?:\/\//i.test(out.image)) {
-      const port = process.env.PORT || 5000;
-      const prefix = `http://localhost:${port}`;
-      if (out.image.startsWith("/")) out.image = `${prefix}${out.image}`;
-      else out.image = `${prefix}/uploads/${out.image}`;
-    }
-    return out;
-  });
-
-  const meta = { page, limit, total, pages: Math.ceil(total / limit) };
-  return ok(res, guides, meta);
-};
-
-// POST /guides/:id/restore - undo soft-delete
-export const restoreGuide = async (req, res) => {
-  const id = req.params.id;
-  const guide = await Guide.findByIdAndUpdate(id, { $set: { deleted: false }, $unset: { deletedAt: 1 } }, { new: true, lean: true });
-  if (!guide) return res.status(404).json({ success: false, message: 'Guide not found' });
-  return ok(res, guide);
-};
-
-// DELETE /guides/:id/permanent - hard-delete and remove files
-export const permanentDeleteGuide = async (req, res) => {
-  const id = req.params.id;
-  const guide = await Guide.findById(id).lean();
-  if (!guide) return res.status(404).json({ success: false, message: 'Guide not found' });
-
-  // delete files referenced by guide (image + steps[].image)
-  try {
-    const files = [];
-    if (guide.image && !/^https?:\/\//i.test(guide.image)) files.push(guide.image.replace(/^\//, '').replace(/^uploads\//, ''));
-    if (guide.images && Array.isArray(guide.images)) {
-      guide.images.forEach(f => { if (f && !/^https?:\/\//i.test(f)) files.push(f.replace(/^\//, '').replace(/^uploads\//, '')); });
-    }
-    if (guide.steps && Array.isArray(guide.steps)) {
-      guide.steps.forEach(s => { if (s.image && !/^https?:\/\//i.test(s.image)) files.push(s.image.replace(/^\//, '').replace(/^uploads\//, '')); });
-    }
-    for (const rel of files) {
-      try {
-        const filePath = path.join(__dirname, '..', 'uploads', rel);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      } catch (e) {
-        // ignore individual file errors
-      }
-    }
-  } catch (e) {
-    // ignore file deletion errors
-  }
-
-  await Guide.deleteOne({ _id: id });
   return ok(res, { deletedId: id });
 };
 

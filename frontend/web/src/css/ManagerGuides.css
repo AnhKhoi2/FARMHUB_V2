@@ -18,7 +18,7 @@
 }
 
 .mg-create-btn {
-	background: linear-gradient(180deg,#0d6efd,#0b5ed7);
+	background: #0d6efd;
 	color: #fff;
 	border: none;
 	padding: 6px 12px;
@@ -27,13 +27,6 @@
 	box-shadow: 0 2px 6px rgba(13,110,253,0.2);
 }
 
-/* Toolbar / search styles */
-.mg-toolbar { display: flex; gap: 12px; align-items: center; }
-.mg-search-box { display: flex; gap: 8px; align-items: center; background: #fff; padding: 6px; border-radius: 8px; border: 1px solid #e6eef6; }
-.mg-search-btn { background: linear-gradient(180deg, #10b981, #059669); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-.mg-clear-btn { background: #fff; border: 1px solid #e6eef6; color: #374151; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
-.mg-select { padding: 8px 10px; border-radius: 8px; border: 1px solid #e6eef6; background: #fff; }
-.mg-search-input { padding: 8px 10px; border-radius: 6px; border: 1px solid #eef6ff; min-width: 220px; }
 .mg-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
