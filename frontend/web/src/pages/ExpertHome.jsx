@@ -61,14 +61,7 @@ function ExpertHome({
             </button>
 
             {/* Component 3: Dashboard */}
-            <button
-              className="nav-button nav-button-dashboard"
-              onClick={() => {
-                try { if (onDashboardClick) onDashboardClick(); } catch (e) {}
-                navigate("/expert/plantmodels");
-              }}
-              title="Garden"
-            >
+            <button className="nav-button nav-button-dashboard" onClick={onDashboardClick} title="Dashboard">
               <Leaf size={20} />
               <span>Garden</span>
             </button>
