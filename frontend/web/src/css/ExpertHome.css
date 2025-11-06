@@ -345,9 +345,9 @@ body {
 }
 
 .content-container {
-  max-width: 1400px;
+  max-width: 1600px; /* increase overall page width to give more room */
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1.5rem 2rem; /* slightly reduce vertical padding to fit content */
 }
 
 /* Welcome Section */
@@ -444,13 +444,14 @@ body {
 .content-area {
   background: var(--color-white);
   border-radius: 12px;
-  padding: 3rem;
+  padding: 1.5rem 2rem; /* reduce padding to give more horizontal space */
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-border);
-  min-height: 400px;
+  min-height: 420px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start; /* align items to top to avoid vertical centering that made panels float */
+  justify-content: flex-start;
+  overflow: visible; /* allow shadows and panels to render without clipping */
 }
 
 .content-placeholder {
@@ -625,12 +626,27 @@ body {
 /* ============================================
    Plant Models Manager specific styles
    ============================================ */
+.panel {
+  width: 100%;
+  display: block;
+}
 .manager-grid {
   display: grid;
-  grid-template-columns: 420px 1fr;
-  gap: 2rem;
+  grid-template-columns: 620px 1fr; /* wider left column to fit vertical form comfortably */
+  gap: 6rem; /* larger gap between panels */
   align-items: start;
+  grid-auto-flow: column;
 }
+
+/* ensure each card sits at grid-start and has no unexpected top margin */
+.manager-grid > .card {
+  align-self: start;
+  margin-top: 0;
+  min-width: 0; /* allow cards to shrink inside grid without overflowing */
+  box-sizing: border-box;
+}
+
+.manager-grid > .card { outline: none; }
 
 .card {
   background: var(--color-white);
@@ -642,8 +658,20 @@ body {
 
 .form-grid {
   display: grid;
+  grid-template-columns: 1fr; /* force a single-column vertical form layout */
   gap: 0.9rem;
 }
+
+.form-grid > div { width: 100%; }
+
+/* Stronger selector to override other page styles that may set two-column layouts */
+.card .form-grid {
+  display: grid;
+  grid-template-columns: 1fr !important;
+  gap: 0.9rem;
+}
+
+.card .form-grid > div { width: 100%; }
 
 label {
   display: block;
@@ -719,6 +747,24 @@ input:focus, textarea:focus {
   font-size: 0.75rem;
 }
 
+/* Trash tab specific styles */
+.btn-trash {
+  background: transparent;
+  border: 1px solid rgba(220, 53, 69, 0.08);
+  color: var(--color-text-dark);
+}
+.btn-trash .trash-badge {
+  background: rgba(220,53,69,0.95);
+  color: #fff;
+}
+.btn-trash.active {
+  background: linear-gradient(90deg, rgba(220,53,69,1), rgba(200,40,55,1));
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(220,53,69,0.12);
+  border-color: transparent;
+}
+.btn-trash.active .trash-badge { background: #fff; color: rgba(220,53,69,1); font-weight:700 }
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -781,6 +827,16 @@ table.plant-table td {
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 0.95rem;
+}
+
+@media (min-width: 900px) {
+  /* On wider screens show action buttons inline */
+  .action-btns {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .action-btns button { margin-left: 6px }
 }
 
 .plant-table tbody tr { background: transparent }

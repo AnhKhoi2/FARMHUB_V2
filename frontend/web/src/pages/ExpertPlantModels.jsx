@@ -188,7 +188,8 @@ function ExpertPlantModels() {
 					</section>
 
 					<section className="content-area">
-						<div className="manager-grid">
+							<div className="panel">
+								<div className="manager-grid">
 							<div className="card">
 								{error && <p className="subtitle" style={{ color: 'var(--color-error)', marginBottom: 8 }}>{error}</p>}
 								<form onSubmit={handleSave} className="form-grid">
@@ -222,10 +223,10 @@ function ExpertPlantModels() {
 														<textarea name="description" value={form.description} onChange={handleChange} rows={4} placeholder="Thêm ghi chú hoặc hướng dẫn sơ bộ" />
 									</div>
 
-									<div style={{ display: "flex", gap: 8 }}>
-														<button className="btn btn-primary" type="submit" disabled={loading}>{editingId ? "Cập nhật" : "Tạo"}</button>
-														<button type="button" className="btn btn-secondary" onClick={handleSuggest}>Gợi ý</button>
-														<button type="button" className="btn" onClick={() => { setForm(emptyForm); setEditingId(null); }}>Đặt lại</button>
+									<div className="cta-row">
+										<button className="btn btn-primary" type="submit" disabled={loading}>{editingId ? "Cập nhật" : "Tạo"}</button>
+										<button type="button" className="btn btn-secondary" onClick={handleSuggest}>Gợi ý</button>
+										<button type="button" className="btn" onClick={() => { setForm(emptyForm); setEditingId(null); }}>Đặt lại</button>
 									</div>
 								</form>
 							</div>
@@ -237,7 +238,7 @@ function ExpertPlantModels() {
 											<strong className="title-text">Mô hình trồng</strong>
 											<div className="tab-switcher" style={{ marginLeft: 12 }}>
 												<button className={"btn " + (view === 'all' ? 'btn-primary' : '')} onClick={async () => { setView('all'); setSearch(''); await fetchList('all'); fetchAllCount(); }}>Tất cả ({allCount})</button>
-												<button className={"btn " + (view === 'trash' ? 'btn-primary' : '')} onClick={async () => { setView('trash'); await fetchList('trash'); fetchTrashCount(); }}>{"Thùng rác "}{trashCount > 0 && <span className="trash-badge">{trashCount}</span>}</button>
+												<button className={"btn btn-trash " + (view === 'trash' ? 'active' : '')} onClick={async () => { setView('trash'); await fetchList('trash'); fetchTrashCount(); }}>{"Thùng rác "}{trashCount > 0 && <span className="trash-badge">{trashCount}</span>}</button>
 											</div>
 										</div>
 									</div>
@@ -297,10 +298,11 @@ function ExpertPlantModels() {
 											</table>
 										)}
 								</div>
+								</div>
+					
 							</div>
-						
 						</div>
-					</section>
+						</section>
 				</div>
 			</main>
 		</div>
