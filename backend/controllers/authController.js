@@ -3,21 +3,32 @@ import * as authService from "../services/authService.js";
 import * as emailService from "../services/emailService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ok } from "../utils/ApiResponse.js";
-import * as userStreakService from "../services/userStreakService.js";
 
 export const authController = {
   register: asyncHandler(async (req, res) => {
     const { email, password, username } = req.body;
+    // Lưu user
     const user = await authService.registerUser(email, password, username);
 
-    // send verification (returns verify link or similar)
-    const verifyLink = await emailService.sendVerificationEmail(user);
-
-    return ok(res, {
-          message:
-            "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
-          verifyLink,
-        });
+    try {
+      // Thử gửi email xác thực
+      const verifyLink = await emailService.sendVerificationEmail(user);
+      return ok(res, {
+        message:
+          "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
+        verifyLink,
+      });
+    } catch (err) {
+      // Nếu gửi mail lỗi -> xoá user vừa tạo để tránh lưu rác
+      try {
+        const User = (await import("../models/User.js")).default;
+        await User.findByIdAndDelete(user._id || user.id);
+      } catch (delErr) {
+        console.error("Failed to cleanup user after email error:", delErr);
+      }
+      // Re-throw để middleware lỗi xử lý response
+      throw err;
+    }
   }),
 
   verifyEmail: asyncHandler(async (req, res) => {
@@ -38,10 +49,7 @@ export const authController = {
       path: "/",
     });
 
-    // record streak (best-effort, non-blocking errors will propagate via asyncHandler)
-    const streakResult = await userStreakService.recordLogin(user._id);
-
-    return ok(res, { user, accessToken, streak: streakResult });
+    return ok(res, { user, accessToken });
   }),
 
   refresh: asyncHandler(async (req, res) => {

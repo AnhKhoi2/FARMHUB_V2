@@ -2,7 +2,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import { generateAccessToken, generateRefreshToken } from "../utils/generateTokens.js";
+import { generateAccessToken, generateRefreshToken , generatePasswordResetToken } from "../utils/generateTokens.js";
 import { AppError } from "../utils/AppError.js";
 import { ERROR_CODES } from "../utils/errorCode.js";
 
