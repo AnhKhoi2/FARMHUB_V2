@@ -26,7 +26,7 @@ function ExpertHome({
   const mockProfile = userProfile || {
     name: "Nguyen Van A",
     email: "expert@farm.com",
-    role: "Agricultural Expert",
+    role: "Chuyên gia nông nghiệp",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=expert",
     notifications: 3,
   };
@@ -41,7 +41,7 @@ function ExpertHome({
             <div className="brand-logo">
               <Leaf className="leaf-icon" />
             </div>
-            <h1 className="brand-name">ExpertHome</h1>
+            <h1 className="brand-name">Trang chuyên gia</h1>
           </div>
 
           {/* 4 Component Buttons */}
@@ -50,10 +50,10 @@ function ExpertHome({
             <button
               className="nav-button nav-button-chat"
               onClick={onChatClick}
-              title="Chat with users"
+              title="Trao đổi với người dùng"
             >
               <MessageCircle size={20} />
-              <span>Chat</span>
+              <span>Trò chuyện</span>
             </button>
 
             {/* Component 2: Manage Guides */}
@@ -67,29 +67,29 @@ function ExpertHome({
                 }
                 navigate("/managerguides");
               }}
-              title="Manage Guides"
+              title="Quản lý hướng dẫn"
             >
-              <span>Manager Guides</span>
+              <span>Quản lý hướng dẫn</span>
             </button>
 
             {/* Component 3: Dashboard */}
             <button
               className="nav-button nav-button-dashboard"
-              onClick={onDashboardClick}
-              title="Dashboard"
+              onClick={() => navigate('/experthome/models')}
+              title="Mô hình trồng"
             >
               <Leaf size={20} />
-              <span>Garden</span>
+              <span>Mô hình trồng</span>
             </button>
 
             {/* Component 4: Analytics */}
             <button
               className="nav-button nav-button-analytics"
               onClick={onAnalyticsClick}
-              title="Analytics"
+              title="Phân tích"
             >
               <BarChart3 size={20} />
-              <span>Analytics</span>
+              <span>Phân tích</span>
             </button>
           </nav>
 
@@ -128,9 +128,9 @@ function ExpertHome({
                       className="profile-avatar"
                     />
                     <div className="profile-info">
-                      <p className="profile-name">{mockProfile.name}</p>
-                      <p className="profile-email">{mockProfile.email}</p>
-                      <p className="profile-role">{mockProfile.role}</p>
+              <p className="profile-name">{mockProfile.name}</p>
+                <p className="profile-email">{mockProfile.email}</p>
+                <p className="profile-role">{mockProfile.role}</p>
                     </div>
                   </div>
 
@@ -138,19 +138,19 @@ function ExpertHome({
 
                   <button className="profile-menu-item">
                     <User size={18} />
-                    <span>Profile</span>
+                    <span>Hồ sơ</span>
                   </button>
 
                   <button className="profile-menu-item">
                     <Settings size={18} />
-                    <span>Settings</span>
+                    <span>Cài đặt</span>
                   </button>
 
                   <div className="profile-divider"></div>
 
                   <button className="profile-menu-item logout">
                     <LogOut size={18} />
-                    <span>Logout</span>
+                    <span>Đăng xuất</span>
                   </button>
                 </div>
               )}
@@ -164,10 +164,10 @@ function ExpertHome({
         <div className="content-container">
           <section className="welcome-section">
             <h2 className="welcome-title">
-              Welcome, {mockProfile.name.split(" ")[1]}! 👋
+              Xin chào, {mockProfile.name.split(" ")[1]}! 👋
             </h2>
             <p className="welcome-subtitle">
-              Manage growing guides and communicate with users
+              Quản lý hướng dẫn trồng trọt và trao đổi với người dùng
             </p>
           </section>
 
@@ -178,7 +178,7 @@ function ExpertHome({
                 <Leaf />
               </div>
               <div className="stat-content">
-                <h3>Guides</h3>
+                <h3>Hướng dẫn</h3>
                 <p className="stat-value">24</p>
               </div>
             </div>
@@ -188,7 +188,7 @@ function ExpertHome({
                 <MessageCircle />
               </div>
               <div className="stat-content">
-                <h3>Messages</h3>
+                <h3>Tin nhắn</h3>
                 <p className="stat-value">156</p>
               </div>
             </div>
@@ -198,7 +198,7 @@ function ExpertHome({
                 <User />
               </div>
               <div className="stat-content">
-                <h3>Users</h3>
+                <h3>Người dùng</h3>
                 <p className="stat-value">342</p>
               </div>
             </div>
@@ -208,7 +208,7 @@ function ExpertHome({
                 <BarChart3 />
               </div>
               <div className="stat-content">
-                <h3>Interactions</h3>
+                <h3>Tương tác</h3>
                 <p className="stat-value">1.2K</p>
               </div>
             </div>
@@ -217,9 +217,9 @@ function ExpertHome({
           {/* Content Placeholder */}
           <section className="content-area">
             <div className="content-placeholder">
-              <p>Main content will be displayed here</p>
+              <p>Nội dung chính sẽ hiển thị ở đây</p>
               <p className="subtitle">
-                Select one of the 4 buttons above to get started
+                Chọn một trong 4 nút phía trên để bắt đầu
               </p>
             </div>
           </section>

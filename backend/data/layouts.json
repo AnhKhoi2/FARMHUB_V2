@@ -1,0 +1,132 @@
+[
+  {
+    "layout_id": 1,
+    "layout_name": "Bố trí hàng ngang",
+    "description": "Xếp chậu hoặc thùng xốp thành hàng song song sát lan can hoặc tường.",
+    "suitable_space": "Ban công, sân thượng dài",
+    "area_min": 1.0,
+    "area_max": 4.0,
+    "advantages": "Gọn gàng, dễ tưới nước, dễ thu hoạch",
+    "notes": "Nên chừa lối đi, tránh che nắng cây phía sau"
+  },
+  {
+    "layout_id": 2,
+    "layout_name": "Bố trí tầng/kệ",
+    "description": "Dùng giá nhiều tầng hoặc khung đứng để đặt chậu theo chiều cao.",
+    "suitable_space": "Logia, sân phơi, ban công nhỏ",
+    "area_min": 0.5,
+    "area_max": 2.0,
+    "advantages": "Tiết kiệm diện tích, tạo “vườn đứng mini”",
+    "notes": "Cần khung chắc chắn, thoát nước tốt"
+  },
+  {
+    "layout_id": 3,
+    "layout_name": "Bố trí theo cụm",
+    "description": "Gom cây thành nhóm nhỏ theo loại hoặc màu sắc.",
+    "suitable_space": "Góc ban công, phòng khách",
+    "area_min": 1.0,
+    "area_max": 3.0,
+    "advantages": "Tạo điểm nhấn tự nhiên, linh hoạt",
+    "notes": "Dễ bị ẩm nếu đặt quá sát"
+  },
+  {
+    "layout_id": 4,
+    "layout_name": "Bố trí đối xứng",
+    "description": "Hai bên đặt cây cân đối về số lượng và chiều cao.",
+    "suitable_space": "Sân thượng, hành lang",
+    "area_min": 2.0,
+    "area_max": 5.0,
+    "advantages": "Cân bằng, thẩm mỹ cao",
+    "notes": "Nên chọn cây tương đồng kích thước"
+  },
+  {
+    "layout_id": 5,
+    "layout_name": "Bố trí ngẫu nhiên",
+    "description": "Sắp cây theo cảm hứng, không theo hàng lối.",
+    "suitable_space": "Phòng khách, ban công",
+    "area_min": 1.0,
+    "area_max": 3.0,
+    "advantages": "Tự nhiên, sinh động",
+    "notes": "Khó chăm sóc đồng đều"
+  },
+  {
+    "layout_id": 6,
+    "layout_name": "Vườn đứng",
+    "description": "Cây trồng trên tường, khung lưới hoặc khay gắn dọc.",
+    "suitable_space": "Tường ban công, hành lang",
+    "area_min": 0.3,
+    "area_max": 2.0,
+    "advantages": "Tiết kiệm diện tích, tạo mảng xanh",
+    "notes": "Cần hệ thống tưới và thoát nước hợp lý"
+  },
+  {
+    "layout_id": 7,
+    "layout_name": "Vườn treo",
+    "description": "Treo chậu bằng móc, dây hoặc giàn sắt.",
+    "suitable_space": "Ban công, cửa sổ, logia",
+    "area_min": 0.3,
+    "area_max": 1.5,
+    "advantages": "Không chiếm diện tích sàn, tạo mảng xanh",
+    "notes": "Nên chọn chậu nhẹ và cây rủ"
+  },
+  {
+    "layout_id": 8,
+    "layout_name": "Bố trí tầng bậc thang",
+    "description": "Chậu được sắp theo cao – thấp như cầu thang.",
+    "suitable_space": "Góc ban công, sân phơi",
+    "area_min": 1.0,
+    "area_max": 3.0,
+    "advantages": "Tận dụng ánh sáng đều, dễ phân tầng cây",
+    "notes": "Cần sắp theo hướng ánh sáng"
+  },
+  {
+    "layout_id": 9,
+    "layout_name": "Bố trí kết hợp",
+    "description": "Kết hợp nhiều kiểu (hàng + tầng + treo).",
+    "suitable_space": "Sân thượng rộng, logia lớn",
+    "area_min": 3.0,
+    "area_max": 10.0,
+    "advantages": "Đa dạng, tạo chiều sâu không gian",
+    "notes": "Cần tính toán bố cục hợp lý"
+  },
+  {
+    "layout_id": 10,
+    "layout_name": "Khu trồng rau ăn",
+    "description": "Thùng xốp hoặc khay lớn theo hàng.",
+    "suitable_space": "Sân thượng, ban công dài",
+    "area_min": 2.0,
+    "area_max": 6.0,
+    "advantages": "Dễ chăm sóc, năng suất cao",
+    "notes": "Cần thoát nước tốt"
+  },
+  {
+    "layout_id": 11,
+    "layout_name": "Khu cây gia vị/thảo mộc",
+    "description": "Chậu nhỏ đặt gần bếp hoặc cửa sổ.",
+    "suitable_space": "Logia, bếp, cửa sổ",
+    "area_min": 0.3,
+    "area_max": 1.5,
+    "advantages": "Tiện sử dụng, mùi thơm dễ chịu",
+    "notes": "Cần ánh sáng nhẹ"
+  },
+  {
+    "layout_id": 12,
+    "layout_name": "Khu cây cảnh/trang trí",
+    "description": "Xen hoa và cây lá đẹp ở góc nhìn chính.",
+    "suitable_space": "Phòng khách, ban công",
+    "area_min": 0.5,
+    "area_max": 3.0,
+    "advantages": "Thẩm mỹ, tạo không gian xanh",
+    "notes": "Chú ý ánh sáng tự nhiên"
+  },
+  {
+    "layout_id": 13,
+    "layout_name": "Khu cây lọc không khí",
+    "description": "Đặt gần cửa hoặc hành lang.",
+    "suitable_space": "Ban công, phòng khách",
+    "area_min": 0.5,
+    "area_max": 2.0,
+    "advantages": "Cải thiện không khí, dễ chăm sóc",
+    "notes": "Nên đặt nơi thông thoáng"
+  }
+]

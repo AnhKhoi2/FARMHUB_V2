@@ -16,6 +16,8 @@ import notebooksRoute from "./routes/notebooks.js";
 import usersRoute from "./routes/users.js";
 import expertApplicationRoutes from "./routes/expertApplicationRoutes.js";
 import expertRoutes from "./routes/expert.routes.js";
+import modelsRoutes from "./routes/models.js";
+import layoutsRoutes from "./routes/layouts.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 
@@ -43,6 +45,8 @@ app.use("/notebooks", notebooksRoute);
 app.use("/admin/users", usersRoute);
 app.use("/api/expert-applications", expertApplicationRoutes);
 app.use("/api/experts", expertRoutes);
+app.use("/admin/models", modelsRoutes);
+app.use("/layouts", layoutsRoutes);
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);

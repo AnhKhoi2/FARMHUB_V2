@@ -18,9 +18,11 @@ import AdminLeaderboard from "../pages/admin/AdminLeaderboard";
 import AdminWeather from "../pages/admin/AdminWeather";
 import AdminExperts from "../pages/admin/AdminExperts";
 import AdminExpertApplications from "../pages/admin/AdminExpertApplications";
+import AdminModels from "../pages/admin/Models";
 
 // Expert Pages
 import ExpertHome from "../pages/expert/ExpertHome";
+import ExpertModels from "../pages/expert/Models";
 import ManagerGuides from "../pages/expert/ManagerGuides";
 import GuideDetail from "../pages/expert/GuideDetail";
 import GuideEdit from "../pages/expert/GuideEdit";
@@ -46,10 +48,13 @@ export default function AppRoutes() {
 
         {/* Trang Register */}
         <Route path="/register" element={<Register />} />
-        {/* Trang xác thực email */}
-        <Route path="/auth/verify/:token" element={<VerifyEmail />} />
+  {/* Trang xác thực email */}
+  <Route path="/auth/verify/:token" element={<VerifyEmail />} />
 
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
+
+  {/* Public home route */}
+  <Route path="/" element={<Home />} />
 
         {/* Admin Routes */}
         <Route
@@ -118,56 +123,24 @@ export default function AppRoutes() {
             </AdminRoute>
           }
         />
+        <Route
+          path="/admin/models"
+          element={
+            <AdminRoute>
+              <AdminModels />
+            </AdminRoute>
+          }
+        />
 
         {/* Expert Routes */}
-        <Route
-          path="/expert/home"
-          element={
-            <PrivateRoute>
-              <ExpertHome />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/managerguides"
-          element={
-            <PrivateRoute>
-              <ManagerGuides />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/managerguides/create"
-          element={
-            <PrivateRoute>
-              <GuideEdit />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/managerguides/edit/:id"
-          element={
-            <PrivateRoute>
-              <GuideEdit />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/managerguides/detail/:id"
-          element={
-            <PrivateRoute>
-              <GuideDetail />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/managerguides/trash"
-          element={
-            <PrivateRoute>
-              <TrashGuides />
-            </PrivateRoute>
-          }
-        />
+        <Route path="/expert/home" element={<PrivateRoute><ExpertHome /></PrivateRoute>} />
+
+        {/* Manager guides (public) */}
+        <Route path="/managerguides" element={<ManagerGuides />} />
+        <Route path="/managerguides/create" element={<GuideEdit />} />
+        <Route path="/managerguides/edit/:id" element={<GuideEdit />} />
+        <Route path="/managerguides/detail/:id" element={<GuideDetail />} />
+        <Route path="/managerguides/trash" element={<TrashGuides />} />
 
         {/* 🔹 NEW: Cụm /admin có AdminLayout để gắn trang Experts (nested route) */}
         <Route
@@ -187,41 +160,9 @@ export default function AppRoutes() {
 
         {/* Direct expert home route for quick access/testing */}
         <Route path="/experthome" element={<ExpertHome />} />
+  <Route path="/experthome/models" element={<ExpertModels />} />
 
-        {/* Manager guides page (protected) */}
-        <Route
-          path="/managerguides"
-          element={
-            <PrivateRoute>
-              <ManagerGuides />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/managerguides/create"
-          element={
-            <PrivateRoute>
-              <GuideEdit />
-            </PrivateRoute>
-          }
-        />
         <Route path="/guides/:id" element={<GuideDetail />} />
-        <Route
-          path="/managerguides/trash"
-          element={
-            <PrivateRoute>
-              <TrashGuides />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/managerguides/edit/:id"
-          element={
-            <PrivateRoute>
-              <GuideEdit />
-            </PrivateRoute>
-          }
-        />
 <Route
           path="/market"
           element={
