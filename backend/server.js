@@ -15,7 +15,11 @@ import guidesRoute from "./routes/guides.js";
 import notebooksRoute from "./routes/notebooks.js";
 import path from "path";
 import { fileURLToPath } from 'url';
-
+import expertRoutes from "./routes/expert.routes.js";
+import http from "http";  
+import chatRoutes from "./routes/chat.routes.js";     // ✅ thêm
+import { initSockets } from "./sockets/index.js"; 
+import expertApplicationRoutes from "./routes/expertApplicationRoutes.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -38,11 +42,18 @@ app.use("/test", testRoute);
 app.use("/guides", guidesRoute);
 app.use("/notebooks", notebooksRoute);
 
+app.use("/api/experts", expertRoutes);
+app.use("/api/chats", chatRoutes); 
+     
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/api/expert-applications", expertApplicationRoutes);
+// ✅ Tạo HTTP server và khởi tạo Socket.IO
+const server = http.createServer(app);
+initSockets(server);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on  ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 Server & Socket.IO running on port ${PORT}`);
 });
