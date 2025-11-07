@@ -17,6 +17,14 @@ import GuideDetail from "../pages/GuideDetail";
 import GuideEdit from "../pages/GuideEdit";
 import TrashGuides from "../pages/TrashGuides";
 
+// 🔹 NEW: import AdminLayout để dùng Outlet
+import AdminLayout from "../components/AdminLayout.jsx";
+
+// 🔹 NEW: import trang Experts bạn vừa copy
+// Nếu bạn đặt file ở vị trí khác (ví dụ: ../pages/Admin/Expert/ExpertContent.jsx),
+// hãy đổi đường dẫn import này cho khớp.
+import ExpertContent from "../pages/ExpertContent.jsx";
+import Market from "../pages/market.jsx";
 export default function AppRoutes() {
   return (
     <BrowserRouter>
@@ -49,7 +57,7 @@ export default function AppRoutes() {
           }
         />
 
-        {/* Admin Dashboard */}
+        {/* Admin (các route phẳng sẵn có) */}
         <Route
           path="/admin/dashboard"
           element={
@@ -94,23 +102,74 @@ export default function AppRoutes() {
             </AdminRoute>
           }
         />
+
+        {/* 🔹 NEW: Cụm /admin có AdminLayout để gắn trang Experts (nested route) */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          }
+        >
+          {/* chỉ thêm experts ở đây để không ảnh hưởng route cũ */}
+          <Route path="experts" element={<ExpertContent />} />
+        </Route>
+
         {/* Expert area (nested routes under /expert) */}
         <Route path="/expert/*" element={<ExpertRoutes />} />
 
-  {/* Direct expert home route for quick access/testing */}
-  <Route path="/experthome" element={<ExpertHome />} />
-  {/* Manager guides page (protected) */}
-  <Route path="/managerguides" element={<PrivateRoute><ManagerGuides /></PrivateRoute>} />
-  <Route path="/managerguides/create" element={<PrivateRoute><GuideEdit /></PrivateRoute>} />
-  <Route path="/guides/:id" element={<GuideDetail />} />
-  <Route path="/managerguides/trash" element={<PrivateRoute><TrashGuides /></PrivateRoute>} />
-  <Route path="/managerguides/edit/:id" element={<PrivateRoute><GuideEdit /></PrivateRoute>} />
-  {/* legacy/shortcut route to support /createguides if linked elsewhere */}
-  <Route path="/createguides" element={<Navigate to="/managerguides/create" replace />} />
+        {/* Direct expert home route for quick access/testing */}
+        <Route path="/experthome" element={<ExpertHome />} />
+
+        {/* Manager guides page (protected) */}
+        <Route
+          path="/managerguides"
+          element={
+            <PrivateRoute>
+              <ManagerGuides />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/managerguides/create"
+          element={
+            <PrivateRoute>
+              <GuideEdit />
+            </PrivateRoute>
+          }
+        />
+        <Route path="/guides/:id" element={<GuideDetail />} />
+        <Route
+          path="/managerguides/trash"
+          element={
+            <PrivateRoute>
+              <TrashGuides />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/managerguides/edit/:id"
+          element={
+            <PrivateRoute>
+              <GuideEdit />
+            </PrivateRoute>
+          }
+        />
+<Route
+          path="/market"
+          element={
+            <PrivateRoute>
+              <Market />
+            </PrivateRoute>
+          }
+        />
+
+        {/* legacy/shortcut route to support /createguides if linked elsewhere */}
+        <Route path="/createguides" element={<Navigate to="/managerguides/create" replace />} />
 
         {/* Bắt mọi route khác về /login (tuỳ chọn) */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-
       </Routes>
     </BrowserRouter>
   );
