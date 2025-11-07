@@ -8,13 +8,13 @@ export default function ManagerGuides() {
   const navigate = useNavigate();
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState(null);
 
   const [page, setPage] = useState(1);
   const [limit] = useState(15);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [search, setSearch] = useState("");
+  const [search, _setSearch] = useState("");
   // search by plant name
   const [plantSearch, setPlantSearch] = useState("");
   // filter by plant type
@@ -76,7 +76,7 @@ export default function ManagerGuides() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plantSearch, category]);
 
-  function onSearchSubmit(e) {
+  function _onSearchSubmit(e) {
     e.preventDefault();
     setPage(1);
   }
@@ -88,7 +88,7 @@ export default function ManagerGuides() {
     try {
       fetchGuides(1);
     } catch (e) {
-      // ignore
+      void e;
     }
   }
 

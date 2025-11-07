@@ -2,16 +2,10 @@
 import mongoose from "mongoose";
 import Expert from "../models/Expert.js";
 import User from "../models/User.js";
+import ExpertApplication from "../models/ExpertApplication.js";
 
 // Tạo model tạm cho expertapplications nếu bạn chưa có schema riêng (strict:false để nhận mọi field)
-import mongoosePkg from "mongoose";
-const { Schema, model } = mongoosePkg;
-const ExpertApplication =
-  mongoose.models.ExpertApplication ||
-  model(
-    "ExpertApplication",
-    new Schema({}, { strict: false, collection: "expertapplications" })
-  );
+// Model chuẩn đã có trong models/ExpertApplication.js
 
 // GET /api/expert-applications?status=pending&q=...
 export async function list(req, res) {
@@ -38,6 +32,19 @@ export async function list(req, res) {
   }
 }
 
+// GET /api/expert-applications/me  (xem đơn của chính user đang đăng nhập)
+export async function getMine(req, res) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    const apps = await ExpertApplication.find({ user: userId }).sort({ createdAt: -1 }).lean();
+    return res.status(200).json({ data: apps });
+  } catch (err) {
+    console.error("Get my applications error:", err);
+    return res.status(500).json({ error: "Failed to get your applications" });
+  }
+}
+
 // GET /api/expert-applications/:id
 export async function getById(req, res) {
   try {
@@ -51,6 +58,64 @@ export async function getById(req, res) {
   } catch (err) {
     console.error("Get application error:", err);
     return res.status(500).json({ error: "Failed to get application detail" });
+  }
+}
+
+// POST /api/expert-applications  (user tự nộp đơn xin xét duyệt)
+export async function create(req, res) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const {
+      full_name,
+      expertise_area,
+      experience_years = 0,
+      description = "",
+      phone_number = "",
+      certificates = [],
+    } = req.body || {};
+
+    if (!full_name || !expertise_area) {
+      return res.status(400).json({ error: "Missing required fields: full_name, expertise_area" });
+    }
+
+    // Check đã là expert chưa
+    const existingExpert = await Expert.findOne({ user: userId, is_deleted: false }).lean();
+    if (existingExpert) {
+      return res.status(409).json({ error: "Bạn đã có hồ sơ Expert" });
+    }
+
+    // Check đơn pending
+    const pending = await ExpertApplication.findOne({ user: userId, status: "pending" }).lean();
+    if (pending) {
+      return res.status(409).json({ error: "Đơn trước đang chờ duyệt" });
+    }
+
+    // Lấy email từ user
+    const user = await User.findById(userId).lean();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const app = await ExpertApplication.create({
+      user: userId,
+      email: user.email,
+      full_name,
+      expertise_area,
+      experience_years: Number(experience_years) || 0,
+      description,
+      phone_number,
+      certificates: Array.isArray(certificates)
+        ? certificates.map((c) => (typeof c === "string" ? { url: c } : c))
+        : [],
+      status: "pending",
+    });
+
+    return res.status(201).json({ data: app });
+  } catch (err) {
+    console.error("Create application error:", err);
+    return res.status(500).json({ error: "Failed to submit application" });
   }
 }
 

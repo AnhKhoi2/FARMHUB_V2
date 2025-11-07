@@ -63,7 +63,7 @@ function ExpertHome({
                 try {
                   if (onAddGuideClick) onAddGuideClick();
                 } catch (e) {
-                  /* ignore handler errors */
+                  void e;
                 }
                 navigate("/managerguides");
               }}

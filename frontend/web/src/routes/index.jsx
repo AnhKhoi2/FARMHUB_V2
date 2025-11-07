@@ -1,4 +1,7 @@
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+// lazy load admin users to avoid require() in browser
+const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/register_v1.jsx";
 import Home from "../pages/farmer/Home";
@@ -13,6 +16,8 @@ import AdminCategories from "../pages/admin/AdminCategories";
 import AdminDiseases from "../pages/admin/AdminDiseases";
 import AdminLeaderboard from "../pages/admin/AdminLeaderboard";
 import AdminWeather from "../pages/admin/AdminWeather";
+import AdminExperts from "../pages/admin/AdminExperts";
+import AdminExpertApplications from "../pages/admin/AdminExpertApplications";
 
 // Expert Pages
 import ExpertHome from "../pages/expert/ExpertHome";
@@ -72,6 +77,16 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <AdminUsers />
+              </React.Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
           path="/admin/leaderboard"
           element={
             <AdminRoute>
@@ -84,6 +99,22 @@ export default function AppRoutes() {
           element={
             <AdminRoute>
               <AdminWeather />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/experts"
+          element={
+            <AdminRoute>
+              <AdminExperts />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/expert-applications"
+          element={
+            <AdminRoute>
+              <AdminExpertApplications />
             </AdminRoute>
           }
         />

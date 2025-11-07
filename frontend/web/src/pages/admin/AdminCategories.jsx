@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import AdminLayout from "../../components/admin/AdminLayout";
+import AdminLayout from "../../components/AdminLayout";
 import PortalModal from "../../components/shared/PortalModal";
 import axiosClient from "../../api/shared/axiosClient";
 
@@ -14,8 +14,9 @@ export default function AdminCategories() {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await axiosClient.get("/admin/disease-categories?limit=50");
-      setItems(res.data.data.items || []);
+      const res = await axiosClient.get("/admin/disease-categories?limit=20");
+      const items = res.data?.data?.items || res.data?.items || [];
+      setItems(items);
     } catch (err) {
       console.error(err);
     } finally {
@@ -23,9 +24,7 @@ export default function AdminCategories() {
     }
   };
 
-  useEffect(() => {
-    fetchItems();
-  }, []);
+  useEffect(() => { fetchItems(); }, []);
 
   const handleCreate = async (payload) => {
     await axiosClient.post("/admin/disease-categories", payload);
@@ -53,12 +52,7 @@ export default function AdminCategories() {
       <div className="container-fluid">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h3>Categories</h3>
-          <button
-            className="btn btn-sm btn-primary"
-            onClick={() => setShowCreate(true)}
-          >
-            Add category
-          </button>
+          <button className="btn btn-sm btn-primary" onClick={() => setShowCreate(true)}>Add category</button>
         </div>
 
         <div className="card">
@@ -75,13 +69,9 @@ export default function AdminCategories() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr>
-                      <td colSpan={4}>Loading...</td>
-                    </tr>
+                    <tr><td colSpan={4}>Loading...</td></tr>
                   ) : items.length === 0 ? (
-                    <tr>
-                      <td colSpan={4}>No records</td>
-                    </tr>
+                    <tr><td colSpan={4}>No records</td></tr>
                   ) : (
                     items.map((it) => (
                       <tr key={it._id}>
@@ -89,24 +79,8 @@ export default function AdminCategories() {
                         <td>{it.slug}</td>
                         <td>{it.description}</td>
                         <td>
-                          <button
-                            className="btn btn-sm btn-outline-primary me-2"
-                            onClick={() => {
-                              setCurrent(it);
-                              setShowEdit(true);
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => {
-                              setCurrent(it);
-                              setShowConfirm(true);
-                            }}
-                          >
-                            Delete
-                          </button>
+                          <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setCurrent(it); setShowEdit(true); }}>Edit</button>
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => { setCurrent(it); setShowConfirm(true); }}>Delete</button>
                         </td>
                       </tr>
                     ))
@@ -120,51 +94,21 @@ export default function AdminCategories() {
         {/* Create Modal */}
         {showCreate && (
           <PortalModal onClose={() => setShowCreate(false)}>
-            <CategoryModal
-              title="Create Category"
-              onClose={() => setShowCreate(false)}
-              onSubmit={handleCreate}
-            />
+            <CategoryModal title="Create Category" onClose={() => setShowCreate(false)} onSubmit={handleCreate} />
           </PortalModal>
         )}
 
         {/* Edit Modal */}
         {showEdit && current && (
-          <PortalModal
-            onClose={() => {
-              setShowEdit(false);
-              setCurrent(null);
-            }}
-          >
-            <CategoryModal
-              title="Edit Category"
-              initial={current}
-              onClose={() => {
-                setShowEdit(false);
-                setCurrent(null);
-              }}
-              onSubmit={(data) => handleEdit(current._id, data)}
-            />
+          <PortalModal onClose={() => { setShowEdit(false); setCurrent(null); }}>
+            <CategoryModal title="Edit Category" initial={current} onClose={() => { setShowEdit(false); setCurrent(null); }} onSubmit={(data) => handleEdit(current._id, data)} />
           </PortalModal>
         )}
 
         {/* Confirm Delete */}
         {showConfirm && current && (
-          <PortalModal
-            onClose={() => {
-              setShowConfirm(false);
-              setCurrent(null);
-            }}
-          >
-            <ConfirmModal
-              title="Delete category"
-              message={`Bạn có chắc muốn xóa "${current.name}" không?`}
-              onCancel={() => {
-                setShowConfirm(false);
-                setCurrent(null);
-              }}
-              onConfirm={() => handleDelete(current._id)}
-            />
+          <PortalModal onClose={() => { setShowConfirm(false); setCurrent(null); }}>
+            <ConfirmModal title="Delete category" message={`Bạn có chắc muốn xóa "${current.name}" không?`} onCancel={() => { setShowConfirm(false); setCurrent(null); }} onConfirm={() => handleDelete(current._id)} />
           </PortalModal>
         )}
       </div>
@@ -185,46 +129,25 @@ function CategoryModal({ title, initial = {}, onClose, onSubmit }) {
     <div>
       <div className="modal-header">
         <h5 className="modal-title">{title}</h5>
-        <button
-          type="button"
-          className="btn-close"
-          aria-label="Close"
-          onClick={onClose}
-        ></button>
+        <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
       </div>
       <div className="modal-body">
         <div className="mb-3">
           <label className="form-label">Name</label>
-          <input
-            className="form-control form-control-sm"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+          <input className="form-control form-control-sm" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="mb-3">
           <label className="form-label">Slug</label>
-          <input
-            className="form-control form-control-sm"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-          />
+          <input className="form-control form-control-sm" value={slug} onChange={(e) => setSlug(e.target.value)} />
         </div>
         <div className="mb-3">
           <label className="form-label">Description</label>
-          <textarea
-            className="form-control form-control-sm"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          <textarea className="form-control form-control-sm" value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onClose}>
-          Cancel
-        </button>
-        <button className="btn btn-sm btn-primary" onClick={submit}>
-          Save
-        </button>
+        <button className="btn btn-sm btn-secondary" onClick={onClose}>Cancel</button>
+        <button className="btn btn-sm btn-primary" onClick={submit}>Save</button>
       </div>
     </div>
   );
@@ -235,23 +158,14 @@ function ConfirmModal({ title, message, onCancel, onConfirm }) {
     <div>
       <div className="modal-header">
         <h5 className="modal-title">{title}</h5>
-        <button
-          type="button"
-          className="btn-close"
-          aria-label="Close"
-          onClick={onCancel}
-        ></button>
+        <button type="button" className="btn-close" aria-label="Close" onClick={onCancel}></button>
       </div>
       <div className="modal-body">
         <p>{message}</p>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onCancel}>
-          Cancel
-        </button>
-        <button className="btn btn-sm btn-danger" onClick={onConfirm}>
-          Delete
-        </button>
+        <button className="btn btn-sm btn-secondary" onClick={onCancel}>Cancel</button>
+        <button className="btn btn-sm btn-danger" onClick={onConfirm}>Delete</button>
       </div>
     </div>
   );

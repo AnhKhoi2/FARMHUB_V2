@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../redux/authSlice";
+import { FaTachometerAlt, FaUsers, FaBug, FaFolderOpen, FaCloudSun, FaTrophy } from 'react-icons/fa';
 
 /*
   AdminLayout: fixed sidebar with collapsible state persisted to localStorage.
@@ -19,15 +20,15 @@ export default function AdminLayout({ children }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved === "true") setCollapsed(true);
-    } catch (_) {}
+    } catch (e) { console.warn('AdminLayout: failed to read sidebar state', e); }
   }, []);
 
   const toggle = () => {
-    setCollapsed((c) => {
+      setCollapsed((c) => {
       const nv = !c;
       try {
         localStorage.setItem(STORAGE_KEY, String(nv));
-      } catch (_) {}
+      } catch (e) { console.warn('AdminLayout: failed to persist sidebar state', e); }
       return nv;
     });
   };
@@ -43,13 +44,14 @@ export default function AdminLayout({ children }) {
   const activeExtra = " active bg-white bg-opacity-10 rounded";
 
   const navItems = [
-    { to: "/admin/dashboard", label: "Dashboard", icon: "🏠" },
-    { to: "/admin/users", label: "Users", icon: "👥" },
-    { to: "/admin/diseases", label: "Diseases", icon: "🦠" },
-    { to: "/admin/disease-categories", label: "Categories", icon: "📂" },
-    { to: "/admin/guides", label: "Guides", icon: "📘" },
-    { to: "/admin/weather", label: "Weather", icon: "🌦" },
-    { to: "/admin/leaderboard", label: "Leaderboard", icon: "🏆" },
+    { to: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
+    { to: "/admin/users", label: "Users", icon: <FaUsers /> },
+    { to: "/admin/diseases", label: "Diseases", icon: <FaBug /> },
+    { to: "/admin/categories", label: "Categories", icon: <FaFolderOpen /> },
+    { to: "/admin/weather", label: "Weather", icon: <FaCloudSun /> },
+    { to: "/admin/leaderboard", label: "Leaderboard", icon: <FaTrophy /> },
+    { to: "/admin/experts", label: "Experts", icon: <FaUsers /> },
+    { to: "/admin/expert-applications", label: "Applications", icon: <FaUsers /> },
   ];
 
   return (
@@ -70,11 +72,15 @@ export default function AdminLayout({ children }) {
 
       <aside
         className="admin-sidebar d-flex flex-column text-white"
-        style={{ width, background: "linear-gradient(180deg,#0d6efd 0%, #6f42c1 100%)" }}
+        style={{ width, background: '#222d32', color: '#c2c7d0' }}
       >
         <div className="d-flex align-items-center justify-content-between px-3 py-3 border-bottom border-white border-opacity-25" style={{ minHeight: 60 }}>
           <div className="admin-logo d-flex align-items-center gap-2" style={{ opacity: collapsed ? 0 : 1, transition: "opacity .15s" }}>
-            <span>FarmHub Admin</span>
+            <img src="/logo192.png" alt="logo" style={{ width: 30, height: 30, borderRadius: 6 }} />
+            <div style={{ lineHeight: 1 }}>
+              <div style={{ fontWeight: 700, color: '#fff' }}>FarmHub</div>
+              <small style={{ color: '#9ca3b3' }}>Admin Panel</small>
+            </div>
           </div>
           <button className="admin-hamburger text-white" onClick={toggle} title={collapsed ? "Expand" : "Collapse"}>
             {collapsed ? "☰" : "✕"}
@@ -89,7 +95,7 @@ export default function AdminLayout({ children }) {
               className={({ isActive }) => linkBase + (isActive ? activeExtra : "")}
               style={{ fontSize: ".9rem" }}
             >
-              <span className="me-1" style={{ width: 18, textAlign: "center" }}>
+              <span className="me-1" style={{ width: 22, textAlign: "center", color: '#c2c7d0' }}>
                 {item.icon}
               </span>
               {!collapsed && <span className="admin-nav-label flex-grow-1">{item.label}</span>}
@@ -105,15 +111,22 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
 
-      <main className="admin-main" style={{ marginLeft: width, padding: "1.5rem 1.25rem" }}>
-        <header className="d-flex align-items-center justify-content-between mb-4" style={{ minHeight: 50 }}>
-          <div>
-            <h1 className="h5 mb-0">Admin Panel</h1>
-            <small className="text-muted">Manage platform content</small>
+      <main className="admin-main" style={{ marginLeft: width, padding: "1rem 1rem", background: '#f4f6f9' }}>
+        <header className="d-flex align-items-center justify-content-between mb-4" style={{ minHeight: 56 }}>
+          <div className="d-flex align-items-center gap-3">
+            <button className="btn btn-sm btn-outline-secondary d-none d-md-inline" onClick={toggle}>{collapsed ? 'Expand' : 'Collapse'}</button>
+            <div>
+              <h1 className="h5 mb-0">Admin Panel</h1>
+              <small className="text-muted">Manage platform content</small>
+            </div>
           </div>
-          <button className="btn btn-outline-secondary btn-sm d-md-none" onClick={toggle}>{collapsed ? "Mở" : "Đóng"}</button>
+          <div className="d-flex align-items-center gap-2">
+            <div className="small text-muted">Admin</div>
+            <div style={{ width:36, height:36, borderRadius:18, background:'#fff', display:'inline-flex', alignItems:'center', justifyContent:'center', color:'#444' }}>A</div>
+          </div>
         </header>
-        <div className="container-fluid px-0">
+
+        <div className="content-wrapper container-fluid px-0">
           {children}
         </div>
       </main>

@@ -11,7 +11,7 @@ export default function TrashGuides() {
   const [page, setPage] = useState(1);
   const [limit] = useState(8);
   const [totalPages, setTotalPages] = useState(1);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState(null);
 
   const fetchTrash = useCallback(
     async (p = page) => {
