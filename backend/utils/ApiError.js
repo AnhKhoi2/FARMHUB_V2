@@ -1,12 +1,16 @@
 // src/utils/ApiError.js
-export class ApiError extends Error {
-  constructor(status, code, message, details) {
+class ApiError extends Error {
+  constructor(statusCode, message) {
     super(message);
-    this.status = status;
-    this.code = code;
-    this.details = details;
+    this.statusCode = statusCode;
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.isOperational = true;
+
+    Error.captureStackTrace(this, this.constructor);
   }
 }
+
+export default ApiError;
 
 export const BadRequest = (message = "Bad Request", details) =>
   new ApiError(400, "BAD_REQUEST", message, details);
