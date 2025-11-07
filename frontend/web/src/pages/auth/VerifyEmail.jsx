@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosClient from "../../api/shared/axiosClient";
+import axiosClient from "../../api/shared/axiosClient.js";
 
 const VerifyEmail = () => {
   const { token } = useParams();
@@ -14,14 +14,11 @@ const VerifyEmail = () => {
         setMessage(res.data.message || "Xác thực thành công!");
         setTimeout(() => navigate("/login"), 2000);
       } catch (err) {
-        setMessage(
-          err.response?.data?.message ||
-            "Liên kết không hợp lệ hoặc đã hết hạn!"
-        );
+        setMessage(err.response?.data?.message || "Liên kết không hợp lệ hoặc đã hết hạn!");
       }
     };
     verifyEmail();
-  }, [token, navigate]);
+  }, [token,navigate]);
 
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>

@@ -2,79 +2,27 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    username: {
-      type: String,
-      required: true,
-      unique: true, //tránh trùng lặp
-      
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-    },
+    username: { type: String, required: true, unique: true },
+    email:    { type: String, required: true, unique: true },
+
+    // 🔧 Chỉ yêu cầu mật khẩu với tài khoản local
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return this.provider === "local";
+      },
     },
-    // ✅ Thay thế 'admin: boolean' bằng 'role: string'
-    role: { 
-      type: String, 
-      enum: ["user", "expert", "moderator", "admin"], 
-      default: "user" 
-    },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
-    deletedAt: {
-      type: Date,
-      default: undefined,
-      index: true,
-    },
-    // Password reset token and expiry for reset flow
-    resetPasswordToken: {
-      type: String,
-      default: undefined,
-      index: true,
-    },
-    resetPasswordExpires: {
-      type: Date,
-      default: undefined,
-      index: true,
-    },
-    refreshTokens: {
-    type: [String],
-    default: [],
-   },
-    // Subscription plan fields
-    subscriptionPlan: {
-      type: String,
-      enum: ["free", "vip", "pro"],
-      default: "free",
-      index: true,
-    },
-    subscriptionExpires: {
-      type: Date,
-      default: undefined,
-      index: true,
-    },
-    // Track daily weather usage (reset each day)
-    weatherUsage: {
-      date: { type: Date, default: undefined },
-      count: { type: Number, default: 0 },
-    },
+
+    provider: { type: String, enum: ["local", "google"], default: "local" },
+    googleId: { type: String, default: null },
+    role:     { type: String, enum: ["user", "expert", "moderator", "admin"], default: "user" },
+    isVerified: { type: Boolean, default: false },
+    isDeleted:  { type: Boolean, default: false },
+    refreshTokens: { type: [String], default: [] },
   },
-  { timestamps: true } //create. update khi nào
+  { timestamps: true }
 );
 
-// Indexes to support search/filter
-userSchema.index({ username: "text", email: "text" });
-userSchema.index({ role: 1, isDeleted: 1 });
 
-const User = mongoose.model("User", userSchema)
+const User = mongoose.model("User", userSchema);
 export default User;
