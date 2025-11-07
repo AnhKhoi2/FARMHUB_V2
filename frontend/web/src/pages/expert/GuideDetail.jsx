@@ -51,7 +51,7 @@ export default function GuideDetail() {
                 <h1 className="guide-title">{guide.title}</h1>
                 <div className="guide-meta">
                   Tác giả:{" "}
-                  <strong>{guide.expert_id?.username || "Unknown"}</strong> •{" "}
+                  <strong>{guide.expert_id?.username || "Không rõ"}</strong> •{" "}
                   {new Date(guide.createdAt).toLocaleString()}
                 </div>
               </div>

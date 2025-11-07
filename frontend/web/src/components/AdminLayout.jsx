@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../redux/authSlice";
-import { FaTachometerAlt, FaUsers, FaBug, FaFolderOpen, FaCloudSun, FaTrophy } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaBug, FaFolderOpen, FaCloudSun, FaTrophy, FaSeedling } from 'react-icons/fa';
 
 /*
   AdminLayout: fixed sidebar with collapsible state persisted to localStorage.
@@ -49,6 +49,7 @@ export default function AdminLayout({ children }) {
     { to: "/admin/diseases", label: "Diseases", icon: <FaBug /> },
     { to: "/admin/categories", label: "Categories", icon: <FaFolderOpen /> },
     { to: "/admin/weather", label: "Weather", icon: <FaCloudSun /> },
+    { to: "/admin/models", label: "Mô hình trồng", icon: <FaSeedling /> },
     { to: "/admin/leaderboard", label: "Leaderboard", icon: <FaTrophy /> },
     { to: "/admin/experts", label: "Experts", icon: <FaUsers /> },
     { to: "/admin/expert-applications", label: "Applications", icon: <FaUsers /> },

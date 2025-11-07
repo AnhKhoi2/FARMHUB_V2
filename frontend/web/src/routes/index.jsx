@@ -26,6 +26,7 @@ import AdminLeaderboard from "../pages/admin/AdminLeaderboard";
 import AdminWeather from "../pages/admin/AdminWeather";
 import AdminExperts from "../pages/admin/AdminExperts";
 import AdminExpertApplications from "../pages/admin/AdminExpertApplications";
+import AdminModels from "../pages/admin/Models";
 // lazy load để tránh require() trên browser
 const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
 
@@ -34,6 +35,7 @@ import AdminLayout from "../components/AdminLayout.jsx";
 
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
+import ExpertModels from "../pages/expert/Models";
 import ManagerGuides from "../pages/expert/ManagerGuides";
 import GuideDetail from "../pages/expert/GuideDetail";
 import GuideEdit from "../pages/expert/GuideEdit";
@@ -50,6 +52,13 @@ export default function AppRoutes() {
         {/* ===== Public Auth ===== */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+  {/* Trang xác thực email */}
+  <Route path="/auth/verify/:token" element={<VerifyEmail />} />
+
+  <Route path="/forgot-password" element={<ForgotPassword />} />
+
+  {/* Public home route */}
+  <Route path="/" element={<Home />} />
         <Route path="/auth/verify/:token" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} /> {/* <- từ code 2 */}
@@ -196,32 +205,48 @@ export default function AppRoutes() {
           }
         />
         <Route
-          path="/managerguides/trash"
+          path="/admin/models"
           element={
-            <PrivateRoute>
-              <TrashGuides />
-            </PrivateRoute>
+            <AdminRoute>
+              <AdminModels />
+            </AdminRoute>
           }
         />
 
+        {/* Expert Routes */}
+        <Route path="/expert/home" element={<PrivateRoute><ExpertHome /></PrivateRoute>} />
+
+        {/* Manager guides (public) */}
+        <Route path="/managerguides" element={<ManagerGuides />} />
+        <Route path="/managerguides/create" element={<GuideEdit />} />
+        <Route path="/managerguides/edit/:id" element={<GuideEdit />} />
+        <Route path="/managerguides/detail/:id" element={<GuideDetail />} />
+        <Route path="/managerguides/trash" element={<TrashGuides />} />
+
+        {/* 🔹 NEW: Cụm /admin có AdminLayout để gắn trang Experts (nested route) */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          }
+        >
+          {/* chỉ thêm experts ở đây để không ảnh hưởng route cũ */}
+          <Route path="experts" element={<ExpertContent />} />
+        </Route>
         {/* Route xem chi tiết guide theo id (nếu nơi khác có dùng) */}
         <Route path="/guides/:id" element={<GuideDetail />} />
 
         {/* Expert nested bundle (nếu bạn có thêm nhiều trang con dưới /expert) */}
         <Route path="/expert/*" element={<ExpertRoutes />} />
 
-        {/* Lối tắt kiểm thử */}
-        <Route
-          path="/experthome"
-          element={
-            <PrivateRoute>
-              <ExpertHome />
-            </PrivateRoute>
-          }
-        />
+        {/* Direct expert home route for quick access/testing */}
+        <Route path="/experthome" element={<ExpertHome />} />
+  <Route path="/experthome/models" element={<ExpertModels />} />
 
-        {/* Marketplace (giữ nguyên từ code 1) */}
-        <Route
+        <Route path="/guides/:id" element={<GuideDetail />} />
+<Route
           path="/market"
           element={
             <PrivateRoute>
