@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import authApi from "../../api/shared/authApi";
+import { useDispatch } from "react-redux";
+import { registerThunk } from "../../redux/authThunks.js";
 
 const Register = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -16,15 +18,10 @@ const Register = () => {
     setLoading(true);
     setError(null);
 
-    try {
-      const res = await authApi.registerApi({ username, email, password });
-      alert(res.data?.message || "Đăng ký thành công!");
-      navigate("/login");
-    } catch (err) {
-      setError(err.response?.data?.message || "Lỗi đăng ký!");
-    } finally {
-      setLoading(false);
-    }
+    const ok = await dispatch(registerThunk({ username, email, password }));
+    setLoading(false);
+
+    if (ok) navigate("/login");
   };
 
   return (
@@ -38,10 +35,9 @@ const Register = () => {
           <h2>Registration</h2>
           <form onSubmit={handleRegister}>
             {error && <div className="error-message">{error}</div>}
+
             <div className="input-box">
-              <span className="icon">
-                <ion-icon name="person"></ion-icon>
-              </span>
+              <span className="icon"><ion-icon name="person"></ion-icon></span>
               <input
                 type="text"
                 required
@@ -52,9 +48,7 @@ const Register = () => {
             </div>
 
             <div className="input-box">
-              <span className="icon">
-                <ion-icon name="mail"></ion-icon>
-              </span>
+              <span className="icon"><ion-icon name="mail"></ion-icon></span>
               <input
                 type="email"
                 required
@@ -65,9 +59,7 @@ const Register = () => {
             </div>
 
             <div className="input-box">
-              <span className="icon">
-                <ion-icon name="lock-closed"></ion-icon>
-              </span>
+              <span className="icon"><ion-icon name="lock-closed"></ion-icon></span>
               <input
                 type="password"
                 required
