@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../redux/authSlice";
-import { FaTachometerAlt, FaUsers, FaBug, FaFolderOpen, FaCloudSun, FaTrophy, FaSeedling, FaShoppingCart } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaBug, FaFolderOpen, FaCloudSun, FaTrophy, FaSeedling, FaShoppingCart, FaBook } from 'react-icons/fa';
 
 /*
   AdminLayout: fixed sidebar with collapsible state persisted to localStorage.
@@ -51,6 +51,7 @@ export default function AdminLayout({ children }) {
     { to: "/admin/weather", label: "Thời tiết", icon: <FaCloudSun /> },
   { to: "/admin/models", label: "Mô hình trồng", icon: <FaSeedling /> },
   { to: "/admin/managerpost", label: "Bài viết", icon: <FaShoppingCart /> },
+  { to: "/admin/managerguides", label: "Hướng dẫn", icon: <FaBook /> },
     { to: "/admin/leaderboard", label: "Bảng xếp hạng", icon: <FaTrophy /> },
     { to: "/admin/experts", label: "Chuyên gia", icon: <FaUsers /> },
     { to: "/admin/expert-applications", label: "Đơn ứng tuyển", icon: <FaUsers /> },

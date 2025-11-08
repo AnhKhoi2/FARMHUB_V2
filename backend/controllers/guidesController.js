@@ -343,7 +343,14 @@ export const updateGuide = async (req, res) => {
   const updates = {};
   const { title, summary, content, tags } = req.body;
   if (title !== undefined) updates.title = title;
+  // support both 'summary' and 'description' coming from various clients
   if (summary !== undefined) updates.summary = summary;
+  if (req.body.description !== undefined) {
+    // persist description field and keep summary in sync for search/legacy uses
+    updates.description = req.body.description;
+    // keep summary updated as well so components/search expecting 'summary' work
+    updates.summary = req.body.description;
+  }
   if (content !== undefined) updates.content = content;
   if (tags !== undefined) {
     try { updates.tags = typeof tags === 'string' ? JSON.parse(tags) : tags; } catch(e) { updates.tags = tags; }
