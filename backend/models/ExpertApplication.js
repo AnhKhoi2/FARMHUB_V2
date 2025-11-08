@@ -15,7 +15,7 @@ const ExpertApplicationSchema = new mongoose.Schema(
     expertise_area: { type: String, required: true, trim: true },
     experience_years: { type: Number, default: 0, min: 0 },
     description: { type: String, default: "" },
-    certificates: { type: [CertificateSchema], default: [] },
+    certificates: [String], // <-- mảng chuỗi, không cần bọc object
     status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
     review_notes: { type: String, default: "" },
     reviewed_by: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
