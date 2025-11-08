@@ -4,7 +4,8 @@ import { Navigate, useLocation } from "react-router-dom";
 
 export default function PrivateRoute({ children }) {
   const reduxToken = useSelector((s) => s.auth.accessToken);
-  const token = reduxToken || localStorage.getItem("accessToken"); // 👈 fallback
+  // support both storage keys: older code used `token`, newer code uses `accessToken`
+  const token = reduxToken || localStorage.getItem("accessToken") || localStorage.getItem("token"); // 👈 fallback
   const location = useLocation();
 
   if (!token) {

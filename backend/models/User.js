@@ -18,6 +18,8 @@ const userSchema = new mongoose.Schema(
     role:     { type: String, enum: ["user", "expert", "moderator", "admin"], default: "user" },
     isVerified: { type: Boolean, default: false },
     isDeleted:  { type: Boolean, default: false },
+  // mark a user as banned by admin (cannot create posts / login etc. checks elsewhere)
+  isBanned: { type: Boolean, default: false },
     refreshTokens: { type: [String], default: [] },
   },
   { timestamps: true }

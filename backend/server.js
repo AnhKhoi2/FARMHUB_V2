@@ -19,6 +19,7 @@ import expertApplicationRoutes from "./routes/expertApplicationRoutes.js";
 import expertRoutes from "./routes/expert.routes.js";
 import modelsRoutes from "./routes/models.js";
 import layoutsRoutes from "./routes/layouts.js";
+import postRoutes from "./routes/post.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 
@@ -30,9 +31,17 @@ const app = express();
 connectDB()
 
 // Middleware
+// Allow the frontend dev server (supports multiple dev ports and an env override)
+const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+const allowedOrigins = [clientUrl, "http://localhost:5173", "http://localhost:5174"];
 app.use(cors({
-  origin: "http://localhost:5173", // domain FE Vite
-  credentials: true,               // ✅ Cho phép gửi cookie
+  origin: (origin, cb) => {
+    // allow requests with no origin (like curl/postman)
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error("CORS policy: This origin is not allowed"), false);
+  },
+  credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -52,6 +61,9 @@ app.use("/api/expert-applications", expertApplicationRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/admin/models", modelsRoutes);
 app.use("/layouts", layoutsRoutes);
+// new primary path
+app.use("/admin/managerpost", postRoutes);
+// (legacy alias removed) '/admin/managerpost' is the canonical path for post management
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);

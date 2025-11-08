@@ -63,10 +63,10 @@ export default function AdminGuides() {
     <AdminLayout>
       <div className="container-fluid">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h3>Guides</h3>
+          <h3>Hướng dẫn</h3>
           <div className="d-flex gap-2">
-            <button className="btn btn-sm btn-primary" onClick={() => setShowCreate(true)}>Create</button>
-            <button className="btn btn-sm btn-outline-secondary" onClick={() => navigate('/admin/guides/trash')}>Trash</button>
+            <button className="btn btn-sm btn-primary" onClick={() => setShowCreate(true)}>Tạo mới</button>
+            <button className="btn btn-sm btn-outline-secondary" onClick={() => navigate('/admin/guides/trash')}>Thùng rác</button>
           </div>
         </div>
 
@@ -83,12 +83,12 @@ export default function AdminGuides() {
                 <div className="card h-100">
                   <div className="ratio ratio-16x9" style={{backgroundPosition:'center',backgroundSize:'cover',backgroundImage:`url(${g.image || g.thumbnail || placeholderImg})`}} />
                   <div className="card-body d-flex flex-column">
-                    <h6 className="card-title mb-1">{g.title || '(No title)'}</h6>
+                    <h6 className="card-title mb-1">{g.title || '(Không có tiêu đề)'}</h6>
                     <div className="text-muted small flex-grow-1">{g.description || g.summary || '—'}</div>
                     <div className="d-flex gap-2 mt-2">
-                      <button className="btn btn-sm btn-outline-primary" onClick={() => navigate(`/guides/${g._id || g.id}`)}>View</button>
-                      <button className="btn btn-sm btn-outline-secondary" onClick={() => { setCurrent(g); setShowEdit(true); }}>Edit</button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(g._id || g.id)}>Delete</button>
+                      <button className="btn btn-sm btn-outline-primary" onClick={() => navigate(`/guides/${g._id || g.id}`)}>Xem</button>
+                      <button className="btn btn-sm btn-outline-secondary" onClick={() => { setCurrent(g); setShowEdit(true); }}>Sửa</button>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(g._id || g.id)}>Xóa</button>
                     </div>
                   </div>
                 </div>
@@ -98,14 +98,14 @@ export default function AdminGuides() {
         </div>
 
         <div className="d-flex justify-content-center align-items-center gap-2 my-3">
-          <button className="btn btn-sm btn-outline-secondary" disabled={page <= 1} onClick={() => setPage(Math.max(1, page - 1))}>Prev</button>
+          <button className="btn btn-sm btn-outline-secondary" disabled={page <= 1} onClick={() => setPage(Math.max(1, page - 1))}>Trước</button>
           <span className="text-muted small">Trang {page} / {totalPages}</span>
-          <button className="btn btn-sm btn-outline-secondary" disabled={page >= totalPages} onClick={() => setPage(Math.min(totalPages, page + 1))}>Next</button>
+          <button className="btn btn-sm btn-outline-secondary" disabled={page >= totalPages} onClick={() => setPage(Math.min(totalPages, page + 1))}>Sau</button>
         </div>
 
         {showCreate && (
           <PortalModal onClose={() => setShowCreate(false)}>
-            <GuideModal title="Create Guide" onClose={() => setShowCreate(false)} onSubmit={async (form) => {
+            <GuideModal title="Tạo hướng dẫn" onClose={() => setShowCreate(false)} onSubmit={async (form) => {
               try {
                 const fd = new FormData();
                 Object.entries(form).forEach(([k,v]) => {
@@ -125,7 +125,7 @@ export default function AdminGuides() {
 
         {showEdit && current && (
           <PortalModal onClose={() => { setShowEdit(false); setCurrent(null); }}>
-            <GuideModal title="Edit Guide" initial={current} onClose={() => { setShowEdit(false); setCurrent(null); }} onSubmit={async (form) => {
+            <GuideModal title="Sửa hướng dẫn" initial={current} onClose={() => { setShowEdit(false); setCurrent(null); }} onSubmit={async (form) => {
               try {
                 const fd = new FormData();
                 Object.entries(form).forEach(([k,v]) => {
@@ -171,34 +171,34 @@ function GuideModal({ title, initial = {}, onClose, onSubmit }) {
   return (
     <div>
       <div className="modal-header">
-        <h5 className="modal-title">{title}</h5>
+            <h5 className="modal-title">{title}</h5>
         <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
       </div>
       <div className="modal-body">
         <div className="mb-2">
-          <label className="form-label">Title</label>
+          <label className="form-label">Tiêu đề</label>
           <input className="form-control form-control-sm" value={titleText} onChange={e=>setTitleText(e.target.value)} />
         </div>
         <div className="mb-2">
-          <label className="form-label">Description</label>
+          <label className="form-label">Mô tả</label>
           <textarea className="form-control form-control-sm" value={description} onChange={e=>setDescription(e.target.value)} />
         </div>
         <div className="mb-2">
-          <label className="form-label">Content</label>
+          <label className="form-label">Nội dung</label>
           <textarea className="form-control form-control-sm" rows={4} value={content} onChange={e=>setContent(e.target.value)} />
         </div>
         <div className="mb-2">
-          <label className="form-label">Plant tags (comma separated)</label>
+          <label className="form-label">Thẻ cây trồng (phân bởi dấu phẩy)</label>
           <input className="form-control form-control-sm" value={plantTags} onChange={e=>setPlantTags(e.target.value)} />
         </div>
         <div className="mb-2">
-          <label className="form-label">Main image</label>
+          <label className="form-label">Ảnh chính</label>
           <input className="form-control form-control-sm" type="file" accept="image/*" onChange={e=>setImageFile(e.target.files?.[0] || null)} />
         </div>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onClose}>Cancel</button>
-        <button className="btn btn-sm btn-primary" onClick={submit}>Save</button>
+        <button className="btn btn-sm btn-secondary" onClick={onClose}>Hủy</button>
+        <button className="btn btn-sm btn-primary" onClick={submit}>Lưu</button>
       </div>
     </div>
   );
