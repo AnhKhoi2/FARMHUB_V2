@@ -1,13 +1,13 @@
 import { loginStart, loginSuccess, loginFailure, logout } from "./authSlice";
 import authApi from "../api/shared/authApi.js";
 import { createAsyncThunk } from "@reduxjs/toolkit";
+// Điều hướng theo vai trò (nếu dùng react-router-dom)
 
 
 export const loginThunk = (credentials) => async (dispatch) => {
   try {
     dispatch(loginStart());
     const res = await authApi.loginApi(credentials);
-    // kỳ vọng API trả { data: { data: { user, accessToken } } }
     const payload = res?.data?.data || {};
     const { user, accessToken } = payload;
 
@@ -15,12 +15,20 @@ export const loginThunk = (credentials) => async (dispatch) => {
       throw new Error("Phản hồi đăng nhập không hợp lệ từ server");
     }
 
-    // cập nhật store thuần
     dispatch(loginSuccess({ user, accessToken }));
 
-    // persist ra localStorage (side-effect)
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("accessToken", accessToken);
+
+    // ⭐ Thêm điều hướng theo vai trò:
+    if (user.role === "admin") {
+      window.location.href = "/admin";
+    } else if (user.role === "expert") {
+      window.location.href = "/expert/home";
+    } else {
+      window.location.href = "/";
+    }
+
     return true;
   } catch (err) {
     const message = err?.response?.data?.message || err.message || "Login failed";
@@ -28,6 +36,7 @@ export const loginThunk = (credentials) => async (dispatch) => {
     return false;
   }
 };
+
 
 export const logoutThunk = () => (dispatch) => {
   dispatch(logout());                     // đặt user=null, accessToken=null, status="idle"

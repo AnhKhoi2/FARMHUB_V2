@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Expert from "../models/Expert.js";
 import User from "../models/User.js";
 import ExpertApplication from "../models/ExpertApplication.js";
+import { sendMail } from "../utils/mailer.js";
 
 // Tạo model tạm cho expertapplications nếu bạn chưa có schema riêng (strict:false để nhận mọi field)
 // Model chuẩn đã có trong models/ExpertApplication.js
@@ -62,107 +63,114 @@ export async function getById(req, res) {
 }
 
 // POST /api/expert-applications  (user tự nộp đơn xin xét duyệt)
-export async function create(req, res) {
+export const create = async (req, res) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "Không tìm thấy user" });
 
-    const {
-      full_name,
-      expertise_area,
-      experience_years = 0,
-      description = "",
-      phone_number = "",
-      certificates = [],
-    } = req.body || {};
+    // Kiểm tra đơn đang chờ
+    const existing = await ExpertApplication.findOne({ user: userId, status: "pending" });
+    if (existing)
+      return res.status(400).json({ error: "Bạn đã có đơn đang chờ duyệt." });
 
-    if (!full_name || !expertise_area) {
-      return res.status(400).json({ error: "Missing required fields: full_name, expertise_area" });
-    }
-
-    // Check đã là expert chưa
-    const existingExpert = await Expert.findOne({ user: userId, is_deleted: false }).lean();
-    if (existingExpert) {
-      return res.status(409).json({ error: "Bạn đã có hồ sơ Expert" });
-    }
-
-    // Check đơn pending
-    const pending = await ExpertApplication.findOne({ user: userId, status: "pending" }).lean();
-    if (pending) {
-      return res.status(409).json({ error: "Đơn trước đang chờ duyệt" });
-    }
-
-    // Lấy email từ user
-    const user = await User.findById(userId).lean();
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    const app = await ExpertApplication.create({
+    // Tạo mới
+    const app = new ExpertApplication({
+      ...req.body,
       user: userId,
       email: user.email,
-      full_name,
-      expertise_area,
-      experience_years: Number(experience_years) || 0,
-      description,
-      phone_number,
-      certificates: Array.isArray(certificates)
-        ? certificates.map((c) => (typeof c === "string" ? { url: c } : c))
-        : [],
       status: "pending",
     });
+    await app.save();
 
-    return res.status(201).json({ data: app });
+    // 🔔 Gửi email cho admin
+    await sendMail({
+      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER, // bạn có thể set ADMIN_EMAIL riêng
+      subject: "FarmHub - Đơn đăng ký Expert mới",
+      html: `
+        <p>Xin chào Admin,</p>
+        <p>Người dùng <b>${user.fullName || user.username}</b> (${user.email}) đã nộp đơn đăng ký trở thành Expert.</p>
+        <p>Vui lòng truy cập trang quản trị để xem và duyệt đơn.</p>
+        <p>— FarmHub System</p>
+      `,
+    });
+
+    return res.status(201).json({ message: "Đã nộp đơn thành công", data: app });
   } catch (err) {
-    console.error("Create application error:", err);
-    return res.status(500).json({ error: "Failed to submit application" });
+    console.error("Create expert application error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 
-// PATCH /api/expert-applications/:id/approve
+// PATCH /api/expert-applications/:id/approv
 export async function approve(req, res) {
   try {
     const { id } = req.params;
     const { activate_expert = true, review_notes = "" } = req.body || {};
+
+    // 1️⃣ Kiểm tra id hợp lệ
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Invalid application id" });
+      return res.status(400).json({ error: "Invalid application ID" });
     }
 
+    // 2️⃣ Tìm đơn
     const app = await ExpertApplication.findById(id);
     if (!app) return res.status(404).json({ error: "Application not found" });
     if (app.status && app.status !== "pending") {
       return res.status(400).json({ error: "Only pending applications can be approved" });
     }
 
-    // ✅ Tạo Expert record
+    // 3️⃣ Chuẩn hóa dữ liệu Expert
     const payload = {
       user: app.user,
       full_name: app.full_name,
       phone_number: app.phone_number || null,
       expertise_area: app.expertise_area,
       experience_years: app.experience_years || 0,
-      certificates: (Array.isArray(app.certificates) ? app.certificates : []).map(c =>
+      certificates: (Array.isArray(app.certificates) ? app.certificates : []).map((c) =>
         typeof c === "string" ? { url: c } : c
       ),
       description: app.description || "",
       review_status: "approved",
       is_public: !!activate_expert,
+      review_notes: review_notes || "",
     };
 
+    // 4️⃣ Tạo hoặc cập nhật record Expert
     const expert = await Expert.findOneAndUpdate(
       { user: app.user, is_deleted: false },
       { $set: payload },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // ✅ Cập nhật role user → expert
-    await User.findByIdAndUpdate(app.user, { role: "expert" });
+    // 5️⃣ Cập nhật role user → expert
+    const updatedUser = await User.findByIdAndUpdate(
+      app.user,
+      { role: "expert" },
+      { new: true }
+    );
 
-    // ✅ Xóa application sau khi duyệt
+    // 6️⃣ Gửi email thông báo cho user
+    if (updatedUser?.email) {
+      await sendMail({
+      to: updatedUser.email,
+      subject: "FarmHub - Đơn đăng ký Expert đã được duyệt",
+      html: `
+        <p>Xin chào ${updatedUser.fullName || updatedUser.username},</p>
+        <p>Chúc mừng! Đơn đăng ký trở thành Expert của bạn đã được duyệt 🎉</p>
+        <p>Bạn có thể đăng nhập lại để bắt đầu sử dụng quyền Expert.</p>
+        <p>— FarmHub Team</p>
+      `,
+    });
+    }
+
+    // 7️⃣ Xóa đơn sau khi duyệt
     await ExpertApplication.findByIdAndDelete(id);
 
+    // 8️⃣ Trả phản hồi
     return res.status(200).json({
-      message: "Application approved, role updated to expert, and removed from pending list",
+      message:
+        "Application approved, expert profile created, and user role updated to expert.",
       expert,
     });
   } catch (err) {
@@ -170,30 +178,37 @@ export async function approve(req, res) {
     return res.status(500).json({ error: "Failed to approve application" });
   }
 }
+
+
 // PATCH /api/expert-applications/:id/reject
-export async function reject(req, res) {
+export const reject = async (req, res) => {
   try {
     const { id } = req.params;
-    const { reason = "" } = req.body || {};
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Invalid application id" });
-    }
+    const { reason } = req.body;
+    const application = await ExpertApplication.findById(id);
+    if (!application) return res.status(404).json({ error: "Không tìm thấy đơn" });
 
-    const app = await ExpertApplication.findById(id);
-    if (!app) return res.status(404).json({ error: "Application not found" });
-    if (app.status && app.status !== "pending") {
-      return res.status(400).json({ error: "Only pending applications can be rejected" });
-    }
+    const user = await User.findById(application.user);
+    if (!user) return res.status(404).json({ error: "Không tìm thấy user" });
 
-    // ✅ Xóa đơn sau khi reject
-    await ExpertApplication.findByIdAndDelete(id);
+    await ExpertApplication.findByIdAndUpdate(id, { status: "rejected", reason });
 
-    return res.status(200).json({
-      message: "Application rejected and removed from pending list",
-      reason,
+    // 🔔 Gửi email cho user
+    await sendMail({
+      to: user.email,
+      subject: "FarmHub - Đơn đăng ký Expert bị từ chối",
+      html: `
+        <p>Xin chào ${user.fullName || user.username},</p>
+        <p>Rất tiếc, đơn đăng ký Expert của bạn đã bị từ chối.</p>
+        ${reason ? `<p><b>Lý do:</b> ${reason}</p>` : ""}
+        <p>Bạn có thể chỉnh sửa hồ sơ và nộp lại trong tương lai.</p>
+        <p>— FarmHub Team</p>
+      `,
     });
+
+    res.json({ message: "Đã từ chối đơn." });
   } catch (err) {
-    console.error("Reject application error:", err);
-    return res.status(500).json({ error: "Failed to reject application" });
+    console.error("Reject error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};

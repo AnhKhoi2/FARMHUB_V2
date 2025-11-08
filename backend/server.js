@@ -15,14 +15,14 @@ import testRoute from "./routes/test.js";
 import guidesRoute from "./routes/guides.js";
 import notebooksRoute from "./routes/notebooks.js";
 import usersRoute from "./routes/users.js";
-import expertApplicationRoutes from "./routes/expertApplicationRoutes.js";
+// import expertApplicationRoutes from "./routes/expertApplicationRoutes.js";
 import expertRoutes from "./routes/expert.routes.js";
 import modelsRoutes from "./routes/models.js";
 import layoutsRoutes from "./routes/layouts.js";
 import postRoutes from "./routes/post.js";
 import path from "path";
 import { fileURLToPath } from 'url';
-
+import expertApplicationsRouter from "./routes/expertApplications.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -57,7 +57,10 @@ app.use("/test", testRoute);
 app.use("/guides", guidesRoute);
 app.use("/notebooks", notebooksRoute);
 app.use("/admin/users", usersRoute);
-app.use("/api/expert-applications", expertApplicationRoutes);
+// app.use("/api/expert-applications", expertApplicationRoutes);
+
+app.use("/api/expert-applications", expertApplicationsRouter);
+
 app.use("/api/experts", expertRoutes);
 app.use("/admin/models", modelsRoutes);
 app.use("/layouts", layoutsRoutes);
