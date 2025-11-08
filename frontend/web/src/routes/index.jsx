@@ -16,7 +16,7 @@ import AdminRoute from "./admin/AdminRoute";
 // Common/Feature pages
 import Home from "../pages/farmer/Home"; // giữ nguyên path kiểu code 1
 import ProfilePage from "../pages/auth/ProfilePage.jsx"; // <- thêm từ code 2
-import Market from "../pages/market.jsx";
+import Post from "../pages/post.jsx";
 
 // Admin Pages
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -27,6 +27,7 @@ import AdminWeather from "../pages/admin/AdminWeather";
 import AdminExperts from "../pages/admin/AdminExperts";
 import AdminExpertApplications from "../pages/admin/AdminExpertApplications";
 import AdminModels from "../pages/admin/Models";
+import AdminPost from "../pages/admin/AdminPost";
 // lazy load để tránh require() trên browser
 const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
 
@@ -212,6 +213,14 @@ export default function AppRoutes() {
             </AdminRoute>
           }
         />
+        <Route
+          path="/admin/managerpost"
+          element={
+            <AdminRoute>
+              <AdminPost />
+            </AdminRoute>
+          }
+        />
 
         {/* Expert Routes */}
         <Route path="/expert/home" element={<PrivateRoute><ExpertHome /></PrivateRoute>} />
@@ -246,11 +255,11 @@ export default function AppRoutes() {
   <Route path="/experthome/models" element={<ExpertModels />} />
 
         <Route path="/guides/:id" element={<GuideDetail />} />
-<Route
+        <Route
           path="/market"
           element={
             <PrivateRoute>
-              <Market />
+              <Post />
             </PrivateRoute>
           }
         />

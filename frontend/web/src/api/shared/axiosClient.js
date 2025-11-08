@@ -9,7 +9,8 @@ const axiosClient = axios.create({
 });
 
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  // Support both current key and legacy 'token' key
+  const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
 
   // Chỉ coi là "public auth" cho 4 endpoint dưới (KHÔNG gồm /auth/password/change)
   const publicAuthPaths = [

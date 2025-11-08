@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../redux/authSlice";
-import { FaTachometerAlt, FaUsers, FaBug, FaFolderOpen, FaCloudSun, FaTrophy, FaSeedling } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaBug, FaFolderOpen, FaCloudSun, FaTrophy, FaSeedling, FaShoppingCart } from 'react-icons/fa';
 
 /*
   AdminLayout: fixed sidebar with collapsible state persisted to localStorage.
@@ -44,15 +44,16 @@ export default function AdminLayout({ children }) {
   const activeExtra = " active bg-white bg-opacity-10 rounded";
 
   const navItems = [
-    { to: "/admin/dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
-    { to: "/admin/users", label: "Users", icon: <FaUsers /> },
-    { to: "/admin/diseases", label: "Diseases", icon: <FaBug /> },
-    { to: "/admin/categories", label: "Categories", icon: <FaFolderOpen /> },
-    { to: "/admin/weather", label: "Weather", icon: <FaCloudSun /> },
-    { to: "/admin/models", label: "Mô hình trồng", icon: <FaSeedling /> },
-    { to: "/admin/leaderboard", label: "Leaderboard", icon: <FaTrophy /> },
-    { to: "/admin/experts", label: "Experts", icon: <FaUsers /> },
-    { to: "/admin/expert-applications", label: "Applications", icon: <FaUsers /> },
+    { to: "/admin/dashboard", label: "Bảng điều khiển", icon: <FaTachometerAlt /> },
+    { to: "/admin/users", label: "Người dùng", icon: <FaUsers /> },
+    { to: "/admin/diseases", label: "Bệnh", icon: <FaBug /> },
+    { to: "/admin/categories", label: "Danh mục", icon: <FaFolderOpen /> },
+    { to: "/admin/weather", label: "Thời tiết", icon: <FaCloudSun /> },
+  { to: "/admin/models", label: "Mô hình trồng", icon: <FaSeedling /> },
+  { to: "/admin/managerpost", label: "Bài viết", icon: <FaShoppingCart /> },
+    { to: "/admin/leaderboard", label: "Bảng xếp hạng", icon: <FaTrophy /> },
+    { to: "/admin/experts", label: "Chuyên gia", icon: <FaUsers /> },
+    { to: "/admin/expert-applications", label: "Đơn ứng tuyển", icon: <FaUsers /> },
   ];
 
   return (
@@ -83,7 +84,7 @@ export default function AdminLayout({ children }) {
               <small style={{ color: '#9ca3b3' }}>Admin Panel</small>
             </div>
           </div>
-          <button className="admin-hamburger text-white" onClick={toggle} title={collapsed ? "Expand" : "Collapse"}>
+          <button className="admin-hamburger text-white" onClick={toggle} title={collapsed ? "Mở rộng" : "Thu nhỏ"}>
             {collapsed ? "☰" : "✕"}
           </button>
         </div>
@@ -105,8 +106,8 @@ export default function AdminLayout({ children }) {
         </nav>
         <div className="p-3 mt-auto border-top border-white border-opacity-25">
           <div className="d-grid gap-2">
-            <button className="btn btn-sm btn-light" onClick={() => navigate("/")}>{collapsed ? "🏠" : "Visit site"}</button>
-            <button className="btn btn-sm btn-outline-light" onClick={doLogout}>{collapsed ? "⏻" : "Logout"}</button>
+            <button className="btn btn-sm btn-light" onClick={() => navigate("/")}>{collapsed ? "🏠" : "Xem trang"}</button>
+            <button className="btn btn-sm btn-outline-light" onClick={doLogout}>{collapsed ? "⏻" : "Đăng xuất"}</button>
           </div>
           {!collapsed && <div className="mt-3 text-white-50 small text-center">© {new Date().getFullYear()} FarmHub</div>}
         </div>
@@ -115,10 +116,10 @@ export default function AdminLayout({ children }) {
       <main className="admin-main" style={{ marginLeft: width, padding: "1rem 1rem", background: '#f4f6f9' }}>
         <header className="d-flex align-items-center justify-content-between mb-4" style={{ minHeight: 56 }}>
           <div className="d-flex align-items-center gap-3">
-            <button className="btn btn-sm btn-outline-secondary d-none d-md-inline" onClick={toggle}>{collapsed ? 'Expand' : 'Collapse'}</button>
+            <button className="btn btn-sm btn-outline-secondary d-none d-md-inline" onClick={toggle}>{collapsed ? 'Mở rộng' : 'Thu nhỏ'}</button>
             <div>
-              <h1 className="h5 mb-0">Admin Panel</h1>
-              <small className="text-muted">Manage platform content</small>
+              <h1 className="h5 mb-0">Bảng quản trị</h1>
+              <small className="text-muted">Quản lý nội dung nền tảng</small>
             </div>
           </div>
           <div className="d-flex align-items-center gap-2">

@@ -1,7 +1,11 @@
+// Backwards-compatible re-export: keep old path /pages/market.jsx working
+export { default } from './post.jsx';
 "use client"
 
 import { useState } from "react"
 import { Upload, X, Leaf, Search } from "lucide-react"
+import axiosClient from "../api/shared/axiosClient";
+import REPORT_REASONS from "../constants/reportReasons";
 import "../css/market.css";
 
 
@@ -78,6 +82,11 @@ const sampleListings = [
 
 export default function Market() {
   const [showForm, setShowForm] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportTarget, setReportTarget] = useState(null)
+  const [reportReason, setReportReason] = useState(REPORT_REASONS[0].value)
+  const [reportMessage, setReportMessage] = useState("")
+  const [reportSubmitting, setReportSubmitting] = useState(false)
   const [listings, setListings] = useState(sampleListings)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState(null)
@@ -161,9 +170,9 @@ export default function Market() {
     <main className="market-main">
       <header className="market-header">
         <div className="market-header-content">
-          <div className="market-logo">
+            <div className="market-logo">
             <Leaf className="market-icon" />
-            <h1>Chợ</h1>
+            <h1>Bài viết</h1>
           </div>
           <button onClick={() => setShowForm(!showForm)} className="market-btn-primary">
             {showForm ? "Ẩn form" : "Đăng bài"}
@@ -174,7 +183,7 @@ export default function Market() {
       <div className="market-container">
         {showForm && (
           <div className="market-form-section">
-            <h2>Đăng bài rao vặt</h2>
+            <h2>Đăng bài</h2>
             <p className="market-form-desc">Chia sẻ sản phẩm hoặc dịch vụ nông nghiệp của bạn</p>
 
             <form onSubmit={handleSubmit} className="market-form">
@@ -321,7 +330,7 @@ export default function Market() {
               <div className="market-form-footer">
                 <div className="market-terms">
                   <input type="checkbox" id="terms" required />
-                  <label htmlFor="terms">Tôi xác nhận bài đăng tuân thủ chính sách Chợ</label>
+                  <label htmlFor="terms">Tôi xác nhận bài đăng tuân thủ chính sách bài viết</label>
                 </div>
                 <div className="market-form-buttons">
                   <button type="reset" className="market-btn-secondary">
@@ -383,6 +392,9 @@ export default function Market() {
                       <span>{listing.views} lượt xem</span>
                     </div>
                   </div>
+                    <div className="mt-2 d-flex justify-content-end">
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => { setReportTarget(listing); setReportMessage(''); setReportReason(REPORT_REASONS[0].value); setShowReportModal(true); }}>Báo cáo</button>
+                    </div>
                 </div>
               ))}
             </div>
@@ -393,6 +405,45 @@ export default function Market() {
           )}
         </div>
       </div>
+      {showReportModal && reportTarget && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 520, background: '#fff', borderRadius: 6, padding: 16 }}>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <h5 className="mb-0">Báo cáo bài viết</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowReportModal(false)}>Đóng</button>
+              </div>
+              <div>
+                <div className="mb-2"><strong>{reportTarget.title}</strong></div>
+                <div className="mb-2">
+                  <label className="form-label">Lý do</label>
+                  <select className="form-select" value={reportReason} onChange={e => setReportReason(e.target.value)}>
+                    {REPORT_REASONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  </select>
+                  <div className="small text-muted mt-1">{REPORT_REASONS.find(r => r.value === reportReason)?.description}</div>
+                </div>
+                <div className="mb-2">
+                  <label className="form-label">Nội dung (không bắt buộc)</label>
+                  <textarea className="form-control" rows={4} value={reportMessage} onChange={e => setReportMessage(e.target.value)} />
+                </div>
+                <div className="d-flex justify-content-end gap-2">
+                  <button className="btn btn-sm btn-secondary" onClick={() => setShowReportModal(false)}>Hủy</button>
+                  <button className="btn btn-sm btn-danger" disabled={reportSubmitting} onClick={async () => {
+                    setReportSubmitting(true);
+                    try {
+                      await axiosClient.post(`/admin/managerpost/${reportTarget.id || reportTarget._id}/report`, { reason: reportReason, message: reportMessage });
+                      alert('Báo cáo đã được gửi. Cảm ơn bạn.');
+                      setShowReportModal(false);
+                    } catch (err) {
+                      console.error(err);
+                      if (err?.response?.status === 401) alert('Bạn cần đăng nhập để báo cáo.');
+                      else alert('Gửi báo cáo thất bại');
+                    } finally { setReportSubmitting(false); }
+                  }}>Gửi báo cáo</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </main>
   )
 }
