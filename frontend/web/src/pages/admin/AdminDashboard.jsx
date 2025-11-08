@@ -93,7 +93,7 @@ export default function AdminDashboard() {
                 <h6 className="card-title">Hướng dẫn</h6>
                 <h2 className="card-text">{loading ? "..." : counts.guides}</h2>
                 <p className="text-muted">Hướng dẫn sử dụng</p>
-                <a className="btn btn-sm btn-primary" href="/admin/guides">Quản lý</a>
+                <a className="btn btn-sm btn-primary" href="/admin/managerguides">Quản lý</a>
               </div>
             </div>
           </div>

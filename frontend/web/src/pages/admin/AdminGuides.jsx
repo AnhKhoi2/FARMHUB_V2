@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import { useNavigate } from 'react-router-dom';
-import axiosClient from '../../api/axiosClient';
-import PortalModal from '../../components/PortalModal';
+import axiosClient from '../../api/shared/axiosClient';
+import PortalModal from '../../components/shared/PortalModal';
 import placeholderImg from '../../assets/placeholder.svg';
 
 // Simple Admin wrapper reusing existing public ManagerGuides & TrashGuides pages via iframe-like embedding could be done,
@@ -66,35 +66,52 @@ export default function AdminGuides() {
           <h3>Hướng dẫn</h3>
           <div className="d-flex gap-2">
             <button className="btn btn-sm btn-primary" onClick={() => setShowCreate(true)}>Tạo mới</button>
-            <button className="btn btn-sm btn-outline-secondary" onClick={() => navigate('/admin/guides/trash')}>Thùng rác</button>
+            {/* route for trash is registered at /managerguides/trash (not /admin/guides/trash) */}
+            <button className="btn btn-sm btn-outline-secondary" onClick={() => navigate('/managerguides/trash')}>Thùng rác</button>
           </div>
         </div>
 
         {error && <div className="alert alert-danger">{error}</div>}
 
-        <div className="row g-3">
-          {loading ? (
-            <div className="text-muted">Đang tải...</div>
-          ) : guides.length === 0 ? (
-            <div className="text-muted">Không có hướng dẫn nào.</div>
-          ) : (
-            guides.map(g => (
-              <div className="col-md-3" key={g._id || g.id}>
-                <div className="card h-100">
-                  <div className="ratio ratio-16x9" style={{backgroundPosition:'center',backgroundSize:'cover',backgroundImage:`url(${g.image || g.thumbnail || placeholderImg})`}} />
-                  <div className="card-body d-flex flex-column">
-                    <h6 className="card-title mb-1">{g.title || '(Không có tiêu đề)'}</h6>
-                    <div className="text-muted small flex-grow-1">{g.description || g.summary || '—'}</div>
-                    <div className="d-flex gap-2 mt-2">
-                      <button className="btn btn-sm btn-outline-primary" onClick={() => navigate(`/guides/${g._id || g.id}`)}>Xem</button>
-                      <button className="btn btn-sm btn-outline-secondary" onClick={() => { setCurrent(g); setShowEdit(true); }}>Sửa</button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(g._id || g.id)}>Xóa</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+        <div className="card">
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <table className="table table-hover mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th style={{width:80}}>#</th>
+                    <th>Tiêu đề</th>
+                    <th>Mô tả</th>
+                    <th>Tác giả</th>
+                    <th>Ngày tạo</th>
+                    <th style={{width:220}}>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={6}>Đang tải...</td></tr>
+                  ) : guides.length === 0 ? (
+                    <tr><td colSpan={6}>Không có hướng dẫn nào.</td></tr>
+                  ) : (
+                    guides.map((g, idx) => (
+                      <tr key={g._id || g.id}>
+                        <td style={{ fontFamily: 'monospace' }}>{String(idx + 1).padStart(2, '0')}</td>
+                        <td>{g.title || '(Không có tiêu đề)'}</td>
+                        <td className="text-muted small">{g.description || g.summary || '—'}</td>
+                        <td>{g.expert_id?.username || g.expert_id?.name || '—'}</td>
+                        <td className="text-muted small">{g.createdAt ? new Date(g.createdAt).toLocaleString() : '—'}</td>
+                        <td>
+                          <button className="btn btn-sm btn-outline-primary me-2" onClick={() => navigate(`/guides/${g._id || g.id}`)}>Xem</button>
+                          <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => { setCurrent(g); setShowEdit(true); }}>Sửa</button>
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(g._id || g.id)}>Xóa</button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <div className="d-flex justify-content-center align-items-center gap-2 my-3">
