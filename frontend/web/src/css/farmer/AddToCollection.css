@@ -1,0 +1,188 @@
+/* AddToCollection.css */
+.btn-add-to-collection {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-add-to-collection:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.add-to-collection-modal {
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.add-to-collection-modal h2 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.notebook-name {
+    color: #7f8c8d;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.loading-text {
+    text-align: center;
+    padding: 2rem;
+    color: #95a5a6;
+}
+
+.collections-list {
+    margin-bottom: 1.5rem;
+}
+
+.collections-list h3 {
+    font-size: 1rem;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.collection-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.collection-item:hover {
+    border-color: #667eea;
+    background: #f8f9fa;
+    transform: translateX(4px);
+}
+
+.collection-item-info h4 {
+    margin: 0 0 0.25rem 0;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.notebook-count {
+    color: #95a5a6;
+    font-size: 0.85rem;
+}
+
+.btn-add-arrow {
+    background: #667eea;
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-add-arrow:hover {
+    background: #5568d3;
+}
+
+.divider {
+    text-align: center;
+    margin: 2rem 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: #e0e0e0;
+}
+
+.divider span {
+    position: relative;
+    background: white;
+    padding: 0 1rem;
+    color: #95a5a6;
+    font-size: 0.9rem;
+}
+
+.create-collection-form {
+    margin-bottom: 1.5rem;
+}
+
+.create-collection-form h3 {
+    font-size: 1rem;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.create-collection-form input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.3s;
+}
+
+.create-collection-form input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-create-new {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-create-new:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.btn-create-new:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-close-modal {
+    width: 100%;
+    padding: 12px;
+    background: #ecf0f1;
+    color: #2c3e50;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-close-modal:hover {
+    background: #d5dbdb;
+}

@@ -26,6 +26,16 @@ import GuideDetail from "../pages/expert/GuideDetail";
 import GuideEdit from "../pages/expert/GuideEdit";
 import TrashGuides from "../pages/expert/TrashGuides";
 
+// Farmer Pages - Notebook
+import NotebookList from "../pages/farmer/NotebookList";
+import NotebookDetail from "../pages/farmer/NotebookDetail";
+import NotebookCreate from "../pages/farmer/NotebookCreate";
+import NotebookEdit from "../pages/farmer/NotebookEdit";
+
+// Farmer Pages - Collections
+import Collections from "../pages/farmer/Collections";
+import CollectionDetail from "../pages/farmer/CollectionDetail";
+
 // 🔹 NEW: import AdminLayout để dùng Outlet
 import AdminLayout from "../components/AdminLayout.jsx";
 
@@ -222,7 +232,7 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-<Route
+        <Route
           path="/market"
           element={
             <PrivateRoute>
@@ -231,8 +241,73 @@ export default function AppRoutes() {
           }
         />
 
+        {/* Farmer Routes - Notebook */}
+        <Route
+          path="/farmer/notebooks"
+          element={
+            <PrivateRoute>
+              <NotebookList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/notebooks/create"
+          element={
+            <PrivateRoute>
+              <NotebookCreate />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/notebooks/:id"
+          element={
+            <PrivateRoute>
+              <NotebookDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/notebooks/:id/edit"
+          element={
+            <PrivateRoute>
+              <NotebookEdit />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Farmer Routes - Collections */}
+        <Route
+          path="/farmer/collections"
+          element={
+            <PrivateRoute>
+              <Collections />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/collections/:id"
+          element={
+            <PrivateRoute>
+              <CollectionDetail />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Home route for regular users (farmers) */}
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <Home />
+            </PrivateRoute>
+          }
+        />
+
         {/* legacy/shortcut route to support /createguides if linked elsewhere */}
-        <Route path="/createguides" element={<Navigate to="/managerguides/create" replace />} />
+        <Route
+          path="/createguides"
+          element={<Navigate to="/managerguides/create" replace />}
+        />
 
         {/* Bắt mọi route khác về /login (tuỳ chọn) */}
         <Route path="*" element={<Navigate to="/login" replace />} />

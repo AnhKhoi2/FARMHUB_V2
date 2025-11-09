@@ -1,7 +1,9 @@
 import Notebook from "../models/Notebook.js";
 import Guide from "../models/Guide.js";
+import PlantTemplate from "../models/PlantTemplate.js";
 import { ok, created, noContent } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import * as notebookTemplateService from "../services/notebookTemplateService.js";
 
 // 📘 Lấy tất cả notebook của user
 export const getAllByUser = asyncHandler(async (req, res) => {
@@ -10,6 +12,7 @@ export const getAllByUser = asyncHandler(async (req, res) => {
     status: { $ne: "deleted" },
   })
     .populate("guide_id", "title category difficulty estimatedTime")
+    .populate("template_id", "template_name plant_group status stages")
     .sort({ createdAt: -1 });
 
   return ok(
@@ -27,10 +30,12 @@ export const getNotebookById = asyncHandler(async (req, res) => {
     _id: id,
     user_id: req.user.id,
     status: { $ne: "deleted" },
-  }).populate(
-    "guide_id",
-    "title category difficulty estimatedTime description steps"
-  );
+  })
+    .populate(
+      "guide_id",
+      "title category difficulty estimatedTime description steps"
+    )
+    .populate("template_id");
 
   if (!notebook) {
     return res
@@ -38,15 +43,23 @@ export const getNotebookById = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Notebook not found" });
   }
 
-  return ok(res, notebook, null, "Fetched notebook detail successfully");
+  // Thêm stage_completion % vào response (now async)
+  const notebookData = notebook.toObject();
+  notebookData.stage_completion = await notebook.getCurrentStageCompletion();
+
+  return ok(res, notebookData, null, "Fetched notebook detail successfully");
 });
 
 // 📝 Tạo mới notebook
 export const createNotebook = asyncHandler(async (req, res) => {
-  const { notebook_name, guide_id, description, cover_image } = req.body;
-  let plant_type = req.body.plant_type;
+  const { notebook_name, guide_id, description, cover_image, planted_date } =
+    req.body;
 
-  // Nếu có guide_id → lấy category làm plant_type
+  let plant_type = req.body.plant_type;
+  let plant_group = null;
+  let autoFoundTemplate = null;
+
+  // ✅ FLOW TỰ ĐỘNG: Guide → plant_group → Template
   if (guide_id) {
     const guide = await Guide.findById(guide_id);
     if (!guide) {
@@ -54,7 +67,28 @@ export const createNotebook = asyncHandler(async (req, res) => {
         .status(404)
         .json({ success: false, message: "Guide not found" });
     }
-    plant_type = guide.category;
+
+    // Lấy plant_name và plant_group từ Guide
+    plant_type = guide.plant_name || guide.title;
+    plant_group = guide.plant_group;
+
+    console.log(`📗 Guide found: ${guide.plant_name} → Group: ${plant_group}`);
+
+    // Tự động tìm template dựa trên plant_group
+    if (plant_group && plant_group !== "other") {
+      autoFoundTemplate = await PlantTemplate.findOne({
+        plant_group: plant_group,
+        status: "active",
+      }).sort({ usage_count: -1 }); // Lấy template được dùng nhiều nhất
+
+      if (autoFoundTemplate) {
+        console.log(
+          `✅ Auto-found template: ${autoFoundTemplate.template_name}`
+        );
+      } else {
+        console.log(`⚠️ No active template found for group: ${plant_group}`);
+      }
+    }
   }
 
   if (!plant_type) {
@@ -65,16 +99,53 @@ export const createNotebook = asyncHandler(async (req, res) => {
     });
   }
 
+  // Tạo notebook với plant_group
   const newNotebook = await Notebook.create({
     user_id: req.user.id,
     notebook_name,
     guide_id: guide_id || undefined,
     plant_type,
+    plant_group: plant_group || "other",
     description,
     cover_image,
+    planted_date: planted_date || new Date(),
   });
 
-  return created(res, newNotebook, "Notebook created successfully");
+  // ✅ TỰ ĐỘNG GÁN TEMPLATE nếu tìm được
+  if (autoFoundTemplate) {
+    try {
+      const notebookWithTemplate =
+        await notebookTemplateService.assignTemplateToNotebook(
+          newNotebook._id,
+          autoFoundTemplate._id
+        );
+
+      console.log(
+        `🎉 Template assigned successfully to notebook ${newNotebook._id}`
+      );
+
+      return created(
+        res,
+        notebookWithTemplate,
+        `Notebook created with template: ${autoFoundTemplate.template_name}`
+      );
+    } catch (error) {
+      console.error("❌ Error assigning template:", error);
+      // Vẫn trả về notebook đã tạo, chỉ không có template
+      return created(
+        res,
+        newNotebook,
+        "Notebook created but template assignment failed"
+      );
+    }
+  }
+
+  // Không tìm được template → trả về notebook thường
+  return created(
+    res,
+    newNotebook,
+    "Notebook created successfully (no template found)"
+  );
 });
 
 // 🔄 Cập nhật notebook
@@ -95,12 +166,13 @@ export const updateNotebook = asyncHandler(async (req, res) => {
   return ok(res, notebook, null, "Notebook updated successfully");
 });
 
-// 🗑️ Xóa notebook (đánh dấu deleted)
+// 🗑️ Xóa mềm notebook (soft delete - đánh dấu deleted)
 export const deleteNotebook = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const notebook = await Notebook.findOneAndUpdate(
     { _id: id, user_id: req.user.id },
-    { status: "deleted" }
+    { status: "deleted" },
+    { new: true }
   );
 
   if (!notebook) {
@@ -109,7 +181,12 @@ export const deleteNotebook = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Notebook not found" });
   }
 
-  return noContent(res);
+  return ok(
+    res,
+    { id: notebook._id, status: notebook.status },
+    null,
+    "Notebook deleted successfully"
+  );
 });
 
 // 🔍 Tìm kiếm notebook theo từ khóa
@@ -132,6 +209,7 @@ export const searchNotebooks = asyncHandler(async (req, res) => {
     ],
   })
     .populate("guide_id", "title category difficulty")
+    .populate("template_id", "template_name plant_group")
     .sort({ createdAt: -1 });
 
   const meta = { count: notebooks.length, keyword };
@@ -179,6 +257,7 @@ export const filterNotebooks = asyncHandler(async (req, res) => {
 
   const notebooks = await Notebook.find(filter)
     .populate("guide_id", "title category difficulty estimatedTime")
+    .populate("template_id", "template_name plant_group status")
     .sort(sortOption);
 
   const meta = {
@@ -260,5 +339,261 @@ export const removeImage = asyncHandler(async (req, res) => {
     { images: notebook.images, total: notebook.images.length },
     null,
     "Image removed successfully"
+  );
+});
+
+// 🌱 Lấy template phù hợp cho notebook
+export const getNotebookTemplate = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const template = await notebookTemplateService.getTemplateForNotebook(id);
+
+  if (!template) {
+    return res
+      .status(404)
+      .json({ success: false, message: "No suitable template found" });
+  }
+
+  return ok(res, template, null, "Template fetched successfully");
+});
+
+// 📌 Gán template cho notebook
+export const assignTemplate = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { template_id } = req.body;
+
+  if (!template_id) {
+    return res
+      .status(400)
+      .json({ success: false, message: "template_id is required" });
+  }
+
+  const notebook = await notebookTemplateService.assignTemplateToNotebook(
+    id,
+    template_id
+  );
+
+  return ok(res, notebook, null, "Template assigned successfully");
+});
+
+// 📊 Lấy timeline của notebook
+export const getNotebookTimeline = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Validate ID
+  if (!id || id === "undefined" || id === "null") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid notebook ID",
+    });
+  }
+
+  const timeline = await notebookTemplateService.getNotebookTimeline(id);
+
+  if (!timeline) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Timeline not available" });
+  }
+
+  return ok(res, timeline, null, "Timeline fetched successfully");
+});
+
+// ✅ Lấy daily checklist
+export const getDailyChecklist = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Validate ID
+  if (!id || id === "undefined" || id === "null") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid notebook ID",
+    });
+  }
+
+  const checklist = await notebookTemplateService.generateDailyChecklist(id);
+
+  if (!checklist) {
+    return res
+      .status(404)
+      .json({ success: false, message: "No checklist available" });
+  }
+
+  return ok(res, checklist, null, "Daily checklist fetched successfully");
+});
+
+// ✔️ Đánh dấu hoàn thành task
+export const completeTask = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { task_name } = req.body;
+
+  if (!task_name) {
+    return res
+      .status(400)
+      .json({ success: false, message: "task_name is required" });
+  }
+
+  const notebook = await notebookTemplateService.completeChecklistTask(
+    id,
+    task_name
+  );
+
+  return ok(res, notebook.daily_checklist, null, "Task completed successfully");
+});
+
+// 🔄 Cập nhật stage hiện tại
+export const updateStage = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { stage_number } = req.body;
+
+  if (!stage_number) {
+    return res
+      .status(400)
+      .json({ success: false, message: "stage_number is required" });
+  }
+
+  const notebook = await notebookTemplateService.updateCurrentStage(
+    id,
+    stage_number
+  );
+
+  return ok(res, notebook, null, "Stage updated successfully");
+});
+
+// 👁️ Lấy observations của stage hiện tại
+export const getCurrentObservations = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const observations =
+    await notebookTemplateService.getCurrentStageObservations(id);
+
+  return ok(
+    res,
+    observations,
+    null,
+    "Current stage observations fetched successfully"
+  );
+});
+
+// 📝 Cập nhật observation
+export const updateObservation = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { observation_key, value } = req.body;
+
+  if (!observation_key || value === undefined) {
+    return res.status(400).json({
+      success: false,
+      message: "observation_key and value are required",
+    });
+  }
+
+  const notebook = await notebookTemplateService.updateStageObservation(
+    id,
+    observation_key,
+    value
+  );
+
+  // Kiểm tra xem có cần tự động chuyển stage không
+  await notebookTemplateService.checkAutoStageTransition(id);
+
+  return ok(res, notebook, null, "Observation updated successfully");
+});
+
+// 🔍 Tính stage hiện tại dựa trên số ngày
+export const calculateStage = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const stageInfo = await notebookTemplateService.calculateCurrentStage(id);
+
+  if (!stageInfo) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Cannot calculate stage" });
+  }
+
+  return ok(res, stageInfo, null, "Stage calculated successfully");
+});
+
+// 🔄 Recalculate progress (debug endpoint)
+export const recalculateProgress = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const notebook = await Notebook.findOne({
+    _id: id,
+    user_id: req.user.id,
+  }).populate("template_id");
+
+  if (!notebook || !notebook.template_id) {
+    return res.status(404).json({
+      success: false,
+      message: "Notebook not found or no template assigned",
+    });
+  }
+
+  // Recalculate progress
+  await notebook.updateProgress(notebook.template_id.stages);
+  await notebook.save();
+
+  const stageCompletion = await notebook.getCurrentStageCompletion();
+
+  return ok(
+    res,
+    {
+      progress: notebook.progress,
+      stage_completion: stageCompletion,
+      template_stages: notebook.template_id.stages.map((s) => ({
+        stage_number: s.stage_number,
+        name: s.name,
+        weight:
+          s.weight || Math.round(100 / notebook.template_id.stages.length),
+      })),
+      stages_tracking: notebook.stages_tracking.map((s) => ({
+        stage_number: s.stage_number,
+        stage_name: s.stage_name,
+        is_current: s.is_current,
+        completed: !!s.completed_at,
+      })),
+    },
+    null,
+    "Progress recalculated successfully"
+  );
+});
+
+// 🔧 Migrate old notebooks to add completed_tasks field
+export const migrateNotebooks = asyncHandler(async (req, res) => {
+  const notebooks = await Notebook.find({
+    user_id: req.user.id,
+  }).populate("template_id");
+
+  let migratedCount = 0;
+
+  for (const notebook of notebooks) {
+    let needsSave = false;
+
+    // Check each stage_tracking
+    for (const stageTracking of notebook.stages_tracking) {
+      // If no completed_tasks, initialize empty array
+      if (!stageTracking.completed_tasks) {
+        stageTracking.completed_tasks = [];
+        needsSave = true;
+      }
+    }
+
+    if (needsSave) {
+      await notebook.save();
+      migratedCount++;
+      console.log(`✅ Migrated notebook: ${notebook.notebook_name} (${notebook._id})`);
+    }
+  }
+
+  return ok(
+    res,
+    {
+      total: notebooks.length,
+      migrated: migratedCount,
+      already_updated: notebooks.length - migratedCount,
+    },
+    null,
+    `Migration complete! ${migratedCount} notebook(s) updated`
   );
 });

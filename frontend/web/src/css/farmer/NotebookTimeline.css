@@ -1,0 +1,263 @@
+/* NotebookTimeline.css */
+
+.notebook-timeline {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.timeline-header h3 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.timeline-stats {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 15px;
+    color: #555;
+    font-weight: 500;
+}
+
+.progress-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.timeline-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #ecf0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 32px;
+}
+
+.timeline-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+}
+
+.timeline-stages {
+    position: relative;
+}
+
+.timeline-stage {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    padding-bottom: 24px;
+}
+
+.stage-marker {
+    position: relative;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stage-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    border: 3px solid #ddd;
+    background: white;
+    color: #7f8c8d;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.timeline-stage.current .stage-icon {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    animation: pulse 2s infinite;
+}
+
+.timeline-stage.completed .stage-icon {
+    border-color: #27ae60;
+    background: #27ae60;
+    color: white;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.6);
+    }
+}
+
+.stage-connector {
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    width: 2px;
+    height: calc(100% - 40px);
+    background: #ddd;
+}
+
+.timeline-stage.completed .stage-connector {
+    background: #27ae60;
+}
+
+.stage-content {
+    flex: 1;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.timeline-stage.current .stage-content {
+    background: #f0f4ff;
+    border-color: #667eea;
+}
+
+.timeline-stage.completed .stage-content {
+    background: #f0fdf4;
+    border-color: #27ae60;
+}
+
+.stage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.stage-header h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.stage-duration {
+    font-size: 13px;
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.stage-dates {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #555;
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 3px solid #667eea;
+}
+
+.stage-dates p {
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stage-dates strong {
+    color: #2c3e50;
+}
+
+.stage-observations {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+}
+
+.stage-observations p {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.stage-observations ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.stage-observations li {
+    font-size: 13px;
+    padding: 4px 0;
+    color: #555;
+}
+
+.timeline-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #ecf0f1;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.timeline-loading,
+.timeline-error {
+    padding: 32px;
+    text-align: center;
+    color: #7f8c8d;
+}
+
+.timeline-error {
+    color: #e74c3c;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .notebook-timeline {
+        padding: 16px;
+    }
+
+    .timeline-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .stage-content {
+        padding: 12px;
+    }
+
+    .stage-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}

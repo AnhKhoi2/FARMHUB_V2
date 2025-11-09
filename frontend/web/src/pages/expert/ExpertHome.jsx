@@ -82,7 +82,16 @@ function ExpertHome({
               <span>Garden</span>
             </button>
 
-            {/* Component 4: Analytics */}
+            {/* Component 4: Plant Templates */}
+            <button
+              className="nav-button nav-button-template"
+              onClick={() => navigate("/expert/plant-templates")}
+              title="Plant Templates"
+            >
+              <span>🌱 Templates</span>
+            </button>
+
+            {/* Component 5: Analytics */}
             <button
               className="nav-button nav-button-analytics"
               onClick={onAnalyticsClick}
