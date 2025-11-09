@@ -248,7 +248,7 @@ export default function ManagerGuides() {
           disabled={page <= 1}
           onClick={() => gotoPage(Math.max(1, page - 1))}
         >
-          &lt; Prev
+          &lt; Trước
         </button>
         <span className="mg-page-info">
           Trang {page} / {totalPages}
@@ -258,7 +258,7 @@ export default function ManagerGuides() {
           disabled={page >= totalPages}
           onClick={() => gotoPage(Math.min(totalPages, page + 1))}
         >
-          Next &gt;
+          Tiếp &gt;
         </button>
       </div>
     </div>

@@ -145,7 +145,12 @@ const Header = () => {
               <li className={currentPath.startsWith("/guides") ? "active" : ""}>
                 <Link to="/guides">Hướng Dẫn</Link>
               </li>
-
+              <li className={currentPath.startsWith("/market") ? "active" : ""}>
+                <Link to="/market">Bài Đăng</Link>
+              </li>
+              <li className={currentPath.startsWith("/experts") ? "active" : ""}>
+                <Link to="/experts">Chuyên gia</Link>
+              </li>
               <li className="user-menu">
                 {user ? (
                   <div
