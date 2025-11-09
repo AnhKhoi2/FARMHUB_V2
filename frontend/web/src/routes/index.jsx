@@ -17,7 +17,7 @@ import AdminRoute from "./admin/AdminRoute";
 import Home from "../pages/farmer/Home"; // giữ nguyên path kiểu code 1
 import ProfilePage from "../pages/auth/ProfilePage.jsx"; // <- thêm từ code 2
 import Post from "../pages/post.jsx";
-
+import ExpertsList from "../pages/expert/ExpertsList";
 // Admin Pages
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminCategories from "../pages/admin/AdminCategories";
@@ -262,7 +262,7 @@ export default function AppRoutes() {
         {/* Direct expert home route for quick access/testing */}
         <Route path="/experthome" element={<ExpertHome />} />
   <Route path="/experthome/models" element={<ExpertModels />} />
-
+  <Route path="/experts" element={<ExpertsList />} />
         <Route path="/guides/:id" element={<GuideDetail />} />
         <Route
           path="/market"

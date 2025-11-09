@@ -1,15 +1,21 @@
+/* =============== RESET =============== */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* =============== THEME VARIABLES =============== */
 :root {
-  --emerald-600: #059669;
   --emerald-700: #047857;
+  --emerald-600: #059669;
+  --emerald-300: #6ee7b7; /* added */
+  --emerald-200: #a7f3d0; /* added */
   --emerald-100: #d1fae5;
-  --emerald-50: #f0fdf4;
+  --emerald-50:  #f0fdf4;
+
   --amber-50: #fffbeb;
+
   --gray-900: #111827;
   --gray-700: #374151;
   --gray-600: #4b5563;
@@ -18,10 +24,12 @@
   --gray-300: #d1d5db;
   --gray-200: #e5e7eb;
   --gray-100: #f3f4f6;
+
   --red-500: #ef4444;
   --white: #ffffff;
 }
 
+/* =============== BASE =============== */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: linear-gradient(to bottom, var(--amber-50), var(--white));
@@ -32,7 +40,7 @@ body {
   min-height: 100vh;
 }
 
-/* Header */
+/* =============== HEADER =============== */
 .market-header {
   background: var(--white);
   border-bottom: 1px solid #e0f2fe;
@@ -73,7 +81,7 @@ body {
   background: var(--emerald-600);
   color: var(--white);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -93,7 +101,7 @@ body {
   background: var(--white);
   color: var(--gray-700);
   border: 1px solid var(--gray-300);
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -103,14 +111,14 @@ body {
   background: var(--gray-100);
 }
 
-/* Container */
+/* =============== CONTAINER =============== */
 .market-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 32px 16px;
 }
 
-/* Form Section */
+/* =============== FORM SECTIONS =============== */
 .market-form-section {
   background: var(--white);
   border: 2px solid var(--emerald-100);
@@ -167,6 +175,7 @@ body {
   font-weight: 600;
 }
 
+/* =============== FORM GROUPS & CONTROLS =============== */
 .market-form-group {
   display: flex;
   flex-direction: column;
@@ -178,29 +187,83 @@ body {
   font-size: 14px;
   font-weight: 600;
   color: var(--gray-700);
+  margin-bottom: 6px; /* tách label khỏi control */
+  line-height: 1.25;
 }
 
+/* Two-column rows (category/price, phone/email) */
+.market-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;  /* thoáng hơn một chút */
+}
+
+.market-form-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;   /* tách label và control */
+}
+
+.market-form-row label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 4px;
+}
+
+/* Controls */
 .market-form-group input,
 .market-form-group textarea,
-.market-form-group select {
+.market-form-group select,
+.market-form-row input,
+.market-form-row select {
+  height: 42px;
   padding: 10px 12px;
   border: 1px solid var(--gray-300);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  background-color: #fff;
+}
+
+.market-form-group textarea {
+  min-height: 120px; /* giữ text area cao hơn input */
+  height: auto;
+  resize: vertical;
 }
 
 .market-form-group input:focus,
 .market-form-group textarea:focus,
-.market-form-group select:focus {
+.market-form-group select:focus,
+.market-form-row input:focus,
+.market-form-row select:focus {
   outline: none;
   border-color: var(--emerald-600);
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+}
+
+/* Custom select arrow */
+.market-form-row select,
+.market-form-group select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--gray-500) 50%),
+    linear-gradient(135deg, var(--gray-500) 50%, transparent 50%),
+    linear-gradient(to right, transparent, transparent);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50%,
+    100% 0;
+  background-size: 6px 6px, 6px 6px, 2.5em 100%;
+  background-repeat: no-repeat;
+  padding-right: 40px;
 }
 
 .required {
   color: var(--red-500);
+  margin-left: 4px;
+  font-weight: 700;
 }
 
 .char-count {
@@ -208,14 +271,9 @@ body {
   color: var(--gray-500);
 }
 
-.market-form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
+/* =============== IMAGE UPLOAD =============== */
 .market-upload-box {
-  border: 2px dashed var(--emerald-300);
+  border: 2px dashed var(--emerald-300); /* dùng biến đã bổ sung */
   border-radius: 8px;
   padding: 24px;
   text-align: center;
@@ -304,6 +362,7 @@ body {
   height: 16px;
 }
 
+/* =============== FORM FOOTER =============== */
 .market-form-footer {
   background: var(--emerald-50);
   border: 1px solid var(--emerald-200);
@@ -336,16 +395,17 @@ body {
 
 .market-form-buttons button {
   flex: 1;
+  height: 44px;
   padding: 10px;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s;
 }
 
-/* Listings Section */
+/* =============== LISTINGS =============== */
 .market-listings {
   margin-top: 32px;
 }
@@ -474,7 +534,7 @@ body {
 .market-card-content h3 {
   font-weight: bold;
   color: var(--gray-900);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-size: 14px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -486,7 +546,7 @@ body {
   font-weight: bold;
   color: var(--emerald-600);
   font-size: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .market-card-location {
@@ -520,7 +580,7 @@ body {
   font-size: 18px;
 }
 
-/* Responsive */
+/* =============== RESPONSIVE =============== */
 @media (max-width: 768px) {
   .market-header-content {
     flex-direction: column;
@@ -529,6 +589,11 @@ body {
 
   .market-form-row {
     grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .market-form-row > div {
+    gap: 6px;
   }
 
   .market-images-grid {

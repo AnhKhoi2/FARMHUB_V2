@@ -1,101 +1,195 @@
-import React, { useEffect, useState } from "react";
-import "../css/post.css";
-import axiosClient from "../api/shared/axiosClient";
-import { Leaf, Upload, X, Search } from "../assets/icons"; // keep existing icons import if present
+"use client";
 
-const categories = ["Nông sản", "Hạt giống", "Phân bón", "Thiết bị", "Dịch vụ", "Khác"];
+import { useEffect, useMemo, useState } from "react";
+import axiosClient from "../api/shared/axiosClient";
+import { Leaf, Upload, X, Search } from "lucide-react";
+import "../css/post.css";
+
+// ==== Mapping UI <-> Admin Post ====
+const UI_CATEGORIES = ["Nông sản", "Hạt giống", "Phân bón", "Thiết bị", "Dịch vụ", "Khác"];
+
+function mapAdminPost(dto) {
+  // Admin post schema:
+  // { _id, title, description, phone, location(Object|String), images:[String], status, userId:{username}, createdAt }
+  const img =
+    dto?.images?.[0] ||
+    "/placeholder.svg";
+
+  return {
+    id: dto?._id,
+    title: dto?.title || "",
+    category: dto?.category || "Nông sản", // Admin Post không bắt buộc category: hiển thị tạm
+    price: dto?.price || dto?.priceText || "", // Admin Post không có price: để trống
+    location:
+      typeof dto?.location === "string"
+        ? dto.location
+        : (dto?.location?.address || dto?.location?.city || dto?.location?.province || ""),
+    image: img,
+    seller: dto?.userId?.username || "Người bán",
+    createdAt: dto?.createdAt
+      ? new Date(dto.createdAt).toLocaleString("vi-VN")
+      : new Date().toLocaleString("vi-VN"),
+    views: 0,
+    status: dto?.status || "pending",
+    _raw: dto,
+  };
+}
 
 export default function Post() {
-  // Listings + fetch
+  // ===== List & filters =====
   const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null); // Chỉ dùng cho UI filter phía client
 
-  // Form / image management
+  // ===== Form =====
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
-    category: categories[0],
+    category: "Nông sản",
     description: "",
     price: "",
     location: "",
-    contactName: "",
+    contactName: "", // Không dùng trên Admin Post, để nguyên UI
     contactPhone: "",
     contactEmail: "",
   });
-  const [uploadedImages, setUploadedImages] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]); // File[]
+  const [imagePreviews, setImagePreviews] = useState([]); // blob urls
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchListings = async () => {
+  // ===== Detail modal =====
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState(null);
+
+  // ===== Helpers =====
+  const fileToBase64 = (f) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(f);
+    });
+
+  // ===== Fetch Admin public list (then filter approved) =====
+  async function fetchListings() {
     setLoading(true);
     try {
-      const res = await axiosClient.get('/admin/managerpost/public?limit=50');
-      const data = res.data?.data?.items || res.data?.data || res.data || [];
-      setListings(data);
+      // Admin public endpoint
+      const res = await axiosClient.get("/admin/managerpost/public", {
+        params: { q: searchQuery || undefined, limit: 50 },
+      });
+
+      const raw = res?.data?.data?.items || res?.data?.data || res?.data || [];
+      // Chỉ hiển thị bài đã duyệt
+      const approved = raw.filter((x) => x?.status === "approved");
+      const items = approved.map(mapAdminPost);
+
+      // (Tùy chọn) filter category ở client theo UI chip
+      const filteredByCat =
+        selectedCategory && selectedCategory !== "Tất cả"
+          ? items.filter((it) => it.category === selectedCategory)
+          : items;
+
+      setListings(filteredByCat);
     } catch (err) {
-      console.error('Failed to load listings', err);
+      console.error(err);
+      alert("Không tải được danh sách bài đăng.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  useEffect(() => { fetchListings(); }, []);
+  useEffect(() => {
+    fetchListings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
 
+  // ===== Open detail (dùng sẵn object, không gọi admin detail vì cần quyền admin) =====
+  function openDetailFromCard(card) {
+    setDetailItem(card);
+    setDetailOpen(true);
+  }
+
+  // ===== Form handlers =====
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageUpload = (e) => {
-    const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).map((file) => URL.createObjectURL(file));
-      setUploadedImages((prev) => [...prev, ...newImages].slice(0, 5));
-    }
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const next = [...imageFiles, ...files].slice(0, 5);
+    setImageFiles(next);
+    setImagePreviews(next.map((f) => URL.createObjectURL(f)));
   };
 
-  const removeImage = (index) => {
-    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = (idx) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== idx));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const isFormValid = formData.title && formData.price && formData.location && formData.contactName;
+  const isFormValid = !!formData.title;
 
+  // ===== Submit to Admin Post (pending) =====
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
+    if (!isFormValid) return;
 
-    // Try to post to backend; backend currently expects image URLs.
-    // Since we don't have an upload endpoint here, fallback to client-side mock like market.jsx
+    setSubmitting(true);
     try {
-      // Attempt to post — will work if you have server-side upload handling that accepts images as URLs
-      await axiosClient.post('/admin/managerpost', {
-        ...formData,
-        images: uploadedImages,
-      });
-      // Refetch listings if server responded OK
-      await fetchListings();
-      alert('Bài đăng đã được gửi.');
-    } catch (err) {
-      // Fallback: local mock (same behavior as market.jsx)
-      console.warn('Posting to server failed, using local mock:', err?.message || err);
-      const newListing = {
-        _id: String(listings.length + 1),
+      // convert images -> base64 (Admin schema images: [String])
+      const imagesBase64 = await Promise.all(imageFiles.map(fileToBase64));
+
+      // Admin Post.create expects:
+      // { title, description, phone, location(Object|String), images:[String] }
+      // + req.user from verifyToken => userId
+      const payload = {
         title: formData.title,
-        category: formData.category,
-        price: formData.price,
-        location: formData.location,
-        images: uploadedImages,
-        userId: { username: formData.contactName },
-        createdAt: new Date().toISOString(),
+        description: formData.description || "",
+        phone: formData.contactPhone || "",
+        location: formData.location || "",
+        images: imagesBase64, // có thể để [] nếu không có ảnh
       };
-      setListings((prev) => [newListing, ...prev]);
-      alert('Bài đăng (local) đã được tạo.');
+
+      await axiosClient.post("/admin/managerpost", payload);
+
+      alert("Bài đã gửi và đang chờ duyệt bởi Admin.");
+      // Reset form
+      setFormData({
+        title: "",
+        category: "Nông sản",
+        description: "",
+        price: "",
+        location: "",
+        contactName: "",
+        contactPhone: "",
+        contactEmail: "",
+      });
+      setImageFiles([]);
+      setImagePreviews([]);
+      setShowForm(false);
+
+      // reload list (vẫn chỉ thấy approved, nên bài mới sẽ chưa hiện)
+      fetchListings();
+    } catch (err) {
+      console.error(err);
+      if (err?.response?.status === 401) alert("Bạn cần đăng nhập để đăng bài.");
+      else alert(err?.response?.data?.message || "Gửi bài thất bại.");
     } finally {
       setSubmitting(false);
-      setFormData({ title: "", category: categories[0], description: "", price: "", location: "", contactName: "", contactPhone: "", contactEmail: "" });
-      setUploadedImages([]);
-      setShowForm(false);
     }
   };
+
+  // ===== Client-side quick filter by text =====
+  const filteredListings = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return listings;
+    return listings.filter(
+      (l) => l.title.toLowerCase().includes(q) || l.seller.toLowerCase().includes(q)
+    );
+  }, [listings, searchQuery]);
 
   return (
     <main className="market-main">
@@ -106,67 +200,61 @@ export default function Post() {
             <h1>Bài viết</h1>
           </div>
           <button onClick={() => setShowForm(!showForm)} className="market-btn-primary">
-            {showForm ? 'Ẩn form' : 'Đăng bài'}
+            {showForm ? "Ẩn form" : "Đăng bài"}
           </button>
         </div>
       </header>
 
       <div className="market-container">
+        {/* ===== Form ===== */}
         {showForm && (
           <div className="market-form-section">
             <h2>Đăng bài</h2>
-            <p className="market-form-desc">Chia sẻ sản phẩm hoặc dịch vụ nông nghiệp của bạn</p>
+            <p className="market-form-desc">Bài gửi sẽ vào trạng thái “chờ duyệt”.</p>
 
             <form onSubmit={handleSubmit} className="market-form">
               <section className="market-form-section-part">
-                <h3>
-                  <span className="market-step">1</span> Thông tin cơ bản
-                </h3>
+                <h3><span className="market-step">1</span> Thông tin cơ bản</h3>
                 <div className="market-form-group">
-                  <label>
-                    Tiêu đề <span className="required">*</span>
-                  </label>
+                  <label>Tiêu đề <span className="required">*</span></label>
                   <input
                     type="text"
                     name="title"
-                    placeholder="vd: Lúa mì giống F1 chất lượng cao"
+                    placeholder="vd: Bán khay trồng rau"
                     value={formData.title}
                     onChange={handleInputChange}
-                    maxLength={100}
+                    maxLength={120}
                     required
                   />
-                  <p className="char-count">{formData.title.length}/100</p>
+                  <p className="char-count">{formData.title.length}/120</p>
                 </div>
+
                 <div className="market-form-row">
                   <div>
                     <label>Danh mục</label>
                     <select name="category" value={formData.category} onChange={handleInputChange}>
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
+                      {UI_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label>
-                      Giá <span className="required">*</span>
-                    </label>
+                    <label>Giá</label>
                     <input
                       type="text"
                       name="price"
-                      placeholder="vd: 150.000 VNĐ"
+                      placeholder="vd: 150.000 VNĐ (tuỳ chọn)"
                       value={formData.price}
                       onChange={handleInputChange}
-                      required
                     />
                   </div>
                 </div>
+
                 <div className="market-form-group">
                   <label>Mô tả chi tiết</label>
                   <textarea
                     name="description"
-                    placeholder="Mô tả tính năng, chất lượng..."
+                    placeholder="Mô tả tình trạng, quy cách, ghi chú..."
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={4}
@@ -174,41 +262,36 @@ export default function Post() {
                   />
                   <p className="char-count">{formData.description.length}/2000</p>
                 </div>
+
                 <div className="market-form-group">
-                  <label>
-                    Địa điểm <span className="required">*</span>
-                  </label>
+                  <label>Địa điểm</label>
                   <input
                     type="text"
                     name="location"
-                    placeholder="vd: Hà Nội"
+                    placeholder="vd: Hà Nội, Cầu Giấy"
                     value={formData.location}
                     onChange={handleInputChange}
-                    required
                   />
                 </div>
               </section>
 
               <section className="market-form-section-part">
-                <h3>
-                  <span className="market-step">2</span> Hình ảnh
-                </h3>
-                {uploadedImages.length < 5 && (
+                <h3><span className="market-step">2</span> Hình ảnh</h3>
+                {imagePreviews.length < 5 && (
                   <div className="market-upload-box">
-                    <input type="file" multiple accept="image/*" onChange={handleImageUpload} id="image-upload" />
+                    <input id="image-upload" type="file" multiple accept="image/*" onChange={handleImageUpload} />
                     <label htmlFor="image-upload">
                       <Upload className="market-icon-upload" />
-                      <p>Kéo ảnh vào hoặc bấm để chọn</p>
-                      <p className="small">PNG, JPG tối đa 5MB</p>
+                      <p>Kéo ảnh vào hoặc bấm để chọn (tối đa 5 ảnh)</p>
                     </label>
                   </div>
                 )}
-                {uploadedImages.length > 0 && (
+                {imagePreviews.length > 0 && (
                   <div className="market-images-grid">
-                    {uploadedImages.map((image, index) => (
-                      <div key={index} className="market-image-item">
-                        <img src={image || "/placeholder.svg"} alt={`Preview ${index + 1}`} />
-                        <button type="button" onClick={() => removeImage(index)} className="market-remove-img">
+                    {imagePreviews.map((img, i) => (
+                      <div key={i} className="market-image-item">
+                        <img src={img || "/placeholder.svg"} alt={`Preview ${i + 1}`} />
+                        <button type="button" onClick={() => removeImage(i)} className="market-remove-img">
                           <X className="market-icon-small" />
                         </button>
                       </div>
@@ -218,20 +301,15 @@ export default function Post() {
               </section>
 
               <section className="market-form-section-part">
-                <h3>
-                  <span className="market-step">3</span> Thông tin liên hệ
-                </h3>
+                <h3><span className="market-step">3</span> Liên hệ</h3>
                 <div className="market-form-group">
-                  <label>
-                    Tên liên hệ <span className="required">*</span>
-                  </label>
+                  <label>Tên liên hệ</label>
                   <input
                     type="text"
                     name="contactName"
-                    placeholder="Nhập tên của bạn"
+                    placeholder="Tên của bạn (tuỳ chọn)"
                     value={formData.contactName}
                     onChange={handleInputChange}
-                    required
                   />
                 </div>
                 <div className="market-form-row">
@@ -240,7 +318,7 @@ export default function Post() {
                     <input
                       type="tel"
                       name="contactPhone"
-                      placeholder="0987654321"
+                      placeholder="0987xxxxxx"
                       value={formData.contactPhone}
                       onChange={handleInputChange}
                     />
@@ -264,7 +342,7 @@ export default function Post() {
                   <label htmlFor="terms">Tôi xác nhận bài đăng tuân thủ chính sách bài viết</label>
                 </div>
                 <div className="market-form-buttons">
-                  <button type="reset" className="market-btn-secondary">
+                  <button type="button" className="market-btn-secondary" onClick={() => setShowForm(false)}>
                     Hủy
                   </button>
                   <button type="submit" disabled={!isFormValid || submitting} className="market-btn-primary">
@@ -276,28 +354,134 @@ export default function Post() {
           </div>
         )}
 
+        {/* ===== List ===== */}
         <div className="market-listings">
           <h2>Bài rao vặt</h2>
-          <div className="market-grid">
-            {loading ? <div>Đang tải...</div> : listings.map((listing) => (
-              <div key={listing._id || listing.id} className="market-card">
-                <div className="market-card-image">
-                  <img src={listing.images?.[0] || listing.image || "/placeholder.svg"} alt={listing.title} />
-                </div>
-                <div className="market-card-content">
-                  <h3>{listing.title}</h3>
-                  <p className="market-card-price">{listing.price}</p>
-                  <p className="market-card-location">{listing.location?.address || listing.location}</p>
-                  <div className="market-card-footer">
-                    <small>{new Date(listing.createdAt).toLocaleString()}</small>
-                    <button className="market-btn-primary">Chi tiết</button>
-                  </div>
-                </div>
-              </div>
+
+          <div className="market-search-filter">
+            <div className="market-search">
+              <Search className="market-icon-small" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm bài đăng..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") fetchListings();
+                }}
+              />
+              <button className="market-btn-primary" style={{ marginLeft: 8 }} onClick={fetchListings}>
+                Tìm
+              </button>
+            </div>
+          </div>
+
+          <div className="market-category-pills">
+            <button onClick={() => setSelectedCategory(null)} className={selectedCategory === null ? "active" : ""}>
+              Tất cả
+            </button>
+            {UI_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={selectedCategory === cat ? "active" : ""}
+              >
+                {cat}
+              </button>
             ))}
           </div>
+
+          {loading ? (
+            <div className="market-empty"><p>Đang tải...</p></div>
+          ) : (
+            <div className="market-grid">
+              {filteredListings.length > 0 ? (
+                filteredListings.map((listing) => (
+                  <div key={listing.id} className="market-card">
+                    <div className="market-card-image">
+                      <img src={listing.image || "/placeholder.svg"} alt={listing.title} />
+                      <div className="market-card-category">{listing.category}</div>
+                    </div>
+                    <div className="market-card-content">
+                      <h3>{listing.title}</h3>
+                      <p className="market-card-price">{listing.price}</p>
+                      <p className="market-card-location">{listing.location}</p>
+                      <p className="market-card-date">{listing.createdAt}</p>
+                      <div className="market-card-footer">
+                        <span>{listing.seller}</span>
+                        <span>{listing.views} lượt xem</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 d-flex justify-content-between">
+                      <button className="btn btn-sm btn-success" onClick={() => openDetailFromCard(listing)}>
+                        Chi tiết
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="market-empty"><p>Không tìm thấy bài đăng nào</p></div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* ===== Detail Modal (dùng data sẵn có) ===== */}
+      {detailOpen && detailItem && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            zIndex: 2100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setDetailOpen(false)}
+        >
+          <div
+            style={{ width: 680, maxWidth: "94vw", background: "#fff", borderRadius: 8, overflow: "hidden" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex align-items-center justify-content-between p-3 border-bottom">
+              <h5 className="mb-0">{detailItem.title}</h5>
+              <button className="btn btn-sm btn-outline-secondary" onClick={() => setDetailOpen(false)}>
+                Đóng
+              </button>
+            </div>
+
+            <div className="p-3">
+              <div style={{ width: "100%", height: 320, overflow: "hidden", borderRadius: 6 }}>
+                <img
+                  src={detailItem.image}
+                  alt={detailItem.title}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+
+              <div className="mt-3">
+                <div className="d-flex gap-3 flex-wrap">
+                  <div><strong>Danh mục:</strong> {detailItem.category}</div>
+                  <div><strong>Giá:</strong> {detailItem.price}</div>
+                  <div><strong>Địa điểm:</strong> {detailItem.location}</div>
+                  <div><strong>Ngày:</strong> {detailItem.createdAt}</div>
+                  <div><strong>Liên hệ:</strong> {detailItem.seller}</div>
+                </div>
+
+                {detailItem?._raw?.description && (
+                  <div className="mt-2">
+                    <strong>Mô tả:</strong>
+                    <div style={{ whiteSpace: "pre-wrap" }}>{detailItem._raw.description}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
