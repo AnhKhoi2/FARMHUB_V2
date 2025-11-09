@@ -1,9 +1,9 @@
-import 'dotenv/config';
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import {connectDB} from "./config/db.js";
+import { connectDB } from "./config/db.js";
 import authRoute from "./routes/auth.js";
 import profileRoute from "./routes/profile.js";
 import diseaseRoutes from "./routes/diseases.js";
@@ -17,18 +17,21 @@ import notebooksRoute from "./routes/notebooks.js";
 import usersRoute from "./routes/users.js";
 // import expertApplicationRoutes from "./routes/expertApplicationRoutes.js";
 import expertRoutes from "./routes/expert.routes.js";
+import plantTemplateRoutes from "./routes/plantTemplates.js";
+import uploadRoutes from "./routes/upload.js";
+import collectionsRoute from "./routes/collections.js";
+import path from "path";
+import { fileURLToPath } from "url";
 import modelsRoutes from "./routes/models.js";
 import layoutsRoutes from "./routes/layouts.js";
 import postRoutes from "./routes/post.js";
-import path from "path";
-import { fileURLToPath } from 'url';
 import expertApplicationsRouter from "./routes/expertApplications.js";
 
 const PORT = process.env.PORT || 5000;
 
 const app = express();
 
-connectDB()
+connectDB();
 
 // Middleware
 // Allow the frontend dev server (supports multiple dev ports and an env override)
@@ -62,6 +65,9 @@ app.use("/admin/users", usersRoute);
 app.use("/api/expert-applications", expertApplicationsRouter);
 
 app.use("/api/experts", expertRoutes);
+app.use("/api/plant-templates", plantTemplateRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/collections", collectionsRoute);
 app.use("/admin/models", modelsRoutes);
 app.use("/layouts", layoutsRoutes);
 // new primary path
@@ -71,8 +77,7 @@ app.use("/admin/managerpost", postRoutes);
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });
-

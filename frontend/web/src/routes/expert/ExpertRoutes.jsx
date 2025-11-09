@@ -2,6 +2,9 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import ExpertHome from "../../pages/expert/ExpertHome"; // corrected path to pages
+import PlantTemplateManager from "../../pages/expert/PlantTemplateManager";
+import PlantTemplateForm from "../../pages/expert/PlantTemplateForm";
+import PlantTemplateDetail from "../../pages/expert/PlantTemplateDetail";
 
 export default function ExpertRoutes() {
   return (
@@ -11,6 +14,18 @@ export default function ExpertRoutes() {
 
       {/* /expert/home */}
       <Route path="home" element={<ExpertHome />} />
+
+      {/* Plant Template Management */}
+      <Route path="plant-templates" element={<PlantTemplateManager />} />
+      <Route
+        path="plant-templates/create"
+        element={<PlantTemplateForm mode="create" />}
+      />
+      <Route path="plant-templates/:id" element={<PlantTemplateDetail />} />
+      <Route
+        path="plant-templates/edit/:id"
+        element={<PlantTemplateForm mode="edit" />}
+      />
 
       {/* mọi path lạ dưới /expert → /expert/home */}
       <Route path="*" element={<Navigate to="home" replace />} />

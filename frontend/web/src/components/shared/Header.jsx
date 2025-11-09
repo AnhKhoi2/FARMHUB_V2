@@ -110,7 +110,10 @@ const Header = () => {
               </li>
               <li
                 className={`has-submenu ${
-                  currentPath.startsWith("/my-garden") ? "active" : ""
+                  currentPath.startsWith("/my-garden") ||
+                  currentPath.startsWith("/farmer/notebooks")
+                    ? "active"
+                    : ""
                 }`}
               >
                 <span
@@ -127,10 +130,10 @@ const Header = () => {
                   }`}
                 >
                   <li>
-                    <Link to="/my-garden">Nhật ký cơ bản</Link>
+                    <Link to="/farmer/notebooks">Nhật ký cơ bản</Link>
                   </li>
                   <li>
-                    <Link to="/my-garden/advanced">Nhật ký nâng cao</Link>
+                    <Link to="/farmer/collections">Bộ sưu tập</Link>
                   </li>
                 </ul>
               </li>
