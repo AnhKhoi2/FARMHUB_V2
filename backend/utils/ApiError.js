@@ -1,14 +1,17 @@
 // src/utils/ApiError.js
 class ApiError extends Error {
-  constructor(statusCode, message) {
+  constructor(statusCode, code, message, details) {
     super(message);
     this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.code = code;
+    this.details = details;
+    this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
     this.isOperational = true;
 
     Error.captureStackTrace(this, this.constructor);
   }
 }
+
 
 export default ApiError;
 
