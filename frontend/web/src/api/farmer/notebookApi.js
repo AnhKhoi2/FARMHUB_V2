@@ -12,6 +12,13 @@ const notebookApi = {
 
   deleteNotebook: (id) => api.delete(`/notebooks/${id}`),
 
+  // Soft Delete Management
+  restoreNotebook: (id) => api.post(`/notebooks/${id}/restore`),
+
+  getDeletedNotebooks: () => api.get("/notebooks/deleted"),
+
+  permanentDeleteNotebook: (id) => api.delete(`/notebooks/${id}/permanent`),
+
   // Search & Filter
   searchNotebooks: (keyword) =>
     api.get("/notebooks/search", { params: { keyword } }),

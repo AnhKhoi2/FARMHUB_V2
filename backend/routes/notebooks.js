@@ -10,6 +10,7 @@ router.use(verifyToken);
 // Tìm kiếm và lọc - ĐẶT TRƯỚC route /:id
 router.get("/search", notebookController.searchNotebooks);
 router.get("/filter", notebookController.filterNotebooks);
+router.get("/deleted", notebookController.getDeletedNotebooks);
 
 // CRUD cơ bản
 router.get("/", notebookController.getAllByUser);
@@ -18,8 +19,16 @@ router.post("/", notebookController.createNotebook);
 router.put("/:id", notebookController.updateNotebook);
 router.delete("/:id", notebookController.deleteNotebook);
 
+// Soft delete management
+router.post("/:id/restore", notebookController.restoreNotebook);
+router.delete("/:id/permanent", notebookController.permanentDeleteNotebook);
+
 // Migration endpoint (admin/debug)
 router.post("/migrate/completed-tasks", notebookController.migrateNotebooks);
+
+// Stage monitoring endpoints
+router.get("/monitor/all", notebookController.monitorAllNotebooks);
+router.get("/:id/monitor", notebookController.checkSingleNotebook);
 
 // Quản lý ảnh
 router.post("/:id/images", notebookController.addImage);

@@ -75,7 +75,7 @@ function ExpertHome({
             {/* Component 3: Dashboard */}
             <button
               className="nav-button nav-button-dashboard"
-              onClick={() => navigate('/experthome/models')}
+              onClick={() => navigate("/experthome/models")}
               title="Mô hình trồng"
             >
               <Leaf size={20} />
@@ -88,7 +88,7 @@ function ExpertHome({
               onClick={() => navigate("/expert/plant-templates")}
               title="Plant Templates"
             >
-              <span>🌱 Templates</span>
+              <span>Bộ Mẫu Cây Trồng</span>
             </button>
 
             {/* Component 5: Analytics */}
@@ -137,9 +137,9 @@ function ExpertHome({
                       className="profile-avatar"
                     />
                     <div className="profile-info">
-              <p className="profile-name">{mockProfile.name}</p>
-                <p className="profile-email">{mockProfile.email}</p>
-                <p className="profile-role">{mockProfile.role}</p>
+                      <p className="profile-name">{mockProfile.name}</p>
+                      <p className="profile-email">{mockProfile.email}</p>
+                      <p className="profile-role">{mockProfile.role}</p>
                     </div>
                   </div>
 
