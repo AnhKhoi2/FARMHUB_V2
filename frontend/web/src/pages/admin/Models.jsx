@@ -6,6 +6,9 @@ import axiosClient from "../../api/shared/axiosClient";
 export default function AdminModels() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [current, setCurrent] = useState(null);
@@ -13,14 +16,19 @@ export default function AdminModels() {
   const [layouts, setLayouts] = useState([]);
   const [showTrash, setShowTrash] = useState(false);
 
-  const fetchItems = async () => {
+  const fetchItems = async (p = page) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set('limit', '50');
+      params.set('limit', String(limit));
+      params.set('page', String(p));
       const res = await axiosClient.get(`/admin/models?${params.toString()}`);
-      const items = res.data?.data?.items || res.data?.items || res.data?.data || [];
+      const data = res.data?.data || res.data || {};
+      const items = data.items || data.docs || res.data?.items || [];
+      const tot = data.total || data.meta?.total || (data.meta?.pages ? data.meta.pages * limit : items.length);
       setItems(items);
+      setTotal(Number(tot || 0));
+      setPage(Number(p));
     } catch (err) {
       console.error(err);
     } finally {
@@ -28,7 +36,7 @@ export default function AdminModels() {
     }
   };
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => { fetchItems(page); }, [page]);
 
   useEffect(() => {
     let mounted = true;
@@ -84,6 +92,7 @@ export default function AdminModels() {
               <table className="table table-hover mb-0">
                 <thead className="table-light">
                   <tr>
+                    <th style={{width:60}}>STT</th>
                     <th>ID</th>
                     <th>Diện tích</th>
                     <th>Đất</th>
@@ -95,13 +104,14 @@ export default function AdminModels() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={7}>Đang tải...</td></tr>
+                    <tr><td colSpan={8}>Đang tải...</td></tr>
                   ) : items.length === 0 ? (
-                    <tr><td colSpan={7}>Chưa có bản ghi</td></tr>
+                    <tr><td colSpan={8}>Chưa có bản ghi</td></tr>
                   ) : (
                     items.map((it, idx) => (
                       <tr key={it._id}>
-                          <td title={it._id} style={{ fontFamily: 'monospace' }}>{String(idx + 1).padStart(2, '0')}</td>
+                          <td className="small text-muted">{(page - 1) * limit + idx + 1}</td>
+                          <td title={it._id} style={{ fontFamily: 'monospace' }}>{it._id}</td>
                           <td>{it.area}</td>
                           <td>{it.soil}</td>
                           <td>{it.climate}</td>
@@ -145,6 +155,41 @@ export default function AdminModels() {
               </table>
             </div>
           </div>
+        </div>
+
+        {/* Pagination controls */}
+        <div className="d-flex justify-content-between align-items-center mt-2">
+          <div className="text-muted small">Tổng: {total} mục</div>
+          <nav>
+            <ul className="pagination pagination-sm mb-0">
+              {(() => {
+                const totalPages = Math.max(1, Math.ceil(total / limit));
+                const pages = [];
+                let start = Math.max(1, page - 2);
+                let end = Math.min(totalPages, page + 2);
+                if (start > 1) { pages.push(1); if (start > 2) pages.push('...'); }
+                for (let p = start; p <= end; p++) pages.push(p);
+                if (end < totalPages) { if (end < totalPages - 1) pages.push('...'); pages.push(totalPages); }
+                return [
+                  <li key="prev" className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => page > 1 && setPage(page - 1)}>Prev</button>
+                  </li>,
+                  pages.map((p, i) => (
+                    typeof p === 'number' ? (
+                      <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
+                        <button className="page-link" onClick={() => setPage(p)}>{p}</button>
+                      </li>
+                    ) : (
+                      <li key={`dot-${i}`} className="page-item disabled"><span className="page-link">{p}</span></li>
+                    )
+                  )),
+                  <li key="next" className={`page-item ${page >= totalPages ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => page < totalPages && setPage(page + 1)}>Next</button>
+                  </li>
+                ];
+              })()}
+            </ul>
+          </nav>
         </div>
 
         {showCreate && (

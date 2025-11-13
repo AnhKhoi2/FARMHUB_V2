@@ -64,8 +64,15 @@ import ExpertRoutes from "./expert/ExpertRoutes.jsx";
 // Trang Experts bạn đã copy (đặt ở đâu thì chỉnh import tương ứng)
 import ExpertContent from "../pages/ExpertContent.jsx";
 import AIChatWidget from "../components/shared/AIChatWidget";
+import { useLocation } from 'react-router-dom';
 
 export default function AppRoutes() {
+  function ChatWrapper() {
+    const location = useLocation();
+    // don't show chat widget on admin paths
+    if (location.pathname && location.pathname.startsWith('/admin')) return null;
+    return <AIChatWidget />;
+  }
   return (
     <BrowserRouter>
       <Routes>
@@ -397,8 +404,8 @@ export default function AppRoutes() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-      {/* Global AI chat widget (floating) */}
-      <AIChatWidget />
+      {/* Global AI chat widget (floating) - hidden on /admin */}
+      <ChatWrapper />
     </BrowserRouter>
   );
 }
