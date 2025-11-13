@@ -4,7 +4,7 @@ import PortalModal from "./PortalModal";
 export default function StreakPopup({ streak, onClose }) {
   if (!streak) return null;
 
-  const { current_streak, pointsAwarded, milestone, total_points } = streak;
+  const { current_streak, pointsAwarded, milestone, total_points, badgesAwarded } = streak;
 
   return (
     <PortalModal onClose={onClose}>
@@ -21,6 +21,31 @@ export default function StreakPopup({ streak, onClose }) {
         )}
         {pointsAwarded > 0 && (
           <div className="alert alert-success">Bạn nhận được +{pointsAwarded} điểm!</div>
+        )}
+
+        {Array.isArray(badgesAwarded) && badgesAwarded.length > 0 && (
+          <div className="mt-2">
+            <strong>Bạn vừa nhận được danh hiệu:</strong>
+            <ul className="streak-badges-list">
+              {badgesAwarded.map((b) => (
+                <li key={b}>{
+                  // friendly label mapping
+                  ({
+                    "hat-giong": "Hạt Giống",
+                    "mam-non": "Mầm Non",
+                    "cay-con": "Cây Con",
+                    "re-ben": "Rễ Bền",
+                    "tan-la": "Tán Lá",
+                    "dom-nu": "Đơm Nụ",
+                    "ket-trai": "Kết Trái",
+                    "ket-trai-2": "Kết Trái",
+                    "co-thu": "Cổ Thụ",
+                    "coi-nguon": "Cội Nguồn",
+                  }[b] || b)
+                }</li>
+              ))}
+            </ul>
+          </div>
         )}
         <div>Tổng điểm hiện tại: <strong>{total_points}</strong></div>
       </div>
