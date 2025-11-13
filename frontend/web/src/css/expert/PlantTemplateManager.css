@@ -865,10 +865,10 @@
     box-shadow: 0 8px 24px rgba(244, 67, 54, 0.5);
 }
 
-/* Remove old card sections that are no longer needed */
-.card-header,
-.card-body,
-.card-footer {
+/* Remove old card sections inside template-card only (avoid hiding global .card-* used by Admin) */
+.template-card .card-header,
+.template-card .card-body,
+.template-card .card-footer {
     display: none;
 }
 

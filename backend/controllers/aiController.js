@@ -33,7 +33,8 @@ export const aiController = {
       console.error('aiController.chat error', { message: err?.message, stack: err?.stack });
       // If AI provider fails, return a helpful mock response instead of 500 so frontend chat still works.
       const mockText = 'Xin lỗi, hiện tại dịch vụ AI bên ngoài không khả dụng. Đây là phản hồi giả để phát triển: hãy kiểm tra cây trồng, giảm độ ẩm, và kiểm tra các triệu chứng điển hình của nấm. Nếu bạn muốn kết quả chính xác hơn, hãy cấu hình đúng GEMINI_API_URL/GEMINI_API_KEY.';
-      return ok(res, { result: { text: mockText, structured: null, provider: 'mock' } });
+      // Provide a fallback shape with cause/treatment so frontend can always read these fields
+      return ok(res, { result: { text: mockText, structured: null, cause: '', treatment: mockText, provider: 'mock' } });
     }
   }),
 };

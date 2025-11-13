@@ -8,6 +8,8 @@ import authRoute from "./routes/auth.js";
 import profileRoute from "./routes/profile.js";
 import diseaseRoutes from "./routes/diseases.js";
 import diseaseCategoryRoutes from "./routes/diseaseCategories.js";
+import publicDiseases from "./routes/publicDiseases.js";
+import publicDiseaseCategories from "./routes/publicDiseaseCategories.js";
 import streakRoutes from "./routes/streaks.js";
 import aiRoutes from "./routes/ai.js";
 import weatherRoutes from "./routes/weather.js";
@@ -62,6 +64,9 @@ app.use("/auth", authRoute);
 app.use("/profile", profileRoute);
 app.use("/admin/diseases", diseaseRoutes);
 app.use("/admin/disease-categories", diseaseCategoryRoutes);
+// Public (user-facing) endpoints without /admin prefix
+app.use("/diseases", publicDiseases);
+app.use("/disease-categories", publicDiseaseCategories);
 app.use("/admin/streaks", streakRoutes);
 app.use("/ai", aiRoutes);
 app.use("/admin/weather", weatherRoutes);

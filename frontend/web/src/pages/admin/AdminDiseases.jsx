@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "../../components/AdminLayout";
 import PortalModal from "../../components/shared/PortalModal";
 import axiosClient from "../../api/shared/axiosClient";
+import "../../css/admin/AdminDiseases.css";
 
 export default function AdminDiseases() {
   const [items, setItems] = useState([]);
@@ -14,11 +15,17 @@ export default function AdminDiseases() {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await axiosClient.get("/admin/diseases?limit=20");
-      const items = res.data?.data?.items || res.data?.items || [];
+      console.log("Fetching diseases...");
+      const res = await axiosClient.get("/admin/diseases?limit=100");
+      console.log("Diseases response:", res.data);
+      
+      // Response structure: { success: true, data: { items: [...], total: ..., page: ..., limit: ... } }
+      const items = res.data?.data?.items || [];
+      console.log("Diseases items:", items);
       setItems(items);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching diseases:", err);
+      console.error("Error response:", err.response?.data);
     } finally {
       setLoading(false);
     }
@@ -49,66 +56,71 @@ export default function AdminDiseases() {
   return (
     <AdminLayout>
       <div className="container-fluid">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h3>Diseases</h3>
-          <button className="btn btn-sm btn-primary" onClick={() => setShowCreate(true)}>Add disease</button>
-        </div>
-
-        <div className="card">
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-hover mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Plant types</th>
-                    <th>Severity</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan={5}>Loading...</td></tr>
-                  ) : items.length === 0 ? (
-                    <tr><td colSpan={5}>No records</td></tr>
-                  ) : (
-                    items.map((it) => (
-                      <tr key={it._id}>
-                        <td>{it.name}</td>
-                        <td>{it.category}</td>
-                        <td>{(it.plantTypes || []).join(", ")}</td>
-                        <td>{it.severity}</td>
-                        <td>
-                          <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setCurrent(it); setShowEdit(true); }}>Edit</button>
-                          <button className="btn btn-sm btn-outline-danger" onClick={() => { setCurrent(it); setShowConfirm(true); }}>Delete</button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+        <div className="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h2 className="h5 mb-0">Bệnh</h2>
+            <small className="text-muted">Quản lý danh sách bệnh</small>
+          </div>
+          <div>
+            <button className="btn btn-sm btn-primary" onClick={() => setShowCreate(true)}>Thêm bệnh</button>
           </div>
         </div>
 
-        {showCreate && (
-          <PortalModal onClose={() => setShowCreate(false)}>
-            <DiseaseModal title="Create Disease" onClose={() => setShowCreate(false)} onSubmit={handleCreate} />
-          </PortalModal>
-        )}
+        <div className="table-responsive bg-white shadow-sm rounded border">
+          <table className="table table-sm table-hover mb-0">
+            <thead className="table-light">
+              <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Plant types</th>
+                <th>Severity</th>
+                <th style={{width:150}}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && (
+                <tr><td colSpan={5} className="text-center py-4">Đang tải...</td></tr>
+              )}
+              {!loading && items.length === 0 && (
+                <tr><td colSpan={5} className="text-center py-4">Không có dữ liệu</td></tr>
+              )}
+              {!loading && items.map(it => (
+                <tr key={it._id}>
+                  <td>
+                    <button className="btn btn-link btn-sm p-0" onClick={() => { setCurrent(it); setShowEdit(true); }}>{it.name}</button>
+                  </td>
+                  <td className="small">{it.category}</td>
+                  <td className="small">{(it.plantTypes || []).join(', ')}</td>
+                  <td className="small">{it.severity}</td>
+                  <td>
+                    <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setCurrent(it); setShowEdit(true); }}>Edit</button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => { setCurrent(it); setShowConfirm(true); }}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        {showEdit && current && (
-          <PortalModal onClose={() => { setShowEdit(false); setCurrent(null); }}>
-            <DiseaseModal title="Edit Disease" initial={current} onClose={() => { setShowEdit(false); setCurrent(null); }} onSubmit={(data) => handleEdit(current._id, data)} />
-          </PortalModal>
-        )}
+        <div className="mt-3">
+          {showCreate && (
+            <PortalModal onClose={() => setShowCreate(false)}>
+              <DiseaseModal title="Create Disease" onClose={() => setShowCreate(false)} onSubmit={handleCreate} />
+            </PortalModal>
+          )}
 
-        {showConfirm && current && (
-          <PortalModal onClose={() => { setShowConfirm(false); setCurrent(null); }}>
-            <ConfirmModal title="Delete disease" message={`Bạn có chắc muốn xóa "${current.name}" không?`} onCancel={() => { setShowConfirm(false); setCurrent(null); }} onConfirm={() => handleDelete(current._id)} />
-          </PortalModal>
-        )}
+          {showEdit && current && (
+            <PortalModal onClose={() => { setShowEdit(false); setCurrent(null); }}>
+              <DiseaseModal title="Edit Disease" initial={current} onClose={() => { setShowEdit(false); setCurrent(null); }} onSubmit={(data) => handleEdit(current._id, data)} />
+            </PortalModal>
+          )}
+
+          {showConfirm && current && (
+            <PortalModal onClose={() => { setShowConfirm(false); setCurrent(null); }}>
+              <ConfirmModal title="Delete disease" message={`Bạn có chắc muốn xóa "${current.name}" không?`} onCancel={() => { setShowConfirm(false); setCurrent(null); }} onConfirm={() => handleDelete(current._id)} />
+            </PortalModal>
+          )}
+        </div>
       </div>
     </AdminLayout>
   );
@@ -169,7 +181,7 @@ function DiseaseModal({ title, initial = {}, onClose, onSubmit }) {
 
 function ConfirmModal({ title, message, onCancel, onConfirm }) {
   return (
-    <div>
+    <div className="confirm-modal">
       <div className="modal-header">
         <h5 className="modal-title">{title}</h5>
         <button type="button" className="btn-close" aria-label="Close" onClick={onCancel}></button>
@@ -178,8 +190,8 @@ function ConfirmModal({ title, message, onCancel, onConfirm }) {
         <p>{message}</p>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onCancel}>Cancel</button>
-        <button className="btn btn-sm btn-danger" onClick={onConfirm}>Delete</button>
+        <button className="btn btn-cancel" onClick={onCancel}>Cancel</button>
+        <button className="btn btn-confirm" onClick={onConfirm}>Delete</button>
       </div>
     </div>
   );
