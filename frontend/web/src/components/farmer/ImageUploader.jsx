@@ -34,19 +34,36 @@ const ImageUploader = ({ onImageSelect, currentImage, label = "Chọn ảnh" }) 
       const formData = new FormData();
       formData.append("image", file);
 
+      // Support both accessToken (new) and token (legacy)
+      const authToken =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+      if (!authToken) {
+        alert("Bạn cần đăng nhập để upload ảnh");
+        setPreview(null);
+        setUploading(false);
+        return;
+      }
+
       const response = await fetch("http://localhost:5000/api/upload", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        headers: authToken
+          ? {
+              Authorization: `Bearer ${authToken}`,
+            }
+          : {},
         body: formData,
       });
 
+      const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error("Upload failed");
+        // Provide more detailed error to help debugging
+        const serverMsg = data?.message || data?.error || response.statusText;
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(serverMsg || "Unauthorized - please login");
+        }
+        throw new Error(serverMsg || `Upload failed (${response.status})`);
       }
-
-      const data = await response.json();
       const imageUrl = data.data?.url || data.url;
 
       // Ensure full URL for display

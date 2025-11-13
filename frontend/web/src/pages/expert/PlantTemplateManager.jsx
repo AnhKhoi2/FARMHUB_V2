@@ -27,7 +27,6 @@ const PlantTemplateManager = () => {
     { value: "all", label: "Tất cả trạng thái" },
     { value: "draft", label: "Nháp" },
     { value: "active", label: "Hoạt động" },
-    { value: "archived", label: "Đã lưu trữ" },
   ];
 
   useEffect(() => {
@@ -50,7 +49,13 @@ const PlantTemplateManager = () => {
         response.data?.data ||
         [];
       console.log("Templates Data:", templatesData); // Debug log
-      setTemplates(Array.isArray(templatesData) ? templatesData : []);
+
+      // Lọc bỏ các template có status "archived" để ẩn khỏi giao diện
+      const filteredTemplates = Array.isArray(templatesData)
+        ? templatesData.filter((template) => template.status !== "archived")
+        : [];
+
+      setTemplates(filteredTemplates);
       setError(null);
     } catch (err) {
       console.error("Error fetching templates:", err);
@@ -129,6 +134,25 @@ const PlantTemplateManager = () => {
   return (
     <div className="plant-template-manager">
       <div className="page-header">
+        <button
+          className="btn-back"
+          onClick={() => navigate("/expert/home")}
+          title="Quay lại trang chủ"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          <span>Quay lại</span>
+        </button>
         <div className="header-content">
           <h1>Quản lý Plant Template</h1>
           <p className="subtitle">
@@ -194,97 +218,111 @@ const PlantTemplateManager = () => {
             <h3>Chưa có template nào</h3>
             <p>Hãy tạo template đầu tiên để bắt đầu!</p>
             <button
-              className="btn btn-primary"
+              className="btn-create-new"
               onClick={() => navigate("/expert/plant-templates/create")}
             >
-              Tạo Template Mới
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>Tạo Template Mới</span>
             </button>
           </div>
         ) : (
           templates.map((template) => (
             <div key={template._id} className="template-card">
-              <div className="card-header">
-                <div className="card-title-section">
-                  <h3 className="card-title">{template.template_name}</h3>
+              {/* Poster Background */}
+              <div className="card-poster">
+                {template.cover_image ? (
+                  <img
+                    src={template.cover_image}
+                    alt={template.template_name}
+                    className="cover-image"
+                  />
+                ) : (
+                  <span className="default-icon">🌿</span>
+                )}
+              </div>
+
+              {/* Info overlay at bottom */}
+              <div className="card-info-overlay">
+                <h3 className="card-title">{template.template_name}</h3>
+                <div className="card-meta">
                   <span
                     className={`badge ${getStatusBadgeClass(template.status)}`}
                   >
                     {getStatusLabel(template.status)}
                   </span>
-                </div>
-                <div className="card-group">
-                  🌱 {getGroupLabel(template.plant_group)}
+                  <span className="card-group">
+                    🌱 {getGroupLabel(template.plant_group)}
+                  </span>
                 </div>
               </div>
 
-              <div className="card-body">
-                <p className="card-description">
-                  {template.group_description || "Không có mô tả"}
-                </p>
-
-                <div className="card-info">
-                  <div className="info-item">
-                    <span className="info-label">Số giai đoạn:</span>
-                    <span className="info-value">
-                      {template.stages?.length || 0}
-                    </span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">Tổng ngày:</span>
-                    <span className="info-value">
-                      {template.stages?.length > 0
-                        ? Math.max(...template.stages.map((s) => s.day_end))
-                        : 0}{" "}
-                      ngày
-                    </span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">Đã sử dụng:</span>
-                    <span className="info-value">
-                      {template.usage_count || 0} lần
-                    </span>
-                  </div>
-                </div>
-
-                {template.plant_examples &&
-                  template.plant_examples.length > 0 && (
-                    <div className="card-examples">
-                      <strong>Ví dụ:</strong>{" "}
-                      {template.plant_examples.join(", ")}
-                    </div>
-                  )}
-              </div>
-
-              <div className="card-footer">
+              {/* Hover Actions - Only 3 icons */}
+              <div className="card-actions-overlay">
                 <button
-                  className="btn btn-sm btn-view"
+                  className="action-btn action-view"
                   onClick={() =>
                     navigate(`/expert/plant-templates/${template._id}`)
                   }
+                  title="Xem chi tiết"
                 >
-                  Xem chi tiết
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
                 </button>
                 <button
-                  className="btn btn-sm btn-edit"
+                  className="action-btn action-edit"
                   onClick={() =>
                     navigate(`/expert/plant-templates/edit/${template._id}`)
                   }
+                  title="Chỉnh sửa"
                 >
-                  Sửa
-                </button>
-                {template.status === "draft" && (
-                  <button
-                    className="btn btn-sm btn-activate"
-                    onClick={() => handleActivate(template._id)}
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    Kích hoạt
-                  </button>
-                )}
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
                 <button
-                  className="btn btn-sm btn-delete"
+                  className="action-btn action-delete"
                   onClick={() => handleDelete(template._id)}
+                  title="Xóa"
                 >
-                  Xóa
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
                 </button>
               </div>
             </div>

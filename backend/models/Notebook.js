@@ -29,6 +29,21 @@ const StageTrackingSchema = new mongoose.Schema(
     started_at: { type: Date },
     completed_at: { type: Date },
     is_current: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ["active", "completed", "overdue", "skipped"],
+      default: "active",
+    },
+    // Track số ngày đã trễ so với stage end day
+    missed_days: { type: Number, default: 0 },
+    // Track các lần đã gửi notification
+    notifications_sent: [
+      {
+        type: { type: String }, // 'warning', 'overdue', 'skipped'
+        day: { type: Number }, // missed_day tại thời điểm gửi
+        sent_at: { type: Date },
+      },
+    ],
     // Track tất cả tasks đã hoàn thành trong stage này
     completed_tasks: [
       {
@@ -109,6 +124,9 @@ const notebookSchema = new mongoose.Schema(
       default: "active",
     },
 
+    // Thời gian xóa mềm (cho soft delete)
+    deletedAt: { type: Date },
+
     // Stage tracking (theo dõi giai đoạn)
     current_stage: { type: Number, default: 1 },
     stages_tracking: [StageTrackingSchema],
@@ -150,8 +168,6 @@ notebookSchema.methods.updateProgress = async function (templateStages) {
   const defaultWeight = Math.round(100 / templateStages.length);
 
   console.log("📊 Calculating plant progress...");
-
-  // ✅ CHỈ TÍNH CÁC STAGE ĐÃ HOÀN THÀNH 100%
   // Duyệt qua từng stage trong template
   for (let i = 0; i < templateStages.length; i++) {
     const templateStage = templateStages[i];
@@ -166,9 +182,23 @@ notebookSchema.methods.updateProgress = async function (templateStages) {
       console.log(
         `   ✅ Stage ${templateStage.stage_number} (${templateStage.name}): +${stageWeight}% (Completed)`
       );
+    } else if (trackingStage && trackingStage.is_current) {
+      // Stage hiện tại → cộng phần dựa trên completion của stage
+      try {
+        const stageCompletion = await this.getCurrentStageCompletion();
+        const partial = Math.round(
+          (stageWeight * (stageCompletion || 0)) / 100
+        );
+        totalProgress += partial;
+        console.log(
+          `   🔄 Stage ${templateStage.stage_number} (${templateStage.name}): +${partial}% (partial, ${stageCompletion}% of ${stageWeight}%)`
+        );
+      } catch (err) {
+        console.warn("⚠️ Error getting current stage completion:", err);
+      }
     } else {
       console.log(
-        `   ⏳ Stage ${templateStage.stage_number} (${templateStage.name}): 0% (Not completed yet)`
+        `   ⏳ Stage ${templateStage.stage_number} (${templateStage.name}): 0% (Not started yet)`
       );
     }
   }

@@ -28,8 +28,24 @@ const NotebookTimeline = ({ notebookId }) => {
   };
 
   if (loading) return <div className="timeline-loading">Đang tải...</div>;
-  if (error) return <div className="timeline-error">{error}</div>;
-  if (!timeline) return null;
+
+  if (error) {
+    return (
+      <div className="timeline-error">
+        <p>⚠️ {error}</p>
+        <small>Bạn cần gán template cho notebook này để xem timeline.</small>
+      </div>
+    );
+  }
+
+  if (!timeline || !timeline.timeline || timeline.timeline.length === 0) {
+    return (
+      <div className="timeline-empty">
+        <p>📋 Notebook chưa có template</p>
+        <small>Vui lòng gán template để theo dõi tiến trình trồng trọt</small>
+      </div>
+    );
+  }
 
   return (
     <div className="notebook-timeline">

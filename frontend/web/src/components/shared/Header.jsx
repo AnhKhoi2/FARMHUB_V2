@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../redux/authSlice";
 import { FaUser, FaShoppingCart, FaBars, FaTimes } from "react-icons/fa";
+import NotificationBell from "../NotificationBell";
 import "./Header.css";
 
 const Header = () => {
@@ -148,9 +149,19 @@ const Header = () => {
               <li className={currentPath.startsWith("/market") ? "active" : ""}>
                 <Link to="/market">Bài Đăng</Link>
               </li>
-              <li className={currentPath.startsWith("/experts") ? "active" : ""}>
+              <li
+                className={currentPath.startsWith("/experts") ? "active" : ""}
+              >
                 <Link to="/experts">Chuyên gia</Link>
               </li>
+
+              {/* Notification Bell - Only show when logged in */}
+              {user && (
+                <li className="notification-item">
+                  <NotificationBell />
+                </li>
+              )}
+
               <li className="user-menu">
                 {user ? (
                   <div
