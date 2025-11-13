@@ -6,7 +6,7 @@ const API_BASE_URL =
 const collectionsApi = {
   // Lấy tất cả collections
   getAllCollections: async (status = null) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     const params = status ? { status } : {};
 
     return axios.get(`${API_BASE_URL}/api/collections`, {
@@ -17,7 +17,7 @@ const collectionsApi = {
 
   // Lấy chi tiết collection
   getCollectionById: async (id) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     return axios.get(`${API_BASE_URL}/api/collections/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -26,7 +26,7 @@ const collectionsApi = {
 
   // Tạo collection mới
   createCollection: async (data) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     return axios.post(`${API_BASE_URL}/api/collections`, data, {
       headers: { Authorization: `Bearer ${token}` },
@@ -35,7 +35,7 @@ const collectionsApi = {
 
   // Cập nhật collection
   updateCollection: async (id, data) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     return axios.put(`${API_BASE_URL}/api/collections/${id}`, data, {
       headers: { Authorization: `Bearer ${token}` },
@@ -44,7 +44,7 @@ const collectionsApi = {
 
   // Xóa collection
   deleteCollection: async (id) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     return axios.delete(`${API_BASE_URL}/api/collections/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -53,7 +53,7 @@ const collectionsApi = {
 
   // Thêm notebook vào collection
   addNotebookToCollection: async (collectionId, notebookId) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     return axios.post(
       `${API_BASE_URL}/api/collections/${collectionId}/notebooks`,
@@ -64,7 +64,7 @@ const collectionsApi = {
 
   // Xóa notebook khỏi collection
   removeNotebookFromCollection: async (collectionId, notebookId) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     return axios.delete(
       `${API_BASE_URL}/api/collections/${collectionId}/notebooks`,
@@ -77,7 +77,7 @@ const collectionsApi = {
 
   // Thêm nhiều notebooks vào collection
   addMultipleNotebooks: async (collectionId, notebookIds) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     return axios.post(
       `${API_BASE_URL}/api/collections/${collectionId}/notebooks/bulk`,
@@ -92,7 +92,7 @@ const collectionsApi = {
     sortBy = null,
     order = "desc"
   ) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     const params = sortBy ? { sort_by: sortBy, order } : {};
 
     return axios.get(
@@ -106,7 +106,7 @@ const collectionsApi = {
 
   // Tìm kiếm collections
   searchCollections: async (keyword) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     return axios.get(`${API_BASE_URL}/api/collections/search`, {
       headers: { Authorization: `Bearer ${token}` },

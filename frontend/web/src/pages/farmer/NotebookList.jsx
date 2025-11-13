@@ -10,20 +10,26 @@ const NotebookList = () => {
   const [error, setError] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [showDeleted, setShowDeleted] = useState(false);
 
   useEffect(() => {
     fetchNotebooks();
-  }, []);
+  }, [showDeleted]);
 
   const fetchNotebooks = async () => {
     try {
       setLoading(true);
-      const response = await notebookApi.getAllNotebooks();
+      const response = showDeleted
+        ? await notebookApi.getDeletedNotebooks()
+        : await notebookApi.getAllNotebooks();
       const notebooksData = response.data?.data || response.data || [];
+      console.log("📋 Fetched notebooks:", notebooksData.length);
+      console.log("📋 First notebook:", notebooksData[0]);
+
       setNotebooks(Array.isArray(notebooksData) ? notebooksData : []);
       setError(null);
     } catch (err) {
-      console.error("Error fetching notebooks:", err);
+      console.error("❌ Error fetching notebooks:", err);
       setError("Không thể tải danh sách nhật ký");
     } finally {
       setLoading(false);
@@ -81,6 +87,35 @@ const NotebookList = () => {
     }
   };
 
+  const handleRestore = async (id) => {
+    if (!window.confirm("Bạn có muốn khôi phục nhật ký này?")) return;
+
+    try {
+      await notebookApi.restoreNotebook(id);
+      fetchNotebooks();
+      alert("Khôi phục nhật ký thành công!");
+    } catch (err) {
+      console.error("Error restoring notebook:", err);
+      alert("Không thể khôi phục nhật ký");
+    }
+  };
+
+  const handlePermanentDelete = async (id) => {
+    if (
+      !window.confirm("⚠️ Xóa vĩnh viễn không thể hoàn tác! Bạn có chắc chắn?")
+    )
+      return;
+
+    try {
+      await notebookApi.permanentDeleteNotebook(id);
+      fetchNotebooks();
+      alert("Đã xóa vĩnh viễn nhật ký!");
+    } catch (err) {
+      console.error("Error permanently deleting notebook:", err);
+      alert("Không thể xóa vĩnh viễn");
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       active: { label: "Đang trồng", class: "badge-success" },
@@ -118,15 +153,29 @@ const NotebookList = () => {
       <div className="page-header">
         <div className="header-content">
           <h1>Nhật Ký Trồng Trọt</h1>
-          <p className="subtitle">Theo dõi và quản lý các cây trồng của bạn</p>
+          <p className="subtitle">
+            {showDeleted
+              ? "Nhật ký đã xóa - Có thể khôi phục hoặc xóa vĩnh viễn"
+              : "Theo dõi và quản lý các cây trồng của bạn"}
+          </p>
         </div>
-        <button
-          className="btn btn-create"
-          onClick={() => navigate("/farmer/notebooks/create")}
-        >
-          <span className="icon">+</span>
-          Tạo Nhật Ký Mới
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            className={`btn ${showDeleted ? "btn-secondary" : "btn-primary"}`}
+            onClick={() => setShowDeleted(!showDeleted)}
+          >
+            {showDeleted ? "📋 Xem Nhật Ký" : "🗑️ Thùng Rác"}
+          </button>
+          {!showDeleted && (
+            <button
+              className="btn btn-create"
+              onClick={() => navigate("/farmer/notebooks/create")}
+            >
+              <span className="icon">+</span>
+              Tạo Nhật Ký Mới
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search & Filter */}
@@ -190,14 +239,28 @@ const NotebookList = () => {
             const statusBadge = getStatusBadge(notebook.status);
             const daysPlanted = calculateDaysPlanted(notebook.planted_date);
 
+            // Debug log
+            console.log("🔍 Rendering notebook:", {
+              id: notebook._id,
+              name: notebook.notebook_name,
+              stage: notebook.current_stage,
+              template: notebook.template_id,
+              checklist: notebook.daily_checklist,
+            });
+
             return (
-              <div key={notebook._id} className="notebook-card">
+              <div
+                key={notebook._id}
+                className="notebook-card"
+                onClick={() => navigate(`/farmer/notebooks/${notebook._id}`)}
+                style={{ cursor: "pointer" }}
+              >
                 {/* Cover Image */}
                 <div className="card-cover">
                   {notebook.cover_image ? (
                     <img
                       src={notebook.cover_image}
-                      alt={notebook.notebook_name}
+                      alt={notebook.notebook_name || "Notebook"}
                     />
                   ) : (
                     <div className="cover-placeholder">
@@ -211,12 +274,49 @@ const NotebookList = () => {
 
                 {/* Card Body */}
                 <div className="card-body">
-                  <h3 className="card-title">{notebook.notebook_name}</h3>
-                  <p className="card-plant-type">🌿 {notebook.plant_type}</p>
+                  <h3 className="card-title">
+                    {notebook.notebook_name || "Nhật ký không có tên"}
+                  </h3>
 
-                  {notebook.description && (
-                    <p className="card-description">{notebook.description}</p>
-                  )}
+                  {/* Basic Info */}
+                  <div className="card-meta">
+                    <div className="meta-item">
+                      <strong>Giai đoạn:</strong> {notebook.current_stage || 1}/
+                      {notebook.template_id &&
+                      typeof notebook.template_id === "object" &&
+                      notebook.template_id.stages
+                        ? notebook.template_id.stages.length
+                        : notebook.stages_tracking
+                        ? notebook.stages_tracking.length
+                        : "-"}
+                    </div>
+                    <div className="meta-item">
+                      <strong>Ngày tạo:</strong>{" "}
+                      {formatDate(notebook.createdAt || notebook.planted_date)}
+                    </div>
+                  </div>
+
+                  {/* Today's tasks */}
+                  {Array.isArray(notebook.daily_checklist) &&
+                    (() => {
+                      const pending = notebook.daily_checklist.filter(
+                        (t) => !t.is_completed
+                      );
+                      return pending.length > 0 ? (
+                        <div className="today-tasks">
+                          <strong>🌱 Công việc hôm nay:</strong>{" "}
+                          {pending.length} việc
+                          <ul className="tasks-list">
+                            {pending.slice(0, 3).map((t, idx) => (
+                              <li key={idx}>{t.task_name}</li>
+                            ))}
+                            {pending.length > 3 && (
+                              <li>... và {pending.length - 3} việc khác</li>
+                            )}
+                          </ul>
+                        </div>
+                      ) : null;
+                    })()}
 
                   {/* Stats */}
                   <div className="card-stats">
@@ -257,27 +357,62 @@ const NotebookList = () => {
                   {/* Template Badge */}
                   {notebook.template_id && (
                     <div className="template-badge">
-                      🌱 {notebook.template_id.template_name}
+                      🌱{" "}
+                      {typeof notebook.template_id === "object"
+                        ? notebook.template_id.template_name
+                        : "Có bộ mẫu"}
                     </div>
                   )}
                 </div>
 
                 {/* Card Footer */}
-                <div className="card-footer">
-                  <button
-                    className="btn btn-view"
-                    onClick={() =>
-                      navigate(`/farmer/notebooks/${notebook._id}`)
-                    }
-                  >
-                    👁️ Xem chi tiết
-                  </button>
-                  <button
-                    className="btn btn-delete"
-                    onClick={() => handleDelete(notebook._id)}
-                  >
-                    🗑️
-                  </button>
+                <div
+                  className="card-footer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {!showDeleted ? (
+                    <>
+                      <button
+                        className="btn btn-view"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/farmer/notebooks/${notebook._id}`);
+                        }}
+                      >
+                        👁️ Xem chi tiết
+                      </button>
+                      <button
+                        className="btn btn-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(notebook._id);
+                        }}
+                      >
+                        🗑️ Xóa
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="btn btn-restore"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRestore(notebook._id);
+                        }}
+                      >
+                        ♻️ Khôi phục
+                      </button>
+                      <button
+                        className="btn btn-permanent-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePermanentDelete(notebook._id);
+                        }}
+                      >
+                        💀 Xóa vĩnh viễn
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             );

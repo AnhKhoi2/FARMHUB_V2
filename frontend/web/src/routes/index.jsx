@@ -53,8 +53,7 @@ import NotebookEdit from "../pages/farmer/NotebookEdit";
 import Collections from "../pages/farmer/Collections";
 import CollectionDetail from "../pages/farmer/CollectionDetail";
 
-// 🔹 NEW: import AdminLayout để dùng Outlet
-import AdminLayout from "../components/AdminLayout.jsx";
+
 
 // Expert nested routes
 import ExpertRoutes from "./expert/ExpertRoutes.jsx";

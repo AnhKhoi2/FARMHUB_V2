@@ -20,11 +20,27 @@ const Collections = () => {
     try {
       setLoading(true);
       const response = await collectionsApi.getAllCollections();
+      console.log("Collections response:", response.data);
       setCollections(response.data.data || []);
       setError(null);
     } catch (err) {
       console.error("Error fetching collections:", err);
-      setError("Không thể tải danh sách bộ sưu tập");
+      console.error("Error response:", err.response);
+
+      // More detailed error messages
+      if (err.response?.status === 401) {
+        setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+      } else if (err.response?.status === 403) {
+        setError("Bạn không có quyền truy cập tài nguyên này.");
+      } else if (err.code === "ERR_NETWORK") {
+        setError(
+          "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng."
+        );
+      } else {
+        setError(
+          err.response?.data?.message || "Không thể tải danh sách bộ sưu tập"
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -39,11 +55,19 @@ const Collections = () => {
     try {
       setLoading(true);
       const response = await collectionsApi.searchCollections(searchKeyword);
+      console.log("Search response:", response.data);
       setCollections(response.data.data || []);
       setError(null);
     } catch (err) {
       console.error("Error searching collections:", err);
-      setError("Không thể tìm kiếm");
+
+      if (err.response?.status === 401) {
+        setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+      } else if (err.code === "ERR_NETWORK") {
+        setError("Không thể kết nối đến máy chủ.");
+      } else {
+        setError(err.response?.data?.message || "Không thể tìm kiếm");
+      }
     } finally {
       setLoading(false);
     }

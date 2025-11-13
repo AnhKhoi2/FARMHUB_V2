@@ -33,25 +33,41 @@ const StageObservations = ({ notebookId }) => {
   const handleObservationChange = async (observationKey, value) => {
     try {
       setSaving(true);
-      await NOTEBOOK_TEMPLATE_API.updateObservation(
+      const response = await NOTEBOOK_TEMPLATE_API.updateObservation(
         notebookId,
         observationKey,
         value
       );
 
-      // Cập nhật local state
-      setObservations((prev) =>
-        prev.map((obs) =>
-          obs.observation_key === observationKey
-            ? { ...obs, value: value }
-            : obs
-        )
-      );
+      // Kiểm tra xem có auto-transition không
+      const responseData = response.data;
+      const autoTransitioned = responseData.meta?.auto_transitioned;
 
-      // Refresh timeline sau khi update observation (có thể trigger auto stage transition)
-      setTimeout(() => {
-        window.location.reload(); // Hoặc emit event để refresh timeline
-      }, 500);
+      if (autoTransitioned) {
+        // Hiển thị thông báo đặc biệt cho auto-transition
+        const newStageName =
+          responseData.meta?.stage_name || "giai đoạn tiếp theo";
+        alert(
+          `🎉 ${
+            responseData.message ||
+            `Đã hoàn thành tất cả quan sát! Tự động chuyển sang ${newStageName}`
+          }`
+        );
+
+        // Reload sau 1 giây để user đọc message
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        // Cập nhật local state bình thường
+        setObservations((prev) =>
+          prev.map((obs) =>
+            obs.observation_key === observationKey
+              ? { ...obs, value: value }
+              : obs
+          )
+        );
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to update observation");
     } finally {
