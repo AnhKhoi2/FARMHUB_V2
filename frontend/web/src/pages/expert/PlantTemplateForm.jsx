@@ -1,0 +1,1539 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import plantTemplateApi from "../../api/expert/plantTemplateApi";
+import guidesApi from "../../api/shared/guidesApi";
+import "../../css/expert/PlantTemplateForm.css";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+const PlantTemplateForm = ({ mode = "create" }) => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [formData, setFormData] = useState({
+    template_name: "",
+    plant_group: "leaf_vegetable",
+    group_description: "",
+    plant_examples: [],
+    cover_image: null,
+    stages: [],
+    rules: {
+      safe_delay_days: 1,
+      auto_skip: true,
+    },
+    status: "draft",
+    notes: "",
+  });
+
+  const [tempInput, setTempInput] = useState("");
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [availableGuides, setAvailableGuides] = useState([]);
+  const [loadingGuides, setLoadingGuides] = useState(false);
+  const [showPlantDropdown, setShowPlantDropdown] = useState(false);
+
+  const plantGroups = [
+    { value: "leaf_vegetable", label: "Rau ăn lá", icon: "🥬" },
+    { value: "root_vegetable", label: "Cây củ", icon: "🥕" },
+    { value: "fruit_short_term", label: "Rau/quả ngắn ngày", icon: "🥒" },
+    { value: "fruit_long_term", label: "Cây ăn quả dài ngày", icon: "🍊" },
+    { value: "bean_family", label: "Họ đậu", icon: "🫘" },
+    { value: "herb", label: "Cây gia vị", icon: "🌿" },
+    { value: "flower_vegetable", label: "Rau ăn hoa", icon: "🥦" },
+    { value: "other", label: "Khác", icon: "🌱" },
+  ];
+
+  const steps = [
+    { number: 1, title: "Thông tin cơ bản", icon: "📝" },
+    { number: 2, title: "Giai đoạn phát triển", icon: "🌱" },
+    { number: 3, title: "Nhiệm vụ tự động", icon: "✅" },
+    { number: 4, title: "Điều kiện quan sát", icon: "👁️" },
+    { number: 5, title: "Quy tắc & Xác nhận", icon: "⚙️" },
+  ];
+
+  useEffect(() => {
+    if (mode === "edit" && id) {
+      loadTemplate();
+    }
+    fetchAvailableGuides();
+  }, [mode, id]);
+
+  const fetchAvailableGuides = async () => {
+    try {
+      setLoadingGuides(true);
+      console.log("🔍 Fetching guides from API...");
+      const response = await guidesApi.getAllGuides({ limit: 1000 });
+      console.log("📦 API Response:", response);
+
+      // API trả về { success: true, data: [...], meta: {...} }
+      const guides = response.data?.data || [];
+      console.log("📋 Guides array:", guides);
+      console.log("📊 Total guides:", guides.length);
+
+      // Extract unique plant names from guides
+      const plantNames = guides
+        .map((guide) => guide.plant_name)
+        .filter((name) => name && name.trim())
+        .filter((name, index, self) => self.indexOf(name) === index)
+        .sort();
+
+      console.log("🌱 Plant names extracted:", plantNames);
+      console.log("✅ Total unique plants:", plantNames.length);
+
+      setAvailableGuides(plantNames);
+    } catch (err) {
+      console.error("❌ Error fetching guides:", err);
+    } finally {
+      setLoadingGuides(false);
+    }
+  };
+
+  const loadTemplate = async () => {
+    try {
+      setLoading(true);
+      const response = await plantTemplateApi.getTemplateById(id);
+      const template = response.data?.data?.template;
+      if (template) {
+        setFormData({
+          template_name: template.template_name,
+          plant_group: template.plant_group,
+          group_description: template.group_description || "",
+          plant_examples: template.plant_examples || [],
+          cover_image: template.cover_image || null,
+          stages: template.stages || [],
+          rules: template.rules || formData.rules,
+          status: template.status || "draft",
+          notes: template.notes || "",
+        });
+      }
+    } catch (err) {
+      console.error("Error loading template:", err);
+      setError("Không thể tải template");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleRuleChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      rules: { ...prev.rules, [field]: value },
+    }));
+  };
+
+  const handleCoverImageUpload = async (file) => {
+    if (!file) return;
+
+    const formDataUpload = new FormData();
+    formDataUpload.append("image", file);
+
+    try {
+      setUploadingCover(true);
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const baseURL = API_URL.replace("/api", "");
+      const response = await axios.post(`${API_URL}/upload`, formDataUpload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const imageUrl = response.data?.data?.url;
+      if (imageUrl) {
+        const fullImageUrl = imageUrl.startsWith("http")
+          ? imageUrl
+          : `${baseURL}${imageUrl}`;
+        setFormData((prev) => ({ ...prev, cover_image: fullImageUrl }));
+      }
+    } catch (error) {
+      console.error("Error uploading cover image:", error);
+      alert("Không thể upload ảnh bìa. Vui lòng thử lại.");
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const addPlantExample = () => {
+    if (tempInput.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        plant_examples: [...prev.plant_examples, tempInput.trim()],
+      }));
+      setTempInput("");
+    }
+  };
+
+  const addPlantExampleFromDropdown = (plantName) => {
+    if (plantName && !formData.plant_examples.includes(plantName)) {
+      setFormData((prev) => ({
+        ...prev,
+        plant_examples: [...prev.plant_examples, plantName],
+      }));
+    }
+    setShowPlantDropdown(false);
+  };
+
+  const removePlantExample = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      plant_examples: prev.plant_examples.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addStage = () => {
+    const newStageNumber = formData.stages.length + 1;
+    const lastStage = formData.stages[formData.stages.length - 1];
+    const dayStart = lastStage ? lastStage.day_end + 1 : 1;
+
+    setFormData((prev) => ({
+      ...prev,
+      stages: [
+        ...prev.stages,
+        {
+          stage_number: newStageNumber,
+          name: "",
+          description: "",
+          day_start: dayStart,
+          day_end: dayStart + 6,
+          stage_image: null,
+          autogenerated_tasks: [],
+          observation_required: [],
+        },
+      ],
+    }));
+  };
+
+  const updateStage = (index, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      stages: prev.stages.map((stage, i) =>
+        i === index ? { ...stage, [field]: value } : stage
+      ),
+    }));
+  };
+
+  const removeStage = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      stages: prev.stages
+        .filter((_, i) => i !== index)
+        .map((stage, i) => ({ ...stage, stage_number: i + 1 })),
+    }));
+  };
+
+  const addTaskToStage = (stageIndex) => {
+    const newTask = {
+      task_name: "",
+      description: "",
+      frequency: "daily",
+      illustration_image: null,
+      priority: "medium",
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      stages: prev.stages.map((stage, i) =>
+        i === stageIndex
+          ? {
+              ...stage,
+              autogenerated_tasks: [...stage.autogenerated_tasks, newTask],
+            }
+          : stage
+      ),
+    }));
+  };
+
+  const updateTask = (stageIndex, taskIndex, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      stages: prev.stages.map((stage, i) =>
+        i === stageIndex
+          ? {
+              ...stage,
+              autogenerated_tasks: stage.autogenerated_tasks.map((task, j) =>
+                j === taskIndex ? { ...task, [field]: value } : task
+              ),
+            }
+          : stage
+      ),
+    }));
+  };
+
+  const removeTask = (stageIndex, taskIndex) => {
+    setFormData((prev) => ({
+      ...prev,
+      stages: prev.stages.map((stage, i) =>
+        i === stageIndex
+          ? {
+              ...stage,
+              autogenerated_tasks: stage.autogenerated_tasks.filter(
+                (_, j) => j !== taskIndex
+              ),
+            }
+          : stage
+      ),
+    }));
+  };
+
+  const addObservationToStage = (stageIndex) => {
+    const newObservation = {
+      key: "",
+      label: "",
+      description: "",
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      stages: prev.stages.map((stage, i) =>
+        i === stageIndex
+          ? {
+              ...stage,
+              observation_required: [
+                ...stage.observation_required,
+                newObservation,
+              ],
+            }
+          : stage
+      ),
+    }));
+  };
+
+  const updateObservation = (stageIndex, obsIndex, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      stages: prev.stages.map((stage, i) =>
+        i === stageIndex
+          ? {
+              ...stage,
+              observation_required: stage.observation_required.map((obs, j) =>
+                j === obsIndex ? { ...obs, [field]: value } : obs
+              ),
+            }
+          : stage
+      ),
+    }));
+  };
+
+  const removeObservation = (stageIndex, obsIndex) => {
+    setFormData((prev) => ({
+      ...prev,
+      stages: prev.stages.map((stage, i) =>
+        i === stageIndex
+          ? {
+              ...stage,
+              observation_required: stage.observation_required.filter(
+                (_, j) => j !== obsIndex
+              ),
+            }
+          : stage
+      ),
+    }));
+  };
+
+  const validateStep = (step) => {
+    switch (step) {
+      case 1:
+        if (!formData.template_name.trim()) {
+          setError("Vui lòng nhập tên template");
+          return false;
+        }
+        if (!formData.plant_group) {
+          setError("Vui lòng chọn nhóm cây");
+          return false;
+        }
+        break;
+      case 2:
+        if (formData.stages.length < 3) {
+          setError("Template phải có ít nhất 3 giai đoạn");
+          return false;
+        }
+        for (let stage of formData.stages) {
+          if (!stage.name.trim()) {
+            setError(`Giai đoạn ${stage.stage_number} chưa có tên`);
+            return false;
+          }
+          if (stage.day_start >= stage.day_end) {
+            setError(
+              `Giai đoạn ${stage.stage_number}: Ngày bắt đầu phải nhỏ hơn ngày kết thúc`
+            );
+            return false;
+          }
+        }
+        break;
+      case 3:
+        // Tasks validation (optional)
+        break;
+      case 4:
+        // Observations validation (optional)
+        break;
+    }
+    setError(null);
+    return true;
+  };
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, 5));
+    }
+  };
+
+  const prevStep = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+    setError(null);
+  };
+
+  const handleSubmit = async () => {
+    if (!validateStep(currentStep)) return;
+
+    try {
+      setLoading(true);
+
+      if (mode === "edit") {
+        await plantTemplateApi.updateTemplate(id, formData);
+        alert("Cập nhật template thành công!");
+      } else {
+        await plantTemplateApi.createTemplate(formData);
+        alert("Tạo template thành công!");
+      }
+
+      navigate("/expert/plant-templates");
+    } catch (err) {
+      console.error("Error saving template:", err);
+      setError(err.response?.data?.message || "Không thể lưu template");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && mode === "edit") {
+    return (
+      <div className="plant-template-form">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="plant-template-form">
+      <div className="form-container">
+        <div className="form-header">
+          <button className="btn-back" onClick={() => navigate(-1)}>
+            ← Quay lại
+          </button>
+          <h1>{mode === "edit" ? "Chỉnh sửa" : "Tạo mới"} Bộ mẫu cây trồng</h1>
+        </div>
+
+        {/* Steps Progress */}
+        <div className="steps-progress">
+          {steps.map((step) => (
+            <div
+              key={step.number}
+              className={`step-item ${
+                currentStep === step.number ? "active" : ""
+              } ${currentStep > step.number ? "completed" : ""}`}
+            >
+              <div className="step-number">
+                {currentStep > step.number ? "✓" : step.icon}
+              </div>
+              <div className="step-title">{step.title}</div>
+            </div>
+          ))}
+        </div>
+
+        {error && (
+          <div className="alert alert-error">
+            <span className="icon">⚠️</span>
+            {error}
+          </div>
+        )}
+
+        {/* Step Content */}
+        <div className="step-content">
+          {currentStep === 1 && (
+            <Step1BasicInfo
+              formData={formData}
+              handleInputChange={handleInputChange}
+              plantGroups={plantGroups}
+              tempInput={tempInput}
+              setTempInput={setTempInput}
+              addPlantExample={addPlantExample}
+              removePlantExample={removePlantExample}
+              uploadingCover={uploadingCover}
+              handleCoverImageUpload={handleCoverImageUpload}
+              availableGuides={availableGuides}
+              loadingGuides={loadingGuides}
+              showPlantDropdown={showPlantDropdown}
+              setShowPlantDropdown={setShowPlantDropdown}
+              addPlantExampleFromDropdown={addPlantExampleFromDropdown}
+            />
+          )}
+
+          {currentStep === 2 && (
+            <Step2Stages
+              stages={formData.stages}
+              addStage={addStage}
+              updateStage={updateStage}
+              removeStage={removeStage}
+            />
+          )}
+
+          {currentStep === 3 && (
+            <Step3Tasks
+              stages={formData.stages}
+              addTaskToStage={addTaskToStage}
+              updateTask={updateTask}
+              removeTask={removeTask}
+            />
+          )}
+
+          {currentStep === 4 && (
+            <Step4Observations
+              stages={formData.stages}
+              addObservationToStage={addObservationToStage}
+              updateObservation={updateObservation}
+              removeObservation={removeObservation}
+            />
+          )}
+
+          {currentStep === 5 && (
+            <Step5Review
+              formData={formData}
+              handleRuleChange={handleRuleChange}
+              handleInputChange={handleInputChange}
+            />
+          )}
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="form-navigation">
+          <button
+            className="btn btn-secondary"
+            onClick={prevStep}
+            disabled={currentStep === 1 || loading}
+          >
+            ← Quay lại
+          </button>
+
+          <div className="nav-info">
+            Bước {currentStep} / {steps.length}
+          </div>
+
+          {currentStep < 5 ? (
+            <button className="btn btn-primary" onClick={nextStep}>
+              Tiếp theo →
+            </button>
+          ) : (
+            <button
+              className="btn btn-success"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading
+                ? "Đang lưu..."
+                : mode === "edit"
+                ? "Cập nhật"
+                : "Tạo template"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Step 1: Basic Info Component
+const Step1BasicInfo = ({
+  formData,
+  handleInputChange,
+  plantGroups,
+  tempInput,
+  setTempInput,
+  addPlantExample,
+  removePlantExample,
+  uploadingCover,
+  handleCoverImageUpload,
+  availableGuides,
+  loadingGuides,
+  showPlantDropdown,
+  setShowPlantDropdown,
+  addPlantExampleFromDropdown,
+}) => (
+  <div className="step-basic-info">
+    <h2>Thông tin cơ bản</h2>
+
+    <div className="form-group">
+      <label>
+        Tên Bộ mẫu <span className="required">*</span>
+      </label>
+      <input
+        type="text"
+        className="form-input"
+        placeholder="Ví dụ: Rau ăn lá cơ bản"
+        value={formData.template_name}
+        onChange={(e) => handleInputChange("template_name", e.target.value)}
+      />
+    </div>
+
+    <div className="form-group">
+      <label>
+        Nhóm cây <span className="required">*</span>
+      </label>
+      <div className="plant-groups-grid">
+        {plantGroups.map((group) => (
+          <div
+            key={group.value}
+            className={`group-card ${
+              formData.plant_group === group.value ? "selected" : ""
+            }`}
+            onClick={() => handleInputChange("plant_group", group.value)}
+          >
+            <div className="group-icon">{group.icon}</div>
+            <div className="group-label">{group.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div className="form-group">
+      <label>Mô tả nhóm cây</label>
+      <textarea
+        className="form-textarea"
+        rows="3"
+        placeholder="Mô tả về nhóm cây này..."
+        value={formData.group_description}
+        onChange={(e) => handleInputChange("group_description", e.target.value)}
+      />
+    </div>
+
+    <div className="form-group">
+      <label>🌱 Các loại cây phù hợp</label>
+      <p className="hint">Chọn các loại cây từ danh sách guides có sẵn</p>
+
+      <div className="plant-selector">
+        <button
+          type="button"
+          className="btn btn-outline btn-sm"
+          onClick={() => setShowPlantDropdown(!showPlantDropdown)}
+          disabled={loadingGuides}
+        >
+          {loadingGuides ? "Đang tải..." : "➕ Chọn cây từ danh sách"}
+        </button>
+
+        {showPlantDropdown && (
+          <div className="plant-dropdown">
+            <div className="plant-dropdown-header">
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Tìm kiếm cây..."
+                value={tempInput}
+                onChange={(e) => setTempInput(e.target.value)}
+              />
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => {
+                  setShowPlantDropdown(false);
+                  setTempInput("");
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="plant-dropdown-list">
+              {availableGuides.length === 0 ? (
+                <div className="plant-dropdown-empty">
+                  Không có dữ liệu cây từ guides
+                </div>
+              ) : (
+                availableGuides
+                  .filter((plant) =>
+                    plant.toLowerCase().includes(tempInput.toLowerCase())
+                  )
+                  .map((plant, index) => (
+                    <div
+                      key={index}
+                      className={`plant-dropdown-item ${
+                        formData.plant_examples.includes(plant)
+                          ? "selected"
+                          : ""
+                      }`}
+                      onClick={() => addPlantExampleFromDropdown(plant)}
+                    >
+                      <span>{plant}</span>
+                      {formData.plant_examples.includes(plant) && (
+                        <span className="check-icon">✓</span>
+                      )}
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {formData.plant_examples.length > 0 && (
+        <div className="tags-list">
+          {formData.plant_examples.map((example, index) => (
+            <span key={index} className="tag">
+              {example}
+              <button
+                type="button"
+                className="tag-remove"
+                onClick={() => removePlantExample(index)}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div className="form-group">
+      <label>📸 Ảnh bìa Template</label>
+      <div className="upload-area">
+        <label className="upload-label">
+          {uploadingCover ? (
+            <div className="uploading">
+              <div className="spinner-upload"></div>
+              <span>Đang upload...</span>
+            </div>
+          ) : formData.cover_image ? (
+            <div className="image-uploaded">
+              <img src={formData.cover_image} alt="Cover" />
+              <div className="image-actions">
+                <button
+                  type="button"
+                  className="btn-change-image"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById("cover-image-input").click();
+                  }}
+                >
+                  🔄 Thay đổi
+                </button>
+                <button
+                  type="button"
+                  className="btn-remove-image"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleInputChange("cover_image", null);
+                  }}
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="upload-placeholder">
+              <div className="upload-icon">🖼️</div>
+              <div className="upload-text">
+                <strong>Click để chọn ảnh bìa</strong>
+                <span>Ảnh này sẽ hiển thị trong danh sách template</span>
+              </div>
+              <div className="upload-hint">PNG, JPG, JPEG (tối đa 5MB)</div>
+            </div>
+          )}
+          <input
+            id="cover-image-input"
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => handleCoverImageUpload(e.target.files[0])}
+            disabled={uploadingCover}
+          />
+        </label>
+      </div>
+    </div>
+
+    {/* <div className="form-group">
+      <label>Ví dụ cây thuộc nhóm</label>
+      <div className="input-with-button">
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Nhập tên cây, ví dụ: Xà lách"
+          value={tempInput}
+          onChange={(e) => setTempInput(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && addPlantExample()}
+        />
+        <button
+          type="button"
+          className="btn btn-sm btn-primary"
+          onClick={addPlantExample}
+        >
+          Thêm
+        </button>
+      </div>
+
+      {formData.plant_examples.length > 0 && (
+        <div className="tags-list">
+          {formData.plant_examples.map((example, index) => (
+            <span key={index} className="tag">
+              {example}
+              <button
+                type="button"
+                className="tag-remove"
+                onClick={() => removePlantExample(index)}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div> */}
+  </div>
+);
+
+// Step 2: Stages Setup with Image Upload
+const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
+  const [uploadingStage, setUploadingStage] = useState(null);
+
+  const handleStageImageUpload = async (index, file) => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      setUploadingStage(index);
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const baseURL = API_URL.replace("/api", "");
+      const response = await axios.post(`${API_URL}/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const imageUrl = response.data?.data?.url;
+      if (imageUrl) {
+        // Add base URL if it's a relative path
+        const fullImageUrl = imageUrl.startsWith("http")
+          ? imageUrl
+          : `${baseURL}${imageUrl}`;
+        updateStage(index, "stage_image", fullImageUrl);
+      }
+    } catch (error) {
+      console.error("Error uploading stage image:", error);
+      alert("Không thể upload ảnh. Vui lòng thử lại.");
+    } finally {
+      setUploadingStage(null);
+    }
+  };
+
+  return (
+    <div className="step-stages">
+      <div className="step-header">
+        <h2>🌱 Giai đoạn phát triển</h2>
+        <p className="hint">
+          Bộ mẫu cần có ít nhất 3 giai đoạn. Bạn có thể upload ảnh mẫu cho mỗi
+          giai đoạn.
+        </p>
+      </div>
+
+      {stages.map((stage, index) => (
+        <div key={index} className="stage-card">
+          <div className="stage-card-header">
+            <h3>Giai đoạn {stage.stage_number}</h3>
+            <button
+              type="button"
+              className="btn-icon btn-danger"
+              onClick={() => {
+                // Nếu xóa sẽ khiến tổng giai đoạn < 3 thì cảnh báo người dùng
+                if (stages.length <= 3) {
+                  const confirmDelete = window.confirm(
+                    "Bạn sắp xóa giai đoạn. Lưu ý: Template cần ít nhất 3 giai đoạn để lưu. Bạn vẫn muốn xóa?"
+                  );
+                  if (!confirmDelete) return;
+                }
+
+                removeStage(index);
+              }}
+              title="Xóa giai đoạn"
+            >
+              🗑️
+            </button>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group flex-1">
+              <label>
+                Tên giai đoạn <span className="required">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ví dụ: Nảy mầm"
+                value={stage.name}
+                onChange={(e) => updateStage(index, "name", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Mô tả giai đoạn</label>
+            <textarea
+              className="form-textarea"
+              rows="2"
+              placeholder="Mô tả chi tiết về giai đoạn này..."
+              value={stage.description}
+              onChange={(e) =>
+                updateStage(index, "description", e.target.value)
+              }
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>
+                Ngày bắt đầu <span className="required">*</span>
+              </label>
+              <input
+                type="number"
+                className="form-input"
+                min="1"
+                value={stage.day_start}
+                onChange={(e) =>
+                  updateStage(index, "day_start", parseInt(e.target.value))
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>
+                Ngày kết thúc <span className="required">*</span>
+              </label>
+              <input
+                type="number"
+                className="form-input"
+                min={stage.day_start + 1}
+                value={stage.day_end}
+                onChange={(e) =>
+                  updateStage(index, "day_end", parseInt(e.target.value))
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Tổng ngày</label>
+              <div className="form-static">
+                {stage.day_end - stage.day_start + 1} ngày
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>📸 Ảnh mẫu giai đoạn</label>
+            <div className="upload-area">
+              <div className="upload-icon">🖼️</div>
+              <label className="upload-label">
+                {uploadingStage === index ? (
+                  <div className="uploading">
+                    <div className="spinner-upload"></div>
+                    <span>Đang upload...</span>
+                  </div>
+                ) : stage.stage_image ? (
+                  <div className="image-uploaded">
+                    <img
+                      src={stage.stage_image}
+                      alt={`Stage ${stage.stage_number}`}
+                    />
+                    <div className="image-actions">
+                      <button
+                        type="button"
+                        className="btn-change-image"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          document
+                            .getElementById(`stage-image-${index}`)
+                            .click();
+                        }}
+                      >
+                        🔄 Thay đổi
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-remove-image"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          updateStage(index, "stage_image", null);
+                        }}
+                      >
+                        🗑️ Xóa
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="upload-placeholder">
+                    <div className="upload-icon">📁</div>
+                    <div className="upload-text">
+                      <strong>Click để chọn ảnh</strong>
+                      <span>hoặc kéo thả ảnh vào đây</span>
+                    </div>
+                    <div className="upload-hint">
+                      PNG, JPG, JPEG (tối đa 5MB)
+                    </div>
+                  </div>
+                )}
+                <input
+                  id={`stage-image-${index}`}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) =>
+                    handleStageImageUpload(index, e.target.files[0])
+                  }
+                  disabled={uploadingStage === index}
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        className="btn btn-outline btn-block"
+        onClick={addStage}
+      >
+        + Thêm giai đoạn
+      </button>
+    </div>
+  );
+};
+
+// Step 3: Tasks with Image Upload
+const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
+  const [uploadingTask, setUploadingTask] = useState(null);
+
+  const handleTaskImageUpload = async (stageIndex, taskIndex, file) => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      setUploadingTask(`${stageIndex}-${taskIndex}`);
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const baseURL = API_URL.replace("/api", "");
+      const response = await axios.post(`${API_URL}/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const imageUrl = response.data?.data?.url;
+      if (imageUrl) {
+        // Add base URL if it's a relative path
+        const fullImageUrl = imageUrl.startsWith("http")
+          ? imageUrl
+          : `${baseURL}${imageUrl}`;
+        updateTask(stageIndex, taskIndex, "illustration_image", fullImageUrl);
+      }
+    } catch (error) {
+      console.error("Error uploading task image:", error);
+      alert("Không thể upload ảnh. Vui lòng thử lại.");
+    } finally {
+      setUploadingTask(null);
+    }
+  };
+
+  return (
+    <div className="step-tasks">
+      <div className="step-header">
+        <h2>✅ Nhiệm vụ tự động</h2>
+        <p className="hint">
+          Các nhiệm vụ này sẽ được tự động sinh ra cho người dùng mỗi ngày
+        </p>
+      </div>
+
+      {stages.map((stage, stageIndex) => (
+        <div key={stageIndex} className="stage-section">
+          <div className="stage-section-header">
+            <h3>
+              Giai đoạn {stage.stage_number}: {stage.name}
+            </h3>
+            <span className="badge">
+              {stage.autogenerated_tasks?.length || 0} nhiệm vụ
+            </span>
+          </div>
+
+          {stage.autogenerated_tasks?.map((task, taskIndex) => (
+            <div key={taskIndex} className="task-card">
+              <div className="task-card-header">
+                <span className="task-number">Nhiệm vụ {taskIndex + 1}</span>
+                <button
+                  type="button"
+                  className="btn-icon btn-sm"
+                  onClick={() => {
+                    const confirmDelete = window.confirm(
+                      "Bạn có chắc muốn xóa nhiệm vụ này? Hành động này không thể hoàn tác."
+                    );
+                    if (!confirmDelete) return;
+                    removeTask(stageIndex, taskIndex);
+                  }}
+                  title="Xóa nhiệm vụ"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group flex-2">
+                  <label>Tên nhiệm vụ</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Ví dụ: Tưới nước"
+                    value={task.task_name}
+                    onChange={(e) =>
+                      updateTask(
+                        stageIndex,
+                        taskIndex,
+                        "task_name",
+                        e.target.value
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="form-group flex-1">
+                  <label>Tần suất</label>
+                  <select
+                    className="form-select"
+                    value={task.frequency}
+                    onChange={(e) =>
+                      updateTask(
+                        stageIndex,
+                        taskIndex,
+                        "frequency",
+                        e.target.value
+                      )
+                    }
+                  >
+                    <option value="daily">Hàng ngày</option>
+                    <option value="every_2_days">2 ngày/lần</option>
+                    <option value="every_3_days">3 ngày/lần</option>
+                    <option value="weekly">Hàng tuần</option>
+                  </select>
+                </div>
+
+                <div className="form-group flex-1">
+                  <label>Độ ưu tiên</label>
+                  <select
+                    className="form-select"
+                    value={task.priority}
+                    onChange={(e) =>
+                      updateTask(
+                        stageIndex,
+                        taskIndex,
+                        "priority",
+                        e.target.value
+                      )
+                    }
+                  >
+                    <option value="low">Thấp</option>
+                    <option value="medium">Trung bình</option>
+                    <option value="high">Cao</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Mô tả</label>
+                <textarea
+                  className="form-textarea"
+                  rows="2"
+                  placeholder="Mô tả chi tiết nhiệm vụ..."
+                  value={task.description}
+                  onChange={(e) =>
+                    updateTask(
+                      stageIndex,
+                      taskIndex,
+                      "description",
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="form-group">
+                <label>📸 Ảnh minh họa nhiệm vụ</label>
+                <div className="upload-area upload-area-sm">
+                  <label className="upload-label">
+                    {uploadingTask === `${stageIndex}-${taskIndex}` ? (
+                      <div className="uploading">
+                        <div className="spinner-upload"></div>
+                        <span>Đang upload...</span>
+                      </div>
+                    ) : task.illustration_image ? (
+                      <div className="image-uploaded">
+                        <img
+                          src={task.illustration_image}
+                          alt={`Task ${taskIndex + 1}`}
+                        />
+                        <div className="image-actions">
+                          <button
+                            type="button"
+                            className="btn-change-image"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              document
+                                .getElementById(
+                                  `task-image-${stageIndex}-${taskIndex}`
+                                )
+                                .click();
+                            }}
+                          >
+                            🔄 Thay đổi
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-remove-image"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              updateTask(
+                                stageIndex,
+                                taskIndex,
+                                "illustration_image",
+                                null
+                              );
+                            }}
+                          >
+                            🗑️ Xóa
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="upload-placeholder upload-placeholder-sm">
+                        <div className="upload-icon">📁</div>
+                        <div className="upload-text">
+                          <strong>Click để chọn ảnh</strong>
+                        </div>
+                      </div>
+                    )}
+                    <input
+                      id={`task-image-${stageIndex}-${taskIndex}`}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={(e) =>
+                        handleTaskImageUpload(
+                          stageIndex,
+                          taskIndex,
+                          e.target.files[0]
+                        )
+                      }
+                      disabled={uploadingTask === `${stageIndex}-${taskIndex}`}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <div className="tasks-actions-row">
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => addTaskToStage(stageIndex)}
+            >
+              + Thêm nhiệm vụ
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-outline btn-sm btn-danger"
+              onClick={() => {
+                const tasks = stage.autogenerated_tasks || [];
+                if (tasks.length === 0) return;
+                const lastIndex = tasks.length - 1;
+                const confirmDelete = window.confirm(
+                  "Bạn sắp xóa nhiệm vụ vừa thêm. Bạn có chắc chắn?"
+                );
+                if (!confirmDelete) return;
+                removeTask(stageIndex, lastIndex);
+              }}
+              title="Xóa nhiệm vụ cuối"
+            >
+              ⤺ Hoàn tác
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Step 4: Observations
+const Step4Observations = ({
+  stages,
+  addObservationToStage,
+  updateObservation,
+  removeObservation,
+}) => (
+  <div className="step-observations">
+    <div className="step-header">
+      <h2>👁️ Điều kiện quan sát</h2>
+      <p className="hint">
+        Các điều kiện quan sát để theo dõi tiến độ phát triển của cây
+      </p>
+    </div>
+
+    {stages.map((stage, stageIndex) => (
+      <div key={stageIndex} className="stage-section">
+        <div className="stage-section-header">
+          <h3>
+            Giai đoạn {stage.stage_number}: {stage.name}
+          </h3>
+          <span className="badge">
+            {stage.observation_required?.length || 0} điều kiện
+          </span>
+        </div>
+
+        {stage.observation_required?.map((obs, obsIndex) => (
+          <div key={obsIndex} className="observation-card">
+            <div className="observation-card-header">
+              <span className="obs-number">Điều kiện {obsIndex + 1}</span>
+              <button
+                type="button"
+                className="btn-icon btn-sm"
+                onClick={() => {
+                  const confirmDelete = window.confirm(
+                    "Bạn có chắc muốn xóa điều kiện quan sát này? Hành động này không thể hoàn tác."
+                  );
+                  if (!confirmDelete) return;
+                  removeObservation(stageIndex, obsIndex);
+                }}
+                title="Xóa điều kiện"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group flex-1">
+                <label>Key (định danh)</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Ví dụ: has_sprout"
+                  value={obs.key}
+                  onChange={(e) =>
+                    updateObservation(
+                      stageIndex,
+                      obsIndex,
+                      "key",
+                      e.target.value
+                    )
+                  }
+                />
+                <small className="hint">Dùng snake_case, không dấu</small>
+              </div>
+
+              <div className="form-group flex-1">
+                <label>Câu hỏi hiển thị</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Ví dụ: Đã nảy mầm?"
+                  value={obs.label}
+                  onChange={(e) =>
+                    updateObservation(
+                      stageIndex,
+                      obsIndex,
+                      "label",
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Mô tả</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Mô tả chi tiết để user dễ quan sát"
+                value={obs.description}
+                onChange={(e) =>
+                  updateObservation(
+                    stageIndex,
+                    obsIndex,
+                    "description",
+                    e.target.value
+                  )
+                }
+              />
+            </div>
+          </div>
+        ))}
+
+        <div className="observations-actions-row">
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={() => addObservationToStage(stageIndex)}
+          >
+            + Thêm điều kiện quan sát
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-outline btn-sm btn-danger"
+            onClick={() => {
+              const obs = stage.observation_required || [];
+              if (obs.length === 0) return;
+              const lastIndex = obs.length - 1;
+              const confirmDelete = window.confirm(
+                "Bạn sắp xóa điều kiện vừa thêm. Bạn có chắc chắn?"
+              );
+              if (!confirmDelete) return;
+              removeObservation(stageIndex, lastIndex);
+            }}
+            title="Xóa điều kiện cuối"
+          >
+            ⤺ Hoàn tác
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+// Step 5: Rules & Review
+const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
+  <div className="step-review">
+    <div className="step-header">
+      <h2>⚙️ Quy tắc & Xác nhận</h2>
+      <p className="hint">
+        Cấu hình quy tắc xử lý và xem lại toàn bộ template trước khi lưu
+      </p>
+    </div>
+
+    <div className="section">
+      <h3>🕒 Quy tắc xử lý trễ hạn</h3>
+
+      <div className="form-group">
+        <label>🔒 Số ngày cho phép trễ (safe_delay_days)</label>
+        <input
+          type="number"
+          className="form-input"
+          min="0"
+          value={formData.rules.safe_delay_days}
+          onChange={(e) =>
+            handleRuleChange("safe_delay_days", parseInt(e.target.value))
+          }
+        />
+        <small className="hint">
+          Số ngày cho phép user trễ trước khi hệ thống tự động chuyển giai đoạn
+          hoặc đánh dấu quá hạn
+        </small>
+      </div>
+
+      <div className="form-group">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={formData.rules.auto_skip}
+            onChange={(e) => handleRuleChange("auto_skip", e.target.checked)}
+          />
+          <span>Tự động chuyển giai đoạn khi quá trễ</span>
+        </label>
+      </div>
+    </div>
+
+    <div className="section">
+      <h3>📋 Trạng thái & Ghi chú</h3>
+
+      <div className="form-group">
+        <label>Trạng thái</label>
+        <select
+          className="form-select"
+          value={formData.status}
+          onChange={(e) => handleInputChange("status", e.target.value)}
+        >
+          <option value="draft">Nháp (Draft)</option>
+          <option value="active">Hoạt động (Active)</option>
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label>Ghi chú</label>
+        <textarea
+          className="form-textarea"
+          rows="3"
+          placeholder="Ghi chú thêm về template này..."
+          value={formData.notes}
+          onChange={(e) => handleInputChange("notes", e.target.value)}
+        />
+      </div>
+    </div>
+
+    <div className="section">
+      <h3>📊 Tổng quan Template</h3>
+      <div className="summary-grid">
+        <div className="summary-item">
+          <div className="summary-label">Tên template</div>
+          <div className="summary-value">{formData.template_name}</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-label">Nhóm cây</div>
+          <div className="summary-value">{formData.plant_group}</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-label">Số giai đoạn</div>
+          <div className="summary-value">{formData.stages.length}</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-label">Tổng ngày</div>
+          <div className="summary-value">
+            {formData.stages.length > 0
+              ? Math.max(...formData.stages.map((s) => s.day_end))
+              : 0}{" "}
+            ngày
+          </div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-label">Tổng nhiệm vụ</div>
+          <div className="summary-value">
+            {formData.stages.reduce(
+              (sum, stage) => sum + (stage.autogenerated_tasks?.length || 0),
+              0
+            )}
+          </div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-label">Tổng điều kiện</div>
+          <div className="summary-value">
+            {formData.stages.reduce(
+              (sum, stage) => sum + (stage.observation_required?.length || 0),
+              0
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Continue with other step components in next file...
+export default PlantTemplateForm;

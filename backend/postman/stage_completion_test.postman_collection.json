@@ -1,0 +1,170 @@
+{
+  "info": {
+    "name": "Stage Completion Test",
+    "description": "Test stage completion without waiting 7 days",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"your_username\",\n  \"password\": \"your_password\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/auth/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "2. Get All Notebooks",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5000/api/notebooks",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "notebooks"]
+        }
+      }
+    },
+    {
+      "name": "3. Get Notebook Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5000/api/notebooks/{{notebookId}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "notebooks", "{{notebookId}}"]
+        }
+      }
+    },
+    {
+      "name": "4. 🧪 Force Complete Stage (TEST)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5000/api/notebooks/{{notebookId}}/test/force-complete-stage",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "api",
+            "notebooks",
+            "{{notebookId}}",
+            "test",
+            "force-complete-stage"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Update to Next Stage",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"stage_number\": 2\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/notebooks/{{notebookId}}/stage",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "notebooks", "{{notebookId}}", "stage"]
+        }
+      }
+    },
+    {
+      "name": "6. Get Notebook Timeline",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5000/api/notebooks/{{notebookId}}/timeline",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "notebooks", "{{notebookId}}", "timeline"]
+        }
+      }
+    },
+    {
+      "name": "7. Get Current Observations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5000/api/notebooks/{{notebookId}}/observations",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "notebooks", "{{notebookId}}", "observations"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "accessToken",
+      "value": "YOUR_ACCESS_TOKEN_HERE"
+    },
+    {
+      "key": "notebookId",
+      "value": "YOUR_NOTEBOOK_ID_HERE"
+    }
+  ]
+}

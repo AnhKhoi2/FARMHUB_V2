@@ -6,6 +6,9 @@ import axiosClient from "../../api/shared/axiosClient";
 export default function AdminPost() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
   const [showTrash, setShowTrash] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
@@ -14,19 +17,23 @@ export default function AdminPost() {
   const [reportsList, setReportsList] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
 
-  const fetchItems = async () => {
+  const fetchItems = async (p = page) => {
     setLoading(true);
     try {
-      // Try admin endpoint first (requires admin auth). If it fails (401/403), fall back to public listing.
       let res;
+      const params = { limit, page: p };
       try {
-        res = await axiosClient.get(`/admin/managerpost?limit=200`);
+        res = await axiosClient.get(`/admin/managerpost`, { params });
       } catch (e) {
         console.warn('Admin managerpost fetch failed, trying public endpoint', e?.response?.status);
-        res = await axiosClient.get(`/admin/managerpost/public?limit=200`);
+        res = await axiosClient.get(`/admin/managerpost/public`, { params });
       }
-      const data = res.data?.data?.items || res.data?.data || res.data || [];
-      setItems(data || []);
+      const data = res.data?.data || res.data || {};
+      const items = data.items || data.data?.items || data.docs || res.data || [];
+      const tot = data.total || data.meta?.total || items.length;
+      setItems(items || []);
+      setTotal(Number(tot || 0));
+      setPage(Number(p));
     } catch (err) {
       console.error('Failed to load posts', err);
     } finally {
@@ -34,7 +41,7 @@ export default function AdminPost() {
     }
   };
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => { fetchItems(page); }, [page]);
 
   const handleHide = async (id) => {
     try {
@@ -75,7 +82,7 @@ export default function AdminPost() {
               <table className="table table-hover mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>#</th>
+                    <th style={{width:60}}>STT</th>
                     <th>Tiêu đề</th>
                     <th>Người đăng</th>
                     <th>Điện thoại</th>
@@ -93,7 +100,7 @@ export default function AdminPost() {
                   ) : (
                     items.map((it, idx) => (
                       <tr key={it._id}>
-                        <td style={{ fontFamily: 'monospace' }}>{String(idx + 1).padStart(2, '0')}</td>
+                        <td className="small text-muted">{(page - 1) * limit + idx + 1}</td>
                         <td>{it.title}</td>
                         <td>{it.userId?.username || (it.userId?.email || '—')}</td>
                         <td>{it.phone || '—'}</td>
@@ -121,6 +128,41 @@ export default function AdminPost() {
               </table>
             </div>
           </div>
+        </div>
+
+        {/* Pagination controls */}
+        <div className="d-flex justify-content-between align-items-center mt-2">
+          <div className="text-muted small">Tổng: {total} mục</div>
+          <nav>
+            <ul className="pagination pagination-sm mb-0">
+              {(() => {
+                const totalPages = Math.max(1, Math.ceil(total / limit));
+                const pages = [];
+                let start = Math.max(1, page - 2);
+                let end = Math.min(totalPages, page + 2);
+                if (start > 1) { pages.push(1); if (start > 2) pages.push('...'); }
+                for (let p = start; p <= end; p++) pages.push(p);
+                if (end < totalPages) { if (end < totalPages - 1) pages.push('...'); pages.push(totalPages); }
+                return [
+                  <li key="prev" className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => page > 1 && setPage(page - 1)}>Prev</button>
+                  </li>,
+                  pages.map((p, i) => (
+                    typeof p === 'number' ? (
+                      <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
+                        <button className="page-link" onClick={() => setPage(p)}>{p}</button>
+                      </li>
+                    ) : (
+                      <li key={`dot-${i}`} className="page-item disabled"><span className="page-link">{p}</span></li>
+                    )
+                  )),
+                  <li key="next" className={`page-item ${page >= totalPages ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => page < totalPages && setPage(page + 1)}>Next</button>
+                  </li>
+                ];
+              })()}
+            </ul>
+          </nav>
         </div>
 
         {showTrash && (

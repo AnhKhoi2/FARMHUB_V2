@@ -127,10 +127,79 @@ export default function ExpertHome({
               </div>
               <h1 className="brand-name">Trang chuyên gia</h1>
             </div>
+s
+          {/* 4 Component Buttons */}
+          <nav className="header-nav">
+            {/* Component 1: Chat */}
+            <button
+              className="nav-button nav-button-chat"
+              onClick={onChatClick}
+              title="Trao đổi với người dùng"
+            >
+              <MessageCircle size={20} />
+              <span>Trò chuyện</span>
+            </button>
 
-            {/* 4 Component Buttons */}
-            <nav className="header-nav">
-              {/* Chat */}
+            {/* Component 2: Manage Guides */}
+            <button
+              className="nav-button nav-button-add"
+              onClick={() => {
+                try {
+                  if (onAddGuideClick) onAddGuideClick();
+                } catch (e) {
+                  void e;
+                }
+                navigate("/managerguides");
+              }}
+              title="Quản lý hướng dẫn"
+            >
+              <span>Quản lý hướng dẫn</span>
+            </button>
+
+            {/* Component 3: Dashboard */}
+            <button
+              className="nav-button nav-button-dashboard"
+              onClick={() => navigate("/experthome/models")}
+              title="Mô hình trồng"
+            >
+              <Leaf size={20} />
+              <span>Mô hình trồng</span>
+            </button>
+
+            {/* Component 4: Plant Templates */}
+            <button
+              className="nav-button nav-button-template"
+              onClick={() => navigate("/expert/plant-templates")}
+              title="Plant Templates"
+            >
+              <span>Bộ Mẫu Cây Trồng</span>
+            </button>
+
+            {/* Component 5: Analytics */}
+            <button
+              className="nav-button nav-button-analytics"
+              onClick={onAnalyticsClick}
+              title="Phân tích"
+            >
+              <BarChart3 size={20} />
+              <span>Phân tích</span>
+            </button>
+          </nav>
+
+          {/* Right Section: Notifications & Avatar */}
+          <div className="header-right">
+            {/* Notifications */}
+            <button className="notification-btn">
+              <Bell size={20} />
+              {mockProfile.notifications > 0 && (
+                <span className="notification-badge">
+                  {mockProfile.notifications}
+                </span>
+              )}
+            </button>
+
+            {/* Avatar & Profile Menu */}
+            <div className="profile-section">
               <button
                 className="nav-button nav-button-chat"
                 onClick={() => setChatOpen(true)}

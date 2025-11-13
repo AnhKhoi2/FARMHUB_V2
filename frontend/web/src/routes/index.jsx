@@ -42,12 +42,37 @@ import ManagerGuides from "../pages/expert/ManagerGuides";
 import GuideDetail from "../pages/expert/GuideDetail";
 import GuideEdit from "../pages/expert/GuideEdit";
 import TrashGuides from "../pages/expert/TrashGuides";
+
+// Farmer Pages - Notebook
+import NotebookList from "../pages/farmer/NotebookList";
+import NotebookDetail from "../pages/farmer/NotebookDetail";
+import NotebookCreate from "../pages/farmer/NotebookCreate";
+import NotebookEdit from "../pages/farmer/NotebookEdit";
+
+// Farmer Pages - Collections
+import Collections from "../pages/farmer/Collections";
+import CollectionDetail from "../pages/farmer/CollectionDetail";
+
+// Farmer Pages - Diseases
+import Diseases from "../pages/farmer/Diseases";
+
+
+
+// Expert nested routes
 import ExpertRoutes from "./expert/ExpertRoutes.jsx";
 
 // Trang Experts bạn đã copy (đặt ở đâu thì chỉnh import tương ứng)
 import ExpertContent from "../pages/ExpertContent.jsx";
+import AIChatWidget from "../components/shared/AIChatWidget";
+import { useLocation } from 'react-router-dom';
 
 export default function AppRoutes() {
+  function ChatWrapper() {
+    const location = useLocation();
+    // don't show chat widget on admin paths
+    if (location.pathname && location.pathname.startsWith('/admin')) return null;
+    return <AIChatWidget />;
+  }
   return (
     <BrowserRouter>
       <Routes>
@@ -94,6 +119,14 @@ export default function AppRoutes() {
         />
         <Route
           path="/admin/categories"
+          element={
+            <AdminRoute>
+              <AdminCategories />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/disease-categories"
           element={
             <AdminRoute>
               <AdminCategories />
@@ -265,6 +298,22 @@ export default function AppRoutes() {
   <Route path="/experts" element={<ExpertsList />} />
         <Route path="/guides/:id" element={<GuideDetail />} />
         <Route
+          path="/managerguides/trash"
+          element={
+            <PrivateRoute>
+              <TrashGuides />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/managerguides/edit/:id"
+          element={
+            <PrivateRoute>
+              <GuideEdit />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/market"
           element={
             <PrivateRoute>
@@ -273,6 +322,79 @@ export default function AppRoutes() {
           }
         />
 
+        {/* Farmer Routes - Notebook */}
+        <Route
+          path="/farmer/notebooks"
+          element={
+            <PrivateRoute>
+              <NotebookList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/notebooks/create"
+          element={
+            <PrivateRoute>
+              <NotebookCreate />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/notebooks/:id"
+          element={
+            <PrivateRoute>
+              <NotebookDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/notebooks/:id/edit"
+          element={
+            <PrivateRoute>
+              <NotebookEdit />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Farmer Routes - Collections */}
+        <Route
+          path="/farmer/collections"
+          element={
+            <PrivateRoute>
+              <Collections />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/collections/:id"
+          element={
+            <PrivateRoute>
+              <CollectionDetail />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Farmer Routes - Diseases */}
+        <Route
+          path="/diseases"
+          element={
+            <PrivateRoute>
+              <Diseases />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Home route for regular users (farmers) */}
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <Home />
+            </PrivateRoute>
+          }
+        />
+
+        {/* legacy/shortcut route to support /createguides if linked elsewhere */}
         {/* Legacy/shortcut */}
         <Route
           path="/createguides"
@@ -282,6 +404,8 @@ export default function AppRoutes() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      {/* Global AI chat widget (floating) - hidden on /admin */}
+      <ChatWrapper />
     </BrowserRouter>
   );
 }

@@ -8,6 +8,7 @@ import {
   FaCloudSun,
   FaBook,
   FaStethoscope,
+  FaBug,
 } from "react-icons/fa";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
@@ -315,7 +316,7 @@ const Home = () => {
           </div>
 
           <div className="row g-4">
-            <div className="col-md-4">
+            <div className="col-md-3">
               <Link to="/weather" className="text-decoration-none">
                 <div className="card h-100 shadow-sm hover-card text-center p-4">
                   <div className="mb-3">
@@ -329,7 +330,7 @@ const Home = () => {
               </Link>
             </div>
 
-            <div className="col-md-4">
+            <div className="col-md-3">
               <Link to="/my-garden" className="text-decoration-none">
                 <div className="card h-100 shadow-sm hover-card text-center p-4">
                   <div className="mb-3">
@@ -343,7 +344,7 @@ const Home = () => {
               </Link>
             </div>
 
-            <div className="col-md-4">
+            <div className="col-md-3">
               <Link to="/diagnosis" className="text-decoration-none">
                 <div className="card h-100 shadow-sm hover-card text-center p-4">
                   <div className="mb-3">
@@ -351,6 +352,20 @@ const Home = () => {
                   </div>
                   <h4 className="fw-bold">Chuẩn đoán</h4>
                   <p className="text-muted">Sổ khám sức khỏe cây trồng</p>
+                </div>
+              </Link>
+            </div>
+
+            <div className="col-md-3">
+              <Link to="/diseases" className="text-decoration-none">
+                <div className="card h-100 shadow-sm hover-card text-center p-4">
+                  <div className="mb-3">
+                    <FaBug size={64} className="text-success" />
+                  </div>
+                  <h4 className="fw-bold">Bệnh cây trồng</h4>
+                  <p className="text-muted">
+                    Tìm hiểu về các loại bệnh và cách phòng trừ
+                  </p>
                 </div>
               </Link>
             </div>
