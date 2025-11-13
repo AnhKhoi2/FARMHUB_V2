@@ -23,6 +23,8 @@ import postRoutes from "./routes/post.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 import expertApplicationsRouter from "./routes/expertApplications.js";
+import expertRatingRoutes from "./routes/expertRating.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -60,7 +62,8 @@ app.use("/admin/users", usersRoute);
 // app.use("/api/expert-applications", expertApplicationRoutes);
 
 app.use("/api/expert-applications", expertApplicationsRouter);
-
+app.use("/api/experts", expertRatingRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/admin/models", modelsRoutes);
 app.use("/layouts", layoutsRoutes);

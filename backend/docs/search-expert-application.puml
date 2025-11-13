@@ -1,0 +1,141 @@
+@startuml
+title FARMHUB – Search Expert Applications
+
+skinparam monochrome true
+skinparam dpi 150
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Consolas
+skinparam linetype ortho
+hide circle
+
+' ======== ENUMS ========
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+enum Role {
+  user
+  expert
+  moderator
+  admin
+}
+
+' ======== MODELS ========
+package "backend/models" {
+  class User <<MongooseModel>> {
+    +_id: ObjectId
+    +username: String
+    +email: String
+    +role: Role
+    +isVerified: Boolean
+    +isDeleted: Boolean
+    +isBanned: Boolean
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class ExpertApplication <<MongooseModel>> {
+    +_id: ObjectId
+    +user: ObjectId -> User
+    +full_name: String
+    +email: String
+    +phone_number: String
+    +expertise_area: String
+    +experience_years: Number
+    +description: String
+    +certificates: [String]
+    +status: ApplicationStatus = pending
+    +review_notes: String
+    +reviewed_by: ObjectId -> User
+    +reviewed_at: Date
+    +createdAt: Date
+    +updatedAt: Date
+    --
+    {static} indexes:
+    - text(full_name, expertise_area, description)
+    - compound(status, experience_years, createdAt)
+  }
+}
+
+' ======== CONTROLLER ========
+package "backend/controllers" {
+  class ExpertApplicationController {
+    +search(filter: SearchFilter): SearchResult
+    +list(filter: SearchFilter): SearchResult
+  }
+}
+
+' ======== SERVICES / QUERY LAYER ========
+package "backend/services" {
+  class ExpertApplicationService {
+    +search(filter: SearchFilter): SearchResult
+  }
+
+  class ExpertApplicationQuery {
+    +build(filter: SearchFilter): any  ' Mongoose conditions
+    +buildSort(sort: SortOption): any
+    --
+    -composeTextQuery(q: string): any
+    -composeRange(field: string, min?: number, max?: number): any
+    -composeDateRange(field: string, from?: Date, to?: Date): any
+  }
+}
+
+' ======== DTOs / VIEW MODELS ========
+package "dto" {
+  class SearchFilter {
+    +q?: string
+    +status?: ApplicationStatus
+    +min_exp?: number
+    +max_exp?: number
+    +reviewerId?: string
+    +date_from?: Date
+    +date_to?: Date
+    +page?: number = 1
+    +limit?: number = 20
+    +sort?: SortOption
+    +isDeleted?: boolean   ' for admin trash views
+  }
+
+  class SortOption {
+    +field: string  ' createdAt | experience_years | status | full_name
+    +direction: int ' 1 or -1
+  }
+
+  class ApplicationListItem <<DTO>> {
+    +id: string
+    +full_name: string
+    +email: string
+    +phone_number?: string
+    +expertise_area: string
+    +experience_years: number
+    +status: ApplicationStatus
+    +createdAt: Date
+    +reviewed_by_email?: string
+  }
+
+  class SearchResult {
+    +items: ApplicationListItem[]
+    +total: number
+    +page: number
+    +limit: number
+  }
+}
+
+' ======== RELATIONSHIPS ========
+User "1" <-- "many" ExpertApplication : applicant
+User "1" <-- "0..many" ExpertApplication : reviewer (reviewed_by)
+
+ExpertApplicationController --> ExpertApplicationService
+ExpertApplicationService --> ExpertApplicationQuery : build()
+ExpertApplicationService --> ExpertApplication : find(filter)
+ExpertApplicationService ..> ApplicationListItem : map()
+ExpertApplicationService ..> SearchResult : wrap()
+
+ExpertApplicationQuery ..> SearchFilter
+SearchResult ..> ApplicationListItem
+SearchFilter ..> SortOption
+@enduml

@@ -1,0 +1,211 @@
+/* ===== Expert Profile – modern clean card ===== */
+
+:root {
+    --xp-bg: #f7f9f8;
+    --xp-surface: #ffffff;
+    --xp-text: #0f172a;
+    --xp-muted: #64748b;
+    --xp-line: #e2e8f0;
+  
+    --xp-brand: #16a34a;          /* emerald-600 */
+    --xp-brand-2: #22c55e;        /* emerald-500 */
+    --xp-brand-3: #34d399;        /* emerald-400 */
+    --xp-shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
+    --xp-radius: 20px;
+  }
+  
+  .xp-wrap {
+    min-height: 100vh;
+    background: var(--xp-bg);
+    color: var(--xp-text);
+  }
+  
+  /* Topbar */
+  .xp-topbar {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .xp-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+  }
+  .xp-logo {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--xp-brand), var(--xp-brand-2));
+    color: #fff;
+    box-shadow: var(--xp-shadow);
+  }
+  
+  /* Hero area */
+  .xp-hero {
+    position: relative;
+    padding: 30px 16px 70px;
+  }
+  .xp-hero-bg {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 180px;
+    background: linear-gradient(120deg, var(--xp-brand), var(--xp-brand-3));
+    opacity: 0.9;
+  }
+  
+  /* Card */
+  .xp-card {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--xp-surface);
+    border-radius: var(--xp-radius);
+    box-shadow: var(--xp-shadow);
+    padding: 26px;
+  }
+  
+  .xp-card-header {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    margin-top: -68px; /* pull up over gradient */
+  }
+  
+  .xp-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f1f5f9;
+    border: 6px solid var(--xp-surface);
+    box-shadow: 0 6px 20px rgba(2, 6, 23, 0.08);
+  }
+  .xp-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .xp-title h1 {
+    font-size: 26px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+  }
+  .xp-title p {
+    margin: 0;
+    color: #065f46;
+    font-weight: 600;
+  }
+  
+  /* Divider */
+  .xp-divider {
+    height: 1px;
+    background: var(--xp-line);
+    margin: 22px 0;
+  }
+  
+  /* Info grid */
+  .xp-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 900px) {
+    .xp-info-grid { grid-template-columns: 1fr; }
+  }
+  
+  .xp-info-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 14px;
+    border: 1px solid var(--xp-line);
+    border-radius: 14px;
+    background: #fafafa;
+  }
+  .xp-info-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: #ecfdf5;
+    color: #065f46;
+  }
+  .xp-info-text {
+    display: grid;
+  }
+  .xp-info-label {
+    font-size: 12px;
+    color: var(--xp-muted);
+  }
+  .xp-info-value {
+    font-weight: 600;
+  }
+  
+  /* Actions */
+  .xp-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  
+  .xp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--xp-brand);
+    color: #fff;
+    border: 1px solid var(--xp-brand);
+    font-weight: 600;
+    box-shadow: var(--xp-shadow);
+    transition: transform .06s ease, opacity .2s ease;
+  }
+  .xp-btn:hover { transform: translateY(-1px); }
+  .xp-btn:active { transform: translateY(0); }
+  
+  .xp-btn.outline {
+    background: #fff;
+    color: var(--xp-brand);
+    border-color: var(--xp-brand);
+  }
+  .xp-btn.ghost {
+    background: transparent;
+    color: var(--xp-text);
+    border-color: var(--xp-line);
+  }
+  .xp-btn.danger {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+  .xp-btn.danger.ghost { background: transparent; }
+  
+  .xp-topbar-right { display: flex; gap: 8px; }
+  
+  /* Loader */
+  .xp-loader {
+    min-height: 50vh;
+    display: grid;
+    place-items: center;
+    gap: 12px;
+    color: var(--xp-muted);
+  }
+  .xp-spinner {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 3px solid #e2e8f0;
+    border-top-color: var(--xp-brand);
+    animation: xp-spin .85s linear infinite;
+  }
+  @keyframes xp-spin { to { transform: rotate(360deg); } }
+  
