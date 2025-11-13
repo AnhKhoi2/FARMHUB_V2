@@ -36,7 +36,32 @@ export const diseaseCategoryController = {
     return ok(res, { items, total, page: pageNum, limit: limitNum });
   }),
 
+  // Public list for non-admin users
+  publicList: asyncHandler(async (req, res) => {
+    const { q, page, limit } = req.query;
+    const filter = { isDeleted: false };
+    if (q) filter.$text = { $search: q };
+
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [items, total] = await Promise.all([
+      DiseaseCategory.find(filter).sort({ order: 1, name: 1 }).skip(skip).limit(limitNum),
+      DiseaseCategory.countDocuments(filter),
+    ]);
+
+    return ok(res, { items, total, page: pageNum, limit: limitNum });
+  }),
+
   getBySlug: asyncHandler(async (req, res) => {
+    const { slug } = req.params;
+    const cat = await DiseaseCategory.findOne({ slug, isDeleted: false });
+    return ok(res, cat);
+  }),
+
+  // Public get by slug
+  publicGetBySlug: asyncHandler(async (req, res) => {
     const { slug } = req.params;
     const cat = await DiseaseCategory.findOne({ slug, isDeleted: false });
     return ok(res, cat);

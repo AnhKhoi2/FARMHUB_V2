@@ -19,7 +19,24 @@ const StageObservations = ({ notebookId }) => {
         notebookId
       );
       const obsData = response.data?.data || response.data || [];
-      setObservations(Array.isArray(obsData) ? obsData : []);
+
+      // Normalize different possible field names from backend templates
+      // Backend PlantTemplate observation schema uses { key, label, description }
+      // Older docs/examples may use observation_key / observation_name.
+      const raw = Array.isArray(obsData) ? obsData : [];
+      const normalized = raw.map((o) => ({
+        // prefer already-correct names, fallback to `key`/`label`
+        observation_key: o.observation_key || o.key || o.observationKey,
+        observation_name:
+          o.observation_name || o.observationName || o.label || o.name,
+        description: o.description || o.desc || "",
+        // preserve any existing value (from stage tracking) or default false
+        value: o.value === undefined ? false : o.value,
+        // keep original object in case other fields are needed
+        __raw: o,
+      }));
+
+      setObservations(normalized);
       setError(null);
     } catch (err) {
       console.error("Error fetching observations:", err);
@@ -50,7 +67,7 @@ const StageObservations = ({ notebookId }) => {
         alert(
           `🎉 ${
             responseData.message ||
-            `Đã hoàn thành tất cả quan sát! Tự động chuyển sang ${newStageName}`
+            `Đã hoàn thành tất cả quan sát! Tự động chuyển sang ${newStageName}. Công việc mới sẽ xuất hiện vào ngày mai.`
           }`
         );
 
