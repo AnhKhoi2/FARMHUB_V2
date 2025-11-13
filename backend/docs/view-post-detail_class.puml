@@ -1,0 +1,119 @@
+@startuml
+title FARMHUB – View Post Detail
+
+skinparam monochrome true
+skinparam dpi 150
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Consolas
+skinparam linetype ortho
+hide circle
+
+' ===== ENUMS (khớp code) =====
+enum PostStatus {
+  pending
+  approved
+  rejected
+}
+
+' ===== MODELS =====
+package "backend/models" {
+  class User <<MongooseModel>> {
+    +_id: ObjectId
+    +username: String
+    +email: String
+    +role: "user"|"expert"|"moderator"|"admin"
+    +isVerified: Boolean
+    +isDeleted: Boolean
+    +isBanned: Boolean
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class MarketPost <<MongooseModel>> {
+    +_id: ObjectId
+    +userId: ObjectId -> User {required}
+    +title: String {required}
+    +description: String
+    +phone: String
+    +location: Object
+    +images: [String] = []
+    +status: PostStatus = pending
+    +isDeleted: Boolean = false
+    +reports: [Report]
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class Report <<Subdocument>> {
+    +userId: ObjectId -> User
+    +reason: String
+    +message: String
+    +createdAt: Date
+  }
+}
+MarketPost "1" o- "many" Report : embeds
+User "1" <-- "many" MarketPost : author (userId)
+
+' ===== ROUTES =====
+package "backend/routes" {
+  class PostRoutes <<ExpressRouter>> {
+    +GET /api/posts/public/:id    ' đề xuất (public detail)
+    +GET /api/posts/:id <<admin>> ' hiện có trong code
+  }
+}
+
+' ===== CONTROLLER =====
+package "backend/controllers" {
+  class PostController {
+    +detailPublic(id): Ok<PostDetailPublic>   ' đề xuất cho user
+    +detail(id): Ok<MarketPost>               ' hiện có (admin)
+  }
+}
+
+' ===== UTILS (ApiResponse) =====
+package "backend/utils" {
+  class ApiResponse {
+    +ok(res, data, meta?): Response<200>
+    +created(res, data): Response<201>
+    +noContent(res): Response<204>
+  }
+}
+
+' ===== DTO (View Model cho FE) =====
+package "dto" {
+  class PostDetailPublic {
+    +id: string
+    +title: string
+    +description?: string
+    +images: string[]
+    +phone?: string
+    +location?: object
+    +status: PostStatus
+    +createdAt: Date
+    +updatedAt: Date
+    +author: { id:string, username:string }
+  }
+}
+
+' ===== QUAN HỆ & LUỒNG =====
+PostRoutes --> PostController : detailPublic(id)
+PostController --> MarketPost : findById(id)\n.populate(userId:'username email')
+PostController ..> PostDetailPublic : map()
+PostController ..> ApiResponse : ok(res, data)
+
+note right of PostController
+  Logic (public gợi ý):
+  - 404 nếu !post hoặc post.isDeleted == true
+  - (tuỳ) chỉ expose khi status == 'approved'
+  - Trả về DTO PostDetailPublic
+end note
+
+note bottom of PostRoutes
+  Nếu chưa có /public/:id:
+  - Có thể thêm GET /api/posts/public/:id
+  - Hoặc nới quyền của /api/posts/:id
+end note
+
+@enduml

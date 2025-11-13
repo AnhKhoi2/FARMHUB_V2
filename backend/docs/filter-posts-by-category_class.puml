@@ -1,0 +1,150 @@
+@startuml
+title FARMHUB – Filter Posts by Category
+
+skinparam monochrome true
+skinparam dpi 150
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Consolas
+skinparam linetype ortho
+hide circle
+
+' ===== ENUMS =====
+enum PostStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PostCategory {
+  "Nông sản"
+  "Hạt giống"
+  "Phân bón"
+  "Thiết bị"
+  "Dịch vụ"
+  "Khác"
+}
+
+' ===== MODELS =====
+package "backend/models" {
+  class User <<MongooseModel>> {
+    +_id: ObjectId
+    +username: String
+    +email: String
+    +role: "user"|"expert"|"moderator"|"admin"
+    +isVerified: Boolean
+    +isDeleted: Boolean
+    +isBanned: Boolean
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class MarketPost <<MongooseModel>> {
+    +_id: ObjectId
+    +userId: ObjectId -> User {required}
+    +title: String {required}
+    +description: String
+    +phone: String
+    +location: Object
+    +images: [String] = []
+    +category: PostCategory         ' <-- cần bổ sung vào schema thực tế
+    +status: PostStatus = pending
+    +isDeleted: Boolean = false
+    +reports: [Report]
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class Report <<Subdocument>> {
+    +userId: ObjectId -> User
+    +reason: String
+    +message: String
+    +createdAt: Date
+  }
+}
+MarketPost "1" o- "many" Report : embeds
+User "1" <-- "many" MarketPost : author (userId)
+
+' ===== ROUTES =====
+package "backend/routes" {
+  class PostRoutes <<ExpressRouter>> {
+    +GET /api/posts/public?category=&q=&page=&limit=     ' user filter by category
+    +GET /api/posts?category=&q=&page=&limit= <<admin>>  ' admin filter by category
+  }
+}
+
+' ===== CONTROLLER =====
+package "backend/controllers" {
+  class PostController {
+    +listPublic(page?,limit?,q?,category?): Ok<SearchResult>
+    +list(page?,limit?,q?,category?): Ok<SearchResult>
+    --
+    -buildPublicFilter(q?,category?): any  ' { isDeleted:false, category?, $or:[title,description] }
+    -buildAdminFilter(q?,category?): any   ' { isDeleted:false, category?, $or:[title,description,phone] }
+  }
+}
+
+' ===== UTILS =====
+package "backend/utils" {
+  class ApiResponse {
+    +ok(res, data, meta?): Response<200>
+    +created(res, data): Response<201>
+    +noContent(res): Response<204>
+  }
+}
+
+' ===== DTOs =====
+package "dto" {
+  class PostCategoryFilter {
+    +q?: string
+    +category?: PostCategory
+    +page?: number = 1
+    +limit?: number = 50
+  }
+
+  class SearchMeta {
+    +total: number
+    +page: number
+    +limit: number
+  }
+
+  class PostListItem {
+    +id: string
+    +title: string
+    +category?: PostCategory
+    +description?: string
+    +thumbnail?: string
+    +status: PostStatus
+    +createdAt: Date
+    +authorUsername?: string
+    +authorEmail?: string   ' chỉ có ở admin list()
+  }
+
+  class SearchResult {
+    +items: PostListItem[]
+    +meta: SearchMeta
+  }
+}
+
+' ===== RELATIONSHIPS (flow) =====
+PostRoutes --> PostController : listPublic()/list()
+PostController --> MarketPost : find(filter)\n.sort({createdAt:-1}).skip().limit()
+PostController ..> ApiResponse : ok(res,{items,meta})
+
+note right of PostController
+  Filter logic:
+  - isDeleted == false
+  - if category provided -> { category: value }
+  - Public: $or on [title, description]
+  - Admin:  $or on [title, description, phone]
+  - populate userId:
+      Public -> username
+      Admin  -> username, email
+end note
+
+PostController ..> PostCategoryFilter
+PostController ..> SearchResult
+PostController ..> PostListItem
+
+@enduml

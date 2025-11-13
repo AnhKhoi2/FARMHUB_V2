@@ -1,0 +1,151 @@
+@startuml
+title FARMHUB – View List of Experts
+
+skinparam monochrome true
+skinparam dpi 150
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Consolas
+skinparam linetype ortho
+hide circle
+
+' ========= ENUMS =========
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+  banned
+  inactive
+}
+
+' ========= MODELS =========
+package "backend/models" {
+
+  class User <<MongooseModel>> {
+    +_id: ObjectId
+    +username: String {unique, required}
+    +email: String {unique, required}
+    +password: String (required if provider==local)
+    +provider: "local" | "google" = local
+    +googleId: String?
+    +role: "user" | "expert" | "moderator" | "admin" = user
+    +isVerified: Boolean = false
+    +isDeleted: Boolean = false
+    +isBanned: Boolean = false
+    +refreshTokens: [String]
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class Expert <<MongooseModel>> {
+    +_id: ObjectId
+    +expert_id: String {uuid, unique}
+    +user: ObjectId -> User {required}
+    --
+    +full_name: String {required}
+    +phone_number: String? {unique,sparse,regex^(0|+84)[0-9]{9}$}
+    +expertise_area: String {required}
+    +experience_years: Number = 0
+    +certificates: [{ url: String! }]
+    +description: String = ""
+    --
+    +avg_score: Number = 0 [0..5]
+    +total_reviews: Number = 0
+    --
+    +review_status: ReviewStatus = pending
+    +review_notes: String = ""
+    +reviewed_by: ObjectId -> User?
+    +reviewed_at: Date?
+    --
+    +is_public: Boolean = true
+    +is_deleted: Boolean = false
+    +deleted_at: Date?
+    +created_at: Date
+    +updated_at: Date
+    --
+    {static} index: text(full_name, expertise_area, description)
+  }
+}
+
+' ========= ROUTES =========
+package "backend/routes" {
+  class ExpertRoutes <<ExpressRouter>> {
+    GET /api/experts
+    GET /api/experts/:id
+    DELETE /api/experts/:id   ' (không dùng cho user)
+  }
+}
+
+' ========= CONTROLLER =========
+package "backend/controllers" {
+  class ExpertController {
+    +list(q?, review_status?, min_exp?, max_exp?, is_public?): ExpertList[]
+    +getById(id): ExpertDetail
+    +remove(id): void ' (soft delete) - không dành cho user
+    --
+    -PROJECTION: String
+    -ALLOWED_REVIEW: [String]
+  }
+}
+
+' ========= SERVICES (ẩn trong controller của bạn) =========
+' (Controller đang gọi trực tiếp Mongoose Model, nên không tách Service ở đây)
+
+' ========= DTOs / VIEW MODELS =========
+package "dto" {
+  class ExpertFilter {
+    +q?: string
+    +review_status?: ReviewStatus
+    +min_exp?: number
+    +max_exp?: number
+    +is_public?: boolean   ' user nên mặc định true
+  }
+
+  class ExpertListItem {
+    +expert_id: string
+    +full_name: string
+    +expertise_area: string
+    +experience_years: number
+    +avg_score: number
+    +total_reviews: number
+    +phone_number?: string
+    +is_public: boolean
+    +review_status: ReviewStatus
+    +created_at: Date
+    +updated_at: Date
+    +user_email?: string
+  }
+
+  class ExpertDetail {
+    +expert_id: string
+    +full_name: string
+    +expertise_area: string
+    +experience_years: number
+    +certificates: [{url:string}]
+    +description: string
+    +avg_score: number
+    +total_reviews: number
+    +review_status: ReviewStatus
+    +review_notes: string
+    +reviewed_by?: string
+    +reviewed_at?: Date
+    +is_public: boolean
+    +phone_number?: string
+    +created_at: Date
+    +updated_at: Date
+    +user_email?: string
+  }
+}
+
+' ========= RELATIONSHIPS =========
+ExpertRoutes --> ExpertController
+ExpertController --> Expert : find(filter).select(PROJECTION).populate(user)
+ExpertController ..> ExpertFilter
+ExpertController ..> ExpertListItem
+ExpertController ..> ExpertDetail
+
+' Model relations
+User "1" <-- "0..1" Expert : owner (user)
+
+@enduml
