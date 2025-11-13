@@ -66,7 +66,8 @@ const DailyChecklist = ({ notebookId, onTaskComplete }) => {
       <div className="checklist-empty">
         <p>📋 Không có công việc hôm nay</p>
         <small>
-          Checklist sẽ được tạo tự động khi bạn gán template cho notebook
+          Nếu bạn vừa chuyển sang giai đoạn mới, công việc mới sẽ xuất hiện vào
+          ngày mai (từ 0 giờ).
         </small>
       </div>
     );

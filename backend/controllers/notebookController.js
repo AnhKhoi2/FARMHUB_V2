@@ -133,6 +133,19 @@ const generateDailyChecklist = async (notebookId) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // Kiểm tra xem đã đến ngày bắt đầu của stage chưa
+  const currentDay = notebook.current_day || 1;
+  if (currentDay < currentStage.day_start) {
+    console.log(
+      `⏳ Stage ${notebook.current_stage} chưa bắt đầu (current_day: ${currentDay}, day_start: ${currentStage.day_start})`
+    );
+    // Trả về checklist rỗng vì chưa đến ngày bắt đầu stage
+    notebook.daily_checklist = [];
+    notebook.last_checklist_generated = today;
+    await notebook.save();
+    return [];
+  }
+
   if (
     notebook.last_checklist_generated &&
     new Date(notebook.last_checklist_generated).setHours(0, 0, 0, 0) ===
@@ -658,11 +671,13 @@ const updateStageObservation = async (notebookId, observationKey, value) => {
           // Cập nhật current_stage
           notebook.current_stage = nextStageNumber;
 
-          // Reset daily_checklist cho stage mới
+          // Không tạo checklist ngay, chỉ tạo khi sang ngày mới
+          notebook.daily_checklist = [];
           await notebook.save();
-          await generateDailyChecklist(notebookId);
 
-          console.log(`✅ Stage switched to ${nextStageNumber} successfully`);
+          console.log(
+            `✅ Stage switched to ${nextStageNumber} successfully (checklist will be generated on next day)`
+          );
         } else {
           console.log(`🏁 All stages completed!`);
           await notebook.save();
