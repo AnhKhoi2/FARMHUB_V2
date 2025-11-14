@@ -5,6 +5,7 @@ import { logout } from "../../redux/authSlice";
 import { FaUser, FaShoppingCart, FaBars, FaTimes } from "react-icons/fa";
 import NotificationBell from "../NotificationBell";
 import "./Header.css";
+import { RadarChartOutlined } from "@ant-design/icons";
 
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
@@ -192,6 +193,13 @@ const Header = () => {
                         <Link to="/cart">
                           <FaShoppingCart className="me-2" size={16} />
                           Giỏ Hàng
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/farmer/streak">
+
+                          <RadarChartOutlined className="me-2" size={16} />
+                          Chuỗi ngày siêng năng
                         </Link>
                       </li>
                       <li>

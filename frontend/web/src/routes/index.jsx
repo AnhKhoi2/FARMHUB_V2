@@ -56,14 +56,13 @@ import CollectionDetail from "../pages/farmer/CollectionDetail";
 // Farmer Pages - Diseases
 import Diseases from "../pages/farmer/Diseases";
 
-
-
 // Expert nested routes
 import ExpertRoutes from "./expert/ExpertRoutes.jsx";
 
 // Trang Experts bạn đã copy (đặt ở đâu thì chỉnh import tương ứng)
 import ExpertContent from "../pages/ExpertContent.jsx";
 import AIChatWidget from "../components/shared/AIChatWidget";
+import StreakScreen from "../pages/farmer/StreakScreen.jsx";
 
 export default function AppRoutes() {
   return (
@@ -72,17 +71,15 @@ export default function AppRoutes() {
         {/* ===== Public Auth ===== */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-  {/* Trang xác thực email */}
-  <Route path="/auth/verify/:token" element={<VerifyEmail />} />
-
-  <Route path="/forgot-password" element={<ForgotPassword />} />
-
-  {/* Public home route */}
-  <Route path="/" element={<Home />} />
+        {/* Trang xác thực email */}
         <Route path="/auth/verify/:token" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} /> {/* <- từ code 2 */}
-
+        {/* Public home route */}
+        <Route path="/" element={<Home />} />
+        <Route path="/auth/verify/:token" element={<VerifyEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
+        {/* <- từ code 2 */}
         {/* ===== Protected app (từ code 2) ===== */}
         <Route
           path="/"
@@ -100,7 +97,6 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-
         {/* ===== Admin (giữ nguyên + bổ sung nested) ===== */}
         <Route
           path="/admin/dashboard"
@@ -176,7 +172,6 @@ export default function AppRoutes() {
             </AdminRoute>
           }
         />
-
         {/* Cụm /admin có layout + nested Experts Content (không ảnh hưởng route cũ) */}
         <Route
           path="/admin"
@@ -188,7 +183,6 @@ export default function AppRoutes() {
         >
           <Route path="experts" element={<ExpertContent />} />
         </Route>
-
         {/* ===== Expert area ===== */}
         <Route
           path="/expert/home"
@@ -198,7 +192,6 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-
         {/* Gom cụm Manager Guides, tránh trùng lặp */}
         <Route
           path="/managerguides"
@@ -256,17 +249,21 @@ export default function AppRoutes() {
             </AdminRoute>
           }
         />
-
         {/* Expert Routes */}
-        <Route path="/expert/home" element={<PrivateRoute><ExpertHome /></PrivateRoute>} />
-
+        <Route
+          path="/expert/home"
+          element={
+            <PrivateRoute>
+              <ExpertHome />
+            </PrivateRoute>
+          }
+        />
         {/* Manager guides (public) */}
         <Route path="/managerguides" element={<ManagerGuides />} />
         <Route path="/managerguides/create" element={<GuideEdit />} />
         <Route path="/managerguides/edit/:id" element={<GuideEdit />} />
         <Route path="/managerguides/detail/:id" element={<GuideDetail />} />
         <Route path="/managerguides/trash" element={<TrashGuides />} />
-
         {/* 🔹 NEW: Cụm /admin có AdminLayout để gắn trang Experts (nested route) */}
         <Route
           path="/admin"
@@ -281,14 +278,12 @@ export default function AppRoutes() {
         </Route>
         {/* Route xem chi tiết guide theo id (nếu nơi khác có dùng) */}
         <Route path="/guides/:id" element={<GuideDetail />} />
-
         {/* Expert nested bundle (nếu bạn có thêm nhiều trang con dưới /expert) */}
         <Route path="/expert/*" element={<ExpertRoutes />} />
-
         {/* Direct expert home route for quick access/testing */}
         <Route path="/experthome" element={<ExpertHome />} />
-  <Route path="/experthome/models" element={<ExpertModels />} />
-  <Route path="/experts" element={<ExpertsList />} />
+        <Route path="/experthome/models" element={<ExpertModels />} />
+        <Route path="/experts" element={<ExpertsList />} />
         <Route path="/guides/:id" element={<GuideDetail />} />
         <Route
           path="/managerguides/trash"
@@ -314,7 +309,6 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-
         {/* Farmer Routes - Notebook */}
         <Route
           path="/farmer/notebooks"
@@ -348,7 +342,6 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-
         {/* Farmer Routes - Collections */}
         <Route
           path="/farmer/collections"
@@ -366,7 +359,6 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-
         {/* Farmer Routes - Diseases */}
         <Route
           path="/diseases"
@@ -376,7 +368,14 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-
+        <Route
+          path="/farmer/streak"
+          element={
+            <PrivateRoute>
+              <StreakScreen />
+            </PrivateRoute>
+          }
+        />
         {/* Home route for regular users (farmers) */}
         <Route
           path="/"
@@ -386,14 +385,12 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-
         {/* legacy/shortcut route to support /createguides if linked elsewhere */}
         {/* Legacy/shortcut */}
         <Route
           path="/createguides"
           element={<Navigate to="/managerguides/create" replace />}
         />
-
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
