@@ -94,8 +94,7 @@ export default function StreakScreen() {
       <Header />
       <Card
         style={{
-          maxWidth: 1000,
-          margin: "30px auto",
+          maxWidth: "100%",
           borderRadius: 20,
           padding: "40px 30px",
           background: "linear-gradient(145deg, #fff3e0, #e0f7fa)",
@@ -117,6 +116,7 @@ export default function StreakScreen() {
             margin: "0 auto 20px",
             width: 150,
             height: 150,
+            borderRadius: "50%",
           }}
         />
         <div style={{ textAlign: "center", marginBottom: 10 }}>
@@ -137,10 +137,17 @@ export default function StreakScreen() {
             {getStreakLevel(currentStreak).title}
           </Button>
         </div>
-        <div style={{ textAlign: "center", marginBottom: 30 , fontSize: 18, color: "#333"}}>
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: 30,
+            fontSize: 18,
+            color: "#333",
+          }}
+        >
           {user.username.toUpperCase()}, bạn đã duy trì chuỗi siêng năng được{" "}
-          <strong>{currentStreak} ngày</strong> liên tiếp! Hãy tiếp tục phát
-          huy nhé!
+          <strong>{currentStreak} ngày</strong> liên tiếp! Hãy tiếp tục phát huy
+          nhé!
         </div>
         {/* Vòng tròn current streak */}
         <div
