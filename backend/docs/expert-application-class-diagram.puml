@@ -1,0 +1,169 @@
+@startuml
+title FARMHUB - View List of Expert Applications
+
+'=================== SETTINGS ===================
+skinparam monochrome true
+skinparam dpi 150
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Consolas
+skinparam linetype ortho
+hide circle
+
+'=================== ENUMS ===================
+enum Provider {
+  local
+  google
+}
+enum Role {
+  user
+  expert
+  moderator
+  admin
+}
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+  banned
+  inactive
+}
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+'=================== MODELS ===================
+package "backend/models" {
+
+  class User {
+    +_id: ObjectId
+    +username: String
+    +email: String
+    +password: String
+    +provider: Provider
+    +googleId: String
+    +role: Role
+    +isVerified: Boolean
+    +isDeleted: Boolean
+    +isBanned: Boolean
+    +refreshTokens: [String]
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class ExpertApplication {
+    +_id: ObjectId
+    +user: ObjectId -> User
+    +full_name: String
+    +email: String
+    +phone_number: String
+    +expertise_area: String
+    +experience_years: Number
+    +description: String
+    +certificates: [String]
+    +status: ApplicationStatus
+    +review_notes: String
+    +reviewed_by: ObjectId -> User
+    +reviewed_at: Date
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class Expert {
+    +_id: ObjectId
+    +expert_id: String (uuid)
+    +user: ObjectId -> User
+    +full_name: String
+    +phone_number: String
+    +expertise_area: String
+    +experience_years: Number
+    +certificates: [{ url: String }]
+    +description: String
+    +avg_score: Number
+    +total_reviews: Number
+    +review_status: ReviewStatus
+    +review_notes: String
+    +reviewed_by: ObjectId -> User
+    +reviewed_at: Date
+    +is_public: Boolean
+    +is_deleted: Boolean
+    +deleted_at: Date
+    +created_at: Date
+    +updated_at: Date
+  }
+}
+
+'=================== CONTROLLERS & SERVICES ===================
+package "backend/controllers" {
+  class ExpertApplicationController {
+    +list(q?, status?, min_exp?, max_exp?, page?, limit?): ApplicationListItem[]
+    +detail(id): ApplicationDetail
+    +approve(id, notes?): void
+    +reject(id, notes?): void
+  }
+}
+
+package "backend/services" {
+  class ExpertApplicationService {
+    +find(filter, page, limit): ApplicationListItem[]
+    +getById(id): ApplicationDetail
+    +approve(id, reviewer, notes?): void
+    +reject(id, reviewer, notes?): void
+  }
+}
+
+'=================== DTOs ===================
+package "dto" {
+  class ApplicationFilter {
+    +q?: string
+    +status?: ApplicationStatus
+    +min_exp?: number
+    +max_exp?: number
+  }
+
+  class ApplicationListItem {
+    +id: string
+    +full_name: string
+    +email: string
+    +phone_number?: string
+    +expertise_area: string
+    +experience_years: number
+    +status: ApplicationStatus
+    +createdAt: Date
+    +reviewed_by_email?: string
+  }
+
+  class ApplicationDetail {
+    +id: string
+    +applicant_user_id: string
+    +full_name: string
+    +email: string
+    +phone_number?: string
+    +expertise_area: string
+    +experience_years: number
+    +description: string
+    +certificates: [string]
+    +status: ApplicationStatus
+    +review_notes: string
+    +reviewed_by?: string
+    +reviewed_at?: Date
+    +createdAt: Date
+    +updatedAt: Date
+  }
+}
+
+'=================== RELATIONSHIPS ===================
+User "1" <-- "many" ExpertApplication : applicant
+User "1" <-- "0..many" ExpertApplication : reviewer
+User "1" <-- "0..1" Expert : owner
+ExpertApplication ..> Expert : «approve()» creates
+ExpertApplicationController --> ExpertApplicationService
+ExpertApplicationService --> ExpertApplication
+ExpertApplicationService ..> User : populate(email, role)
+ExpertApplicationService ..> ApplicationListItem
+ExpertApplicationService ..> ApplicationDetail
+
+@enduml

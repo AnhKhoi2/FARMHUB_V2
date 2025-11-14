@@ -1,0 +1,161 @@
+@startuml
+title FARMHUB – Search Experts
+
+skinparam monochrome true
+skinparam dpi 150
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Consolas
+skinparam linetype ortho
+hide circle
+
+' ======== ENUMS ========
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+  banned
+  inactive
+}
+
+' ======== MODELS ========
+package "backend/models" {
+  class User <<MongooseModel>> {
+    +_id: ObjectId
+    +username: String
+    +email: String
+    +role: "user"|"expert"|"moderator"|"admin"
+    +isVerified: Boolean
+    +isDeleted: Boolean
+    +isBanned: Boolean
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class Expert <<MongooseModel>> {
+    +_id: ObjectId
+    +expert_id: String {uuid, unique}
+    +user: ObjectId -> User
+    --
+    +full_name: String
+    +phone_number: String?
+    +expertise_area: String
+    +experience_years: Number
+    +certificates: [{ url: String }]
+    +description: String
+    --
+    +avg_score: Number
+    +total_reviews: Number
+    +review_status: ReviewStatus
+    +review_notes: String
+    +reviewed_by: ObjectId -> User
+    +reviewed_at: Date
+    --
+    +is_public: Boolean
+    +is_deleted: Boolean
+    +deleted_at: Date
+    +created_at: Date
+    +updated_at: Date
+    --
+    {static} index: text(full_name, expertise_area, description)
+  }
+}
+
+' ======== ROUTES / CONTROLLER ========
+package "backend/routes" {
+  class ExpertRoutes <<ExpressRouter>> {
+    GET /api/experts?q&min_exp&max_exp&sort&page&limit
+  }
+}
+
+package "backend/controllers" {
+  class ExpertController {
+    +list(q?, min_exp?, max_exp?, sort?, page?, limit?): SearchResult
+    +getById(id): ExpertDetail
+    --
+    -PROJECTION: String
+    -ALLOWED_REVIEW: [String]
+  }
+}
+
+' ======== (OPTIONAL) QUERY LAYER ========
+package "backend/services (optional)" {
+  class ExpertQuery {
+    +build(filter: SearchFilter): any         ' Mongoose conditions
+    +buildSort(sort: SortOption): any
+    --
+    -composeText(q: string): any             ' $text hoặc RegExp
+    -composeRange(field: string, min?, max?): any
+  }
+}
+
+' ======== DTOs ========
+package "dto" {
+  class SearchFilter {
+    +q?: string
+    +min_exp?: number
+    +max_exp?: number
+    +page?: number = 1
+    +limit?: number = 20
+    +sort?: SortOption
+    --
+    +is_public: boolean = true               ' bắt buộc cho user
+    +review_status: ReviewStatus = approved  ' bắt buộc cho user
+  }
+
+  class SortOption {
+    +field: string   ' created_at | avg_score | experience_years | full_name
+    +direction: int  ' 1 or -1
+  }
+
+  class ExpertListItem {
+    +expert_id: string
+    +full_name: string
+    +expertise_area: string
+    +experience_years: number
+    +avg_score: number
+    +total_reviews: number
+    +description: string
+    +created_at: Date
+    +user_email?: string
+  }
+
+  class SearchResult {
+    +items: ExpertListItem[]
+    +total: number
+    +page: number
+    +limit: number
+  }
+
+  class ExpertDetail {
+    +expert_id: string
+    +full_name: string
+    +expertise_area: string
+    +experience_years: number
+    +certificates: [{url:string}]
+    +description: string
+    +avg_score: number
+    +total_reviews: number
+    +review_status: ReviewStatus
+    +is_public: boolean
+    +created_at: Date
+    +updated_at: Date
+  }
+}
+
+' ======== RELATIONSHIPS ========
+ExpertRoutes --> ExpertController
+ExpertController --> Expert : find(filter).select(PROJECTION).populate(user)
+ExpertController ..> SearchFilter
+ExpertController ..> SearchResult
+ExpertController ..> ExpertListItem
+ExpertController ..> ExpertDetail
+
+ExpertQuery ..> SearchFilter
+ExpertQuery ..> SortOption
+ExpertController ..> ExpertQuery : (nếu tách lớp truy vấn)
+
+User "1" <-- "0..1" Expert : owner
+
+@enduml

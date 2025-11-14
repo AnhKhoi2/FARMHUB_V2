@@ -19,19 +19,19 @@
 
 /* Action Buttons */
 .admin-diseases-page .btn-add {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   border: none;
   color: white;
   font-weight: 600;
   padding: 0.5rem 1.5rem;
   border-radius: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.24s ease;
+  box-shadow: 0 6px 18px rgba(217,119,6,0.12);
 }
 
 .admin-diseases-page .btn-add:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 10px 26px rgba(217,119,6,0.14);
 }
 
 /* Card Styles */
@@ -52,7 +52,7 @@
 }
 
 .admin-diseases-page .table thead {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   color: white;
 }
 
@@ -82,6 +82,16 @@
   color: #495057;
 }
 
+/* Vertical dividers between columns */
+.admin-diseases-page .table th,
+.admin-diseases-page .table td {
+  border-right: 1px solid #eef1f3;
+}
+.admin-diseases-page .table th:last-child,
+.admin-diseases-page .table td:last-child {
+  border-right: none;
+}
+
 /* Severity Badges */
 .admin-diseases-page .severity-badge {
   padding: 0.35rem 0.75rem;
@@ -93,18 +103,18 @@
 }
 
 .admin-diseases-page .severity-badge.low {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: white;
+  background: linear-gradient(135deg, #8bd5a7 0%, #6ee7b7 100%);
+  color: #0b3b2e;
 }
 
 .admin-diseases-page .severity-badge.medium {
-  background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
-  color: white;
+  background: linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%);
+  color: #5b3a00;
 }
 
 .admin-diseases-page .severity-badge.high {
-  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
-  color: white;
+  background: linear-gradient(135deg, #ff9a8b 0%, #ff7a59 100%);
+  color: #4b120b;
 }
 
 /* Plant Types Tags */
@@ -125,43 +135,43 @@
 
 /* Action Buttons */
 .admin-diseases-page .btn-edit {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #ffd59e 0%, #ffc078 100%);
   border: none;
-  color: white;
-  padding: 0.4rem 1rem;
+  color: #4b2e00;
+  padding: 0.35rem 0.9rem;
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: all 0.24s ease;
 }
 
 .admin-diseases-page .btn-edit:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(79, 172, 254, 0.3);
+  box-shadow: 0 6px 14px rgba(255,170,80,0.12);
 }
 
 .admin-diseases-page .btn-delete {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #ffb4a2 0%, #ff8a65 100%);
   border: none;
   color: white;
-  padding: 0.4rem 1rem;
+  padding: 0.35rem 0.9rem;
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: all 0.24s ease;
 }
 
 .admin-diseases-page .btn-delete:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(245, 87, 108, 0.3);
+  box-shadow: 0 6px 14px rgba(255,120,90,0.12);
 }
 
 /* Modal Styles */
 .admin-diseases-page .modal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   color: white;
   border-bottom: none;
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
 }
 
 .admin-diseases-page .modal-title {
@@ -201,8 +211,8 @@
 
 .admin-diseases-page .form-control:focus,
 .admin-diseases-page .form-select:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.18rem rgba(217,119,6,0.12);
 }
 
 /* Loading State */

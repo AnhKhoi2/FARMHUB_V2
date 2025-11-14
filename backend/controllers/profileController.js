@@ -1,5 +1,6 @@
 import Profile from "../models/Profile.js";
 import User from "../models/User.js";
+import UserStreak from "../models/UserStreak.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ok } from "../utils/ApiResponse.js";
 
@@ -34,6 +35,22 @@ export const profileController = {
     const { password, ...user } = userRaw || {};
 
     const profile = profileDoc || emptyProfile(userId);
+
+    // attach streak / badges info if available
+    try {
+      // UserStreak schema uses `user` as the ref field
+      const streak = await UserStreak.findOne({ user: userId }).lean();
+      profile.earned_badges = Array.isArray(streak?.earned_badges)
+        ? streak.earned_badges
+        : [];
+      profile.total_points = streak?.total_points || 0;
+      profile.current_streak = streak?.current_streak || 0;
+    } catch (e) {
+      // non-fatal — ignore if model missing or DB issue
+      profile.earned_badges = profile.earned_badges || [];
+      profile.total_points = profile.total_points || 0;
+      profile.current_streak = profile.current_streak || 0;
+    }
 
     return ok(res, { ...profile, user, hasPassword });
   }),

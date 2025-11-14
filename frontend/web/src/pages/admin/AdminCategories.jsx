@@ -3,6 +3,8 @@ import AdminLayout from "../../components/AdminLayout";
 import PortalModal from "../../components/shared/PortalModal";
 import axiosClient from "../../api/shared/axiosClient";
 import "../../css/admin/AdminCategories.css";
+import { toast, Toaster } from 'react-hot-toast';
+import { showError, showSuccess } from '../../utils/notify';
 
 export default function AdminCategories() {
   const [items, setItems] = useState([]);
@@ -26,6 +28,7 @@ export default function AdminCategories() {
     } catch (err) {
       console.error("Error fetching categories:", err);
       console.error("Error response:", err.response?.data);
+      showError(err, { duration: 6000 });
     } finally {
       setLoading(false);
     }
@@ -34,29 +37,47 @@ export default function AdminCategories() {
   useEffect(() => { fetchItems(); }, []);
 
   const handleCreate = async (payload) => {
-    await axiosClient.post("/admin/disease-categories", payload);
-    setShowCreate(false);
-    fetchItems();
+    try {
+      await axiosClient.post("/admin/disease-categories", payload);
+      showSuccess('Tạo danh mục thành công');
+      setShowCreate(false);
+      fetchItems();
+    } catch (err) {
+      console.error('Create category failed', err);
+      showError(err, { duration: 6000 });
+    }
   };
 
   const handleEdit = async (id, payload) => {
-    await axiosClient.put(`/admin/disease-categories/${id}`, payload);
-    setShowEdit(false);
-
-    setCurrent(null);
-    fetchItems();
+    try {
+      await axiosClient.put(`/admin/disease-categories/${id}`, payload);
+      showSuccess('Cập nhật danh mục thành công');
+      setShowEdit(false);
+      setCurrent(null);
+      fetchItems();
+    } catch (err) {
+      console.error('Edit category failed', err);
+      showError(err, { duration: 6000 });
+    }
   };
 
   const handleDelete = async (id) => {
-    await axiosClient.delete(`/admin/disease-categories/${id}`);
-    setShowConfirm(false);
-    setCurrent(null);
-    fetchItems();
+    try {
+      await axiosClient.delete(`/admin/disease-categories/${id}`);
+      showSuccess('Xóa danh mục thành công');
+      setShowConfirm(false);
+      setCurrent(null);
+      fetchItems();
+    } catch (err) {
+      console.error('Delete category failed', err);
+      showError(err, { duration: 6000 });
+    }
   };
 
   return (
     <AdminLayout>
       <div className="container-fluid">
+        <Toaster position="top-right" />
         <div className="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
             <h2 className="h5 mb-0">Danh mục bệnh</h2>
@@ -71,6 +92,7 @@ export default function AdminCategories() {
           <table className="table table-sm table-hover mb-0">
             <thead className="table-light">
               <tr>
+                <th style={{width:60}}>STT</th>
                 <th>Icon</th>
                 <th>Name</th>
                 <th>Slug</th>
@@ -80,13 +102,14 @@ export default function AdminCategories() {
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={5} className="text-center py-4">Đang tải...</td></tr>
+                <tr><td colSpan={6} className="text-center py-4">Đang tải...</td></tr>
               )}
               {!loading && items.length === 0 && (
-                <tr><td colSpan={5} className="text-center py-4">Không có dữ liệu</td></tr>
+                <tr><td colSpan={6} className="text-center py-4">Không có dữ liệu</td></tr>
               )}
-              {!loading && items.map(it => (
+              {!loading && items.map((it, idx) => (
                 <tr key={it._id}>
+                  <td className="small text-muted">{idx + 1}</td>
                   <td><div className="category-icon">{it.icon || '🦠'}</div></td>
                   <td>
                     <button className="btn btn-link btn-sm p-0" onClick={() => { setCurrent(it); setShowEdit(true); }}>{it.name}</button>

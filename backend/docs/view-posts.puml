@@ -1,0 +1,113 @@
+@startuml
+title FARMHUB – View List of Posts
+
+skinparam monochrome true
+skinparam dpi 150
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Consolas
+skinparam linetype ortho
+hide circle
+
+' ===== ENUMS (khớp code) =====
+enum PostStatus {
+  pending
+  approved
+  rejected
+}
+
+' ===== MODELS =====
+package "backend/models" {
+  class User <<MongooseModel>> {
+    +_id: ObjectId
+    +username: String
+    +email: String
+    +role: "user"|"expert"|"moderator"|"admin"
+    +isVerified: Boolean
+    +isDeleted: Boolean
+    +isBanned: Boolean
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class MarketPost <<MongooseModel>> {
+    +_id: ObjectId
+    +userId: ObjectId -> User {required}
+    +title: String {required}
+    +description: String
+    +phone: String
+    +location: Object
+    +images: [String] = []
+    +status: PostStatus = pending
+    +isDeleted: Boolean = false
+    +reports: [Report]
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class Report <<Subdocument>> {
+    +userId: ObjectId -> User
+    +reason: String
+    +message: String
+    +createdAt: Date
+  }
+}
+MarketPost "1" o- "many" Report : embeds
+User "1" <-- "many" MarketPost : author (userId)
+User "1" <-- "many" Report : reporter (userId)
+
+' ===== ROUTE (user) =====
+package "backend/routes" {
+  class PostRoutes <<ExpressRouter>> {
+    GET /api/posts/public   ' user browsing (no auth)
+  }
+}
+
+' ===== CONTROLLER =====
+package "backend/controllers" {
+  class PostController {
+    +listPublic(page?, limit?, q?): SearchResult
+    --
+    -buildFilter(q?): any  ' { isDeleted:false, $or:[title/description] }
+  }
+}
+
+' ===== DTOs (view models) =====
+package "dto" {
+  class PostFilter {
+    +q?: string
+    +page?: number = 1
+    +limit?: number = 50
+  }
+
+  class PostListItem {
+    +id: string
+    +title: string
+    +description?: string
+    +thumbnail?: string
+    +status: PostStatus
+    +createdAt: Date
+    +authorUsername?: string
+  }
+
+  class SearchMeta {
+    +total: number
+    +page: number
+    +limit: number
+  }
+
+  class SearchResult {
+    +items: PostListItem[]
+    +meta: SearchMeta
+  }
+}
+
+' ===== RELATIONSHIPS (flow) =====
+PostRoutes --> PostController : listPublic()
+PostController --> MarketPost : find(filter)\n.sort({createdAt:-1}).skip().limit()\n.populate(userId:'username')
+PostController ..> PostFilter
+PostController ..> PostListItem
+PostController ..> SearchResult
+
+@enduml

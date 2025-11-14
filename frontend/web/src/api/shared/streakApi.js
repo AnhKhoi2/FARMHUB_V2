@@ -15,6 +15,7 @@ function getById(id) {
 }
 
 function record() {
+	// backend mounts streak routes under /admin/streaks (route requires auth token)
 	return axiosClient.post("/admin/streaks/record");
 }
 

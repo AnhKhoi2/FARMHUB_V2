@@ -9,9 +9,22 @@ const MarketPostSchema = new Schema(
     phone: { type: String },
     location: { type: Object },
     images: { type: [String], default: [] },
-    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+
+    // 🔹 Thêm trường category (lọc theo danh mục)
+    category: {
+      type: String,
+      enum: ['Nông sản', 'Hạt giống', 'Phân bón', 'Thiết bị', 'Dịch vụ', 'Khác'],
+      default: 'Khác',
+    },
+
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
     isDeleted: { type: Boolean, default: false },
-    // reports: array of { userId, reason, message, createdAt }
+
+    // 🔹 reports: array of { userId, reason, message, createdAt }
     reports: [
       {
         userId: { type: Schema.Types.ObjectId, ref: 'User' },
@@ -24,4 +37,4 @@ const MarketPostSchema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("MarketPost", MarketPostSchema);
+export default mongoose.model('MarketPost', MarketPostSchema);
