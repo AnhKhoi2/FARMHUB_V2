@@ -12,7 +12,7 @@ export default function AdminGuides() {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [limit] = useState(12);
+  const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -27,8 +27,9 @@ export default function AdminGuides() {
       const data = res.data || {};
       const docs = data.data || data.docs || [];
       const meta = data.meta || {};
+      const tot = data.total || meta.total || (meta.pages ? meta.pages * limit : docs.length);
       setGuides(docs);
-      setTotalPages(meta.pages || 1);
+      setTotalPages(Math.max(1, Math.ceil(tot / limit)));
     } catch (e) {
       console.error(e);
       setError('Không thể tải guides');
@@ -79,13 +80,13 @@ export default function AdminGuides() {
               <table className="table table-hover mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th style={{width:80}}>#</th>
-                    <th>Tiêu đề</th>
-                    <th>Mô tả</th>
-                    <th>Tác giả</th>
-                    <th>Ngày tạo</th>
-                    <th style={{width:220}}>Hành động</th>
-                  </tr>
+                      <th style={{width:60}}>STT</th>
+                      <th>Tiêu đề</th>
+                      <th>Mô tả</th>
+                      <th>Tác giả</th>
+                      <th>Ngày tạo</th>
+                      <th style={{width:220}}>Hành động</th>
+                    </tr>
                 </thead>
                 <tbody>
                   {loading ? (
@@ -95,7 +96,7 @@ export default function AdminGuides() {
                   ) : (
                     guides.map((g, idx) => (
                       <tr key={g._id || g.id}>
-                        <td style={{ fontFamily: 'monospace' }}>{String(idx + 1).padStart(2, '0')}</td>
+                        <td className="small text-muted">{(page - 1) * limit + idx + 1}</td>
                         <td>{g.title || '(Không có tiêu đề)'}</td>
                         <td className="text-muted small">{g.description || g.summary || '—'}</td>
                         <td>{g.expert_id?.username || g.expert_id?.name || '—'}</td>
@@ -114,10 +115,39 @@ export default function AdminGuides() {
           </div>
         </div>
 
-        <div className="d-flex justify-content-center align-items-center gap-2 my-3">
-          <button className="btn btn-sm btn-outline-secondary" disabled={page <= 1} onClick={() => setPage(Math.max(1, page - 1))}>Trước</button>
-          <span className="text-muted small">Trang {page} / {totalPages}</span>
-          <button className="btn btn-sm btn-outline-secondary" disabled={page >= totalPages} onClick={() => setPage(Math.min(totalPages, page + 1))}>Sau</button>
+        <div className="d-flex justify-content-between align-items-center mt-2">
+          <div />
+          <nav>
+            <ul className="pagination pagination-sm mb-0">
+              {(() => {
+                const total = totalPages * limit; // estimate total based on pages
+                const totalPagesLocal = Math.max(1, totalPages);
+                const pages = [];
+                let start = Math.max(1, page - 2);
+                let end = Math.min(totalPagesLocal, page + 2);
+                if (start > 1) { pages.push(1); if (start > 2) pages.push('...'); }
+                for (let p = start; p <= end; p++) pages.push(p);
+                if (end < totalPagesLocal) { if (end < totalPagesLocal - 1) pages.push('...'); pages.push(totalPagesLocal); }
+                return [
+                  <li key="prev" className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => page > 1 && setPage(page - 1)}>Prev</button>
+                  </li>,
+                  pages.map((p, i) => (
+                    typeof p === 'number' ? (
+                      <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
+                        <button className="page-link" onClick={() => setPage(p)}>{p}</button>
+                      </li>
+                    ) : (
+                      <li key={`dot-${i}`} className="page-item disabled"><span className="page-link">{p}</span></li>
+                    )
+                  )),
+                  <li key="next" className={`page-item ${page >= totalPagesLocal ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => page < totalPagesLocal && setPage(page + 1)}>Next</button>
+                  </li>
+                ];
+              })()}
+            </ul>
+          </nav>
         </div>
 
         {showCreate && (

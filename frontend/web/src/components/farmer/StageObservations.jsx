@@ -19,7 +19,24 @@ const StageObservations = ({ notebookId }) => {
         notebookId
       );
       const obsData = response.data?.data || response.data || [];
-      setObservations(Array.isArray(obsData) ? obsData : []);
+
+      // Normalize different possible field names from backend templates
+      // Backend PlantTemplate observation schema uses { key, label, description }
+      // Older docs/examples may use observation_key / observation_name.
+      const raw = Array.isArray(obsData) ? obsData : [];
+      const normalized = raw.map((o) => ({
+        // prefer already-correct names, fallback to `key`/`label`
+        observation_key: o.observation_key || o.key || o.observationKey,
+        observation_name:
+          o.observation_name || o.observationName || o.label || o.name,
+        description: o.description || o.desc || "",
+        // preserve any existing value (from stage tracking) or default false
+        value: o.value === undefined ? false : o.value,
+        // keep original object in case other fields are needed
+        __raw: o,
+      }));
+
+      setObservations(normalized);
       setError(null);
     } catch (err) {
       console.error("Error fetching observations:", err);
@@ -33,25 +50,41 @@ const StageObservations = ({ notebookId }) => {
   const handleObservationChange = async (observationKey, value) => {
     try {
       setSaving(true);
-      await NOTEBOOK_TEMPLATE_API.updateObservation(
+      const response = await NOTEBOOK_TEMPLATE_API.updateObservation(
         notebookId,
         observationKey,
         value
       );
 
-      // Cập nhật local state
-      setObservations((prev) =>
-        prev.map((obs) =>
-          obs.observation_key === observationKey
-            ? { ...obs, value: value }
-            : obs
-        )
-      );
+      // Kiểm tra xem có auto-transition không
+      const responseData = response.data;
+      const autoTransitioned = responseData.meta?.auto_transitioned;
 
-      // Refresh timeline sau khi update observation (có thể trigger auto stage transition)
-      setTimeout(() => {
-        window.location.reload(); // Hoặc emit event để refresh timeline
-      }, 500);
+      if (autoTransitioned) {
+        // Hiển thị thông báo đặc biệt cho auto-transition
+        const newStageName =
+          responseData.meta?.stage_name || "giai đoạn tiếp theo";
+        alert(
+          `🎉 ${
+            responseData.message ||
+            `Đã hoàn thành tất cả quan sát! Tự động chuyển sang ${newStageName}. Công việc mới sẽ xuất hiện vào ngày mai.`
+          }`
+        );
+
+        // Reload sau 1 giây để user đọc message
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        // Cập nhật local state bình thường
+        setObservations((prev) =>
+          prev.map((obs) =>
+            obs.observation_key === observationKey
+              ? { ...obs, value: value }
+              : obs
+          )
+        );
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to update observation");
     } finally {

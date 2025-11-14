@@ -128,13 +128,25 @@ const PlantTemplateDetail = () => {
 
         <div className="header-actions">
           <button
-            className="btn btn-edit"
+            className="btn btn-primary btn-edit"
+            style={{ backgroundColor: "white", color: "black" }}
             onClick={() => navigate(`/expert/plant-templates/edit/${id}`)}
           >
             ✏️ Chỉnh sửa
           </button>
         </div>
       </div>
+
+      {/* Cover Image Section - Below Header */}
+      {template.cover_image && (
+        <div className="cover-image-section">
+          <img
+            src={template.cover_image}
+            alt={template.template_name}
+            className="detail-cover-image"
+          />
+        </div>
+      )}
 
       {/* Stats */}
       <div className="stats-section">
@@ -410,7 +422,7 @@ const PlantTemplateDetail = () => {
                     </div>
                   </div>
 
-                  <div className="rule-card">
+                  {/* <div className="rule-card">
                     <div className="rule-icon">⚠️</div>
                     <div className="rule-content">
                       <h4>Cảnh báo trước</h4>
@@ -421,7 +433,7 @@ const PlantTemplateDetail = () => {
                         Hệ thống sẽ cảnh báo trước khi task sắp hết hạn
                       </p>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 

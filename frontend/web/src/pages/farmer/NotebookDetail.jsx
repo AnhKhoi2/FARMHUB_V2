@@ -36,10 +36,6 @@ const NotebookDetail = () => {
       // Fetch notebook details
       const notebookRes = await notebookApi.getNotebookById(id);
       const notebookData = notebookRes.data?.data || notebookRes.data;
-      console.log("📓 Notebook:", notebookData);
-      console.log("� Stage Completion:", notebookData.stage_completion);
-      console.log("📈 Progress:", notebookData.progress);
-      console.log("�📋 Template ID:", notebookData.template_id);
       setNotebook(notebookData);
       setJournalText(notebookData.description || "");
 
@@ -48,13 +44,10 @@ const NotebookDetail = () => {
         try {
           const templateRes = await notebookApi.getTemplate(id);
           const templateData = templateRes.data?.data || templateRes.data;
-          console.log("✅ Template loaded:", templateData);
           setTemplate(templateData);
         } catch (err) {
-          console.log("❌ No template assigned yet", err);
+          console.error("No template assigned yet", err);
         }
-      } else {
-        console.log("⚠️ Notebook has no template_id - need to assign template");
       }
 
       setError(null);
@@ -129,9 +122,21 @@ const NotebookDetail = () => {
     }
   };
 
+  const handleDeleteNotebook = async () => {
+    if (!window.confirm("Bạn có chắc muốn xóa nhật ký này?")) return;
+
+    try {
+      await notebookApi.deleteNotebook(id);
+      alert("Xóa nhật ký thành công!");
+      navigate("/farmer/notebooks");
+    } catch (err) {
+      console.error("Error deleting notebook:", err);
+      alert(err?.response?.data?.message || "Không thể xóa nhật ký");
+    }
+  };
+
   const calculateDaysPlanted = () => {
     if (!notebook?.planted_date) {
-      console.log("⚠️ No planted_date found");
       return 0;
     }
 
@@ -144,9 +149,6 @@ const NotebookDetail = () => {
 
     const diff = today.getTime() - plantedDate.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    console.log(`📅 Planted date: ${notebook.planted_date}`);
-    console.log(`📅 Days planted: ${days}`);
 
     return days;
   };
@@ -252,6 +254,13 @@ const NotebookDetail = () => {
             }}
           >
             ✏️ Chỉnh sửa
+          </button>
+          <button
+            className="btn-delete"
+            onClick={() => handleDeleteNotebook()}
+            title="Xóa nhật ký"
+          >
+            🗑️ Xóa
           </button>
         </div>
       </div>

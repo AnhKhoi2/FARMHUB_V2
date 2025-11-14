@@ -53,6 +53,9 @@ import NotebookEdit from "../pages/farmer/NotebookEdit";
 import Collections from "../pages/farmer/Collections";
 import CollectionDetail from "../pages/farmer/CollectionDetail";
 
+// Farmer Pages - Diseases
+import Diseases from "../pages/farmer/Diseases";
+
 
 
 // Expert nested routes
@@ -60,8 +63,16 @@ import ExpertRoutes from "./expert/ExpertRoutes.jsx";
 
 // Trang Experts bạn đã copy (đặt ở đâu thì chỉnh import tương ứng)
 import ExpertContent from "../pages/ExpertContent.jsx";
+import AIChatWidget from "../components/shared/AIChatWidget";
+import { useLocation } from 'react-router-dom';
 
 export default function AppRoutes() {
+  function ChatWrapper() {
+    const location = useLocation();
+    // don't show chat widget on admin paths
+    if (location.pathname && location.pathname.startsWith('/admin')) return null;
+    return <AIChatWidget />;
+  }
   return (
     <BrowserRouter>
       <Routes>
@@ -108,6 +119,14 @@ export default function AppRoutes() {
         />
         <Route
           path="/admin/categories"
+          element={
+            <AdminRoute>
+              <AdminCategories />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/disease-categories"
           element={
             <AdminRoute>
               <AdminCategories />
@@ -355,6 +374,16 @@ export default function AppRoutes() {
           }
         />
 
+        {/* Farmer Routes - Diseases */}
+        <Route
+          path="/diseases"
+          element={
+            <PrivateRoute>
+              <Diseases />
+            </PrivateRoute>
+          }
+        />
+
         {/* Home route for regular users (farmers) */}
         <Route
           path="/"
@@ -375,6 +404,8 @@ export default function AppRoutes() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      {/* Global AI chat widget (floating) - hidden on /admin */}
+      <ChatWrapper />
     </BrowserRouter>
   );
 }

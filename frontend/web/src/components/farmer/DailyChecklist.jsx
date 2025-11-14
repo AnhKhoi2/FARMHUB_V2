@@ -51,13 +51,43 @@ const DailyChecklist = ({ notebookId, onTaskComplete }) => {
   };
 
   if (loading) return <div className="checklist-loading">Đang tải...</div>;
-  if (error) return <div className="checklist-error">{error}</div>;
-  if (checklist.length === 0)
-    return <div className="checklist-empty">Không có công việc hôm nay</div>;
+
+  if (error) {
+    return (
+      <div className="checklist-error">
+        <p>⚠️ {error}</p>
+        <small>Bạn cần gán template cho notebook này để tạo checklist.</small>
+      </div>
+    );
+  }
+
+  if (checklist.length === 0) {
+    return (
+      <div className="checklist-empty">
+        <p>📋 Không có công việc hôm nay</p>
+        <small>
+          Nếu bạn vừa chuyển sang giai đoạn mới, công việc mới sẽ xuất hiện vào
+          ngày mai (từ 0 giờ).
+        </small>
+      </div>
+    );
+  }
 
   const completedCount = checklist.filter((t) => t.is_completed).length;
   const totalCount = checklist.length;
   const progressPercent = Math.round((completedCount / totalCount) * 100);
+
+  // Kiểm tra tasks từ hôm qua chưa hoàn thành
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+
+  const overdueTasksCount = checklist.filter((task) => {
+    if (task.is_completed) return false;
+    const taskDate = new Date(task.created_at);
+    taskDate.setHours(0, 0, 0, 0);
+    return taskDate.getTime() < yesterday.getTime();
+  }).length;
 
   return (
     <div className="daily-checklist">
@@ -76,46 +106,71 @@ const DailyChecklist = ({ notebookId, onTaskComplete }) => {
         </div>
       </div>
 
-      <div className="checklist-items">
-        {checklist.map((task, index) => (
-          <div
-            key={index}
-            className={`checklist-item ${
-              task.is_completed ? "completed" : ""
-            } priority-${task.priority}`}
-          >
-            <div className="task-checkbox">
-              <input
-                type="checkbox"
-                checked={task.is_completed}
-                onChange={() => handleCompleteTask(task.task_name)}
-              />
-            </div>
+      {/* Cảnh báo tasks overdue */}
+      {overdueTasksCount > 0 && (
+        <div className="overdue-warning">
+          ⚠️ Bạn có {overdueTasksCount} công việc chưa hoàn thành từ hôm qua!
+        </div>
+      )}
 
-            <div className="task-content">
-              <div className="task-header">
-                <h4>{task.task_name}</h4>
-                <div className="task-badges">
-                  {task.priority === "high" && (
-                    <span className="badge priority-high">Cao</span>
-                  )}
-                  <span className="badge frequency">{task.frequency}</span>
-                </div>
+      <div className="checklist-items">
+        {checklist.map((task, index) => {
+          const isOverdue = () => {
+            if (task.is_completed) return false;
+            const taskDate = new Date(task.created_at);
+            taskDate.setHours(0, 0, 0, 0);
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            yesterday.setHours(0, 0, 0, 0);
+            return taskDate.getTime() < yesterday.getTime();
+          };
+
+          return (
+            <div
+              key={index}
+              className={`checklist-item ${
+                task.is_completed ? "completed" : ""
+              } ${isOverdue() ? "overdue" : ""} priority-${task.priority}`}
+            >
+              <div className="task-checkbox">
+                <input
+                  type="checkbox"
+                  checked={task.is_completed}
+                  onChange={() => handleCompleteTask(task.task_name)}
+                />
               </div>
 
-              {task.description && (
-                <p className="task-description">{task.description}</p>
-              )}
+              <div className="task-content">
+                <div className="task-header">
+                  <h4>
+                    {isOverdue() && <span className="overdue-icon">⏰ </span>}
+                    {task.task_name}
+                  </h4>
+                  <div className="task-badges">
+                    {task.priority === "high" && (
+                      <span className="badge priority-high">Cao</span>
+                    )}
+                    {isOverdue() && (
+                      <span className="badge overdue-badge">Trễ hạn</span>
+                    )}
+                    <span className="badge frequency">{task.frequency}</span>
+                  </div>
+                </div>
 
-              {task.completed_at && (
-                <p className="task-completed-time">
-                  ✓ Hoàn thành lúc{" "}
-                  {new Date(task.completed_at).toLocaleTimeString("vi-VN")}
-                </p>
-              )}
+                {task.description && (
+                  <p className="task-description">{task.description}</p>
+                )}
+
+                {task.completed_at && (
+                  <p className="task-completed-time">
+                    ✓ Hoàn thành lúc{" "}
+                    {new Date(task.completed_at).toLocaleTimeString("vi-VN")}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

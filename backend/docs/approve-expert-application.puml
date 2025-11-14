@@ -1,0 +1,156 @@
+@startuml
+title FARMHUB – Approves Expert Application
+
+skinparam monochrome true
+skinparam dpi 150
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Consolas
+skinparam linetype ortho
+hide circle
+
+' ========= ENUMS =========
+enum Role {
+  user
+  expert
+  moderator
+  admin
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+  banned
+  inactive
+}
+
+' ========= MODELS =========
+package "backend/models" {
+  class User <<MongooseModel>> {
+    +_id: ObjectId
+    +email: String
+    +username: String
+    +role: Role = user
+    +isVerified: Boolean
+    +isDeleted: Boolean
+    +isBanned: Boolean
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class ExpertApplication <<MongooseModel>> {
+    +_id: ObjectId
+    +user: ObjectId -> User
+    +full_name: String
+    +email: String
+    +phone_number: String
+    +expertise_area: String
+    +experience_years: Number
+    +description: String
+    +certificates: [String]
+    +status: ApplicationStatus = pending
+    +review_notes: String
+    +reviewed_by: ObjectId -> User
+    +reviewed_at: Date
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class Expert <<MongooseModel>> {
+    +_id: ObjectId
+    +expert_id: String (uuid)
+    +user: ObjectId -> User
+    +full_name: String
+    +phone_number: String
+    +expertise_area: String
+    +experience_years: Number
+    +certificates: [{ url: String }]
+    +description: String
+    +avg_score: Number = 0
+    +total_reviews: Number = 0
+    +review_status: ReviewStatus = pending
+    +review_notes: String
+    +reviewed_by: ObjectId -> User
+    +reviewed_at: Date
+    +is_public: Boolean = true
+    +is_deleted: Boolean = false
+    +deleted_at: Date
+    +created_at: Date
+    +updated_at: Date
+  }
+}
+
+' ========= CONTROLLER / SERVICE =========
+package "backend/controllers" {
+  class ExpertApplicationController {
+    +approve(id: string, reviewerId: ObjectId, notes?: string): void
+    +reject(id: string, reviewerId: ObjectId, notes?: string): void
+    +detail(id: string): ApplicationDetail
+    +list(...filters): ApplicationListItem[]
+  }
+}
+
+package "backend/services" {
+  class ExpertApplicationService {
+    +approve(appId: string, reviewerId: ObjectId, notes?: string): void
+    +reject(appId: string, reviewerId: ObjectId, notes?: string): void
+    +getById(appId: string): ApplicationDetail
+    --
+    -ensurePending(app: ExpertApplication): void
+    -createExpertFrom(app: ExpertApplication, reviewerId: ObjectId, notes?: string): Expert
+    -promoteUserToExpert(userId: ObjectId): void
+    -markApplicationApproved(app: ExpertApplication, reviewerId: ObjectId, notes?: string): void
+  }
+}
+
+' ========= DTOs / VIEW MODELS =========
+package "dto" {
+  class ApplicationDetail <<DTO>> {
+    +id: string
+    +applicant_user_id: string
+    +full_name: string
+    +email: string
+    +phone_number?: string
+    +expertise_area: string
+    +experience_years: number
+    +description: string
+    +certificates: [string]
+    +status: ApplicationStatus
+    +review_notes: string
+    +reviewed_by?: string
+    +reviewed_at?: Date
+    +createdAt: Date
+    +updatedAt: Date
+  }
+}
+
+' ========= (OPTIONAL) HẠ TẦNG =========
+package "infrastructure (optional)" {
+  class NotificationService {
+    +sendExpertApproved(userId: ObjectId, expertId: ObjectId): void
+  }
+  class AuditLog {
+    +append(actorId: ObjectId, action: String, target: String, meta: any): void
+  }
+}
+
+' ========= RELATIONSHIPS / LUỒNG CHÍNH =========
+User "1" <-- "many" ExpertApplication : applicant
+User "1" <-- "0..1" Expert : owner
+ExpertApplication ..> Expert : «approve() creates»
+ExpertApplicationController --> ExpertApplicationService
+ExpertApplicationService --> ExpertApplication
+ExpertApplicationService --> Expert
+ExpertApplicationService --> User : role update (user -> expert)
+ExpertApplicationService ..> NotificationService : notify()
+ExpertApplicationService ..> AuditLog : append()
+
+@enduml

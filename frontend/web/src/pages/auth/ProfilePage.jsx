@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 // thêm ở đầu file
 import authApi from "../../api/shared/authApi.js";
 import expertApplicationApi from "../../api/shared/expertApplicationApi.js";
+import "../../css/auth/ProfilePage.css";
 
 // Đã cập nhật để dùng CSS theo theme
 import "../../css/auth/Profile.css";
@@ -293,6 +294,8 @@ export default function ProfilePage() {
   const [form, setForm] = useState({});
   const [snapshot, setSnapshot] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({}); // 🔹 lỗi theo field (422)
+  const [earnedBadges, setEarnedBadges] = useState([]);
+  const [totalPoints, setTotalPoints] = useState(0);
 
   const [hasPassword, setHasPassword] = useState(true);
 
@@ -322,6 +325,21 @@ export default function ProfilePage() {
   const avatarPreview = useMemo(() => form.avatar?.trim(), [form.avatar]);
   const needsSetPassword = hasPassword === false;
 
+  const BADGE_META = {
+    "hat-giong": { label: "Hạt Giống", emoji: "🌱", color: "bg-amber-100 text-amber-800" },
+    "first-streak": { label: "Khởi đầu", emoji: "✨", color: "bg-amber-100 text-amber-800" },
+    "streak-7": { label: "7 ngày liên tiếp", emoji: "🏅", color: "bg-emerald-100 text-emerald-800" },
+    "streak-30": { label: "30 ngày kiên trì", emoji: "🥇", color: "bg-emerald-100 text-emerald-800" },
+    // fallback mapping for other slugs
+  };
+
+  const badgeLabel = (slug) => {
+    if (!slug) return "";
+    if (BADGE_META[slug]) return `${BADGE_META[slug].emoji} ${BADGE_META[slug].label}`;
+    // prettify slug -> Title Case
+    return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   // load profile + my applications
   useEffect(() => {
     (async () => {
@@ -329,6 +347,8 @@ export default function ProfilePage() {
         const { data } = await profileApi.getProfile();
         const payload = data?.data || {};
         setServerUser(payload.user || null);
+        setEarnedBadges(Array.isArray(payload.earned_badges) ? payload.earned_badges : []);
+        setTotalPoints(payload.total_points || 0);
         setHasPassword(Boolean(payload.hasPassword));
         const profileData = {
           fullName: payload.fullName || "",
@@ -527,21 +547,50 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="profile-page">
-      <div className="agri-theme-container">
-        <h1 className="text-3xl font-bold mb-4 agri-theme-heading">
-          🌿 Hồ sơ cá nhân
-        </h1>
-        {serverUser && (
-          <p className="text-sm text-agri-gray mb-6">
-            Tài khoản: <span className="font-medium text-agri-primary">{serverUser.username}</span>
-            {" · "}Email: <span className="font-mono">{serverUser.email}</span>
-            {" · "}Vai trò:
-            <span className="font-bold text-agri-primary">
-              {(serverUser.role || '').toUpperCase()}
-            </span>
-          </p>
-        )}
+    <div className="profile-page max-w-6xl mx-auto p-6">
+      <h1 className="text-2xl font-semibold mb-4">Hồ sơ cá nhân</h1>
+      {serverUser && (
+        <p className="text-sm text-gray-500 mb-6">
+          Tài khoản: <span className="font-medium">{serverUser.username}</span>
+          {" · "}Email: <span className="font-mono">{serverUser.email}</span>
+          {" · "}Vai trò: <span className="font-semibold">{serverUser.role}</span>
+        </p>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Avatar */}
+        <div className="pf-card">
+          <div className="pf-hero" />
+          <div className="pf-avatar-wrap">
+            <div className="pf-avatar">
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="avatar" />
+              ) : (
+                <div className="text-gray-400 text-sm">(Chưa có ảnh)</div>
+              )}
+            </div>
+
+            <div className="pf-maininfo">
+              <p className="pf-name">{form.fullName || "Người dùng"}</p>
+              <p className="pf-username">{serverUser?.username ? `@${serverUser.username}` : ""}</p>
+
+              <div className="pf-stats">Điểm: <span className="font-medium">{totalPoints}</span></div>
+
+              {earnedBadges?.length > 0 ? (
+                <div className="pf-badges">
+                  {earnedBadges.map((slug) => (
+                    <div key={slug} className={`pf-badge-chip ${slug === 'hat-giong' ? 'important' : ''}`} title={badgeLabel(slug)}>
+                      <span className="pf-emoji">{BADGE_META[slug]?.emoji || '🏅'}</span>
+                      <span>{badgeLabel(slug)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-2 text-xs text-gray-400">Chưa có danh hiệu</div>
+              )}
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Avatar & Summary (Cột 1) */}

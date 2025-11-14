@@ -1,0 +1,189 @@
+/* Diseases Page Styles */
+.diseases-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+/* Hero Section */
+.hero-section-diseases {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  padding: 80px 0 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section-diseases::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,117.3C1248,117,1344,139,1392,149.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') bottom center no-repeat;
+  background-size: cover;
+  opacity: 0.3;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Section Titles */
+.section-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+}
+
+/* Categories Section */
+.category-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid #e9ecef;
+  height: 100%;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-color: #2ecc71;
+}
+
+.category-card.active {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: white;
+  border-color: #27ae60;
+  box-shadow: 0 8px 20px rgba(46, 204, 113, 0.3);
+}
+
+.category-card.active h5,
+.category-card.active p {
+  color: white !important;
+}
+
+.category-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.category-card h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: #2c3e50;
+}
+
+/* Disease Card */
+.disease-card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.disease-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  border-color: #2ecc71;
+}
+
+.disease-card .card-header {
+  border-radius: 12px 12px 0 0 !important;
+  padding: 1rem;
+}
+
+.severity-icon {
+  font-size: 1.5rem;
+}
+
+.disease-card .card-title {
+  color: #27ae60;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.disease-card .card-text {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.disease-card .card-footer {
+  padding: 1rem;
+  border-radius: 0 0 12px 12px !important;
+}
+
+.symptoms-preview {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e9ecef;
+}
+
+/* Badges */
+.badge {
+  font-weight: 500;
+  padding: 0.4em 0.8em;
+  font-size: 0.75rem;
+}
+
+/* Info Banner */
+.info-banner .card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Hover Effects */
+.hover-card {
+  transition: all 0.3s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Search Bar */
+.input-group-text {
+  border: 1px solid #ced4da;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-section-diseases {
+    padding: 60px 0 40px;
+  }
+
+  .hero-content h1 {
+    font-size: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .category-card {
+    padding: 1rem;
+  }
+
+  .category-icon {
+    font-size: 2rem;
+  }
+}
+
+/* Loading Spinner */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Empty State */
+.card-body.py-5 {
+  padding: 3rem 1rem;
+}

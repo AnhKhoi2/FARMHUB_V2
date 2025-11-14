@@ -124,6 +124,11 @@ const PlantTemplateSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // Ảnh bìa template
+    cover_image: {
+      type: String,
+      default: null,
+    },
     // Các giai đoạn phát triển (3-5 stages)
     stages: {
       type: [StageSchema],
@@ -138,15 +143,11 @@ const PlantTemplateSchema = new mongoose.Schema(
     rules: {
       safe_delay_days: {
         type: Number,
-        default: 3, // Cho phép trễ 3 ngày
+        default: 2, // Cho phép trễ 2 ngày (sẽ cảnh báo ngày 1, 2; quá hạn ngày 3)
       },
       auto_skip: {
         type: Boolean,
-        default: true, // Tự động skip stage nếu quá trễ
-      },
-      warning_days: {
-        type: Number,
-        default: 1, // Cảnh báo khi trễ 1 ngày
+        default: true, // Tự động skip stage nếu quá safe_delay_days
       },
     },
     // Trạng thái template

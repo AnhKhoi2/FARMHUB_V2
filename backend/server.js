@@ -8,6 +8,8 @@ import authRoute from "./routes/auth.js";
 import profileRoute from "./routes/profile.js";
 import diseaseRoutes from "./routes/diseases.js";
 import diseaseCategoryRoutes from "./routes/diseaseCategories.js";
+import publicDiseases from "./routes/publicDiseases.js";
+import publicDiseaseCategories from "./routes/publicDiseaseCategories.js";
 import streakRoutes from "./routes/streaks.js";
 import aiRoutes from "./routes/ai.js";
 import weatherRoutes from "./routes/weather.js";
@@ -26,6 +28,11 @@ import modelsRoutes from "./routes/models.js";
 import layoutsRoutes from "./routes/layouts.js";
 import postRoutes from "./routes/post.js";
 import expertApplicationsRouter from "./routes/expertApplications.js";
+import expertRatingRoutes from "./routes/expertRating.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+import notificationRoutes from "./routes/notifications.js";
+import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
+import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -36,16 +43,22 @@ connectDB();
 // Middleware
 // Allow the frontend dev server (supports multiple dev ports and an env override)
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-const allowedOrigins = [clientUrl, "http://localhost:5173", "http://localhost:5174"];
-app.use(cors({
-  origin: (origin, cb) => {
-    // allow requests with no origin (like curl/postman)
-    if (!origin) return cb(null, true);
-    if (allowedOrigins.includes(origin)) return cb(null, true);
-    return cb(new Error("CORS policy: This origin is not allowed"), false);
-  },
-  credentials: true,
-}));
+const allowedOrigins = [
+  clientUrl,
+  "http://localhost:5173",
+  "http://localhost:5174",
+];
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // allow requests with no origin (like curl/postman)
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error("CORS policy: This origin is not allowed"), false);
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -53,6 +66,9 @@ app.use("/auth", authRoute);
 app.use("/profile", profileRoute);
 app.use("/admin/diseases", diseaseRoutes);
 app.use("/admin/disease-categories", diseaseCategoryRoutes);
+// Public (user-facing) endpoints without /admin prefix
+app.use("/diseases", publicDiseases);
+app.use("/disease-categories", publicDiseaseCategories);
 app.use("/admin/streaks", streakRoutes);
 app.use("/ai", aiRoutes);
 app.use("/admin/weather", weatherRoutes);
@@ -63,7 +79,8 @@ app.use("/admin/users", usersRoute);
 // app.use("/api/expert-applications", expertApplicationRoutes);
 
 app.use("/api/expert-applications", expertApplicationsRouter);
-
+app.use("/api/experts", expertRatingRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/api/plant-templates", plantTemplateRoutes);
 app.use("/api/upload", uploadRoutes);
@@ -73,11 +90,17 @@ app.use("/layouts", layoutsRoutes);
 // new primary path
 app.use("/admin/managerpost", postRoutes);
 // (legacy alias removed) '/admin/managerpost' is the canonical path for post management
+app.use("/api/notifications", notificationRoutes);
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// 🔄 Khởi chạy cron jobs
+startStageMonitoringJob(); // Chạy hàng ngày lúc 8:00 sáng - kiểm tra stage status
+startTaskReminderJob(); // Chạy hàng ngày lúc 9:00 sáng - nhắc nhở tasks chưa hoàn thành
+
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });

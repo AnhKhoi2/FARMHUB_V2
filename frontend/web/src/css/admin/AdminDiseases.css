@@ -1,0 +1,322 @@
+/* Admin Diseases Page Styles */
+.admin-diseases-page {
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 60px);
+  padding: 2rem 0;
+}
+
+/* Page Header */
+.admin-diseases-page .page-header {
+  margin-bottom: 2rem;
+}
+
+.admin-diseases-page .page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+}
+
+/* Action Buttons */
+.admin-diseases-page .btn-add {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.24s ease;
+  box-shadow: 0 6px 18px rgba(217,119,6,0.12);
+}
+
+.admin-diseases-page .btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(217,119,6,0.14);
+}
+
+/* Card Styles */
+.admin-diseases-page .card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.admin-diseases-page .card-body {
+  padding: 0;
+}
+
+/* Table Styles */
+.admin-diseases-page .table {
+  margin-bottom: 0;
+}
+
+.admin-diseases-page .table thead {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+}
+
+.admin-diseases-page .table thead th {
+  border: none;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+.admin-diseases-page .table tbody tr {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.admin-diseases-page .table tbody tr:hover {
+  background-color: #f8f9fa;
+  transform: scale(1.01);
+}
+
+.admin-diseases-page .table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  color: #495057;
+}
+
+/* Vertical dividers between columns */
+.admin-diseases-page .table th,
+.admin-diseases-page .table td {
+  border-right: 1px solid #eef1f3;
+}
+.admin-diseases-page .table th:last-child,
+.admin-diseases-page .table td:last-child {
+  border-right: none;
+}
+
+/* Severity Badges */
+.admin-diseases-page .severity-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-diseases-page .severity-badge.low {
+  background: linear-gradient(135deg, #8bd5a7 0%, #6ee7b7 100%);
+  color: #0b3b2e;
+}
+
+.admin-diseases-page .severity-badge.medium {
+  background: linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%);
+  color: #5b3a00;
+}
+
+.admin-diseases-page .severity-badge.high {
+  background: linear-gradient(135deg, #ff9a8b 0%, #ff7a59 100%);
+  color: #4b120b;
+}
+
+/* Plant Types Tags */
+.admin-diseases-page .plant-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.admin-diseases-page .plant-tag {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Action Buttons */
+.admin-diseases-page .btn-edit {
+  background: linear-gradient(135deg, #ffd59e 0%, #ffc078 100%);
+  border: none;
+  color: #4b2e00;
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.24s ease;
+}
+
+.admin-diseases-page .btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(255,170,80,0.12);
+}
+
+.admin-diseases-page .btn-delete {
+  background: linear-gradient(135deg, #ffb4a2 0%, #ff8a65 100%);
+  border: none;
+  color: white;
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.24s ease;
+}
+
+.admin-diseases-page .btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(255,120,90,0.12);
+}
+
+/* Modal Styles */
+.admin-diseases-page .modal-header {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  border-bottom: none;
+  padding: 1.25rem 1.5rem;
+}
+
+.admin-diseases-page .modal-title {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.admin-diseases-page .btn-close {
+  filter: brightness(0) invert(1);
+  opacity: 1;
+}
+
+.admin-diseases-page .modal-body {
+  padding: 2rem;
+}
+
+.admin-diseases-page .modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 1.25rem 2rem;
+}
+
+/* Form Styles */
+.admin-diseases-page .form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.admin-diseases-page .form-control,
+.admin-diseases-page .form-select {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.admin-diseases-page .form-control:focus,
+.admin-diseases-page .form-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.18rem rgba(217,119,6,0.12);
+}
+
+/* Loading State */
+.admin-diseases-page .loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.admin-diseases-page .loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3rem;
+}
+
+/* Empty State */
+.admin-diseases-page .empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.admin-diseases-page .empty-state-icon {
+  font-size: 4rem;
+  opacity: 0.3;
+  margin-bottom: 1rem;
+}
+
+/* Confirm Modal */
+.admin-diseases-page .confirm-modal .modal-body {
+  padding: 2rem;
+  text-align: center;
+}
+
+.admin-diseases-page .confirm-modal .modal-body p {
+  font-size: 1.1rem;
+  color: #495057;
+  margin: 0;
+}
+
+.admin-diseases-page .confirm-modal .btn-cancel {
+  background-color: #6c757d;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.admin-diseases-page .confirm-modal .btn-confirm {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-diseases-page {
+    padding: 1rem 0;
+  }
+
+  .admin-diseases-page .page-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+
+  .admin-diseases-page .table {
+    font-size: 0.85rem;
+  }
+
+  .admin-diseases-page .table thead th,
+  .admin-diseases-page .table tbody td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .admin-diseases-page .plant-types {
+    flex-direction: column;
+  }
+
+  .admin-diseases-page .btn-edit,
+  .admin-diseases-page .btn-delete {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-diseases-page .card {
+  animation: fadeIn 0.4s ease;
+}
+
+.admin-diseases-page .table tbody tr {
+  animation: fadeIn 0.3s ease;
+}

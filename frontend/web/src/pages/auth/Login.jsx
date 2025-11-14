@@ -39,8 +39,9 @@ const Login = () => {
       const { data } = await streakApi.record(); // { success, data: { streak } } tuỳ cấu trúc axiosClient
       const streak = data?.data?.streak || data?.streak || null;
       if (streak) {
-        setStreakData(streak);  // mở popup
-        return;                 // chờ user bấm OK rồi mới navigate
+        // ensure badgesAwarded array exists and map slugs to labels in UI popup
+        setStreakData(streak); // mở popup
+        return; // chờ user bấm OK rồi mới navigate
       }
     } catch (e) {
       // lỗi record streak không chặn điều hướng

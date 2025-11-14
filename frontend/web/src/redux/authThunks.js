@@ -18,7 +18,6 @@ export const loginThunk = (credentials) => async (dispatch) => {
 
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("accessToken", accessToken);
-
     // ❌ Không điều hướng ở đây nữa
     return { success: true, role: user.role };
   } catch (err) {

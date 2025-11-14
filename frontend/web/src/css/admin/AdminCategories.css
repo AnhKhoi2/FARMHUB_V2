@@ -1,0 +1,360 @@
+/* Admin Categories Page Styles */
+.admin-categories-page {
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 60px);
+  padding: 2rem 0;
+}
+
+/* Page Header */
+.admin-categories-page .page-header {
+  margin-bottom: 2rem;
+}
+
+.admin-categories-page .page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+}
+
+/* Action Buttons */
+.admin-categories-page .btn-add {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.24s ease;
+  box-shadow: 0 6px 18px rgba(217,119,6,0.12);
+}
+
+.admin-categories-page .btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(217,119,6,0.14);
+}
+
+/* Card Styles */
+.admin-categories-page .card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.admin-categories-page .card-body {
+  padding: 0;
+}
+
+/* Table Styles */
+.admin-categories-page .table {
+  margin-bottom: 0;
+}
+
+.admin-categories-page .table thead {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+}
+
+.admin-categories-page .table thead th {
+  border: none;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+.admin-categories-page .table tbody tr {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.admin-categories-page .table tbody tr:hover {
+  background-color: #f8f9fa;
+  transform: scale(1.01);
+}
+
+.admin-categories-page .table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  color: #495057;
+}
+
+/* Category Icon */
+.admin-categories-page .category-icon {
+  font-size: 1.75rem;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffb4a2 0%, #ff8a65 100%);
+  border-radius: 10px;
+  color: white;
+  box-shadow: 0 6px 18px rgba(255,130,90,0.12);
+}
+
+/* Category Name */
+.admin-categories-page .category-name {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+/* Description */
+.admin-categories-page .category-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  max-width: 400px;
+}
+
+/* Disease Count Badge */
+.admin-categories-page .disease-count-badge {
+  background: linear-gradient(135deg, #ffd59e 0%, #ffc078 100%);
+  color: #4b2e00;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 6px 14px rgba(255,180,100,0.12);
+}
+
+/* Action Buttons */
+.admin-categories-page .btn-edit {
+  background: linear-gradient(135deg, #ffd59e 0%, #ffc078 100%);
+  border: none;
+  color: #4b2e00;
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.24s ease;
+}
+
+.admin-categories-page .btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(255,170,80,0.12);
+}
+
+.admin-categories-page .btn-delete {
+  background: linear-gradient(135deg, #ffb4a2 0%, #ff8a65 100%);
+  border: none;
+  color: white;
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.24s ease;
+}
+
+.admin-categories-page .btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(255,120,90,0.12);
+}
+
+/* Modal Styles */
+.admin-categories-page .modal-header {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  border-bottom: none;
+  padding: 1.25rem 1.5rem;
+}
+
+.admin-categories-page .modal-title {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.admin-categories-page .btn-close {
+  filter: brightness(0) invert(1);
+  opacity: 1;
+}
+
+.admin-categories-page .modal-body {
+  padding: 2rem;
+}
+
+.admin-categories-page .modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 1.25rem 2rem;
+}
+
+/* Form Styles */
+.admin-categories-page .form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.admin-categories-page .form-control,
+.admin-categories-page .form-select {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.admin-categories-page .form-control:focus,
+.admin-categories-page .form-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.18rem rgba(217,119,6,0.12);
+}
+
+.admin-categories-page .form-text {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Icon Preview */
+.admin-categories-page .icon-preview {
+  font-size: 3rem;
+  text-align: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-radius: 12px;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+/* Loading State */
+.admin-categories-page .loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.admin-categories-page .loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3rem;
+}
+
+/* Empty State */
+.admin-categories-page .empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.admin-categories-page .empty-state-icon {
+  font-size: 4rem;
+  opacity: 0.3;
+  margin-bottom: 1rem;
+}
+
+/* Confirm Modal */
+.admin-categories-page .confirm-modal .modal-body {
+  padding: 2rem;
+  text-align: center;
+}
+
+.admin-categories-page .confirm-modal .modal-body p {
+  font-size: 1.1rem;
+  color: #495057;
+  margin: 0;
+}
+
+.admin-categories-page .confirm-modal .btn-cancel {
+  background-color: #6c757d;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.admin-categories-page .confirm-modal .btn-confirm {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Stats Card */
+.admin-categories-page .stats-card {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 26px rgba(217,119,6,0.12);
+}
+
+.admin-categories-page .stats-card h4 {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.admin-categories-page .stats-card p {
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-categories-page {
+    padding: 1rem 0;
+  }
+
+  .admin-categories-page .page-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+
+  .admin-categories-page .table {
+    font-size: 0.85rem;
+  }
+
+  .admin-categories-page .table thead th,
+  .admin-categories-page .table tbody td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .admin-categories-page .category-description {
+    max-width: 100%;
+  }
+
+  .admin-categories-page .btn-edit,
+  .admin-categories-page .btn-delete {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-categories-page .card {
+  animation: fadeIn 0.4s ease;
+}
+
+.admin-categories-page .table tbody tr {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.admin-categories-page .category-icon:hover {
+  animation: pulse 0.5s ease;
+}
