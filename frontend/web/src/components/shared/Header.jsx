@@ -5,6 +5,8 @@ import { logout } from "../../redux/authSlice";
 import { FaUser, FaShoppingCart, FaBars, FaTimes } from "react-icons/fa";
 import NotificationBell from "../NotificationBell";
 import "./Header.css";
+import { RadarChartOutlined } from "@ant-design/icons";
+import { Tooltip } from "antd";
 
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
@@ -161,7 +163,12 @@ const Header = () => {
                   <NotificationBell />
                 </li>
               )}
-
+              <li>
+              <Tooltip title="Streak Của Tôi">
+                <Link to="/farmer/streak">
+                  <RadarChartOutlined  size={16} />
+                </Link></Tooltip>
+              </li>
               <li className="user-menu">
                 {user ? (
                   <div
@@ -194,6 +201,7 @@ const Header = () => {
                           Giỏ Hàng
                         </Link>
                       </li>
+
                       <li>
                         <button
                           type="button"

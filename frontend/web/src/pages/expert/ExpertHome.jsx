@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import HeaderExpert from "../../components/shared/HeaderExpert";
 
 // Fallback lấy user từ localStorage (tuỳ theo dự án bạn lưu key gì)
 function getLocalUserFallback() {
@@ -115,6 +116,31 @@ export default function ExpertHome({
 
   // ✅ BỌC BẰNG FRAGMENT ĐỂ CÓ THÊM CHATWIDGET Ở CUỐI
   return (
+    <div className="expert-home">
+      {/* Header */}
+     <HeaderExpert/>
+
+      {/* Main Content Area */}
+      <main className="expert-main">
+        <div className="content-container">
+          <section className="welcome-section">
+            <h2 className="welcome-title">
+              Xin chào, {mockProfile.name.split(" ")[1]}! 👋
+            </h2>
+            <p className="welcome-subtitle">
+              Quản lý hướng dẫn trồng trọt và trao đổi với người dùng
+            </p>
+          </section>
+
+          {/* Quick Stats */}
+          <section className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon stat-icon-guides">
+                <Leaf />
+              </div>
+              <div className="stat-content">
+                <h3>Hướng dẫn</h3>
+                <p className="stat-value">24</p>
     <>
       <div className="expert-home">
         {/* Header */}
