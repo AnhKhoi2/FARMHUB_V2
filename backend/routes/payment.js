@@ -5,6 +5,8 @@ import { verifyToken } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 // Single create endpoint (canonical)
 router.post("/create", verifyToken, paymentController.createVNPay);
+// Backwards-compatible alias for older frontend code
+router.post("/create-payment", verifyToken, paymentController.createVNPay);
 router.get("/vnpay_ipn", paymentController.vnpIpn);
 router.get("/vnpay/return", paymentController.vnpayReturn);
 router.get("/history", verifyToken, paymentController.history);
