@@ -101,15 +101,45 @@ export const postController = {
     return ok(res, item);
   }),
 
+  // Public detail view (no auth) used by marketplace front-end
+  detailPublic: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const item = await MarketPost.findById(id).populate({ path: 'userId', select: 'username' });
+    if (!item) throw new AppError('Post not found', 404, 'NOT_FOUND');
+    return ok(res, item);
+  }),
+
   create: asyncHandler(async (req, res) => {
     const userId = req.user?.id;
-    const { title, description, phone, location = {}, images = [] } = req.body;
-    if (!userId) throw new AppError('Unauthorized', 401, 'UNAUTHORIZED');
-    if (!title) throw new AppError('Title is required', 400, 'MISSING_TITLE');
-
-    const post = await MarketPost.create({ userId, title, description, phone, location, images });
+    const {
+      title,
+      description,
+      phone,
+      location = {},
+      images = [],
+      category,
+      price,
+    } = req.body;
+  
+    if (!userId) throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
+    if (!title) throw new AppError("Title is required", 400, "MISSING_TITLE");
+  
+    const post = await MarketPost.create({
+      userId,
+      title,
+      description,
+      phone,
+      location,
+      images,
+      category: category || "Khác",
+      price: price || "",
+    });
+  
     return ok(res, post);
   }),
+  
+  
+  
 
   softDelete: asyncHandler(async (req, res) => {
     const { id } = req.params;

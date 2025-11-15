@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../redux/authSlice";
-import { FaUser, FaShoppingCart, FaBars, FaTimes } from "react-icons/fa";
+import { FaUser, FaBars, FaTimes } from "react-icons/fa"; // ❌ bỏ FaShoppingCart
 import NotificationBell from "../NotificationBell";
 import "./Header.css";
 import { RadarChartOutlined } from "@ant-design/icons";
@@ -13,45 +13,20 @@ const Header = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const currentPath = location.pathname;
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState(false);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      const dropdown = document.querySelector(".user-dropdown");
-      const mobileNav = document.querySelector(".main-nav");
-
-      if (dropdown && !dropdown.contains(e.target)) {
-        setDropdownOpen(false);
-      }
-
-      if (
-        mobileNav &&
-        !mobileNav.contains(e.target) &&
-        !e.target.closest(".mobile-menu-toggle")
-      ) {
-        setMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Close mobile menu when route changes
-  useEffect(() => {
+    setDropdownOpen(false);
     setMenuOpen(false);
     setSubmenuOpen(false);
   }, [location.pathname]);
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (menuOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
 
     return () => {
       document.body.style.overflow = "";
@@ -64,12 +39,21 @@ const Header = () => {
     setMenuOpen(false);
   };
 
-  const toggleMobileMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-
   const toggleSubmenu = () => {
     setSubmenuOpen(!submenuOpen);
+  };
+
+  const handleToggleUserDropdown = (e) => {
+    e.stopPropagation();
+    setDropdownOpen((prev) => !prev);
+  };
+
+  const handleMouseEnter = () => {
+    if (window.innerWidth >= 992) setSubmenuOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (window.innerWidth >= 992) setSubmenuOpen(false);
   };
 
   return (
@@ -86,7 +70,7 @@ const Header = () => {
 
           <button
             className="mobile-menu-toggle"
-            onClick={toggleMobileMenu}
+            onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle mobile menu"
           >
             {menuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
@@ -97,36 +81,30 @@ const Header = () => {
               <li className={currentPath === "/" ? "active" : ""}>
                 <Link to="/">Trang Chủ</Link>
               </li>
-              <li className={currentPath.startsWith("/shop") ? "active" : ""}>
-                <Link to="/shop">Cửa Hàng</Link>
-              </li>
-              <li className={currentPath.startsWith("/about") ? "active" : ""}>
-                <Link to="/about">Giới Thiệu</Link>
-              </li>
-              <li className={currentPath.startsWith("/news") ? "active" : ""}>
-                <Link to="/news">Tin Tức</Link>
-              </li>
-              <li
-                className={currentPath.startsWith("/weather") ? "active" : ""}
-              >
+
+              <li className={currentPath.startsWith("/weather") ? "active" : ""}>
                 <Link to="/weather">Thời Tiết</Link>
               </li>
+
+              {/* NHẬT KÝ LÀM VƯỜN – SUBMENU */}
               <li
                 className={`has-submenu ${
                   currentPath.startsWith("/my-garden") ||
-                  currentPath.startsWith("/farmer/notebooks")
+                  currentPath.startsWith("/farmer/notebooks") ||
+                  currentPath.startsWith("/farmer/collections")
                     ? "active"
                     : ""
                 }`}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
               >
                 <span
-                  className={`dropdown-toggle ${
-                    submenuOpen ? "submenu-open" : ""
-                  }`}
-                  onClick={toggleSubmenu}
+                  className="dropdown-toggle"
+                  onClick={() => window.innerWidth < 992 && toggleSubmenu()}
                 >
                   Nhật Ký Làm Vườn
                 </span>
+
                 <ul
                   className={`submenu ${
                     submenuOpen ? "mobile-submenu-open" : ""
@@ -140,65 +118,59 @@ const Header = () => {
                   </li>
                 </ul>
               </li>
-              <li
-                className={currentPath.startsWith("/diagnosis") ? "active" : ""}
-              >
-                <Link to="/diagnosis">Chuẩn Đoán</Link>
-              </li>
+
               <li className={currentPath.startsWith("/guides") ? "active" : ""}>
                 <Link to="/guides">Hướng Dẫn</Link>
               </li>
+
               <li className={currentPath.startsWith("/market") ? "active" : ""}>
-                <Link to="/market">Bài Đăng</Link>
+                <Link to="/market">Chợ</Link>
               </li>
-              <li
-                className={currentPath.startsWith("/experts") ? "active" : ""}
-              >
+
+              <li className={currentPath.startsWith("/experts") ? "active" : ""}>
                 <Link to="/experts">Chuyên gia</Link>
               </li>
 
-              {/* Notification Bell - Only show when logged in */}
               {user && (
                 <li className="notification-item">
                   <NotificationBell />
                 </li>
               )}
-              <li>
-              <Tooltip title="Streak Của Tôi">
+              {/* streak */}
+                <li className={currentPath.startsWith("/farmer/streak") ? "active" : ""}>
                 <Link to="/farmer/streak">
-                  <RadarChartOutlined  size={16} />
-                </Link></Tooltip>
+                  <Tooltip title="Xếp hạng Streak">
+                    <RadarChartOutlined style={{ fontSize: '18px' }} />
+                  </Tooltip>
+                </Link>
               </li>
+
+              {/* USER MENU */}
               <li className="user-menu">
                 {user ? (
-                  <div
-                    className="user-dropdown"
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                  >
-                    <div className="user-info">
+                  <div className="user-dropdown">
+                    <div className="user-info" onClick={handleToggleUserDropdown}>
                       <img
                         src={user.avatar || "https://via.placeholder.com/40"}
                         alt="Avatar"
                         className="avatar"
                       />
                       <span className="username">
-                        {user.username || user.email}
-                        <span> ▾</span>
+                        {user.username || user.email} ▾
                       </span>
                     </div>
+
                     <ul
-                      className={`dropdown-menu ${dropdownOpen ? "show" : ""}`}
+                      className={`user-dropdown-menu ${
+                        dropdownOpen ? "show" : ""
+                      }`}
                     >
                       <li>
-                        <Link to="/profile">
-                          <FaUser className="me-2" size={16} />
-                          Hồ Sơ
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/cart">
-                          <FaShoppingCart className="me-2" size={16} />
-                          Giỏ Hàng
+                        <Link
+                          to="/profile"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <FaUser className="me-2" size={16} /> Hồ Sơ
                         </Link>
                       </li>
 
@@ -222,7 +194,14 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Mobile menu overlay */}
+      {/* overlay bắt click ngoài để đóng dropdown user */}
+      {dropdownOpen && (
+        <div
+          className="dropdown-overlay"
+          onClick={() => setDropdownOpen(false)}
+        />
+      )}
+
       {menuOpen && (
         <div
           className="mobile-menu-overlay show"

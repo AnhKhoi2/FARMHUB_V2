@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { profileApi } from "../../api/shared/profileApi.js";
 import { toast } from "react-toastify";
 // thêm ở đầu file
@@ -51,6 +51,34 @@ export default function ProfilePage() {
 
   const avatarPreview = useMemo(() => form.avatar?.trim(), [form.avatar]);
   const needsSetPassword = hasPassword === false;
+
+  const fileInputRef = useRef(null);
+
+  const fileToBase64 = (f) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(f);
+    });
+
+  const handleAvatarSelect = async (e) => {
+    const f = e?.target?.files?.[0];
+    if (!f) return;
+    try {
+      const b64 = await fileToBase64(f);
+      setForm((prev) => ({ ...prev, avatar: b64 }));
+      setFieldErrors((prev) => ({ ...prev, avatar: undefined }));
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể đọc file ảnh");
+    }
+  };
+
+  const clearAvatar = () => {
+    setForm((prev) => ({ ...prev, avatar: "" }));
+    try { if (fileInputRef.current) fileInputRef.current.value = ""; } catch(e){ void e; }
+  };
 
   const BADGE_META = {
     "hat-giong": { label: "Hạt Giống", emoji: "🌱", color: "bg-amber-100 text-amber-800" },
@@ -135,6 +163,12 @@ export default function ProfilePage() {
 
   function handleCancel() {
     if (snapshot) setForm(snapshot);
+    // reset file input and avatar preview when cancelling
+    try {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (e) {
+      void e;
+    }
     setEditMode(false);
     setFieldErrors({});
   }
@@ -154,6 +188,8 @@ export default function ProfilePage() {
         dob: updated.dob || form.dob,
       };
       setForm(normalized);
+      // update local serverUser if backend returned user info
+      if (updated.user) setServerUser((prev) => ({ ...(prev || {}), ...updated.user }));
       setSnapshot(normalized);
       setEditMode(false);
       setFieldErrors({});
@@ -293,7 +329,16 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="pf-maininfo">
+              {/* Avatar controls when editing */}
+              {editMode && (
+                <div style={{ marginTop: 8, marginBottom: 8 }}>
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarSelect} style={{ display: "none" }} />
+                  <button type="button" className="px-3 py-1 rounded border me-2" onClick={() => fileInputRef.current?.click()}>Thay ảnh</button>
+                  <button type="button" className="px-3 py-1 rounded border" onClick={clearAvatar}>Xóa ảnh</button>
+                </div>
+              )}
+
+              <div className="pf-maininfo">
               <p className="pf-name">{form.fullName || "Người dùng"}</p>
               <p className="pf-username">{serverUser?.username ? `@${serverUser.username}` : ""}</p>
 

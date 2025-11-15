@@ -252,7 +252,7 @@ export default function ExpertsList() {
   };
 
   return (
-    <div className="ex-page">
+    <div className="ex-page user-expert-page">
       <div className="ex-hero">
         <h1>Experts</h1>
         <p>Find trusted agricultural experts and start a conversation.</p>
