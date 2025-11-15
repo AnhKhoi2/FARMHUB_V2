@@ -4,13 +4,33 @@ const { Schema } = mongoose;
 const MarketPostSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+
     title: { type: String, required: true },
+
     description: { type: String },
+
     phone: { type: String },
-    location: { type: Object },
+
+    // Có thể để Object hoặc String đều được
+    location: { type: Schema.Types.Mixed, default: "" },
+
     images: { type: [String], default: [] },
 
-    // 🔹 Thêm trường category (lọc theo danh mục)
+    // 🔹 THÊM FIELD PRICE
+    price: {
+      type: String,
+      default: "",
+      set(v) {
+        if (!v) return "";
+        // xoá các biến thể vnđ / vnd để tránh trùng lặp
+        const clean = String(v).replace(/vnd|vnđ|đ|đồng|VNĐ|VND/gi, "").trim();
+        if (!clean) return "";
+        return `${clean} VNĐ`;
+      }
+    },
+    
+
+    // 🔹 Danh mục
     category: {
       type: String,
       enum: ['Nông sản', 'Hạt giống', 'Phân bón', 'Thiết bị', 'Dịch vụ', 'Khác'],
@@ -22,9 +42,10 @@ const MarketPostSchema = new Schema(
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
     },
+
     isDeleted: { type: Boolean, default: false },
 
-    // 🔹 reports: array of { userId, reason, message, createdAt }
+    // 🔹 Danh sách báo cáo
     reports: [
       {
         userId: { type: Schema.Types.ObjectId, ref: 'User' },

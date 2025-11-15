@@ -1,76 +1,191 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import AdminLayout from '../../components/AdminLayout';
-import axiosClient from '../../api/shared/axiosClient';
+import React, { useEffect, useState, useCallback } from "react";
+import { toast } from "react-toastify";
+import AdminLayout from "../../components/AdminLayout";
+import axiosClient from "../../api/shared/axiosClient";
 
 export default function AdminExpertApplications() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState('pending');
-  const [q, setQ] = useState('');
+  const [status, setStatus] = useState("pending");
+  const [q, setQ] = useState("");
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
+
     try {
-      const res = await axiosClient.get('/api/expert-applications', {
-        params: { status: status || undefined, q: q || undefined, limit: 50 }
+      const res = await axiosClient.get("/api/expert-applications", {
+        params: {
+          status: status || undefined,
+          q: q || undefined,
+          limit: 50,
+        },
       });
-      const data = res.data?.data;
-      setItems(Array.isArray(data?.items) ? data.items : []);
-    } catch (e) {
-      setError(e.response?.data?.error || e.message);
-    } finally { setLoading(false); }
+
+      const data = res.data;
+      const itemsData =
+        data?.data?.items || data?.data || data?.items || data || [];
+
+      setItems(Array.isArray(itemsData) ? itemsData : []);
+    } catch (err) {
+      console.error("Load applications error:", err);
+      const res = err.response;
+
+      if (!res) {
+        const msg = "Không thể kết nối server.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      const msg =
+        res.data?.error || res.data?.message || "Lỗi tải danh sách đơn.";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   }, [status, q]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const approve = async (id) => {
-    if (!window.confirm('Approve this application?')) return;
+    const confirm = window.confirm("Bạn có chắc muốn duyệt đơn này?");
+    if (!confirm) return;
+
     try {
-      await axiosClient.patch(`/api/expert-applications/${id}/approve`, { activate_expert: true });
+      const res = await axiosClient.patch(
+        `/api/expert-applications/${id}/approve`
+      );
+      toast.success(
+        res.data?.message ||
+          "Duyệt đơn thành công, user đã được chuyển sang role expert."
+      );
       load();
-    } catch (e) {
-      alert(e.response?.data?.error || e.message);
+    } catch (err) {
+      console.error("Approve error:", err);
+      const res = err.response;
+
+      if (!res) {
+        toast.error("Không thể kết nối server.");
+        return;
+      }
+
+      if (res.status === 400) {
+        toast.error(res.data?.error || "Đơn không hợp lệ.");
+        return;
+      }
+
+      if (res.status === 404) {
+        toast.error("Không tìm thấy đơn đăng ký.");
+        return;
+      }
+
+      toast.error("Lỗi server khi duyệt đơn.");
     }
   };
 
   const reject = async (id) => {
-    const reason = window.prompt('Reject reason:');
-    if (reason === null) return;
+    const reason =
+      window.prompt("Nhập lý do từ chối (có thể để trống):") ?? "";
+    // Nếu bấm Cancel -> null, nhưng đã xử lý trên; vẫn cho gửi với reason rỗng
+
     try {
-      await axiosClient.patch(`/api/expert-applications/${id}/reject`, { reason });
+      const res = await axiosClient.patch(
+        `/api/expert-applications/${id}/reject`,
+        { reason }
+      );
+
+      toast.success(res.data?.message || "Đã từ chối đơn.");
       load();
-    } catch (e) {
-      alert(e.response?.data?.error || e.message);
+    } catch (err) {
+      console.error("Reject error:", err);
+      const res = err.response;
+
+      if (!res) {
+        toast.error("Không thể kết nối server.");
+        return;
+      }
+
+      if (res.status === 400) {
+        toast.error(res.data?.error || "Đơn không hợp lệ.");
+        return;
+      }
+
+      if (res.status === 404) {
+        toast.error("Không tìm thấy đơn đăng ký.");
+        return;
+      }
+
+      toast.error("Lỗi server khi từ chối đơn.");
     }
+  };
+
+  const resetFilter = () => {
+    setStatus("pending");
+    setQ("");
+  };
+
+  const renderStatusBadge = (st) => {
+    let cls = "bg-secondary";
+    if (st === "pending") cls = "bg-warning text-dark";
+    else if (st === "approved") cls = "bg-success";
+    else if (st === "rejected") cls = "bg-danger";
+
+    return <span className={`badge ${cls}`}>{st}</span>;
   };
 
   return (
     <AdminLayout>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="h5 mb-0">Expert Applications</h3>
-        <div className="text-muted small">Showing: {status || 'all'}</div>
+        <div className="text-muted small">
+          Showing: {status || "all"}
+        </div>
       </div>
 
+      {/* Filters */}
       <div className="row g-2 mb-3">
         <div className="col-auto">
-          <select className="form-select form-select-sm" value={status} onChange={e => setStatus(e.target.value)}>
-            <option value=''>all</option>
-            <option value='pending'>pending</option>
-            <option value='approved'>approved</option>
-            <option value='rejected'>rejected</option>
+          <select
+            className="form-select form-select-sm"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
           </select>
         </div>
         <div className="col-auto">
-          <input className="form-control form-control-sm" placeholder="Search" value={q} onChange={e => setQ(e.target.value)} />
+          <input
+            type="text"
+            className="form-control form-control-sm"
+            placeholder="Search name / email / expertise..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
         </div>
         <div className="col-auto">
-          <button className="btn btn-sm btn-outline-secondary" onClick={() => { setStatus('pending'); setQ(''); }}>Reset</button>
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            type="button"
+            onClick={resetFilter}
+          >
+            Reset
+          </button>
         </div>
       </div>
 
-      {error && <div className="alert alert-danger py-1 small">{error}</div>}
+      {error && (
+        <div className="alert alert-danger py-1 small">{error}</div>
+      )}
 
+      {/* Table */}
       <div className="card">
         <div className="card-body p-0">
           <div className="table-responsive">
@@ -88,29 +203,51 @@ export default function AdminExpertApplications() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={7} className="text-center py-3">Loading...</td></tr>
-                ) : items.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-3">No data</td></tr>
-                ) : items.map(it => (
-                  <tr key={it._id}>
-                    <td>{it.full_name}</td>
-                    <td className="small">{it.email}</td>
-                    <td className="small">{it.phone_number || '—'}</td>
-                    <td>{it.expertise_area}</td>
-                    <td>{it.experience_years ?? 0} yrs</td>
-                    <td><span className={`badge ${it.status === 'pending' ? 'bg-warning' : it.status === 'approved' ? 'bg-success' : 'bg-danger'}`}>{it.status}</span></td>
-                    <td>
-                      {it.status === 'pending' ? (
-                        <div className="btn-group btn-group-sm">
-                          <button className="btn btn-outline-success" onClick={() => approve(it._id)}>Approve</button>
-                          <button className="btn btn-outline-danger" onClick={() => reject(it._id)}>Reject</button>
-                        </div>
-                      ) : (
-                        <span className="text-muted small">—</span>
-                      )}
+                  <tr>
+                    <td colSpan={7} className="text-center py-3">
+                      Loading...
                     </td>
                   </tr>
-                ))}
+                ) : items.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-3">
+                      No data
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((it) => (
+                    <tr key={it._id}>
+                      <td>{it.full_name}</td>
+                      <td className="small">{it.email}</td>
+                      <td className="small">
+                        {it.phone_number || "—"}
+                      </td>
+                      <td>{it.expertise_area}</td>
+                      <td>{it.experience_years ?? 0} yrs</td>
+                      <td>{renderStatusBadge(it.status)}</td>
+                      <td>
+                        {it.status === "pending" ? (
+                          <div className="btn-group btn-group-sm">
+                            <button
+                              className="btn btn-outline-success"
+                              onClick={() => approve(it._id)}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              className="btn btn-outline-danger"
+                              onClick={() => reject(it._id)}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-muted small">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

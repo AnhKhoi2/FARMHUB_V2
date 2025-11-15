@@ -24,14 +24,19 @@ function getLocalUserFallback() {
       if (raw) {
         const u = JSON.parse(raw);
         if (u && (u.username || u.fullName || u.email)) {
-          const name = u.fullName || u.username || (u.email ? u.email.split("@")[0] : "Expert");
+          const name =
+            u.fullName ||
+            u.username ||
+            (u.email ? u.email.split("@")[0] : "Expert");
           return {
             name,
             email: u.email || "",
             role: "Chuyên gia nông nghiệp",
             avatar:
               u.avatar ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                name
+              )}`,
             notifications: 0,
           };
         }
@@ -62,6 +67,16 @@ export default function ExpertHome({
   // ✅ THÊM: state mở/đóng ChatWidget
   const [chatOpen, setChatOpen] = useState(false);
 
+  // ✅ Hàm xử lý khi bấm "Trò chuyện"
+  const handleChatClick = () => {
+    // nếu cha có truyền hàm thì vẫn gọi cho chắc
+    if (typeof onChatClick === "function") {
+      onChatClick();
+    }
+    // nhưng chắc chắn phải mở widget ở đây
+    setChatOpen(true);
+  };
+
   useEffect(() => {
     (async () => {
       // Một số dự án set baseURL = http://.../api, số khác là http://...
@@ -88,7 +103,6 @@ export default function ExpertHome({
           }
         } catch (e) {
           // thử path tiếp theo
-          // console.warn("Fetch failed", url, e?.response?.status, e?.message);
         }
       }
       if (!ok) {
@@ -127,66 +141,76 @@ export default function ExpertHome({
               </div>
               <h1 className="brand-name">Trang chuyên gia</h1>
             </div>
-          {/* 4 Component Buttons */}
-          <nav className="header-nav">
-            {/* Component 1: Chat */}
-            <button
-              className="nav-button nav-button-chat"
-              onClick={onChatClick}
-              title="Trao đổi với người dùng"
-            >
-              <MessageCircle size={20} />
-              <span>Trò chuyện</span>
-            </button>
 
-            {/* Component 2: Manage Guides */}
-            <button
-              className="nav-button nav-button-add"
-              onClick={() => {
-                try {
-                  if (onAddGuideClick) onAddGuideClick();
-                } catch (e) {
-                  void e;
-                }
-                navigate("/managerguides");
-              }}
-              title="Quản lý hướng dẫn"
-            >
-              <span>Quản lý hướng dẫn</span>
-            </button>
+            {/* 5 Component Buttons */}
+            <nav className="header-nav">
+              {/* Component 1: Chat */}
+              <button
+                className="nav-button nav-button-chat"
+                onClick={handleChatClick}
+                title="Trao đổi với người dùng"
+              >
+                <MessageCircle size={20} />
+                <span>Trò chuyện</span>
+              </button>
 
-            {/* Component 3: Dashboard */}
-            <button
-              className="nav-button nav-button-dashboard"
-              onClick={() => navigate("/experthome/models")}
-              title="Mô hình trồng"
-            >
-              <Leaf size={20} />
-              <span>Mô hình trồng</span>
-            </button>
+              {/* Component 2: Manage Guides */}
+              <button
+                className="nav-button nav-button-add"
+                onClick={() => {
+                  try {
+                    if (onAddGuideClick) onAddGuideClick();
+                  } catch (e) {
+                    void e;
+                  }
+                  navigate("/managerguides");
+                }}
+                title="Quản lý hướng dẫn"
+              >
+                <span>Quản lý hướng dẫn</span>
+              </button>
 
-            {/* Component 4: Plant Templates */}
-            <button
-              className="nav-button nav-button-template"
-              onClick={() => navigate("/expert/plant-templates")}
-              title="Plant Templates"
-            >
-              <span>Bộ Mẫu Cây Trồng</span>
-            </button>
+              {/* Component 3: Dashboard / Mô hình trồng */}
+              <button
+                className="nav-button nav-button-dashboard"
+                onClick={() => {
+                  if (typeof onDashboardClick === "function") {
+                    onDashboardClick();
+                  }
+                  navigate("/experthome/models");
+                }}
+                title="Mô hình trồng"
+              >
+                <Leaf size={20} />
+                <span>Mô hình trồng</span>
+              </button>
 
-            {/* Component 5: Analytics */}
-            <button
-              className="nav-button nav-button-analytics"
-              onClick={onAnalyticsClick}
-              title="Phân tích"
-            >
-              <BarChart3 size={20} />
-              <span>Phân tích</span>
-            </button>
-          </nav>
+              {/* Component 4: Plant Templates */}
+              <button
+                className="nav-button nav-button-template"
+                onClick={() => navigate("/expert/plant-templates")}
+                title="Plant Templates"
+              >
+                <span>Bộ Mẫu Cây Trồng</span>
+              </button>
 
-      <div className="header-right">
-        {/* Notifications */}
+              {/* Component 5: Analytics */}
+              <button
+                className="nav-button nav-button-analytics"
+                onClick={() => {
+                  if (typeof onAnalyticsClick === "function") {
+                    onAnalyticsClick();
+                  }
+                }}
+                title="Phân tích"
+              >
+                <BarChart3 size={20} />
+                <span>Phân tích</span>
+              </button>
+            </nav>
+
+            <div className="header-right">
+              {/* Notifications */}
               <button className="notification-btn" title="Thông báo">
                 <Bell size={20} />
                 {notifications > 0 && (
@@ -208,7 +232,11 @@ export default function ExpertHome({
                 {showProfileMenu && (
                   <div className="profile-dropdown">
                     <div className="profile-header">
-                      <img src={avatar} alt={name} className="profile-avatar" />
+                      <img
+                        src={avatar}
+                        alt={name}
+                        className="profile-avatar"
+                      />
                       <div className="profile-info">
                         <p className="profile-name">{name}</p>
                         <p className="profile-email">{email}</p>
@@ -323,7 +351,7 @@ export default function ExpertHome({
               <div className="content-placeholder">
                 <p>Nội dung chính sẽ hiển thị ở đây</p>
                 <p className="subtitle">
-                  Chọn một trong 4 nút phía trên để bắt đầu
+                  Chọn một trong các nút phía trên để bắt đầu
                 </p>
               </div>
             </section>
@@ -333,11 +361,10 @@ export default function ExpertHome({
 
       {/* ✅ Chat panel để ngoài .expert-home */}
       <ChatWidget
-  open={chatOpen}
-  onClose={(v) => setChatOpen(Boolean(v))}   // nhận tham số true/false từ ChatWidget
-  initialOpenPayload={null}
-/>
-
+        open={chatOpen}
+        onClose={() => setChatOpen(false)} // ChatWidget gọi onClose() là tắt
+        initialOpenPayload={null}
+      />
     </>
   );
 }
