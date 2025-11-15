@@ -104,3 +104,27 @@ startTaskReminderJob(); // Chạy hàng ngày lúc 9:00 sáng - nhắc nhở tas
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });
+
+
+// 404 cho route không tồn tại (optional)
+app.use((req, res, next) => {
+  next(new AppError("Route không tồn tại", 404, "NOT_FOUND"));
+});
+
+// ERROR HANDLER
+app.use((err, req, res, next) => {
+  console.error("🔥 ERROR:", err);
+
+  const statusCode = err.statusCode || 500;
+  const code = err.code || "INTERNAL_ERROR";
+
+  const message =
+    err.message ||
+    ERROR_CODES.INTERNAL_ERROR.message;
+
+  res.status(statusCode).json({
+    success: false,
+    code,
+    message,
+  });
+});

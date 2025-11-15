@@ -193,50 +193,35 @@ export const authController = {
   }),
 
   // Đăng nhập
-  login: asyncHandler(async (req, res) => {
-    const { username, password } = req.body;
+ login: asyncHandler(async (req, res, next) => {
+  const { emailOrUsername, password } = req.body;
 
-    if (!username || !password) {
-      throw new AppError("Thiếu thông tin đăng nhập", 400, "MISSING_CREDENTIALS");
-    }
-    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-    if (!usernameRegex.test(username)) {
-      throw new AppError("Tên đăng nhập không hợp lệ", 400, "INVALID_USERNAME");
-    }
+  const user = await User.findOne({
+    $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+  });
 
-    const user = await User.findOne({ username });
-    if (!user) {
-      throw new AppError("Thông tin đăng nhập không chính xác", 401, "INVALID_CREDENTIALS");
-    }
+  if (!user) {
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
+  }
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      const { message, statusCode } = ERROR_CODES.INVALID_CREDENTIALS;
-      throw new AppError(message, statusCode, "INVALID_CREDENTIALS");
-    }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
+  }
 
-    if (!user.isVerified) {
-      const { message, statusCode } = ERROR_CODES.ACCOUNT_NOT_VERIFIED;
-      throw new AppError(message, statusCode, "ACCOUNT_NOT_VERIFIED");
-    }
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: refreshToken } });
-
-    const { password: _pw, ...userInfo } = user._doc;
-
-    // set cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-    });
-
-    return ok(res, { user: userInfo, accessToken });
-  }),
+  return ok(res, { user, accessToken, refreshToken });
+}),
 
   // Refresh token
   refresh: asyncHandler(async (req, res) => {
