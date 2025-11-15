@@ -60,7 +60,9 @@ async function grantUserSubscription(payment) {
 export const paymentController = {
   // POST /payments/vnpay/create { plan, bankCode }
   createVNPay: asyncHandler(async (req, res) => {
-    const { plan, bankCode } = req.body;
+    const { plan: rawPlan, bankCode } = req.body;
+    // Normalize plan alias (e.g. "smart" -> "vip")
+    const plan = PLAN_ALIASES[rawPlan] || rawPlan;
     if (!["vip", "pro"].includes(plan)) throw BadRequest("Plan không hợp lệ");
 
     const userId = req.user?.id;
