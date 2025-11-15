@@ -156,6 +156,11 @@ const Header = () => {
               >
                 <Link to="/experts">Chuyên gia</Link>
               </li>
+              <li
+                className={currentPath.startsWith("/pricing") ? "active" : ""}
+              >
+                <Link to="/pricing">Gói Dịch Vụ</Link>
+              </li>
 
               {/* Notification Bell - Only show when logged in */}
               {user && (
@@ -164,10 +169,11 @@ const Header = () => {
                 </li>
               )}
               <li>
-              <Tooltip title="Streak Của Tôi">
-                <Link to="/farmer/streak">
-                  <RadarChartOutlined  size={16} />
-                </Link></Tooltip>
+                <Tooltip title="Streak Của Tôi">
+                  <Link to="/farmer/streak">
+                    <RadarChartOutlined size={16} />
+                  </Link>
+                </Tooltip>
               </li>
               <li className="user-menu">
                 {user ? (
