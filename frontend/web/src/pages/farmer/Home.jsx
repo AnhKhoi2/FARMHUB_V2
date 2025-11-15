@@ -13,22 +13,13 @@ import {
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
 import "../../css/farmer/Home.css";
-import { message } from "antd";
-import axiosClient from "../../api/shared/axiosClient";
 
 const Home = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const [selectedTab, setSelectedTab] = useState("Tất Cả");
   const [recentVisited, setRecentVisited] = useState([]);
-  const recordStreak = async () => {
-    try {
-      await axiosClient.post("/admin/streaks/record");
-      message.success("Đã ghi streak hôm nay thành công!");
-    } catch {
-      message.error("Hôm nay bạn đã ghi streak rồi nhé!");
-    }
-  };
+
   // Mock data cho products
   const allProducts = [
     {
@@ -85,7 +76,6 @@ const Home = () => {
     // Lấy dữ liệu từ localStorage
     const stored = JSON.parse(localStorage.getItem("recentVisited") || "[]");
     setRecentVisited(stored);
-    recordStreak();
   }, []);
 
   const filteredProducts = allProducts.filter((product) => {

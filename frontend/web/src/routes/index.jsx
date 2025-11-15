@@ -12,6 +12,7 @@ import ResetPassword from "../pages/auth/ResetPassword"; // <- thêm từ code 2
 // Guards
 import PrivateRoute from "./shared/PrivateRoute"; // dùng path kiểu code 1
 import AdminRoute from "./admin/AdminRoute";
+import ModeratorRoute from "./moderator/ModeratorRoute";
 
 // Common/Feature pages
 import Home from "../pages/farmer/Home"; // giữ nguyên path kiểu code 1
@@ -34,6 +35,11 @@ const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
 
 // Admin layout + nested
 import AdminLayout from "../components/AdminLayout.jsx";
+
+// Moderator pages
+import ModeratorHome from "../pages/moderator/ModeratorHome";
+import ManagerPost from "../pages/moderator/ManagerPost";
+import ManagerReport from "../pages/moderator/ManagerReport";
 
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
@@ -190,6 +196,31 @@ export default function AppRoutes() {
         >
           <Route path="experts" element={<ExpertContent />} />
         </Route>
+        {/* ===== Moderator area ===== */}
+        <Route
+          path="/moderator"
+          element={
+            // <ModeratorRoute>
+              <ModeratorHome />
+            // </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/managerpost"
+          element={
+            <ModeratorRoute>
+              <ManagerPost />
+            </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/managerreport"
+          element={
+            <ModeratorRoute>
+              <ManagerReport />
+            </ModeratorRoute>
+          }
+        />
         {/* ===== Expert area ===== */}
         <Route
           path="/expert/home"
