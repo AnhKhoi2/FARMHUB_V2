@@ -105,7 +105,12 @@ export const paymentController = {
       vnpTxnRef: txnRef,
       status: "pending",
     });
-    return created(res, { paymentId: payment._id, payUrl });
+    // Return format matching frontend expectation: {code: 0, data: {paymentUrl}}
+    return res.json({
+      code: 0,
+      message: "OK",
+      data: { paymentId: payment._id, paymentUrl: payUrl },
+    });
   }),
 
   // GET /payments/vnpay/return (VNPay will redirect here with query params)

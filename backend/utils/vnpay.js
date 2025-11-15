@@ -59,18 +59,29 @@ export function buildVNPayUrl({
 
   // Sort params alphabetically
   const sortedKeys = Object.keys(params).sort();
-  // Use raw (un-encoded) values when building signData to match VNPay signing examples
-  const signData = sortedKeys.map((k) => `${k}=${params[k]}`).join("&");
+  // VNPay requires signing with URLEncoded values (per official spec)
+  const signData = sortedKeys
+    .map((k) => `${k}=${encodeURIComponent(params[k])}`)
+    .join("&");
 
   const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
   const vnp_SecureHash = hmac
     .update(Buffer.from(signData, "utf-8"))
     .digest("hex");
 
-  // Build query using encodeURIComponent for URL
-  const query =
-    sortedKeys.map((k) => `${k}=${encodeURIComponent(params[k])}`).join("&") +
-    `&vnp_SecureHash=${vnp_SecureHash}`;
+  // Build query (signData already encoded)
+  const query = signData + `&vnp_SecureHash=${vnp_SecureHash}`;
+
+  // Debug log in non-production
+  if (process.env.NODE_ENV !== "production") {
+    console.log("\n=== VNPAY Build URL Debug ===");
+    console.log("signData (encoded):", signData);
+    console.log("vnp_SecureHash:", vnp_SecureHash);
+    console.log("VNP_TMN_CODE:", VNP_TMN_CODE);
+    console.log("VNP_HASH_SECRET length:", VNP_HASH_SECRET.length);
+    console.log("=== END Debug ===\n");
+  }
+
   return `${VNP_URL}?${query}`;
 }
 
@@ -78,36 +89,26 @@ export function verifyVNPayReturn(params) {
   const { vnp_SecureHash, vnp_SecureHashType, ...rest } = params;
   const sortedKeys = Object.keys(rest).sort();
 
-  // Build sign data using raw (unencoded) values for signature computation
-  const signDataRaw = sortedKeys.map((k) => `${k}=${rest[k]}`).join("&");
-  const signedRaw = crypto
-    .createHmac("sha512", VNP_HASH_SECRET)
-    .update(Buffer.from(signDataRaw, "utf-8"))
-    .digest("hex");
-
-  // Also support encoded variant if needed
-  const signDataEncoded = sortedKeys
+  // VNPay uses URLEncoded values for signature (matching buildVNPayUrl)
+  const signData = sortedKeys
     .map((k) => `${k}=${encodeURIComponent(rest[k])}`)
     .join("&");
-  const signedEncoded = crypto
+  const signed = crypto
     .createHmac("sha512", VNP_HASH_SECRET)
-    .update(Buffer.from(signDataEncoded, "utf-8"))
+    .update(Buffer.from(signData, "utf-8"))
     .digest("hex");
 
   const received = String(vnp_SecureHash || "").toLowerCase();
-  const s1 = String(signedRaw || "").toLowerCase();
-  const s2 = String(signedEncoded || "").toLowerCase();
+  const computed = String(signed || "").toLowerCase();
 
-  const ok = received === s1 || received === s2;
+  const ok = received === computed;
 
   if (!ok && process.env.NODE_ENV !== "production") {
     const info = {
       time: new Date().toISOString(),
       received: vnp_SecureHash,
-      computed_raw: signedRaw,
-      computed_encoded: signedEncoded,
-      signDataRaw,
-      signDataEncoded,
+      computed: signed,
+      signData,
       env: {
         VNP_TMN_CODE,
         VNP_URL,
