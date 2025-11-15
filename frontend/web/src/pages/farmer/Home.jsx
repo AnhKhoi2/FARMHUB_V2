@@ -86,7 +86,7 @@ const Home = () => {
   return (
     <>
       <Header />
-      <div className="homepage">
+      <div className="homepage user-home-page">
         {/* Hero Carousel */}
         <section className="hero-section">
           <div

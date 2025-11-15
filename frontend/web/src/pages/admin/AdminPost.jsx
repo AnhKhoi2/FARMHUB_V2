@@ -104,7 +104,7 @@ export default function AdminPost() {
                         <td>{it.title}</td>
                         <td>{it.userId?.username || (it.userId?.email || '—')}</td>
                         <td>{it.phone || '—'}</td>
-                        <td>{it.location?.address || '—'}</td>
+                        <td>{it.location || '—'}</td>
                         <td>{new Date(it.createdAt).toLocaleString()}</td>
                         <td>{it.status}</td>
                         <td>
@@ -308,7 +308,7 @@ function DetailModal({ item, onClose }) {
         {item.title && <h5>{item.title}</h5>}
         {item.userId && <p><strong>Người đăng:</strong> {item.userId?.username || item.userId?.email}</p>}
         {item.phone && <p><strong>Điện thoại:</strong> {item.phone || '—'}</p>}
-        {item.location && <p><strong>Địa điểm:</strong> {item.location?.address || '—'}</p>}
+        {item.location && <p><strong>Địa điểm:</strong> {item.location || '—'}</p>}
         {item.description && <>
           <p><strong>Mô tả:</strong></p>
           <p>{item.description}</p>
