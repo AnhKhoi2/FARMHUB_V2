@@ -31,6 +31,7 @@ import expertApplicationsRouter from "./routes/expertApplications.js";
 import expertRatingRoutes from "./routes/expertRating.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import notificationRoutes from "./routes/notifications.js";
+import paymentRouter from "./routes/payment.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
 
@@ -91,6 +92,7 @@ app.use("/layouts", layoutsRoutes);
 app.use("/admin/managerpost", postRoutes);
 // (legacy alias removed) '/admin/managerpost' is the canonical path for post management
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/payment", paymentRouter);
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
