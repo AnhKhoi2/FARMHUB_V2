@@ -13,16 +13,27 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  // src/pages/auth/Register.jsx
+const handleRegister = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
 
-    const ok = await dispatch(registerThunk({ username, email, password }));
-    setLoading(false);
+  const result = await dispatch(
+    registerThunk({ username, email, password })
+  );
+  setLoading(false);
 
-    if (ok) navigate("/login");
-  };
+  if (result?.success) {
+    // Có thể show toast sau này, giờ redirect luôn
+    navigate("/login");
+  } else if (result?.message) {
+    setError(result.message); // in đúng message từ BE
+  } else {
+    setError("Đăng ký thất bại. Vui lòng thử lại.");
+  }
+};
+
 
   return (
     <div className="login-page">

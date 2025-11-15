@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { profileApi } from "../../api/shared/profileApi.js";
 import { toast } from "react-toastify";
-// thêm ở đầu file
 import authApi from "../../api/shared/authApi.js";
 import expertApplicationApi from "../../api/shared/expertApplicationApi.js";
 import "../../css/auth/ProfilePage.css";
+import "../../css/auth/Profile.css";
 
 function toDateDisplay(d) {
   if (!d) return "-";
@@ -13,6 +13,261 @@ function toDateDisplay(d) {
   return dt.toLocaleDateString("vi-VN");
 }
 
+/* ============================
+   1. MODAL ĐỔI MẬT KHẨU
+============================ */
+function ChangePasswordModal({
+  isOpen,
+  onClose,
+  needsSetPassword,
+  pwForm,
+  setPwForm,
+  pwSaving,
+  handleChangePassword,
+}) {
+  if (!isOpen) return null;
+
+  const handlePwChange = (name, value) => {
+    setPwForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[1000] bg-black bg-opacity-50 flex justify-center items-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="agri-card w-full max-w-lg space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-semibold text-agri-primary border-b pb-2">
+          🔑 Đổi Mật Khẩu
+        </h2>
+
+        <div className="grid gap-4">
+          {needsSetPassword ? (
+            <p className="text-sm text-agri-gray bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+              ⚠️ Lần đầu tạo mật khẩu — không cần nhập mật khẩu cũ.
+            </p>
+          ) : (
+            <div>
+              <label className="agri-label">Mật khẩu hiện tại</label>
+              <input
+                type="password"
+                value={pwForm.oldPassword}
+                onChange={(e) => handlePwChange("oldPassword", e.target.value)}
+                className="agri-input"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="agri-label">Mật khẩu mới</label>
+            <input
+              type="password"
+              value={pwForm.newPassword}
+              onChange={(e) => handlePwChange("newPassword", e.target.value)}
+              className="agri-input"
+            />
+          </div>
+
+          <div>
+            <label className="agri-label">Xác nhận mật khẩu</label>
+            <input
+              type="password"
+              value={pwForm.confirmPassword}
+              onChange={(e) =>
+                handlePwChange("confirmPassword", e.target.value)
+              }
+              className="agri-input"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="agri-btn-secondary"
+            disabled={pwSaving}
+          >
+            Hủy
+          </button>
+          <button
+            type="button"
+            onClick={handleChangePassword}
+            disabled={pwSaving}
+            className="agri-btn-primary disabled:opacity-60"
+          >
+            {pwSaving ? "Đang xử lý…" : needsSetPassword ? "✨ Tạo mật khẩu" : "🔄 Đổi mật khẩu"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+/* ============================
+   2. MODAL ĐĂNG KÝ EXPERT
+============================ */
+function ExpertApplicationModal({
+  isOpen,
+  onClose,
+  applyForm,
+  onApplyChange,
+  addCertField,
+  setCertAt,
+  submitApplication,
+  applySaving,
+  hasApproved,
+  hasPending,
+}) {
+  if (!isOpen) return null;
+
+  if (hasApproved || hasPending) {
+    return (
+      <div
+        className="fixed inset-0 z-[1000] bg-black bg-opacity-50 flex justify-center items-center p-4"
+        onClick={onClose}
+      >
+        <div
+          className="agri-card w-full max-w-2xl p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 className="text-xl font-semibold mb-4 text-agri-primary">Thông báo</h2>
+          <p className="text-agri-gray">
+            {hasApproved
+              ? "Bạn đã là Expert. Không cần nộp đơn."
+              : "Bạn đã có đơn đang chờ duyệt."}
+          </p>
+          <button onClick={onClose} className="mt-4 agri-btn-primary">Đóng</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[1000] bg-black bg-opacity-50 flex justify-center items-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="agri-card w-full max-w-3xl my-8 p-6 space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b pb-3">
+          <h2 className="text-xl font-semibold text-agri-primary">
+            🧑‍🌾 Đăng ký trở thành Expert
+          </h2>
+          <button className="text-2xl text-agri-gray hover:text-agri-primary">&times;</button>
+        </div>
+
+        <form onSubmit={submitApplication} className="profile-form space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="agri-label">Họ và tên *</label>
+              <input
+                type="text"
+                value={applyForm.full_name}
+                onChange={(e) => onApplyChange("full_name", e.target.value)}
+                className="agri-input"
+              />
+            </div>
+
+            <div>
+              <label className="agri-label">Số điện thoại</label>
+              <input
+                type="text"
+                value={applyForm.phone_number}
+                onChange={(e) => onApplyChange("phone_number", e.target.value)}
+                className="agri-input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="agri-label">Lĩnh vực chuyên môn *</label>
+            <input
+              type="text"
+              value={applyForm.expertise_area}
+              onChange={(e) => onApplyChange("expertise_area", e.target.value)}
+              className="agri-input"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="agri-label">Số năm kinh nghiệm</label>
+              <input
+                type="number"
+                value={applyForm.experience_years}
+                min="0"
+                onChange={(e) =>
+                  onApplyChange(
+                    "experience_years",
+                    Number(e.target.value) || 0
+                  )
+                }
+                className="agri-input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="agri-label">Giới thiệu</label>
+            <textarea
+              rows={4}
+              value={applyForm.description}
+              onChange={(e) => onApplyChange("description", e.target.value)}
+              className="agri-input"
+            />
+          </div>
+
+          <div>
+            <label className="agri-label">Chứng chỉ / Portfolio (URL)</label>
+            <div className="space-y-2">
+              {applyForm.certificates.map((url, i) => (
+                <div key={i} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={url}
+                    onChange={(e) => setCertAt(i, e.target.value)}
+                    className="flex-1 agri-input"
+                  />
+                  {i === applyForm.certificates.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={addCertField}
+                      className="px-3 py-2 rounded-xl border text-agri-primary hover:bg-agri-green-light"
+                    >
+                      +
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose} className="agri-btn-secondary">
+              Hủy
+            </button>
+
+            <button
+              type="submit"
+              disabled={applySaving}
+              className="agri-btn-primary disabled:opacity-60"
+            >
+              {applySaving ? "Đang gửi…" : "✉️ Nộp đơn"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+/* ============================
+   3. COMPONENT CHÍNH
+============================ */
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
@@ -21,13 +276,14 @@ export default function ProfilePage() {
 
   const [form, setForm] = useState({});
   const [snapshot, setSnapshot] = useState(null);
-  const [fieldErrors, setFieldErrors] = useState({}); // 🔹 lỗi theo field (422)
+  const [fieldErrors, setFieldErrors] = useState({});
+
   const [earnedBadges, setEarnedBadges] = useState([]);
   const [totalPoints, setTotalPoints] = useState(0);
 
   const [hasPassword, setHasPassword] = useState(true);
 
-  // state cho Đổi mật khẩu
+  /* Đổi mật khẩu */
   const [pwOpen, setPwOpen] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
   const [pwForm, setPwForm] = useState({
@@ -36,9 +292,11 @@ export default function ProfilePage() {
     confirmPassword: "",
   });
 
-  // ---------- Expert Application states ----------
+  /* Expert apply */
   const [appsLoading, setAppsLoading] = useState(true);
-  const [myApps, setMyApps] = useState([]); // danh sách đơn của tôi
+  const [appModalOpen, setAppModalOpen] = useState(false);
+  const [myApps, setMyApps] = useState([]);
+
   const [applySaving, setApplySaving] = useState(false);
   const [applyForm, setApplyForm] = useState({
     full_name: "",
@@ -46,37 +304,39 @@ export default function ProfilePage() {
     experience_years: 0,
     description: "",
     phone_number: "",
-    certificates: [""], // mảng URL
+    certificates: [""],
   });
 
   const avatarPreview = useMemo(() => form.avatar?.trim(), [form.avatar]);
   const needsSetPassword = hasPassword === false;
 
   const BADGE_META = {
-    "hat-giong": { label: "Hạt Giống", emoji: "🌱", color: "bg-amber-100 text-amber-800" },
-    "first-streak": { label: "Khởi đầu", emoji: "✨", color: "bg-amber-100 text-amber-800" },
-    "streak-7": { label: "7 ngày liên tiếp", emoji: "🏅", color: "bg-emerald-100 text-emerald-800" },
-    "streak-30": { label: "30 ngày kiên trì", emoji: "🥇", color: "bg-emerald-100 text-emerald-800" },
-    // fallback mapping for other slugs
+    "hat-giong": { label: "Hạt Giống", emoji: "🌱" },
+    "first-streak": { label: "Khởi đầu", emoji: "✨" },
+    "streak-7": { label: "7 ngày liên tiếp", emoji: "🏅" },
+    "streak-30": { label: "30 ngày kiên trì", emoji: "🥇" },
   };
 
   const badgeLabel = (slug) => {
     if (!slug) return "";
     if (BADGE_META[slug]) return `${BADGE_META[slug].emoji} ${BADGE_META[slug].label}`;
-    // prettify slug -> Title Case
     return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  // load profile + my applications
+  /* =====================================================
+     LOAD PROFILE + ĐƠN EXPERT
+  ===================================================== */
   useEffect(() => {
     (async () => {
       try {
         const { data } = await profileApi.getProfile();
         const payload = data?.data || {};
+
         setServerUser(payload.user || null);
-        setEarnedBadges(Array.isArray(payload.earned_badges) ? payload.earned_badges : []);
+        setEarnedBadges(payload.earned_badges || []);
         setTotalPoints(payload.total_points || 0);
         setHasPassword(Boolean(payload.hasPassword));
+
         const profileData = {
           fullName: payload.fullName || "",
           avatar: payload.avatar || "",
@@ -86,46 +346,39 @@ export default function ProfilePage() {
           address: payload.address || "",
           bio: payload.bio || "",
         };
+
         setForm(profileData);
         setSnapshot(profileData);
 
-        // gợi ý trước cho form Expert
         setApplyForm((prev) => ({
           ...prev,
-          full_name: profileData.fullName || "",
-          phone_number: profileData.phone || "",
+          full_name: profileData.fullName,
+          phone_number: profileData.phone,
         }));
       } catch (err) {
-        console.error(err);
         toast.error("Không tải được hồ sơ.");
       } finally {
         setLoading(false);
       }
 
-      // load đơn đăng ký expert của chính mình
       try {
         setAppsLoading(true);
         const res = await expertApplicationApi.getMine();
-        const list = Array.isArray(res?.data?.data) ? res.data.data : [];
-        setMyApps(list);
-      } catch (err) {
-        console.error(err);
-        // không toast lỗi ồn ào
-      } finally {
+        setMyApps(res?.data?.data || []);
+      } catch (_) {}
+      finally {
         setAppsLoading(false);
       }
     })();
   }, []);
 
-  // ---------------- Profile handlers ----------------
+  /* =====================================================
+     HANDLER PROFILE
+  ===================================================== */
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    setFieldErrors((prev) => ({
-      ...prev,
-      [name]: undefined,
-      __server: undefined,
-    }));
+    setFieldErrors((p) => ({ ...p, [name]: undefined, __server: undefined }));
   }
 
   function handleStartEdit() {
@@ -136,7 +389,6 @@ export default function ProfilePage() {
   function handleCancel() {
     if (snapshot) setForm(snapshot);
     setEditMode(false);
-    setFieldErrors({});
   }
 
   async function handleSave() {
@@ -146,654 +398,466 @@ export default function ProfilePage() {
         ...form,
         dob: form.dob ? new Date(form.dob).toISOString() : undefined,
       };
+
       const { data } = await profileApi.updateProfile(payload);
       const updated = data?.data || {};
+
       const normalized = {
         ...form,
         ...updated,
         dob: updated.dob || form.dob,
       };
+
       setForm(normalized);
       setSnapshot(normalized);
       setEditMode(false);
-      setFieldErrors({});
       toast.success("Đã lưu hồ sơ thành công");
     } catch (err) {
-      console.error(err);
       const status = err?.response?.status;
       const body = err?.response?.data;
+
       if (status === 422) {
         setFieldErrors(body?.errors || {});
         if (body?.message) toast.error(body.message);
       } else {
-        toast.error(body?.message || "Lưu hồ sơ thất bại");
+        toast.error(body?.message || "Lỗi khi lưu hồ sơ");
       }
     } finally {
       setSaving(false);
     }
   }
 
+  /* =====================================================
+     ĐỔI MẬT KHẨU
+  ===================================================== */
   async function handleChangePassword() {
-    if (!pwForm.newPassword || !pwForm.confirmPassword) {
-      return toast.error("Vui lòng nhập mật khẩu mới và xác nhận.");
-    }
-    if (!needsSetPassword && !pwForm.oldPassword) {
+    if (!pwForm.newPassword || !pwForm.confirmPassword)
+      return toast.error("Vui lòng nhập mật khẩu mới + xác nhận.");
+
+    if (!needsSetPassword && !pwForm.oldPassword)
       return toast.error("Vui lòng nhập mật khẩu hiện tại.");
-    }
-    if (pwForm.newPassword !== pwForm.confirmPassword) {
+
+    if (pwForm.newPassword !== pwForm.confirmPassword)
       return toast.error("Mật khẩu xác nhận không khớp.");
-    }
-    const strong = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/.test(
-      pwForm.newPassword
-    );
-    if (!strong) {
-      return toast.error(
-        "Mật khẩu mới phải ≥8 ký tự, gồm chữ, số và ký tự đặc biệt."
-      );
-    }
+
+    if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/.test(pwForm.newPassword))
+      return toast.error("Mật khẩu ≥8 ký tự và có chữ + số + ký tự đặc biệt.");
 
     try {
       setPwSaving(true);
+
       await authApi.changePassword(
         needsSetPassword ? "" : pwForm.oldPassword,
         pwForm.newPassword
       );
-      toast.success(
-        needsSetPassword
-          ? "Tạo mật khẩu thành công ✅"
-          : "Đổi mật khẩu thành công ✅"
-      );
+
+      toast.success("Đổi mật khẩu thành công");
       setPwForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
       setPwOpen(false);
     } catch (err) {
-      const msg = err?.response?.data?.message || "Thao tác thất bại";
-      toast.error(msg);
+      toast.error(err?.response?.data?.message || "Không thể đổi mật khẩu");
     } finally {
       setPwSaving(false);
     }
   }
 
-  // ---------------- Expert Apply handlers ----------------
-  const hasApproved = !!serverUser && serverUser.role === "expert";
-  const hasPending = myApps?.some?.((a) => a.status === "pending");
+  /* =====================================================
+      EXPERT APPLY
+  ===================================================== */
+  const hasApproved = serverUser?.role === "expert";
+  const hasPending = myApps?.some((a) => a.status === "pending");
 
   const onApplyChange = (name, value) => {
     setApplyForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const addCertField = () => {
-    setApplyForm((prev) => ({ ...prev, certificates: [...prev.certificates, ""] }));
+    setApplyForm((prev) => ({
+      ...prev,
+      certificates: [...prev.certificates, ""],
+    }));
   };
 
-  const setCertAt = (idx, value) => {
+  const setCertAt = (i, value) => {
     const next = [...applyForm.certificates];
-    next[idx] = value;
-    setApplyForm((p) => ({ ...p, certificates: next }));
+    next[i] = value;
+    setApplyForm((prev) => ({ ...prev, certificates: next }));
   };
 
   async function submitApplication(e) {
-    e?.preventDefault?.();
-    if (hasApproved) {
-      return toast.info("Bạn đã là Expert.");
-    }
-    if (hasPending) {
-      return toast.info("Bạn đã có đơn đang chờ duyệt.");
-    }
+    e.preventDefault();
+
+    if (hasApproved) return toast.info("Bạn đã là Expert.");
+    if (hasPending) return toast.info("Bạn đã có đơn đang chờ duyệt.");
+
     if (!applyForm.full_name?.trim() || !applyForm.expertise_area?.trim()) {
-      return toast.error("Vui lòng nhập Họ tên và Lĩnh vực chuyên môn.");
+      return toast.error("Họ tên + lĩnh vực là bắt buộc.");
     }
+
     setApplySaving(true);
     try {
       const payload = {
         ...applyForm,
-        certificates: (applyForm.certificates || []).filter(Boolean),
+        certificates: applyForm.certificates.filter(Boolean),
       };
+
       await expertApplicationApi.create(payload);
-      toast.success("Đã nộp đơn. Vui lòng chờ admin duyệt!");
-      // reload my applications
+      toast.success("Đã gửi đơn đăng ký Expert!");
+
+      setAppModalOpen(false);
+
       const res = await expertApplicationApi.getMine();
-      setMyApps(Array.isArray(res?.data?.data) ? res.data.data : []);
+      setMyApps(res?.data?.data || []);
     } catch (err) {
-      const msg = err?.response?.data?.error || err?.message || "Nộp đơn thất bại";
-      toast.error(msg);
+      toast.error(err?.response?.data?.error || "Nộp đơn thất bại");
     } finally {
       setApplySaving(false);
     }
   }
 
+  /* =====================================================
+      RENDER
+  ===================================================== */
   if (loading) {
     return (
       <div className="min-h-[60vh] grid place-items-center">
-        <div className="animate-pulse text-gray-500">Đang tải hồ sơ…</div>
+        <div className="animate-pulse text-agri-gray">
+          Đang tải hồ sơ…
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="profile-page max-w-6xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Hồ sơ cá nhân</h1>
-      {serverUser && (
-        <p className="text-sm text-gray-500 mb-6">
-          Tài khoản: <span className="font-medium">{serverUser.username}</span>
-          {" · "}Email: <span className="font-mono">{serverUser.email}</span>
-          {" · "}Vai trò: <span className="font-semibold">{serverUser.role}</span>
-        </p>
-      )}
+    <div className="profile-page">
+      <div className="agri-theme-container">
+        <h1 className="text-3xl font-bold mb-4 agri-theme-heading">
+          🌿 Hồ sơ cá nhân
+        </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Avatar */}
-        <div className="pf-card">
-          <div className="pf-hero" />
-          <div className="pf-avatar-wrap">
-            <div className="pf-avatar">
+        {serverUser && (
+          <p className="text-sm text-agri-gray mb-6">
+            Tài khoản:{" "}
+            <span className="font-medium text-agri-primary">
+              {serverUser.username}
+            </span>{" "}
+            · Email:{" "}
+            <span className="font-mono">{serverUser.email}</span>{" "}
+            · Vai trò:{" "}
+            <span className="font-bold text-agri-primary">
+              {serverUser.role?.toUpperCase()}
+            </span>
+          </p>
+        )}
+
+        {/* ==============================
+            GRID 3 CỘT
+        =============================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* ========== CỘT 1: AVATAR =========== */}
+          <div className="agri-card avatar-section">
+            <div className="avatar-wrapper">
               {avatarPreview ? (
-                <img src={avatarPreview} alt="avatar" />
+                <img
+                  src={avatarPreview}
+                  alt="avatar"
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <div className="text-gray-400 text-sm">(Chưa có ảnh)</div>
+                <div className="grid place-items-center w-full h-full text-gray-400 bg-gray-50">
+                  🌱 Chưa có ảnh
+                </div>
               )}
             </div>
 
-            <div className="pf-maininfo">
-              <p className="pf-name">{form.fullName || "Người dùng"}</p>
-              <p className="pf-username">{serverUser?.username ? `@${serverUser.username}` : ""}</p>
+            <p className="text-center text-lg mt-3 font-semibold text-agri-primary">
+              {form.fullName || "Người dùng"}
+            </p>
 
-              <div className="pf-stats">Điểm: <span className="font-medium">{totalPoints}</span></div>
-
-              {earnedBadges?.length > 0 ? (
-                <div className="pf-badges">
-                  {earnedBadges.map((slug) => (
-                    <div key={slug} className={`pf-badge-chip ${slug === 'hat-giong' ? 'important' : ''}`} title={badgeLabel(slug)}>
-                      <span className="pf-emoji">{BADGE_META[slug]?.emoji || '🏅'}</span>
-                      <span>{badgeLabel(slug)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-2 text-xs text-gray-400">Chưa có danh hiệu</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Info viewer / editor */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow p-4 space-y-4">
-          {!editMode ? (
-            <>
-              <div>
-                <span className="font-semibold">Số điện thoại:</span>{" "}
-                {form.phone || "-"}
-              </div>
-              <div>
-                <span className="font-semibold">Ngày sinh:</span>{" "}
-                {toDateDisplay(form.dob)}
-              </div>
-              <div>
-                <span className="font-semibold">Giới tính:</span>{" "}
-                {form.gender === "male"
-                  ? "Nam"
-                  : form.gender === "female"
-                  ? "Nữ"
-                  : "Khác"}
-              </div>
-              <div>
-                <span className="font-semibold">Địa chỉ:</span>{" "}
-                {form.address || "-"}
-              </div>
-              <div>
-                <span className="font-semibold">Giới thiệu:</span>
-                <p className="whitespace-pre-wrap text-gray-700 mt-1">
-                  {form.bio || "(Chưa có nội dung)"}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleStartEdit}
-                className="px-4 py-2 rounded-xl bg-black text-white"
-              >
-                Chỉnh sửa
-              </button>
-            </>
-          ) : (
-            <>
-              {fieldErrors?.__server && (
-                <p className="text-sm text-red-600">{fieldErrors.__server}</p>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Avatar URL
-                </label>
-                <input
-                  type="text"
-                  name="avatar"
-                  value={form.avatar || ""}
-                  onChange={handleChange}
-                  placeholder="https://…"
-                  className="w-full border rounded-xl px-3 py-2 focus:ring"
-                />
-                {fieldErrors?.avatar && (
-                  <p className="text-xs text-red-600 mt-1">
-                    {fieldErrors.avatar}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Họ và tên
-                </label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={form.fullName || ""}
-                  onChange={handleChange}
-                  placeholder="Nguyễn Văn A"
-                  className="w-full border rounded-xl px-3 py-2 focus:ring"
-                />
-                {fieldErrors?.fullName && (
-                  <p className="text-xs text-red-600 mt-1">
-                    {fieldErrors.fullName}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Số điện thoại
-                  </label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={form.phone || ""}
-                    onChange={handleChange}
-                    placeholder="090… hoặc +8490…"
-                    className="w-full border rounded-xl px-3 py-2 focus:ring"
-                  />
-                  {fieldErrors?.phone && (
-                    <p className="text-xs text-red-600 mt-1">
-                      {fieldErrors.phone}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Ngày sinh
-                  </label>
-                  <input
-                    type="date"
-                    name="dob"
-                    value={form.dob?.split("T")[0] || ""}
-                    onChange={handleChange}
-                    className="w-full border rounded-xl px-3 py-2 focus:ring"
-                  />
-                  {fieldErrors?.dob && (
-                    <p className="text-xs text-red-600 mt-1">
-                      {fieldErrors.dob}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Giới tính
-                  </label>
-                  <select
-                    name="gender"
-                    value={form.gender || "other"}
-                    onChange={handleChange}
-                    className="w-full border rounded-xl px-3 py-2 focus:ring bg-white"
-                  >
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                    <option value="other">Khác</option>
-                  </select>
-                  {fieldErrors?.gender && (
-                    <p className="text-xs text-red-600 mt-1">
-                      {fieldErrors.gender}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Địa chỉ
-                  </label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={form.address || ""}
-                    onChange={handleChange}
-                    placeholder="Số nhà, đường, quận/huyện, tỉnh/thành…"
-                    className="w-full border rounded-xl px-3 py-2 focus:ring"
-                  />
-                  {fieldErrors?.address && (
-                    <p className="text-xs text-red-600 mt-1">
-                      {fieldErrors.address}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Giới thiệu
-                </label>
-                <textarea
-                  name="bio"
-                  value={form.bio || ""}
-                  onChange={handleChange}
-                  rows={4}
-                  placeholder="Mô tả ngắn về bạn, sở thích, kinh nghiệm…"
-                  className="w-full border rounded-xl px-3 py-2 focus:ring"
-                />
-                {fieldErrors?.bio && (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.bio}</p>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-4 py-2 rounded-xl bg-black text-white disabled:opacity-60"
-                >
-                  {saving ? "Đang lưu…" : "Lưu thay đổi"}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="px-4 py-2 rounded-xl border"
-                  disabled={saving}
-                >
-                  Hủy
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* ----- Card Đổi mật khẩu ----- */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Đổi mật khẩu</h2>
             <button
               type="button"
-              onClick={() => setPwOpen((v) => !v)}
-              className="px-3 py-1.5 rounded-xl border"
+              onClick={() => setPwOpen(true)}
+              className="w-full agri-btn-secondary mt-4 flex items-center justify-center gap-2"
             >
-              {pwOpen ? "Đóng" : "Mở form"}
+              🔑 Đổi mật khẩu
             </button>
           </div>
 
-          {pwOpen && (
-            <div className="grid gap-4">
-              {needsSetPassword ? (
-                <p className="text-sm text-gray-600">
-                  Lần đầu tạo mật khẩu (tài khoản Google): <b>không cần</b> nhập mật khẩu hiện tại.
-                </p>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Mật khẩu hiện tại</label>
-                  <input
-                    type="password"
-                    value={pwForm.oldPassword}
-                    onChange={(e) => setPwForm({ ...pwForm, oldPassword: e.target.value })}
-                    className="w-full border rounded-xl px-3 py-2 focus:ring"
-                    placeholder="Nhập mật khẩu hiện tại"
-                  />
-                </div>
-              )}
+          {/* ========== CỘT 2 + 3: THÔNG TIN CƠ BẢN =========== */}
+          <div className="agri-card lg:col-span-2 space-y-4">
+            <h2 className="text-xl font-semibold text-agri-primary">
+              Thông tin cơ bản
+            </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Mật khẩu mới
-                  </label>
-                  <input
-                    type="password"
-                    value={pwForm.newPassword}
-                    onChange={(e) =>
-                      setPwForm({ ...pwForm, newPassword: e.target.value })
-                    }
-                    className="w-full border rounded-xl px-3 py-2 focus:ring"
-                    placeholder="Ít nhất 8 ký tự, gồm chữ/số/ký tự đặc biệt"
-                  />
+            {!editMode ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
+                  <div><span className="agri-label">Số điện thoại:</span> {form.phone || "-"}</div>
+                  <div><span className="agri-label">Ngày sinh:</span> {toDateDisplay(form.dob)}</div>
+                  <div>
+                    <span className="agri-label">Giới tính:</span>{" "}
+                    {form.gender === "male"
+                      ? "Nam 👨"
+                      : form.gender === "female"
+                      ? "Nữ 👩"
+                      : "Khác ❓"}
+                  </div>
+                  <div><span className="agri-label">Địa chỉ:</span> {form.address || "-"}</div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Xác nhận mật khẩu mới
-                  </label>
-                  <input
-                    type="password"
-                    value={pwForm.confirmPassword}
-                    onChange={(e) =>
-                      setPwForm({ ...pwForm, confirmPassword: e.target.value })
-                    }
-                    className="w-full border rounded-xl px-3 py-2 focus:ring"
-                    placeholder="Nhập lại mật khẩu mới"
-                  />
-                </div>
-              </div>
 
-              <div className="flex gap-3">
+                <div>
+                  <span className="agri-label">Giới thiệu:</span>
+                  <p className="whitespace-pre-wrap text-agri-gray mt-1">
+                    {form.bio || "(Chưa có nội dung)"}
+                  </p>
+                </div>
+
                 <button
                   type="button"
-                  onClick={handleChangePassword}
-                  disabled={pwSaving}
-                  className="px-4 py-2 rounded-xl bg-black text-white disabled:opacity-60"
+                  onClick={handleStartEdit}
+                  className="agri-btn-primary mt-4"
                 >
-                  {pwSaving ? "Đang đổi…" : needsSetPassword ? "Tạo mật khẩu" : "Đổi mật khẩu"}
+                  📝 Chỉnh sửa hồ sơ
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPwForm({
-                      oldPassword: "",
-                      newPassword: "",
-                      confirmPassword: "",
-                    });
-                    setPwOpen(false);
-                  }}
-                  className="px-4 py-2 rounded-xl border"
-                  disabled={pwSaving}
-                >
-                  Hủy
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+              </>
+            ) : (
+              <>
+                {fieldErrors.__server && (
+                  <p className="text-sm text-red-600">{fieldErrors.__server}</p>
+                )}
 
-        {/* ----- Card Đăng ký trở thành Expert ----- */}
-        <div className="lg:col-span-3 bg-white rounded-2xl shadow p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Đăng ký trở thành Expert</h2>
-            {hasApproved && (
-              <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-sm">
-                Bạn đã là Expert ✅
-              </span>
-            )}
-            {!hasApproved && hasPending && (
-              <span className="px-2 py-1 rounded-lg bg-amber-100 text-amber-700 text-sm">
-                Đơn của bạn đang chờ duyệt…
-              </span>
+                <div>
+                  <label className="agri-label">Avatar URL</label>
+                  <input
+                    type="text"
+                    name="avatar"
+                    value={form.avatar || ""}
+                    onChange={handleChange}
+                    className="agri-input"
+                  />
+                </div>
+
+                <div>
+                  <label className="agri-label">Họ và tên</label>
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={form.fullName || ""}
+                    onChange={handleChange}
+                    className="agri-input"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="agri-label">Số điện thoại</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      value={form.phone || ""}
+                      onChange={handleChange}
+                      className="agri-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="agri-label">Ngày sinh</label>
+                    <input
+                      type="date"
+                      name="dob"
+                      value={form.dob?.split("T")[0] || ""}
+                      onChange={handleChange}
+                      className="agri-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="agri-label">Giới tính</label>
+                    <select
+                      name="gender"
+                      value={form.gender}
+                      onChange={handleChange}
+                      className="agri-input"
+                    >
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                      <option value="other">Khác</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="agri-label">Địa chỉ</label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={form.address || ""}
+                      onChange={handleChange}
+                      className="agri-input"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="agri-label">Giới thiệu</label>
+                  <textarea
+                    name="bio"
+                    rows={4}
+                    value={form.bio || ""}
+                    onChange={handleChange}
+                    className="agri-input"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="agri-btn-primary disabled:opacity-60"
+                  >
+                    {saving ? "Đang lưu…" : "💾 Lưu thay đổi"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="agri-btn-secondary"
+                    disabled={saving}
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
-          {/* Nếu chưa là expert và không có đơn pending => hiển thị form */}
-          {!hasApproved && !hasPending && (
-            <form onSubmit={submitApplication} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Họ và tên *</label>
-                  <input
-                    type="text"
-                    value={applyForm.full_name}
-                    onChange={(e) => onApplyChange("full_name", e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 focus:ring"
-                    placeholder="Nguyễn Văn A"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Số điện thoại</label>
-                  <input
-                    type="text"
-                    value={applyForm.phone_number}
-                    onChange={(e) => onApplyChange("phone_number", e.target.value)}
-                    className="w-full border rounded-xl px-3 py-2 focus:ring"
-                    placeholder="090… hoặc +8490…"
-                  />
-                </div>
-              </div>
+          {/* ========== ĐĂNG KÝ EXPERT (FULL WIDTH) =========== */}
+          <div className="agri-card lg:col-span-3 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-agri-primary">
+                🧑‍🌾 Đăng ký trở thành Expert
+              </h2>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Lĩnh vực chuyên môn *</label>
-                <input
-                  type="text"
-                  value={applyForm.expertise_area}
-                  onChange={(e) => onApplyChange("expertise_area", e.target.value)}
-                  className="w-full border rounded-xl px-3 py-2 focus:ring"
-                  placeholder="Bệnh cây ăn lá, dinh dưỡng, tưới tiêu…"
-                />
-              </div>
+              <div className="flex items-center gap-3">
+                {hasApproved && (
+                  <span className="status-tag status-approved">
+                    Đã là Expert ✅
+                  </span>
+                )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Số năm kinh nghiệm</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={applyForm.experience_years}
-                    onChange={(e) =>
-                      onApplyChange(
-                        "experience_years",
-                        isNaN(Number(e.target.value)) ? 0 : Number(e.target.value)
-                      )
-                    }
-                    className="w-full border rounded-xl px-3 py-2 focus:ring"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
+                {!hasApproved && hasPending && (
+                  <span className="status-tag status-pending">
+                    Đơn đang chờ duyệt…
+                  </span>
+                )}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Giới thiệu / Mô tả</label>
-                <textarea
-                  rows={4}
-                  value={applyForm.description}
-                  onChange={(e) => onApplyChange("description", e.target.value)}
-                  className="w-full border rounded-xl px-3 py-2 focus:ring"
-                  placeholder="Tóm tắt kinh nghiệm, ca tư vấn đã làm…"
-                />
+                {!hasApproved && !hasPending && (
+                  <button
+                    type="button"
+                    onClick={() => setAppModalOpen(true)}
+                    className="agri-btn-primary"
+                  >
+                    ✉️ Nộp đơn Expert
+                  </button>
+                )}
               </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Chứng chỉ / Portfolio (URL)</label>
-                <div className="space-y-2">
-                  {applyForm.certificates.map((url, i) => (
-                    <div key={i} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={url}
-                        onChange={(e) => setCertAt(i, e.target.value)}
-                        className="flex-1 border rounded-xl px-3 py-2 focus:ring"
-                        placeholder="https://…"
-                      />
-                      {i === applyForm.certificates.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={addCertField}
-                          className="px-3 py-2 rounded-xl border"
-                        >
-                          +
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  disabled={applySaving}
-                  className="px-4 py-2 rounded-xl bg-black text-white disabled:opacity-60"
-                >
-                  {applySaving ? "Đang gửi…" : "Nộp đơn"}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Danh sách đơn của tôi */}
-          <div className="mt-6">
-            <h3 className="font-semibold mb-2">Đơn đã nộp</h3>
-            <div className="overflow-x-auto rounded-xl border">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left p-2">Họ tên</th>
-                    <th className="text-left p-2">Email</th>
-                    <th className="text-left p-2">Lĩnh vực</th>
-                    <th className="text-left p-2">Kinh nghiệm</th>
-                    <th className="text-left p-2">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appsLoading ? (
-                    <tr>
-                      <td className="p-3 text-center text-gray-500" colSpan={5}>
-                        Đang tải…
-                      </td>
-                    </tr>
-                  ) : myApps?.length ? (
-                    myApps.map((it) => (
-                      <tr key={it._id} className="border-t">
-                        <td className="p-2">{it.full_name}</td>
-                        <td className="p-2">{it.email}</td>
-                        <td className="p-2">{it.expertise_area}</td>
-                        <td className="p-2">{it.experience_years ?? 0} năm</td>
-                        <td className="p-2">
-                          <span
-                            className={
-                              "px-2 py-0.5 rounded-lg " +
-                              (it.status === "pending"
-                                ? "bg-amber-100 text-amber-700"
-                                : it.status === "approved"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-rose-100 text-rose-700")
-                            }
-                          >
-                            {it.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td className="p-3 text-center text-gray-500" colSpan={5}>
-                        Chưa có đơn nào
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
             </div>
 
-            {!hasApproved && hasPending && (
-              <p className="text-sm text-gray-600 mt-3">
-                Đơn của bạn đang chờ duyệt. Khi được chấp thuận, vai trò sẽ chuyển sang <b>expert</b>.
-                Bạn có thể đăng xuất/đăng nhập lại hoặc tải thông tin tài khoản để cập nhật giao diện.
-              </p>
-            )}
+            {/* Lịch sử đơn */}
+            <div className="pt-4 border-t">
+              <h3 className="font-semibold mb-2 text-agri-primary">Lịch sử Đơn đã nộp</h3>
+
+              <div className="overflow-x-auto rounded-xl border">
+                <table className="min-w-full text-sm agri-table">
+                  <thead>
+                    <tr>
+                      <th>Họ tên</th>
+                      <th>Email</th>
+                      <th>Lĩnh vực</th>
+                      <th>Kinh nghiệm</th>
+                      <th>Trạng thái</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {appsLoading ? (
+                      <tr>
+                        <td colSpan="5" className="p-3 text-center text-agri-gray">
+                          Đang tải…
+                        </td>
+                      </tr>
+                    ) : myApps.length ? (
+                      myApps.map((it) => (
+                        <tr key={it._id}>
+                          <td>{it.full_name}</td>
+                          <td>{it.email}</td>
+                          <td>{it.expertise_area}</td>
+                          <td>{it.experience_years} năm</td>
+                          <td>
+                            <span
+                              className={
+                                "status-tag " +
+                                (it.status === "pending"
+                                  ? "status-pending"
+                                  : it.status === "approved"
+                                  ? "status-approved"
+                                  : "status-rejected")
+                              }
+                            >
+                              {it.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="p-3 text-center text-agri-gray">
+                          Chưa có đơn nào
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {!hasApproved && hasPending && (
+                <p className="text-sm text-agri-gray mt-3 p-3 bg-agri-green-light rounded-lg">
+                  Đơn của bạn đang chờ duyệt. Khi được chấp thuận, vai trò sẽ chuyển sang <b>expert</b>.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* ==============================
+          MODALS
+      =============================== */}
+      <ChangePasswordModal
+        isOpen={pwOpen}
+        onClose={() => setPwOpen(false)}
+        needsSetPassword={needsSetPassword}
+        pwForm={pwForm}
+        setPwForm={setPwForm}
+        pwSaving={pwSaving}
+        handleChangePassword={handleChangePassword}
+      />
+
+      <ExpertApplicationModal
+        isOpen={appModalOpen}
+        onClose={() => setAppModalOpen(false)}
+        applyForm={applyForm}
+        onApplyChange={onApplyChange}
+        addCertField={addCertField}
+        setCertAt={setCertAt}
+        submitApplication={submitApplication}
+        applySaving={applySaving}
+        hasApproved={hasApproved}
+        hasPending={hasPending}
+      />
     </div>
   );
 }

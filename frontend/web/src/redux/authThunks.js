@@ -7,7 +7,10 @@ export const loginThunk = (credentials) => async (dispatch) => {
   try {
     dispatch(loginStart());
     const res = await authApi.loginApi(credentials);
-    const payload = res?.data?.data || {};
+
+    // BE có thể trả { success, data: { user, accessToken } }
+    // hoặc { user, accessToken } trực tiếp
+    const payload = res?.data?.data || res?.data || {};
     const { user, accessToken } = payload;
 
     if (!user || !accessToken) {
@@ -18,34 +21,79 @@ export const loginThunk = (credentials) => async (dispatch) => {
 
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("accessToken", accessToken);
-    // ❌ Không điều hướng ở đây nữa
+
     return { success: true, role: user.role };
   } catch (err) {
-    const message = err?.response?.data?.message || err.message || "Login failed";
-    dispatch(loginFailure(message));
+    console.error("Login error:", err?.response?.data || err);
+
+    const data = err?.response?.data;
+
+    // ƯU TIÊN lấy message từ BE
+    const backendMessage =
+      data?.message ||              // { message: "..." }
+      data?.error?.message ||       // { error: { message: "..." } }
+      data?.errorMessage ||         // một số API dùng key này
+      data?.errors?.[0]?.msg ||     // trường hợp validation kiểu array
+      err.message;
+
+    const backendCode =
+      data?.code ||                 // { code: "INVALID_CREDENTIALS" }
+      data?.error?.code;
+
+    // text hiển thị cho user
+    let uiMessage =
+      backendMessage ||
+      "Đăng nhập thất bại. Vui lòng thử lại.";
+
+    // Nếu muốn, có thể show code để debug
+    // ví dụ: [INVALID_CREDENTIALS] Tên đăng nhập hoặc mật khẩu không đúng.
+    if (backendCode) {
+      uiMessage = ` ${uiMessage}`;
+    }
+
+    dispatch(loginFailure(uiMessage));
     return { success: false };
   }
 };
 
+// các thunk khác giữ nguyên...
 export const logoutThunk = () => (dispatch) => {
   dispatch(logout());
   localStorage.removeItem("user");
   localStorage.removeItem("accessToken");
 };
 
+// src/redux/authThunks.js
+
 export const registerThunk = (formData) => async () => {
   try {
     const res = await authApi.registerApi(formData);
+
+    // Ưu tiên lấy message từ BE
+    const data = res?.data;
     const message =
-      res?.data?.message || "Đăng ký thành công! Vui lòng kiểm tra email xác nhận.";
-    alert(message);
-    return true;
+      data?.message || 
+      data?.msg ||
+      "Đăng ký thành công! Vui lòng kiểm tra email xác nhận.";
+
+    return { success: true, message };
   } catch (err) {
-    const message = err?.response?.data?.message || "Đăng ký thất bại!";
-    alert(message);
-    return false;
+    console.error("Register error:", err?.response?.data || err);
+
+    const data = err?.response?.data;
+
+    // CHỈ LẤY MESSAGE, KHÔNG DÙNG CODE
+    const uiMessage =
+      data?.message ||
+      data?.error?.message ||
+      data?.errorMessage ||
+      data?.errors?.[0]?.msg ||
+      "Đăng ký thất bại. Vui lòng thử lại.";
+
+    return { success: false, message: uiMessage };
   }
 };
+
 
 export const loginWithGoogleThunk = createAsyncThunk(
   "auth/loginWithGoogle",
