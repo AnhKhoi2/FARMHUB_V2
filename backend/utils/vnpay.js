@@ -59,23 +59,22 @@ export function buildVNPayUrl({
 
   // Sort params alphabetically
   const sortedKeys = Object.keys(params).sort();
-  // VNPay requires signing with URLEncoded values (per official spec)
-  const signData = sortedKeys
-    .map((k) => `${k}=${encodeURIComponent(params[k])}`)
-    .join("&");
+  // Build signData with RAW values (NOT encoded) per VNPay spec
+  const signData = sortedKeys.map((k) => `${k}=${params[k]}`).join("&");
 
   const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
   const vnp_SecureHash = hmac
     .update(Buffer.from(signData, "utf-8"))
     .digest("hex");
 
-  // Build query (signData already encoded)
-  const query = signData + `&vnp_SecureHash=${vnp_SecureHash}`;
+  // Build query string - use qs.stringify with encode:false (VNPay standard)
+  params.vnp_SecureHash = vnp_SecureHash;
+  const query = qs.stringify(params, { encode: false });
 
   // Debug log in non-production
   if (process.env.NODE_ENV !== "production") {
     console.log("\n=== VNPAY Build URL Debug ===");
-    console.log("signData (encoded):", signData);
+    console.log("signData (raw):", signData);
     console.log("vnp_SecureHash:", vnp_SecureHash);
     console.log("VNP_TMN_CODE:", VNP_TMN_CODE);
     console.log("VNP_HASH_SECRET length:", VNP_HASH_SECRET.length);
@@ -89,10 +88,8 @@ export function verifyVNPayReturn(params) {
   const { vnp_SecureHash, vnp_SecureHashType, ...rest } = params;
   const sortedKeys = Object.keys(rest).sort();
 
-  // VNPay uses URLEncoded values for signature (matching buildVNPayUrl)
-  const signData = sortedKeys
-    .map((k) => `${k}=${encodeURIComponent(rest[k])}`)
-    .join("&");
+  // Build signData with RAW values (NOT encoded) per VNPay spec
+  const signData = sortedKeys.map((k) => `${k}=${rest[k]}`).join("&");
   const signed = crypto
     .createHmac("sha512", VNP_HASH_SECRET)
     .update(Buffer.from(signData, "utf-8"))
