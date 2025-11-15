@@ -11,19 +11,21 @@ const UI_CATEGORIES = ["Nông sản", "Hạt giống", "Phân bón", "Thiết b�
 function mapAdminPost(dto) {
   // Admin post schema:
   // { _id, title, description, phone, location(Object|String), images:[String], status, userId:{username}, createdAt }
-  const img =
-    dto?.images?.[0] ||
-    "/placeholder.svg";
+  const img = dto?.images?.[0] || "/placeholder.svg";
 
   return {
     id: dto?._id,
     title: dto?.title || "",
-    category: dto?.category || "Nông sản", // Admin Post không bắt buộc category: hiển thị tạm
-    price: dto?.price || dto?.priceText || "", // Admin Post không có price: để trống
+    category: dto?.category || "Khác",
+    price: dto?.price || dto?.priceText || "",
+    phone: dto?.phone || "",
     location:
       typeof dto?.location === "string"
         ? dto.location
-        : (dto?.location?.address || dto?.location?.city || dto?.location?.province || ""),
+        : (dto?.location?.address ||
+          dto?.location?.city ||
+          dto?.location?.province ||
+          ""),
     image: img,
     seller: dto?.userId?.username || "Người bán",
     createdAt: dto?.createdAt
@@ -150,8 +152,11 @@ export default function Post() {
         description: formData.description || "",
         phone: formData.contactPhone || "",
         location: formData.location || "",
-        images: imagesBase64, // có thể để [] nếu không có ảnh
+        images: imagesBase64,
+        category: formData.category,
+        price: formData.price || "",
       };
+
 
       await axiosClient.post("/admin/managerpost", payload);
 
@@ -187,7 +192,9 @@ export default function Post() {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return listings;
     return listings.filter(
-      (l) => l.title.toLowerCase().includes(q) || l.seller.toLowerCase().includes(q)
+      (l) =>
+        l.title.toLowerCase().includes(q) ||
+        l.seller.toLowerCase().includes(q)
     );
   }, [listings, searchQuery]);
 
@@ -197,9 +204,12 @@ export default function Post() {
         <div className="market-header-content">
           <div className="market-logo">
             <Leaf className="market-icon" />
-            <h1>Bài viết</h1>
+            <h1>Chợ</h1>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="market-btn-primary">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="market-btn-primary"
+          >
             {showForm ? "Ẩn form" : "Đăng bài"}
           </button>
         </div>
@@ -210,13 +220,19 @@ export default function Post() {
         {showForm && (
           <div className="market-form-section">
             <h2>Đăng bài</h2>
-            <p className="market-form-desc">Bài gửi sẽ vào trạng thái “chờ duyệt”.</p>
+            <p className="market-form-desc">
+              Bài gửi sẽ vào trạng thái “chờ duyệt”.
+            </p>
 
             <form onSubmit={handleSubmit} className="market-form">
               <section className="market-form-section-part">
-                <h3><span className="market-step">1</span> Thông tin cơ bản</h3>
+                <h3>
+                  <span className="market-step">1</span> Thông tin cơ bản
+                </h3>
                 <div className="market-form-group">
-                  <label>Tiêu đề <span className="required">*</span></label>
+                  <label>
+                    Tiêu đề <span className="required">*</span>
+                  </label>
                   <input
                     type="text"
                     name="title"
@@ -226,15 +242,23 @@ export default function Post() {
                     maxLength={120}
                     required
                   />
-                  <p className="char-count">{formData.title.length}/120</p>
+                  <p className="char-count">
+                    {formData.title.length}/120
+                  </p>
                 </div>
 
                 <div className="market-form-row">
                   <div>
                     <label>Danh mục</label>
-                    <select name="category" value={formData.category} onChange={handleInputChange}>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                    >
                       {UI_CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -260,7 +284,9 @@ export default function Post() {
                     rows={4}
                     maxLength={2000}
                   />
-                  <p className="char-count">{formData.description.length}/2000</p>
+                  <p className="char-count">
+                    {formData.description.length}/2000
+                  </p>
                 </div>
 
                 <div className="market-form-group">
@@ -276,13 +302,23 @@ export default function Post() {
               </section>
 
               <section className="market-form-section-part">
-                <h3><span className="market-step">2</span> Hình ảnh</h3>
+                <h3>
+                  <span className="market-step">2</span> Hình ảnh
+                </h3>
                 {imagePreviews.length < 5 && (
                   <div className="market-upload-box">
-                    <input id="image-upload" type="file" multiple accept="image/*" onChange={handleImageUpload} />
+                    <input
+                      id="image-upload"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                    />
                     <label htmlFor="image-upload">
                       <Upload className="market-icon-upload" />
-                      <p>Kéo ảnh vào hoặc bấm để chọn (tối đa 5 ảnh)</p>
+                      <p>
+                        Kéo ảnh vào hoặc bấm để chọn (tối đa 5 ảnh)
+                      </p>
                     </label>
                   </div>
                 )}
@@ -290,8 +326,15 @@ export default function Post() {
                   <div className="market-images-grid">
                     {imagePreviews.map((img, i) => (
                       <div key={i} className="market-image-item">
-                        <img src={img || "/placeholder.svg"} alt={`Preview ${i + 1}`} />
-                        <button type="button" onClick={() => removeImage(i)} className="market-remove-img">
+                        <img
+                          src={img || "/placeholder.svg"}
+                          alt={`Preview ${i + 1}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(i)}
+                          className="market-remove-img"
+                        >
                           <X className="market-icon-small" />
                         </button>
                       </div>
@@ -301,7 +344,9 @@ export default function Post() {
               </section>
 
               <section className="market-form-section-part">
-                <h3><span className="market-step">3</span> Liên hệ</h3>
+                <h3>
+                  <span className="market-step">3</span> Liên hệ
+                </h3>
                 <div className="market-form-group">
                   <label>Tên liên hệ</label>
                   <input
@@ -339,13 +384,23 @@ export default function Post() {
               <div className="market-form-footer">
                 <div className="market-terms">
                   <input type="checkbox" id="terms" required />
-                  <label htmlFor="terms">Tôi xác nhận bài đăng tuân thủ chính sách bài viết</label>
+                  <label htmlFor="terms">
+                    Tôi xác nhận bài đăng tuân thủ chính sách bài viết
+                  </label>
                 </div>
                 <div className="market-form-buttons">
-                  <button type="button" className="market-btn-secondary" onClick={() => setShowForm(false)}>
+                  <button
+                    type="button"
+                    className="market-btn-secondary"
+                    onClick={() => setShowForm(false)}
+                  >
                     Hủy
                   </button>
-                  <button type="submit" disabled={!isFormValid || submitting} className="market-btn-primary">
+                  <button
+                    type="submit"
+                    disabled={!isFormValid || submitting}
+                    className="market-btn-primary"
+                  >
                     {submitting ? "Đang gửi..." : "Đăng bài"}
                   </button>
                 </div>
@@ -370,14 +425,21 @@ export default function Post() {
                   if (e.key === "Enter") fetchListings();
                 }}
               />
-              <button className="market-btn-primary" style={{ marginLeft: 8 }} onClick={fetchListings}>
+              <button
+                className="market-btn-primary"
+                style={{ marginLeft: 8 }}
+                onClick={fetchListings}
+              >
                 Tìm
               </button>
             </div>
           </div>
 
           <div className="market-category-pills">
-            <button onClick={() => setSelectedCategory(null)} className={selectedCategory === null ? "active" : ""}>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={selectedCategory === null ? "active" : ""}
+            >
               Tất cả
             </button>
             {UI_CATEGORIES.map((cat) => (
@@ -392,36 +454,74 @@ export default function Post() {
           </div>
 
           {loading ? (
-            <div className="market-empty"><p>Đang tải...</p></div>
+            <div className="market-empty">
+              <p>Đang tải...</p>
+            </div>
           ) : (
             <div className="market-grid">
               {filteredListings.length > 0 ? (
                 filteredListings.map((listing) => (
-                  <div key={listing.id} className="market-card">
-                    <div className="market-card-image">
-                      <img src={listing.image || "/placeholder.svg"} alt={listing.title} />
-                      <div className="market-card-category">{listing.category}</div>
-                    </div>
-                    <div className="market-card-content">
-                      <h3>{listing.title}</h3>
-                      <p className="market-card-price">{listing.price}</p>
-                      <p className="market-card-location">{listing.location}</p>
-                      <p className="market-card-date">{listing.createdAt}</p>
-                      <div className="market-card-footer">
-                        <span>{listing.seller}</span>
-                        <span>{listing.views} lượt xem</span>
-                      </div>
-                    </div>
+<div key={listing.id} className="market-card">
+  <div className="market-card-image">
+    <img src={listing.image || "/placeholder.svg"} alt={listing.title} />
+    <div className="market-card-category">{listing.category}</div>
+  </div>
 
+  <div className="market-card-content">
+    {/* Tiêu đề */}
+    <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "6px" }}>
+      {listing.title}
+    </h3>
+
+    {/* Giá */}
+    <p style={{ fontWeight: "700", color: "#059669", marginBottom: "6px" }}>
+  {listing.price ? `${listing.price.replace(/VNĐ|VND/gi, "").trim()} VNĐ` : "Giá liên hệ"}
+</p>
+
+    {/* SĐT (nếu có) */}
+    {listing.phone && (
+      <p style={{ marginBottom: "6px" }}>
+        <strong>SĐT:</strong> {listing.phone}
+      </p>
+    )}
+
+    {/* Địa chỉ */}
+    <p style={{ marginBottom: "4px" }}>
+      {listing.location || "Không rõ địa chỉ"}
+    </p>
+
+    {/* Ngày đăng */}
+    <p style={{ marginBottom: "6px", fontSize: "13px", color: "#6b7280" }}>
+      {listing.createdAt}
+    </p>
+
+    {/* Người đăng + lượt xem */}
+    <div
+      style={{
+        fontSize: "13px",
+        display: "flex",
+        justifyContent: "space-between",
+        color: "#374151",
+      }}
+    >
+      <span>{listing.seller}</span>
+      <span>{listing.views} lượt xem</span>
+    </div>
+  </div>
                     <div className="mt-2 d-flex justify-content-between">
-                      <button className="btn btn-sm btn-success" onClick={() => openDetailFromCard(listing)}>
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => openDetailFromCard(listing)}
+                      >
                         Chi tiết
                       </button>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="market-empty"><p>Không tìm thấy bài đăng nào</p></div>
+                <div className="market-empty">
+                  <p>Không tìm thấy bài đăng nào</p>
+                </div>
               )}
             </div>
           )}
@@ -443,38 +543,75 @@ export default function Post() {
           onClick={() => setDetailOpen(false)}
         >
           <div
-            style={{ width: 680, maxWidth: "94vw", background: "#fff", borderRadius: 8, overflow: "hidden" }}
+            style={{
+              width: 680,
+              maxWidth: "94vw",
+              background: "#fff",
+              borderRadius: 8,
+              overflow: "hidden",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="d-flex align-items-center justify-content-between p-3 border-bottom">
               <h5 className="mb-0">{detailItem.title}</h5>
-              <button className="btn btn-sm btn-outline-secondary" onClick={() => setDetailOpen(false)}>
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => setDetailOpen(false)}
+              >
                 Đóng
               </button>
             </div>
 
             <div className="p-3">
-              <div style={{ width: "100%", height: 320, overflow: "hidden", borderRadius: 6 }}>
+              <div
+                style={{
+                  width: "100%",
+                  height: 320,
+                  overflow: "hidden",
+                  borderRadius: 6,
+                }}
+              >
                 <img
                   src={detailItem.image}
                   alt={detailItem.title}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
                 />
               </div>
 
               <div className="mt-3">
                 <div className="d-flex gap-3 flex-wrap">
-                  <div><strong>Danh mục:</strong> {detailItem.category}</div>
-                  <div><strong>Giá:</strong> {detailItem.price}</div>
-                  <div><strong>Địa điểm:</strong> {detailItem.location}</div>
-                  <div><strong>Ngày:</strong> {detailItem.createdAt}</div>
-                  <div><strong>Liên hệ:</strong> {detailItem.seller}</div>
+                  <div>
+                    <strong>Danh mục:</strong> {detailItem.category}
+                  </div>
+                  <div>
+                    <strong>Giá:</strong>{" "}
+                    {detailItem.price || "Giá liên hệ"}
+                  </div>
+                  <div>
+                    <strong>Số điện thoại:</strong>{" "}
+                    {detailItem.phone || "Không có"}
+                  </div>
+                  <div>
+                    <strong>Địa điểm:</strong> {detailItem.location}
+                  </div>
+                  <div>
+                    <strong>Ngày:</strong> {detailItem.createdAt}
+                  </div>
+                  <div>
+                    <strong>Liên hệ:</strong> {detailItem.seller}
+                  </div>
                 </div>
 
                 {detailItem?._raw?.description && (
                   <div className="mt-2">
                     <strong>Mô tả:</strong>
-                    <div style={{ whiteSpace: "pre-wrap" }}>{detailItem._raw.description}</div>
+                    <div style={{ whiteSpace: "pre-wrap" }}>
+                      {detailItem._raw.description}
+                    </div>
                   </div>
                 )}
               </div>
