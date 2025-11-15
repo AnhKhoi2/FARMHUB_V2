@@ -1,434 +1,225 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Table, Button, Tag, Space, Drawer, Form, Input, Checkbox, Spin, message, Typography } from "antd";
+import { PlusOutlined, EditOutlined, DeleteOutlined, RollbackOutlined } from "@ant-design/icons";
 import axiosClient from "../../api/shared/axiosClient";
+import Header from "../../components/shared/Header";
+import HeaderExpert from "../../components/shared/HeaderExpert";
+
+const { TextArea } = Input;
+const { Title } = Typography;
 
 export default function ExpertModels() {
-  const navigate = useNavigate();
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
-  const [current, setCurrent] = useState(null);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [layouts, setLayouts] = useState([]);
-  const [showTrash, setShowTrash] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerType, setDrawerType] = useState("create"); // create / edit
+  const [currentItem, setCurrentItem] = useState(null);
+  const [form] = Form.useForm();
 
+  // Fetch models
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      params.set('limit', '50');
-      const res = await axiosClient.get(`/admin/models?${params.toString()}`);
-      const items = res.data?.data?.items || res.data?.items || res.data?.data || [];
-      setItems(items);
+      const res = await axiosClient.get("/admin/models?limit=50");
+      const data = res.data?.data?.items || res.data?.items || res.data?.data || [];
+      setItems(data);
     } catch (err) {
       console.error(err);
+      message.error("Không thể tải dữ liệu mô hình.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchItems(); }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    const fetchLayouts = async () => {
-      try {
-        const res = await axiosClient.get('/layouts');
-        const data = res.data?.data || res.data || [];
-        if (mounted) setLayouts(data || []);
-      } catch (err) {
-        console.error('Failed to load layouts', err);
-      }
-    };
-    fetchLayouts();
-    return () => { mounted = false; };
-  }, []);
-
-  const handleCreate = async (payload) => {
-    await axiosClient.post("/admin/models", payload);
-    setShowCreate(false);
-    fetchItems();
-  };
-
-  const handleEdit = async (id, payload) => {
-    await axiosClient.put(`/admin/models/${id}`, payload);
-    setShowEdit(false);
-    setCurrent(null);
-    fetchItems();
-  };
-
-  const handleDelete = async (id) => {
-    await axiosClient.delete(`/admin/models/${id}`);
-    setShowConfirm(false);
-    setCurrent(null);
-    fetchItems();
-  };
-
-  return (
-    <div className="container py-3">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>Mô hình trồng</h3>
-          <div className="d-flex align-items-center">
-          {/* showHidden removed */}
-          <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => setShowTrash(true)}>Thùng rác</button>
-          {/* Layouts reference removed */}
-          <button className="btn btn-sm btn-secondary me-2" onClick={() => navigate('/experthome')}>Quay lại</button>
-          <button className="btn btn-sm btn-primary" onClick={() => setShowCreate(true)}>Tạo mô hình</button>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="card-body p-0">
-          <div className="table-responsive">
-            <table className="table table-hover mb-0">
-              <thead className="table-light">
-                <tr>
-                  <th>ID</th>
-                  <th>Diện tích</th>
-                  <th>Đất</th>
-
-  
-                  <th>Khí hậu</th>
-                  <th>Tưới</th>
-                  <th>Bố trí</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={7}>Đang tải...</td></tr>
-                ) : items.length === 0 ? (
-                  <tr><td colSpan={7}>Chưa có bản ghi</td></tr>
-                ) : (
-                  items.map((it, idx) => (
-                    <tr key={it._id}>
-                      <td title={it._id} style={{ fontFamily: 'monospace' }}>{String(idx + 1).padStart(2, '0')}</td>
-                      <td>{it.area}</td>
-                      <td>{it.soil}</td>
-                      <td>{it.climate}</td>
-                      <td>{it.irrigation}</td>
-                      <td>
-                        {(it.layouts || []).map((id) => {
-                          const found = layouts.find((l) => Number(l.layout_id) === Number(id));
-                          return found ? <div key={id} className="badge bg-light border text-dark me-1">{found.layout_name}</div> : null;
-                        })}
-                      </td>
-                      <td>
-                        <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setCurrent(it); setShowEdit(true); }}>Sửa</button>
-                        {!it.isDeleted ? (
-                          <button className="btn btn-sm btn-outline-danger me-2" onClick={async () => {
-                            try {
-                              await axiosClient.patch(`/admin/models/${it._id}/hide`);
-                              await fetchItems();
-                            } catch (err) {
-                              console.error('Delete (hide) error', err);
-                              alert('Không thể xóa mô hình');
-                            }
-                          }}>Xóa</button>
-                        ) : (
-                          <button className="btn btn-sm btn-success me-2" onClick={async () => {
-                            try {
-                              await axiosClient.patch(`/admin/models/${it._id}/restore`);
-                              await fetchItems();
-                            } catch (err) {
-                              console.error('Restore error', err);
-                              alert('Không thể hoàn tác');
-                            }
-                          }}>Hoàn tác</button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Simple modals implemented inline for quick demo */}
-      {showCreate && (
-        <div className="modal show d-block" tabIndex={-1}>
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Tạo mô hình</h5>
-                <button type="button" className="btn-close" onClick={() => setShowCreate(false)} />
-              </div>
-              <div className="modal-body">
-                <ModelForm layouts={layouts} onSubmit={async (p) => { await handleCreate(p); }} onCancel={() => setShowCreate(false)} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showEdit && current && (
-        <div className="modal show d-block" tabIndex={-1}>
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Sửa mô hình</h5>
-                <button type="button" className="btn-close" onClick={() => { setShowEdit(false); setCurrent(null); }} />
-              </div>
-              <div className="modal-body">
-                <ModelForm layouts={layouts} initial={current} onSubmit={async (p) => { await handleEdit(current._id, p); }} onCancel={() => { setShowEdit(false); setCurrent(null); }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showConfirm && current && (
-        <div className="modal show d-block" tabIndex={-1}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Xác nhận</h5>
-                <button type="button" className="btn-close" onClick={() => { setShowConfirm(false); setCurrent(null); }} />
-              </div>
-              <div className="modal-body">
-                <p>Bạn có chắc muốn xóa mô hình này?</p>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-sm btn-secondary" onClick={() => { setShowConfirm(false); setCurrent(null); }}>Hủy</button>
-                <button className="btn btn-sm btn-danger" onClick={() => handleDelete(current._id)}>Xóa</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Layouts reference modal removed */}
-      {showTrash && (
-        <div className="modal show d-block" tabIndex={-1}>
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <TrashModal onClose={() => setShowTrash(false)} />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ModelForm({ initial = {}, onSubmit, onCancel, layouts = [] }) {
-  const [area, setArea] = useState(initial.area || "");
-  const [selectedLayouts, setSelectedLayouts] = useState(initial.layouts ? initial.layouts.map((v) => Number(v)) : []);
-  const [soil, setSoil] = useState(initial.soil || "");
-  const [climate, setClimate] = useState(initial.climate || "");
-  const [irrigation, setIrrigation] = useState(initial.irrigation || "");
-  
-  const [sunHours, setSunHours] = useState(initial.sunHours || "");
-  const [sunIntensity, setSunIntensity] = useState(initial.sunIntensity || "");
-  const [wind, setWind] = useState(initial.wind || "");
-  const [hasRoof, setHasRoof] = useState(!!initial.hasRoof);
-  const [floorMaterial, setFloorMaterial] = useState(initial.floorMaterial || "");
-  const [description, setDescription] = useState(initial.description || "");
-
-  const submit = () => {
-    if (!selectedLayouts || selectedLayouts.length !== 3) {
-      return alert('Vui lòng chọn đúng 3 cách bố trí cho mô hình.');
+  // Fetch layouts
+  const fetchLayouts = async () => {
+    try {
+      const res = await axiosClient.get("/layouts");
+      const data = res.data?.data || res.data || [];
+      setLayouts(data);
+    } catch (err) {
+      console.error("Không thể tải layouts", err);
     }
-    onSubmit({
-      area: area === "" ? undefined : Number(area),
-      soil,
-      climate,
-      irrigation,
-      sunHours: sunHours === "" ? undefined : Number(sunHours),
-      sunIntensity: sunIntensity || undefined,
-      wind: wind || undefined,
-      hasRoof,
-      floorMaterial: floorMaterial || undefined,
-      description,
-      layouts: selectedLayouts,
-    });
   };
 
-  return (
-    <div>
-      {/* model_id removed */}
-      {/* crop removed: model selection will be inferred from user inputs when showing to users */}
-      <div className="mb-3">
-        <label className="form-label">Diện tích</label>
-        <input type="number" step="0.1" className="form-control form-control-sm" value={area} onChange={(e) => setArea(e.target.value)} />
-      </div>
-      {/* balconyArea removed */}
-      <div className="mb-3">
-        <label className="form-label">Loại đất</label>
-        <input className="form-control form-control-sm" value={soil} onChange={(e) => setSoil(e.target.value)} />
-      </div>
-      <div className="mb-3">
-        <label className="form-label">Khí hậu</label>
-        <input className="form-control form-control-sm" value={climate} onChange={(e) => setClimate(e.target.value)} />
-      </div>
-      <div className="mb-3">
-        <label className="form-label">Tưới</label>
-        <input className="form-control form-control-sm" value={irrigation} onChange={(e) => setIrrigation(e.target.value)} />
-      </div>
-      <div className="mb-3 row">
-        <div className="col-md-4">
-          <label className="form-label">Thời gian có nắng (giờ)</label>
-          <input type="number" step="0.1" min="0" max="24" className="form-control form-control-sm" value={sunHours} onChange={(e) => setSunHours(e.target.value)} />
-        </div>
-        <div className="col-md-4">
-          <label className="form-label">Cường độ ánh sáng</label>
-          <select className="form-select form-select-sm" value={sunIntensity} onChange={(e) => setSunIntensity(e.target.value)}>
-            <option value="">-- Chọn --</option>
-            <option value="Yếu">Yếu</option>
-            <option value="Vừa">Vừa</option>
-            <option value="Nắng gắt">Nắng gắt</option>
-          </select>
-        </div>
-        <div className="col-md-4">
-          <label className="form-label">Mức độ gió</label>
-          <select className="form-select form-select-sm" value={wind} onChange={(e) => setWind(e.target.value)}>
-            <option value="">-- Chọn --</option>
-            <option value="Yếu">Yếu</option>
-            <option value="Vừa">Vừa</option>
-            <option value="Mạnh">Mạnh</option>
-          </select>
-        </div>
-      </div>
-      <div className="mb-3 row align-items-center">
-        <div className="col-md-4">
-          <label className="form-label">Có mái che</label>
-          <div className="form-check">
-            <input className="form-check-input" type="checkbox" checked={hasRoof} onChange={(e) => setHasRoof(e.target.checked)} id="hasRoofExp" />
-            <label className="form-check-label" htmlFor="hasRoofExp">Có mái che</label>
-          </div>
-        </div>
-        <div className="col-md-8">
-          <label className="form-label">Chất liệu nền</label>
-          <select className="form-select form-select-sm" value={floorMaterial} onChange={(e) => setFloorMaterial(e.target.value)}>
-            <option value="">-- Chọn --</option>
-            <option value="Gạch">Gạch</option>
-            <option value="Xi măng">Xi măng</option>
-            <option value="Gỗ">Gỗ</option>
-            <option value="Chống thấm">Chống thấm</option>
-            <option value="Khác">Khác</option>
-          </select>
-        </div>
-      </div>
-      <div className="mb-3">
-        <label className="form-label">Mô tả</label>
-        <textarea className="form-control form-control-sm" value={description} onChange={(e) => setDescription(e.target.value)} />
-      </div>
-      <div className="mb-3">
-        <label className="form-label">Chọn 3 bố trí tham khảo</label>
-        <div className="row g-2">
-          {layouts.map((l) => {
-            const id = Number(l.layout_id);
-            const checked = selectedLayouts.includes(id);
-            return (
-              <div className="col-6" key={id}>
-                <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id={`layout-exp-${id}`} checked={checked} onChange={(e) => {
-                    if (e.target.checked) {
-                      if (selectedLayouts.length >= 3) return alert('Chỉ được chọn tối đa 3 bố trí');
-                      setSelectedLayouts((s) => [...s, id]);
-                    } else {
-                      setSelectedLayouts((s) => s.filter((x) => x !== id));
-                    }
-                  }} />
-                  <label className="form-check-label" htmlFor={`layout-exp-${id}`}>{l.layout_name} <small className="text-muted">({l.area_min}-{l.area_max} m²)</small></label>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className="d-flex justify-content-end">
-        <button className="btn btn-sm btn-secondary me-2" onClick={onCancel}>Hủy</button>
-        <button className="btn btn-sm btn-primary" onClick={submit}>Lưu</button>
-      </div>
-    </div>
-  );
-}
-
-function LayoutsModal({ onClose }) {
-  const [layouts, setLayouts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    let mounted = true;
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const res = await axiosClient.get('/layouts');
-        const data = res.data?.data || res.data;
-        if (mounted) setLayouts(data || []);
-      } catch (err) {
-        console.error('Failed to load layouts', err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    fetch();
-    return () => { mounted = false; };
+    fetchItems();
+    fetchLayouts();
   }, []);
 
-  // Layouts reference removed from expert UI — keep layouts fetching for ModelForm usage
-  return null;
-}
+  const openDrawer = (type, item = null) => {
+    setDrawerType(type);
+    setCurrentItem(item);
+    if (item) {
+      form.setFieldsValue({
+        ...item,
+        layouts: item.layouts?.map((l) => Number(l)) || [],
+      });
+    } else {
+      form.resetFields();
+    }
+    setDrawerVisible(true);
+  };
 
-  function TrashModal({ onClose }) {
-    const [trash, setTrash] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    const fetchTrash = async () => {
-      setLoading(true);
-      try {
-        const res = await axiosClient.get('/admin/models/trash?limit=200');
-        const items = res.data?.data || res.data || [];
-        setTrash(items || []);
-      } catch (err) {
-        console.error('Failed to load trash', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    useEffect(() => { fetchTrash(); }, []);
-
-    const handleRestore = async (id) => {
-      try {
+  const handleDelete = async (id, isDeleted) => {
+    try {
+      if (isDeleted) {
         await axiosClient.patch(`/admin/models/${id}/restore`);
-        await fetchTrash();
-      } catch (err) {
-        console.error('Restore error', err);
-        alert('Không thể hoàn tác');
+        message.success("Mô hình đã được hoàn tác");
+      } else {
+        await axiosClient.patch(`/admin/models/${id}/hide`);
+        message.success("Mô hình đã xóa");
       }
-    };
+      fetchItems();
+    } catch (err) {
+      console.error(err);
+      message.error("Thao tác thất bại");
+    }
+  };
 
-    return (
-      <div style={{ minWidth: 700 }}>
-        <div className="modal-header">
-          <h5 className="modal-title">Thùng rác - Mô hình đã xóa</h5>
-          <button type="button" className="btn-close" onClick={onClose} />
-        </div>
-        <div className="modal-body">
-          {loading ? <p>Đang tải...</p> : (
-            <div className="list-group">
-              {trash.length === 0 ? <p>Không có mô hình đã xóa</p> : trash.map((t) => (
-                <div key={t._id} className="list-group-item d-flex justify-content-between align-items-center">
-                  <div>
-                    <div>Diện tích: {t.area} m² — {t.soil}</div>
-                    <div className="text-muted small">{t.description}</div>
-                  </div>
-                  <div>
-                    <button className="btn btn-sm btn-success me-2" onClick={() => handleRestore(t._id)}>Hoàn tác</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="modal-footer">
-          <button className="btn btn-sm btn-secondary" onClick={onClose}>Đóng</button>
-        </div>
-      </div>
-    );
-  }
+  const handleSubmit = async (values) => {
+    try {
+      const payload = { ...values, layouts: values.layouts.map((v) => Number(v)) };
+      if (drawerType === "create") {
+        await axiosClient.post("/admin/models", payload);
+        message.success("Tạo mô hình thành công");
+      } else if (drawerType === "edit" && currentItem) {
+        await axiosClient.put(`/admin/models/${currentItem._id}`, payload);
+        message.success("Cập nhật mô hình thành công");
+      }
+      setDrawerVisible(false);
+      fetchItems();
+    } catch (err) {
+      console.error(err);
+      message.error("Lưu thất bại");
+    }
+  };
+
+  const columns = [
+    {
+      title: "ID",
+      dataIndex: "_id",
+      key: "_id",
+      render: (_, record, index) => String(index + 1).padStart(2, "0"),
+    },
+    { title: "Diện tích", dataIndex: "area", key: "area", sorter: (a, b) => a.area - b.area },
+    { title: "Đất", dataIndex: "soil", key: "soil" },
+    { title: "Khí hậu", dataIndex: "climate", key: "climate" },
+    { title: "Tưới", dataIndex: "irrigation", key: "irrigation" },
+    {
+      title: "Bố trí",
+      dataIndex: "layouts",
+      key: "layouts",
+      render: (layoutIds) =>
+        (layoutIds || []).map((id) => {
+          const l = layouts.find((lo) => Number(lo.layout_id) === Number(id));
+          return l ? (
+            <Tag color="blue" key={id} style={{ marginBottom: 4 }}>
+              {l.layout_name}
+            </Tag>
+          ) : null;
+        }),
+    },
+    {
+      title: "Hành động",
+      key: "action",
+      render: (_, record) => (
+        <Space>
+          <Button icon={<EditOutlined />} size="small" onClick={() => openDrawer("edit", record)}>
+            Sửa
+          </Button>
+          <Button
+            size="small"
+            danger={!record.isDeleted}
+            type={record.isDeleted ? "default" : "primary"}
+            icon={record.isDeleted ? <RollbackOutlined /> : <DeleteOutlined />}
+            onClick={() => handleDelete(record._id, record.isDeleted)}
+          >
+            {record.isDeleted ? "Hoàn tác" : "Xóa"}
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <>
+     <HeaderExpert/>
+    <div style={{ padding: 24 }}>
+      <Space style={{ marginBottom: 16 }} align="center">
+        <Title level={4} style={{ margin: 0 }}>
+          Mô hình trồng
+        </Title>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => openDrawer("create")}>
+          Tạo mô hình
+        </Button>
+      </Space>
+
+      {loading ? (
+        <Spin tip="Đang tải dữ liệu..." style={{ width: "100%", padding: 50 }} />
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={items}
+          rowKey="_id"
+          pagination={{ pageSize: 10 }}
+          bordered
+          scroll={{ x: "max-content" }}
+        />
+      )}
+
+      <Drawer
+        title={drawerType === "create" ? "Tạo mô hình" : "Sửa mô hình"}
+        open={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        width={720}
+        bodyStyle={{ paddingBottom: 80 }}
+        footer={
+          <div style={{ textAlign: "right" }}>
+            <Button onClick={() => setDrawerVisible(false)} style={{ marginRight: 8 }}>
+              Hủy
+            </Button>
+            <Button type="primary" onClick={() => form.submit()}>
+              Lưu
+            </Button>
+          </div>
+        }
+      >
+        <Form layout="vertical" form={form} onFinish={handleSubmit}>
+          <Form.Item label="Diện tích" name="area" rules={[{ required: true, message: "Nhập diện tích" }]}>
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item label="Loại đất" name="soil" rules={[{ required: true, message: "Nhập loại đất" }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Khí hậu" name="climate" rules={[{ required: true, message: "Nhập khí hậu" }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Tưới" name="irrigation" rules={[{ required: true, message: "Nhập phương pháp tưới" }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Mô tả" name="description">
+            <TextArea rows={3} />
+          </Form.Item>
+          <Form.Item
+            label="Chọn 3 bố trí"
+            name="layouts"
+            rules={[{ required: true, message: "Chọn đúng 3 bố trí", type: "array", len: 3 }]}
+          >
+            <Checkbox.Group>
+              <Space direction="vertical">
+                {layouts.map((l) => (
+                  <Checkbox key={l.layout_id} value={Number(l.layout_id)}>
+                    {l.layout_name} ({l.area_min}-{l.area_max} m²)
+                  </Checkbox>
+                ))}
+              </Space>
+            </Checkbox.Group>
+          </Form.Item>
+        </Form>
+      </Drawer>
+    </div>
+    </>
+  );
+}

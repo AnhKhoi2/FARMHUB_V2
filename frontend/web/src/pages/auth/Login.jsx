@@ -12,6 +12,7 @@ import "../../css/auth/Login.css";
 import streakApi from "../../api/shared/streakApi.js";     // ← thêm
 import StreakPopup from "../../components/shared/StreakPopup"; // ← path theo dự án của bạn
 
+
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const Login = () => {
 
   const nextRouteByRole = (role) => {
     if (role === "admin") return "/admin";
+    if (role === "moderator") return "/moderator";
     if (role === "expert") return "/expert/home";
     return "/";
   };
@@ -39,9 +41,8 @@ const Login = () => {
       const { data } = await streakApi.record(); // { success, data: { streak } } tuỳ cấu trúc axiosClient
       const streak = data?.data?.streak || data?.streak || null;
       if (streak) {
-        // ensure badgesAwarded array exists and map slugs to labels in UI popup
-        setStreakData(streak); // mở popup
-        return; // chờ user bấm OK rồi mới navigate
+        setStreakData(streak);  // mở popup
+        return;                 // chờ user bấm OK rồi mới navigate
       }
     } catch (e) {
       // lỗi record streak không chặn điều hướng
