@@ -1,4 +1,4 @@
-import AppRoutes from "./routes";
+import AppRoutes from "./routes/index";
 import ExpertHome from "./pages/expert/ExpertHome";
 
 export default function App() {
