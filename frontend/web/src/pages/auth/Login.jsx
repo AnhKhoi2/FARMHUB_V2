@@ -12,6 +12,7 @@ import "../../css/auth/Login.css";
 import streakApi from "../../api/shared/streakApi.js";     // ← thêm
 import StreakPopup from "../../components/shared/StreakPopup"; // ← path theo dự án của bạn
 
+
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const Login = () => {
 
   const nextRouteByRole = (role) => {
     if (role === "admin") return "/admin";
+    if (role === "moderator") return "/moderator";
     if (role === "expert") return "/expert/home";
     return "/";
   };

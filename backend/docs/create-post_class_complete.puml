@@ -1,0 +1,188 @@
+@startuml
+title FARMHUB – Create Post (Complete)
+
+skinparam monochrome true
+skinparam dpi 150
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Consolas
+skinparam linetype ortho
+hide circle
+
+' ================= ENUMS (khớp code) =================
+enum PostStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PostCategory {
+  "Nông sản"
+  "Hạt giống"
+  "Phân bón"
+  "Thiết bị"
+  "Dịch vụ"
+  "Khác"
+}
+
+' ================= MODELS =================
+package "backend/models" {
+  class User <<MongooseModel>> {
+    +_id: ObjectId
+    +username: String
+    +email: String
+    +role: "user"|"expert"|"moderator"|"admin"
+    +isVerified: Boolean
+    +isDeleted: Boolean
+    +isBanned: Boolean
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class MarketPost <<MongooseModel>> {
+    +_id: ObjectId
+    +userId: ObjectId -> User {required}
+    +title: String {required}
+    +description: String
+    +phone: String
+    +location: Object
+    +images: [String] = []
+    +category: PostCategory = "Khác"
+    +status: PostStatus = pending
+    +isDeleted: Boolean = false
+    +reports: [Report]
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class Report <<Subdocument>> {
+    +userId: ObjectId -> User
+    +reason: String
+    +message: String
+    +createdAt: Date
+  }
+}
+MarketPost "1" o- "many" Report : embeds
+User "1" <-- "many" MarketPost : author (userId)
+
+' ================= ROUTES =================
+package "backend/routes" {
+  class PostRoutes <<ExpressRouter>> {
+    +POST /api/posts                <<auth>>
+    +POST /api/posts/:id/report     <<auth>>
+    --
+    +GET  /api/posts/public
+    +GET  /api/posts                <<admin>>
+    +GET  /api/posts/:id            <<admin>>
+    +PATCH /api/posts/:id/hide      <<admin>>
+    +PATCH /api/posts/:id/restore   <<admin>>
+    +PATCH /api/posts/:id/status    <<admin>>
+    +PATCH /api/posts/:id/ban-user  <<admin>>
+  }
+}
+
+' ================= MIDDLEWARE =================
+package "backend/middlewares" {
+  class AuthMiddleware {
+    +verifyToken(req,res,next)
+    +requireAdmin(req,res,next)
+    +requireRoles(roles)
+    +requireOwnerOrAdmin(param="id")
+    --
+    -isBypass(): boolean
+  }
+}
+
+' ================= CONTROLLER =================
+package "backend/controllers" {
+  class PostController {
+    +create(req,res): Ok<MarketPost>                 ' body: {title, description?, phone?, location?, images?, category?}
+    +report(id, {reason?,message?}): Ok<{message}>
+    +detail(id): Ok<MarketPost>                      <<admin>>
+    +listPublic(page?,limit?,q?,category?): Ok<SearchResult>
+    +list(page?,limit?,q?,category?): Ok<SearchResult> <<admin>>
+  }
+}
+
+' ================= UTILS =================
+package "backend/utils" {
+  class ApiResponse {
+    +ok(res, data, meta?): Response<200>
+    +created(res, data): Response<201>
+    +noContent(res): Response<204>
+  }
+
+  class AppError {
+    +message: string
+    +statusCode: number = 500
+    +code: string = "INTERNAL_ERROR"
+    +stack: string
+    --
+    +constructor(message, statusCode?, code?)
+  }
+
+  class asyncHandler {
+    +(fn): (req,res,next) => Promise<any>
+  }
+}
+
+' ================= DTOs (request/response) =================
+package "dto" {
+  class PostCreateRequest {
+    +title: string!
+    +description?: string
+    +phone?: string
+    +location?: object
+    +images?: string[]
+    +category?: PostCategory = "Khác"
+  }
+
+  class PostListItem {
+    +id: string
+    +title: string
+    +category?: PostCategory
+    +description?: string
+    +thumbnail?: string
+    +status: PostStatus
+    +createdAt: Date
+    +authorUsername?: string
+    +authorEmail?: string
+  }
+
+  class SearchMeta {
+    +total: number
+    +page: number
+    +limit: number
+  }
+
+  class SearchResult {
+    +items: PostListItem[]
+    +meta: SearchMeta
+  }
+}
+
+' ================= RELATIONSHIPS (flow) =================
+PostRoutes --> PostController : create()
+PostRoutes ..> AuthMiddleware : verifyToken (for /api/posts)
+
+PostController --> MarketPost : create({userId,title,description,phone,location,images,category})
+PostController ..> ApiResponse : ok(res, post)
+PostController ..> AppError : throw on 400/401/404/500
+PostController ..> asyncHandler : wrap controller methods
+
+note right of PostController
+  Validation (theo code hiện tại):
+  - 401 nếu không có req.user (JWT)
+  - 400 nếu thiếu title
+  Persist:
+  - status = 'pending', isDeleted = false (mặc định)
+  - category mặc định 'Khác' nếu không truyền
+end note
+
+note bottom of PostRoutes
+  <<auth>> = require verifyToken
+  <<admin>> = require verifyToken + requireAdmin
+end note
+
+@enduml

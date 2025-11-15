@@ -1,22 +1,26 @@
 import { Router } from "express";
 import { postController } from "../controllers/postController.js";
-import { verifyToken, requireAdmin } from "../middlewares/authMiddleware.js";
+import { verifyToken, requireAdmin, requireModeratorOrAdmin } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
 // Public listing (no auth)
 router.get("/public", postController.listPublic);
 
-// Admin management endpoints
-router.get("/", verifyToken, requireAdmin, postController.list);
-router.get("/trash", verifyToken, requireAdmin, postController.trash);
-// reported posts
-router.get("/reported", verifyToken, requireAdmin, postController.reported);
-router.get("/:id/reports", verifyToken, requireAdmin, postController.reportsForPost);
-router.get("/:id", verifyToken, requireAdmin, postController.detail);
-router.patch("/:id/hide", verifyToken, requireAdmin, postController.softDelete);
-router.patch("/:id/restore", verifyToken, requireAdmin, postController.restore);
-router.patch("/:id/status", verifyToken, requireAdmin, postController.updateStatus);
+// Management endpoints: allow moderators OR admins for most actions
+router.get("/", verifyToken, requireModeratorOrAdmin, postController.list);
+router.get("/trash", verifyToken, requireModeratorOrAdmin, postController.trash);
+// reported posts (list)
+router.get("/reported", verifyToken, requireModeratorOrAdmin, postController.reported);
+// view reports for a post
+router.get("/:id/reports", verifyToken, requireModeratorOrAdmin, postController.reportsForPost);
+// view single post detail (management)
+router.get("/:id", verifyToken, requireModeratorOrAdmin, postController.detail);
+// moderation actions
+router.patch("/:id/hide", verifyToken, requireModeratorOrAdmin, postController.softDelete);
+router.patch("/:id/restore", verifyToken, requireModeratorOrAdmin, postController.restore);
+router.patch("/:id/status", verifyToken, requireModeratorOrAdmin, postController.updateStatus);
+// ban user remains admin-only
 router.patch("/:id/ban-user", verifyToken, requireAdmin, postController.banUserForPost);
 
 // Public (simple) creation endpoint: allow authenticated users to create a post

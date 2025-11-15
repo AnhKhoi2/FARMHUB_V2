@@ -1,6 +1,6 @@
-// src/routes/ExpertRoutes.jsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import ExpertProfile from "../../pages/expert/ExpertProfile"; // NEW
 import ExpertHome from "../../pages/expert/ExpertHome"; // corrected path to pages
 import PlantTemplateManager from "../../pages/expert/PlantTemplateManager";
 import PlantTemplateForm from "../../pages/expert/PlantTemplateForm";
@@ -12,9 +12,13 @@ export default function ExpertRoutes() {
       {/* /expert → /expert/home */}
       <Route index element={<Navigate to="home" replace />} />
 
-      {/* /expert/home */}
+      {/* Trang chính chuyên gia */}
       <Route path="home" element={<ExpertHome />} />
 
+      {/* Trang hồ sơ chuyên gia (nhẹ, chỉ thông tin cơ bản) */}
+      <Route path="profile" element={<ExpertProfile />} />
+
+      {/* fallback */}
       {/* Plant Template Management */}
       <Route path="plant-templates" element={<PlantTemplateManager />} />
       <Route

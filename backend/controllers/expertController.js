@@ -3,6 +3,7 @@
 // ===============================
 import mongoose from "mongoose";
 import Expert from "../models/Expert.js";
+import User from "../models/User.js";
 
 // ---------- Helpers ----------
 const ALLOWED_REVIEW = ["pending", "approved", "rejected", "banned", "inactive"];
@@ -104,3 +105,35 @@ export async function create(_req, res) {
 export async function update(_req, res) {
   return res.status(405).json({ error: "Update is disabled" });
 }
+export async function getMyBasic(req, res) {
+  try {
+    const userId = req.user?._id || req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const user = await User.findById(userId)
+      .select("username email role avatar isDeleted")
+      .lean();
+    if (!user || user.isDeleted) return res.status(404).json({ error: "User not found" });
+
+    const expert = await Expert.findOne({ user: userId, is_deleted: false })
+      .select("full_name")
+      .lean();
+
+    const name = expert?.full_name || user.username || user.email.split("@")[0];
+    const payload = {
+      name,
+      email: user.email || "",
+      role: "Chuyên gia nông nghiệp",
+      avatar:
+        user.avatar ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
+      notifications: 0,
+    };
+
+    return res.json({ data: payload });
+  } catch (err) {
+    console.error("getMyBasic error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+}
+  

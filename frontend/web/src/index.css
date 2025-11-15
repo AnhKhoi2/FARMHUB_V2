@@ -3,9 +3,19 @@
   line-height: 1.5;
   font-weight: 400;
 
+  /* Theme variables (warm palette) */
+  --color-primary: #d97706; /* amber-600 */
+  --color-primary-700: #b45309; /* amber-700 */
+  --color-accent: #ff7a3d; /* warm accent */
+  --color-muted: #6b7280;
+  --bg-dark: #242424;
+  --bg-light: #ffffff;
+  --text-light: rgba(255, 255, 255, 0.92);
+  --text-dark: #213547;
+
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--text-light);
+  background-color: var(--bg-dark);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -55,13 +65,38 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: transparent;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.18s;
 }
 
 button:hover {
-  border-color: #646cff;
+  border-color: rgba(0,0,0,0.06);
+}
+
+/* Primary button (warm) */
+.btn-primary, .btn.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: var(--text-light);
+  border: none;
+  box-shadow: 0 6px 18px rgba(217,119,6,0.12);
+}
+.btn-primary:hover, .btn.btn-primary:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 10px 26px rgba(217,119,6,0.14);
+}
+
+/* Outline primary to match warm palette */
+.btn-outline-primary, .btn.btn-outline-primary {
+  border: 1px solid rgba(217,119,6,0.16);
+  color: var(--color-primary-700);
+  background: transparent;
+}
+.btn-outline-primary:hover { background: rgba(217,119,6,0.04); }
+
+/* Danger outline warm-ish */
+.btn-outline-danger, .btn.btn-outline-danger {
+  border: 1px solid rgba(244,88,75,0.14);
 }
 
 button:focus,
@@ -71,15 +106,15 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color: var(--text-dark);
+    background-color: var(--bg-light);
   }
 
   a:hover {
-    color: #747bff;
+    color: var(--color-primary-700);
   }
 
   button {
-    background-color: #f9f9f9;
+    background-color: transparent;
   }
 }

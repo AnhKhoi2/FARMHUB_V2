@@ -194,6 +194,8 @@ export const authController = {
 
   // Đăng nhập
   login: asyncHandler(async (req, res) => {
+    // TEMP LOG: ghi lại body để debug khi frontend trả về 400
+    console.log("[DEBUG] POST /auth/login body:", req.body);
     const { username, password } = req.body;
 
     if (!username || !password) {

@@ -28,6 +28,8 @@ import modelsRoutes from "./routes/models.js";
 import layoutsRoutes from "./routes/layouts.js";
 import postRoutes from "./routes/post.js";
 import expertApplicationsRouter from "./routes/expertApplications.js";
+import expertRatingRoutes from "./routes/expertRating.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 import notificationRoutes from "./routes/notifications.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
@@ -77,7 +79,8 @@ app.use("/admin/users", usersRoute);
 // app.use("/api/expert-applications", expertApplicationRoutes);
 
 app.use("/api/expert-applications", expertApplicationsRouter);
-
+app.use("/api/experts", expertRatingRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/api/plant-templates", plantTemplateRoutes);
 app.use("/api/upload", uploadRoutes);

@@ -133,6 +133,7 @@ export default function AdminUsers() {
         <table className="table table-sm table-hover mb-0">
           <thead className="table-light">
             <tr>
+              <th style={{width:60}}>STT</th>
               <th>Username</th>
               <th>Email</th>
               <th>Role</th>
@@ -147,8 +148,9 @@ export default function AdminUsers() {
             {!loading && items.length === 0 && (
               <tr><td colSpan={5} className="text-center py-4">Không có dữ liệu</td></tr>
             )}
-            {!loading && items.map(u => (
+            {!loading && items.map((u, idx) => (
               <tr key={u._id} className={u.isDeleted ? "table-danger" : ""}>
+                <td className="small text-muted">{(page - 1) * limit + idx + 1}</td>
                 <td>
                   <button className="btn btn-link btn-sm p-0" onClick={() => openDetail(u._id)}>{u.username}</button>
                 </td>
@@ -178,13 +180,46 @@ export default function AdminUsers() {
           </tbody>
         </table>
       </div>
-
+      {/* Pagination controls (similar behavior to AdminDiseases) */}
       <div className="d-flex justify-content-between align-items-center mt-3">
-        <div className="small text-muted">Trang {page}/{totalPages}</div>
-        <div className="btn-group btn-group-sm">
-          <button className="btn btn-outline-secondary" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Prev</button>
-          <button className="btn btn-outline-secondary" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
-        </div>
+        <div className="text-muted small">Tổng: {total} mục</div>
+        <nav>
+          <ul className="pagination pagination-sm mb-0">
+            {(() => {
+              const totalPagesLocal = Math.max(1, Math.ceil(total / limit));
+              const pages = [];
+              let start = Math.max(1, page - 2);
+              let end = Math.min(totalPagesLocal, page + 2);
+              if (start > 1) {
+                pages.push(1);
+                if (start > 2) pages.push('...');
+              }
+              for (let p = start; p <= end; p++) pages.push(p);
+              if (end < totalPagesLocal) {
+                if (end < totalPagesLocal - 1) pages.push('...');
+                pages.push(totalPagesLocal);
+              }
+
+              return [
+                <li key="prev" className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => page > 1 && setPage(page - 1)}>Prev</button>
+                </li>,
+                pages.map((p, i) => (
+                  typeof p === 'number' ? (
+                    <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
+                      <button className="page-link" onClick={() => setPage(p)}>{p}</button>
+                    </li>
+                  ) : (
+                    <li key={`dot-${i}`} className="page-item disabled"><span className="page-link">{p}</span></li>
+                  )
+                )),
+                <li key="next" className={`page-item ${page >= totalPagesLocal ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => page < totalPagesLocal && setPage(page + 1)}>Next</button>
+                </li>
+              ];
+            })()}
+          </ul>
+        </nav>
       </div>
 
       {/* Detail Modal */}

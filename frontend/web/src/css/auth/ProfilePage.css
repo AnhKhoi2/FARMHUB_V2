@@ -1,0 +1,73 @@
+/* ProfilePage.css — dedicated styles for the user profile page
+   Inspired by modern profile UIs (e.g., blossom.app):
+   - clean card, soft gradient header
+   - large circular avatar, overlapping the card
+   - badge chips with subtle colors and wrap layout
+*/
+
+:root{
+  --pf-bg: #faf9f7;
+  --pf-card: #ffffff;
+  --pf-accent: #f59e0b; /* amber */
+  --pf-accent-2: #fb923c; /* orange */
+  --pf-muted: #6b7280;
+  --pf-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --pf-radius: 16px;
+}
+
+.profile-page {
+  background: var(--pf-bg);
+  color: #0f172a;
+}
+
+.profile-page .pf-card {
+  background: var(--pf-card);
+  border-radius: var(--pf-radius);
+  box-shadow: var(--pf-shadow);
+  padding: 22px;
+  position: relative;
+  overflow: visible;
+}
+
+.profile-page .pf-hero {
+  height: 84px;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(120deg, rgba(245,158,11,0.95), rgba(251,146,60,0.95));
+  margin: -22px -22px 10px -22px;
+}
+
+.profile-page .pf-avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: -46px; /* pull avatar up over hero */
+}
+
+.profile-page .pf-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 9999px;
+  overflow: hidden;
+  border: 6px solid var(--pf-card);
+  box-shadow: 0 8px 20px rgba(2,6,23,0.08);
+}
+.profile-page .pf-avatar img{ width:100%; height:100%; object-fit:cover; }
+
+.profile-page .pf-maininfo {
+  display: flex;
+  flex-direction: column;
+}
+.profile-page .pf-name { font-size: 20px; font-weight:700; }
+.profile-page .pf-username { font-size: 12px; color: var(--pf-muted); margin-top: 2px }
+
+.profile-page .pf-stats { margin-top: 8px; font-size: 13px; color: var(--pf-muted); }
+
+.profile-page .pf-badges { margin-top: 10px; display:flex; gap:8px; flex-wrap:wrap }
+.profile-page .pf-badge-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:12px; background:#fff; border:1px solid rgba(15,23,42,0.06); }
+.profile-page .pf-badge-chip.important{ background: linear-gradient(90deg, rgba(245,158,11,0.12), rgba(251,146,60,0.12)); border-color: rgba(245,158,11,0.18); }
+.profile-page .pf-badge-chip .pf-emoji{ font-size:14px }
+
+@media (max-width: 768px){
+  .profile-page .pf-avatar{ width:88px; height:88px }
+  .profile-page .pf-hero{ height:64px }
+}

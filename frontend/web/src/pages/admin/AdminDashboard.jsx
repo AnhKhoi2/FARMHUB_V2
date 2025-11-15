@@ -58,8 +58,7 @@ export default function AdminDashboard() {
           </div>
           <div className="col text-end">
             <div className="d-flex justify-content-end gap-2">
-              <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowAiModal(true)}>Kiểm tra AI</button>
-              <button className="btn btn-outline-danger" onClick={() => dispatch(logout())}>Đăng xuất</button>
+
             </div>
           </div>
         </div>
@@ -97,16 +96,6 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-
-          <div className="col-md-3">
-            <div className="card shadow-sm">
-              <div className="card-body">
-                <h6 className="card-title">AI Chẩn đoán</h6>
-                <p className="text-muted">Kiểm tra nhanh endpoint chẩn đoán AI</p>
-                <button className="btn btn-sm btn-primary" onClick={() => setShowAiModal(true)}>Mở trình kiểm tra</button>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="row g-3 mt-3">
@@ -122,32 +111,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {showAiModal && (
-          <PortalModal onClose={() => { setShowAiModal(false); setAiResult(null); setAiError(null); }}>
-            <div className="modal-header">
-              <h5 className="modal-title">Trình kiểm tra AI Chẩn đoán</h5>
-              <button type="button" className="btn-close" aria-label="Close" onClick={() => { setShowAiModal(false); setAiResult(null); setAiError(null); }}></button>
-            </div>
-            <div className="modal-body">
-              <div className="mb-3">
-                <label className="form-label">Mô tả cây trồng</label>
-                <textarea className="form-control" rows={2} value={aiDescription} onChange={(e) => setAiDescription(e.target.value)} />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Triệu chứng</label>
-                <textarea className="form-control" rows={2} value={aiSymptoms} onChange={(e) => setAiSymptoms(e.target.value)} />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Thông tin thêm</label>
-                <input className="form-control" value={aiExtra} onChange={(e) => setAiExtra(e.target.value)} />
-              </div>
-
-              {aiError && <div className="alert alert-danger">{aiError}</div>}
-
-              {aiResult && <AIResponseView result={aiResult} />}
-            </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => { setShowAiModal(false); setAiResult(null); setAiError(null); }}>Đóng</button>
               <button className="btn btn-primary" onClick={async () => {
                 setAiLoading(true); setAiError(null); setAiResult(null);
                 try {
@@ -161,8 +125,6 @@ export default function AdminDashboard() {
                 }
               }} disabled={aiLoading}>{aiLoading ? 'Đang xử lý...' : 'Gửi tới AI'}</button>
             </div>
-          </PortalModal>
-        )}
       </div>
     </AdminLayout>
   );
