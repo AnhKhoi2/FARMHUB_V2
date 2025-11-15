@@ -1,16 +1,25 @@
 import crypto from "crypto";
 import qs from "querystring";
+import fs from "fs";
+import path from "path";
 
 // VNPay config via env
 const VNP_TMN_CODE = process.env.VNP_TMN_CODE || "";
 const VNP_HASH_SECRET = process.env.VNP_HASH_SECRET || "";
 const VNP_URL =
-  process.env.VNP_URL || "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+  process.env.VNP_PAYMENT_URL ||
+  process.env.VNP_URL ||
+  "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
 const VNP_RETURN_URL =
-  process.env.VNP_RETURN_URL || "http://localhost:5000/payments/vnpay/return";
+  process.env.VNP_RETURN_URL ||
+  (() => {
+    const port = process.env.PORT || 5000;
+    const path = process.env.RETURN_URL_PATH || "/vnpay_return";
+    return `http://localhost:${port}${path}`;
+  })();
 
 export function hasVNPayConfig() {
-  return Boolean(VNP_TMN_CODE && VNP_HASH_SECRET);
+  return Boolean(VNP_TMN_CODE && VNP_HASH_SECRET && VNP_URL);
 }
 
 export function getReturnUrl() {
@@ -54,15 +63,15 @@ export function buildVNPayUrl({
 
   // Sort params alphabetically
   const sortedKeys = Object.keys(params).sort();
-  const signData = sortedKeys
-    .map((k) => `${k}=${encodeURIComponent(params[k])}`)
-    .join("&");
+  // Use raw (un-encoded) values when building signData to match VNPay signing examples
+  const signData = sortedKeys.map((k) => `${k}=${params[k]}`).join("&");
 
   const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
   const vnp_SecureHash = hmac
     .update(Buffer.from(signData, "utf-8"))
     .digest("hex");
 
+  // Build query using encodeURIComponent for URL
   const query =
     sortedKeys.map((k) => `${k}=${encodeURIComponent(params[k])}`).join("&") +
     `&vnp_SecureHash=${vnp_SecureHash}`;
@@ -72,12 +81,56 @@ export function buildVNPayUrl({
 export function verifyVNPayReturn(params) {
   const { vnp_SecureHash, vnp_SecureHashType, ...rest } = params;
   const sortedKeys = Object.keys(rest).sort();
-  const signData = sortedKeys
+
+  // Build sign data using raw (unencoded) values for signature computation
+  const signDataRaw = sortedKeys.map((k) => `${k}=${rest[k]}`).join("&");
+  const signedRaw = crypto
+    .createHmac("sha512", VNP_HASH_SECRET)
+    .update(Buffer.from(signDataRaw, "utf-8"))
+    .digest("hex");
+
+  // Also support encoded variant if needed
+  const signDataEncoded = sortedKeys
     .map((k) => `${k}=${encodeURIComponent(rest[k])}`)
     .join("&");
-  const signed = crypto
+  const signedEncoded = crypto
     .createHmac("sha512", VNP_HASH_SECRET)
-    .update(Buffer.from(signData, "utf-8"))
+    .update(Buffer.from(signDataEncoded, "utf-8"))
     .digest("hex");
-  return signed === vnp_SecureHash;
+
+  const received = String(vnp_SecureHash || "").toLowerCase();
+  const s1 = String(signedRaw || "").toLowerCase();
+  const s2 = String(signedEncoded || "").toLowerCase();
+
+  const ok = received === s1 || received === s2;
+
+  if (!ok && process.env.NODE_ENV !== "production") {
+    const info = {
+      time: new Date().toISOString(),
+      received: vnp_SecureHash,
+      computed_raw: signedRaw,
+      computed_encoded: signedEncoded,
+      signDataRaw,
+      signDataEncoded,
+      env: {
+        VNP_TMN_CODE,
+        VNP_URL,
+      },
+    };
+    console.error(
+      "\n=== VNPAY Signature MISMATCH ===\n",
+      JSON.stringify(info, null, 2),
+      "\n=== END ===\n"
+    );
+    try {
+      const logDir = path.join(process.cwd(), "backend", "logs");
+      fs.mkdirSync(logDir, { recursive: true });
+      const logPath = path.join(logDir, "vnpay-signature.log");
+      fs.appendFileSync(logPath, JSON.stringify(info) + "\n");
+    } catch (e) {
+      console.error("Failed to write VNPAY signature log", e);
+    }
+  }
+
+  return ok;
 }

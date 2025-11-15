@@ -1,11 +1,3 @@
-import { Router } from 'express';
-import { paymentController } from '../controllers/paymentController.js';
-import { verifyToken } from '../middlewares/authMiddleware.js';
-
-const router = Router();
-
-router.post('/vnpay/create', verifyToken, paymentController.createVNPay);
-router.get('/vnpay/return', paymentController.vnpayReturn);
-router.get('/history', verifyToken, paymentController.history);
-
-export default router;
+// // DEPRECATED: `payments.js` routes have been consolidated into `payment.js`.
+// // Re-export the default from `payment.js` to keep any legacy imports working.
+// export { default } from "./payment.js";
