@@ -35,6 +35,28 @@ function sortObject(obj) {
   return sorted;
 }
 
+// Helper: grant subscription to user based on payment
+async function grantUserSubscription(payment) {
+  try {
+    const user = await User.findById(payment.userId);
+    if (user) {
+      const now = new Date();
+      const base =
+        user.subscriptionExpires && user.subscriptionExpires > now
+          ? new Date(user.subscriptionExpires)
+          : now;
+      base.setDate(base.getDate() + (PLAN_DURATIONS[payment.plan] || 30));
+      user.subscriptionPlan = payment.plan;
+      user.subscriptionExpires = base;
+      await user.save();
+      return true;
+    }
+  } catch (e) {
+    console.error("Grant subscription error:", e);
+  }
+  return false;
+}
+
 export const paymentController = {
   // POST /payments/vnpay/create { plan, bankCode }
   createVNPay: asyncHandler(async (req, res) => {
@@ -129,19 +151,8 @@ export const paymentController = {
       payment.status = "success";
       await payment.save();
 
-      // Grant subscription
-      const user = await User.findById(payment.userId);
-      if (user) {
-        const now = new Date();
-        const base =
-          user.subscriptionExpires && user.subscriptionExpires > now
-            ? new Date(user.subscriptionExpires)
-            : now;
-        base.setDate(base.getDate() + (PLAN_DURATIONS[payment.plan] || 30));
-        user.subscriptionPlan = payment.plan;
-        user.subscriptionExpires = base;
-        await user.save();
-      }
+      // Grant subscription via helper
+      await grantUserSubscription(payment);
 
       return ok(res, {
         success: true,
@@ -249,64 +260,11 @@ export const paymentController = {
   // VNPAY IPN handler
   vnpIpn: asyncHandler(async (req, res) => {
     try {
-      let vnp_Params = { ...req.query };
+      // Accept either query (GET) or body (POST)
+      const params = Object.keys(req.query).length ? req.query : req.body || {};
 
-      const secureHash = vnp_Params.vnp_SecureHash;
-      delete vnp_Params.vnp_SecureHash;
-      delete vnp_Params.vnp_SecureHashType;
-
-      vnp_Params = sortObject(vnp_Params);
-      const signData = qs.stringify(vnp_Params, { encode: false });
-      const hmac = crypto.createHmac("sha512", secretKey);
-      const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
-
-      if (secureHash && secureHash.toLowerCase() === signed.toLowerCase()) {
-        const rspCode = vnp_Params.vnp_ResponseCode;
-        const orderId = vnp_Params.vnp_TxnRef;
-
-        const payment = await Payment.findOne({ vnpTxnRef: orderId });
-        if (!payment) {
-          console.warn("Payment not found for txn", orderId);
-          return res.json({ RspCode: "00", Message: "No such order" });
-        }
-
-        payment.vnpResponseCode = rspCode;
-        payment.vnpTransactionNo = vnp_Params.vnp_TransactionNo;
-        payment.vnpBankCode = vnp_Params.vnp_BankCode;
-        payment.vnpPayDate = vnp_Params.vnp_PayDate;
-
-        if (rspCode === "00") {
-          payment.status = "success";
-          await payment.save();
-
-          try {
-            const user = await User.findById(payment.userId);
-            if (user) {
-              const now = new Date();
-              const base =
-                user.subscriptionExpires && user.subscriptionExpires > now
-                  ? new Date(user.subscriptionExpires)
-                  : now;
-              base.setDate(
-                base.getDate() + (PLAN_DURATIONS[payment.plan] || 30)
-              );
-              user.subscriptionPlan = payment.plan;
-              user.subscriptionExpires = base;
-              await user.save();
-            }
-          } catch (e) {
-            console.warn("Failed to update user subscription", e);
-          }
-
-          console.log("VNPAY IPN success for order", orderId);
-          return res.json({ RspCode: "00", Message: "Success" });
-        } else {
-          payment.status = "failed";
-          await payment.save();
-          console.log("VNPAY IPN failed", vnp_Params);
-          return res.json({ RspCode: "00", Message: "Payment failed" });
-        }
-      } else {
+      const verified = verifyVNPayReturn(params);
+      if (!verified) {
         // Write signature mismatch details to log file for debugging
         try {
           const fs = await import("fs");
@@ -317,27 +275,46 @@ export const paymentController = {
           const info = {
             time: new Date().toISOString(),
             endpoint: "vnpIpn",
-            receivedSecureHash: secureHash,
-            computedSecureHash: signed,
-            signData,
-            params: vnp_Params,
+            params,
           };
           fs.appendFileSync(logPath, JSON.stringify(info) + "\n");
         } catch (e) {
           console.error("Failed to write vnpay ipn log", e);
         }
-
         if (process.env.NODE_ENV !== "production") {
-          console.warn("Invalid VNPAY signature", {
-            receivedSecureHash: secureHash,
-            computedSecureHash: signed,
-            signData,
-            params: vnp_Params,
-          });
+          console.warn("Invalid VNPAY signature", { params });
         } else {
           console.warn("Invalid VNPAY signature");
         }
         return res.json({ RspCode: "97", Message: "Invalid signature" });
+      }
+
+      const rspCode = params.vnp_ResponseCode;
+      const orderId = params.vnp_TxnRef;
+
+      const payment = await Payment.findOne({ vnpTxnRef: orderId });
+      if (!payment) {
+        console.warn("Payment not found for txn", orderId);
+        return res.json({ RspCode: "00", Message: "No such order" });
+      }
+
+      // Update payment info
+      payment.vnpResponseCode = rspCode;
+      payment.vnpTransactionNo = params.vnp_TransactionNo;
+      payment.vnpBankCode = params.vnp_BankCode;
+      payment.vnpPayDate = params.vnp_PayDate;
+
+      if (rspCode === "00") {
+        payment.status = "success";
+        await payment.save();
+        await grantUserSubscription(payment);
+        console.log("VNPAY IPN success for order", orderId);
+        return res.json({ RspCode: "00", Message: "Success" });
+      } else {
+        payment.status = "failed";
+        await payment.save();
+        console.log("VNPAY IPN failed", params);
+        return res.json({ RspCode: "00", Message: "Payment failed" });
       }
     } catch (err) {
       console.error(err);

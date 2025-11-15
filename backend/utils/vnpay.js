@@ -12,11 +12,7 @@ const VNP_URL =
   "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
 const VNP_RETURN_URL =
   process.env.VNP_RETURN_URL ||
-  (() => {
-    const port = process.env.PORT || 5000;
-    const path = process.env.RETURN_URL_PATH || "/vnpay_return";
-    return `http://localhost:${port}${path}`;
-  })();
+  `http://localhost:${process.env.PORT || 5000}/api/payment/vnpay/return`;
 
 export function hasVNPayConfig() {
   return Boolean(VNP_TMN_CODE && VNP_HASH_SECRET && VNP_URL);
