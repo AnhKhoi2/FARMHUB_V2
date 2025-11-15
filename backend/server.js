@@ -95,23 +95,6 @@ app.use("/admin/managerpost", postRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/payment", paymentRouter);
 
-// Expose VNPay return and IPN endpoints according to environment configuration
-// These are read from `.env` (RETURN_URL_PATH, IPN_URL_PATH). Provide safe defaults.
-const returnPath = process.env.RETURN_URL_PATH || "/vnpay_return";
-const ipnPath = process.env.IPN_URL_PATH || "/vnpay_ipn";
-console.log(`VNPay return path: ${returnPath}, IPN path: ${ipnPath}`);
-
-app.get(returnPath, (req, res, next) =>
-  paymentController.vnpayReturn(req, res, next)
-);
-app.get(ipnPath, (req, res, next) => paymentController.vnpIpn(req, res, next));
-
-// Also accept POST callbacks from VNPay (some setups POST instead of GET)
-app.post(returnPath, (req, res, next) =>
-  paymentController.vnpayReturn(req, res, next)
-);
-app.post(ipnPath, (req, res, next) => paymentController.vnpIpn(req, res, next));
-
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
