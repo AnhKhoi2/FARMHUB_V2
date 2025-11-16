@@ -108,8 +108,8 @@ export const authController = {
     const hashed = await bcrypt.hash(password, salt);
 
     const newUser = new User({
-      username,
-      email,
+      username: String(username).trim(),
+      email: String(email).toLowerCase().trim(),
       password: hashed,
       isVerified: false,
     });
@@ -197,11 +197,27 @@ export const authController = {
   const { emailOrUsername, password } = req.body;
 console.log(emailOrUsername, password);
 
+  if (!emailOrUsername || !password) {
+    const { message, statusCode } = ERROR_CODES.MISSING_FIELDS;
+    throw new AppError(message, statusCode, "MISSING_FIELDS");
+  }
+
+  // Normalize input: trim and lowercase for email lookup
+  const identifier = String(emailOrUsername).trim();
+
+  // escape for use in regex
+  const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const usernameQuery = { username: { $regex: `^${escapeRegExp(identifier)}$`, $options: "i" } };
+
   const user = await User.findOne({
-    $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+    $or: [
+      { email: identifier.toLowerCase() },
+      usernameQuery,
+    ],
   });
 
   if (!user) {
+    // Avoid leaking which side failed
     throw new AppError(
       ERROR_CODES.INVALID_CREDENTIALS.message,
       ERROR_CODES.INVALID_CREDENTIALS.statusCode,
@@ -209,7 +225,24 @@ console.log(emailOrUsername, password);
     );
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  // If account registered via OAuth/provider and has no password
+  if (!user.password) {
+    // Better message for client, but keep generic code to avoid leaking too much
+    throw new AppError(
+      "Tài khoản này không có mật khẩu. Vui lòng đăng nhập bằng nhà cung cấp đã liên kết hoặc tạo mật khẩu.",
+      400,
+      "NO_PASSWORD_SET"
+    );
+  }
+
+  let isMatch = false;
+  try {
+    isMatch = await bcrypt.compare(password, user.password);
+  } catch (err) {
+    console.error("login bcrypt.compare error:", err);
+    // Fall through to invalid credentials
+  }
+
   if (!isMatch) {
     throw new AppError(
       ERROR_CODES.INVALID_CREDENTIALS.message,
