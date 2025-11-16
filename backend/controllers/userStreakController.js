@@ -4,6 +4,17 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ok } from "../utils/ApiResponse.js";
 
 export const userStreakController = {
+  
+  // User tự xem streak của họ
+  getMyStreak: asyncHandler(async (req, res) => {
+    const userId = req.user.id; // lấy từ token
+    
+    const data = await UserStreak.findOne({ user: userId })
+      .populate("user", "username email role");
+
+    return ok(res, { item: data });
+  }),
+
   // record by token/user context
   recordForUser: asyncHandler(async (req, res) => {
     const userId = req.user?.id;

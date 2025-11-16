@@ -1,21 +1,47 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
-import "../../css/expert/ManagerGuides.css";
 import placeholderImg from "../../assets/placeholder.svg";
+import {
+  Form,
+  Input,
+  Button,
+  Upload,
+  Card,
+  Row,
+  Col,
+  Space,
+  Checkbox,
+  Spin,
+  message,
+  Divider,
+  Typography,
+  Tag,
+  Tooltip,
+} from "antd";
+import {
+  UploadOutlined,
+  PlusOutlined,
+  DeleteOutlined,
+  ArrowLeftOutlined,
+  SaveOutlined,
+  FileImageOutlined,
+} from "@ant-design/icons";
+
+const { Title, Text } = Typography;
+const { TextArea } = Input;
 
 export default function GuideEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
   const [steps, setSteps] = useState([]);
-  // tags (freeform) removed — using plantTags instead
   const [plantTags, setPlantTags] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
   const [file, setFile] = useState(null);
@@ -33,27 +59,24 @@ export default function GuideEdit() {
     let mounted = true;
     const fetchGuide = async () => {
       if (!id) {
-        // create mode: initialize defaults
         setTitle("");
         setDescription("");
-        setContent("");
         setImagePreview(null);
         setSteps([{ title: "", text: "", imagePreview: null, file: null }]);
         setPlantTags([]);
         setLoading(false);
         return;
       }
+
       try {
         const res = await axiosClient.get(`/guides/${id}`);
         const g = res.data.data || res.data;
         if (!mounted) return;
         setTitle(g.title || "");
-        setDescription(g.description || g.summary || "");
-        setContent(g.content || "");
-        // freeform tags removed; we keep plantTags instead
+        setDescription(g.description || "");
         setImagePreview(g.image || placeholderImg);
-        // load steps into state (each step: title, text, imagePreview, file)
-        const loaded =
+
+        const loadedSteps =
           g.steps && Array.isArray(g.steps)
             ? g.steps.map((s) => ({
                 title: s.title || "",
@@ -62,14 +85,13 @@ export default function GuideEdit() {
                 file: null,
               }))
             : [];
+
         setSteps(
-          loaded.length
-            ? loaded
+          loadedSteps.length
+            ? loadedSteps
             : [{ title: "", text: "", imagePreview: null, file: null }]
         );
-        setPlantTags(
-          g.plantTags && Array.isArray(g.plantTags) ? g.plantTags : []
-        );
+        setPlantTags(g.plantTags || []);
       } catch (err) {
         console.warn(err);
         setError("Không thể tải hướng dẫn");
@@ -81,17 +103,16 @@ export default function GuideEdit() {
     return () => (mounted = false);
   }, [id]);
 
-  function onFileChange(e) {
-    const f = e.target.files[0];
-    setFile(f);
+  const handleMainUpload = (info) => {
+    const f = info?.file?.originFileObj;
     if (f) {
-      const url = URL.createObjectURL(f);
-      setImagePreview(url);
+      setFile(f);
+      setImagePreview(URL.createObjectURL(f));
     }
-  }
+  };
 
-  function onStepFileChange(index, e) {
-    const f = e.target.files[0];
+  const handleStepUpload = (info, index) => {
+    const f = info?.file?.originFileObj;
     setSteps((prev) => {
       const copy = [...prev];
       copy[index] = {
@@ -101,40 +122,34 @@ export default function GuideEdit() {
       };
       return copy;
     });
-  }
+  };
 
-  function addStep() {
+  const addStep = () => {
     setSteps((prev) => [
       ...prev,
       { title: "", text: "", imagePreview: null, file: null },
     ]);
-  }
+  };
 
-  function removeStep(index) {
+  const removeStep = (index) => {
     setSteps((prev) => prev.filter((_, i) => i !== index));
-  }
+  };
 
-  function updateStep(index, field, value) {
+  const updateStep = (index, field, value) => {
     setSteps((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
       return copy;
     });
-  }
+  };
 
-  async function onSubmit(e) {
-    e.preventDefault();
+  const onSubmit = async () => {
     setSaving(true);
-    setError(null);
     try {
       const form = new FormData();
       form.append("title", title);
       form.append("description", description);
-      form.append("content", content);
-      // freeform tags removed — not sending 'tags' field anymore
       if (file) form.append("image", file);
-
-      // attach steps: JSON + per-step files named stepImage_<index>
       const stepsPayload = steps.map((s) => ({
         title: s.title,
         text: s.text,
@@ -144,7 +159,6 @@ export default function GuideEdit() {
       steps.forEach((s, idx) => {
         if (s.file) form.append(`stepImage_${idx}`, s.file);
       });
-      // plantTags
       form.append("plantTags", JSON.stringify(plantTags));
 
       if (id) {
@@ -156,242 +170,258 @@ export default function GuideEdit() {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
-      // success
+
+      message.success("Lưu hướng dẫn thành công");
       navigate("/managerguides");
     } catch (err) {
       console.warn(err);
+      message.error("Lưu thất bại");
       setError("Lưu thất bại");
     } finally {
       setSaving(false);
     }
-  }
+  };
 
-  if (loading) return <div className="mg-loading">Đang tải...</div>;
+  if (loading)
+    return (
+      <div style={{ textAlign: "center", marginTop: 60 }}>
+        <Spin size="large" />
+        <p>Đang tải dữ liệu...</p>
+      </div>
+    );
 
   return (
-    <div className="guide-edit-container">
-      <div className="guide-card">
-        <div
-          className="guide-header"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <h2>{id ? "Sửa hướng dẫn" : "Tạo hướng dẫn"}</h2>
-            <div className="guide-sub">
+    <Card
+      bordered={false}
+      style={{
+        padding: 24,
+        background: "#fff",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+        borderRadius: 12,
+      }}
+    >
+      <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
+        <Col>
+          <Space direction="vertical" size={2}>
+            <Title level={3} style={{ margin: 0 }}>
+              {id ? "✏️ Chỉnh sửa hướng dẫn" : "🪴 Tạo hướng dẫn mới"}
+            </Title>
+            <Text type="secondary">
               {id
-                ? "Chỉnh sửa nội dung và ảnh minh họa cho hướng dẫn"
-                : "Tạo mới hướng dẫn với các bước và ảnh minh họa"}
-            </div>
-          </div>
-          <div className="header-actions">
-            <button
-              type="button"
-              className="mg-btn back-btn"
-              onClick={() => navigate(-1)}
+                ? "Cập nhật nội dung, ảnh minh họa và các bước hướng dẫn chi tiết."
+                : "Thêm hướng dẫn gieo trồng mới cho người dùng."}
+            </Text>
+          </Space>
+        </Col>
+        <Col>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+            Quay lại
+          </Button>
+        </Col>
+      </Row>
+
+      <Divider />
+
+      {error && (
+        <Card type="inner" style={{ marginBottom: 16 }} title="Lỗi">
+          <Text type="danger">{error}</Text>
+        </Card>
+      )}
+
+      <Form layout="vertical" onFinish={onSubmit}>
+        <Row gutter={24}>
+          {/* LEFT SIDE */}
+          <Col xs={24} lg={16}>
+            <Card
+              title="🌱 Thông tin cơ bản"
+              size="small"
+              bordered={true}
+              style={{
+                marginBottom: 24,
+                borderRadius: 10,
+              }}
             >
-              Quay lại
-            </button>
-          </div>
-        </div>
-
-        {error && (
-          <div className="mg-error" style={{ margin: "8px 20px" }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={onSubmit} className="guide-form">
-          <div className="form-grid">
-            <div className="form-left">
-              <div className="field">
-                <label className="field-label">Tiêu đề</label>
-                <input
-                  className="mg-input"
+              <Form.Item label="Tiêu đề" required>
+                <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Nhập tiêu đề"
+                  placeholder="Nhập tiêu đề hướng dẫn..."
                 />
-              </div>
+              </Form.Item>
 
-              <div className="field">
-                <label className="field-label">Mô tả ngắn</label>
-                <textarea
-                  className="mg-textarea"
+              <Form.Item label="Mô tả ngắn">
+                <TextArea
+                  rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Tóm tắt ngắn gọn"
+                  placeholder="Nhập mô tả ngắn gọn..."
                 />
-              </div>
+              </Form.Item>
 
-              <div className="field">
-                <label className="field-label">Các bước hướng dẫn</label>
-                <div className="steps-list">
-                  {steps.map((step, idx) => (
-                    <div
-                      key={idx}
-                      className="step-item"
-                      style={{
-                        border: "1px solid #eef6ff",
-                        padding: 12,
-                        borderRadius: 8,
-                        marginBottom: 12,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: 8,
-                        }}
-                      >
-                        <div style={{ fontWeight: 600 }}>Bước {idx + 1}</div>
-                        <div>
-                          <button
-                            type="button"
-                            className="mg-btn"
-                            onClick={() => removeStep(idx)}
-                          >
-                            Xóa
-                          </button>
-                        </div>
-                      </div>
-                      <input
-                        className="mg-input"
-                        placeholder="Tiêu đề bước (tùy chọn)"
+              <Form.Item label="Loại cây (chọn)">
+                <Checkbox.Group
+                  options={availablePlantTags}
+                  value={plantTags}
+                  onChange={(v) => setPlantTags(v)}
+                />
+              </Form.Item>
+            </Card>
+
+            <Card
+              title="📋 Các bước hướng dẫn"
+              size="small"
+              bordered={true}
+              style={{
+                marginBottom: 24,
+                borderRadius: 10,
+              }}
+            >
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {steps.map((step, idx) => (
+                  <Card
+                    key={idx}
+                    type="inner"
+                    title={
+                      <Space>
+                        <Tag color="green">Bước {idx + 1}</Tag>
+                        <Text strong>{step.title || "Chưa đặt tiêu đề"}</Text>
+                      </Space>
+                    }
+                    extra={
+                      <Tooltip title="Xóa bước này">
+                        <Button
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => removeStep(idx)}
+                        />
+                      </Tooltip>
+                    }
+                    style={{
+                      borderRadius: 8,
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                    }}
+                  >
+                    <Form.Item label="Tiêu đề bước">
+                      <Input
                         value={step.title}
                         onChange={(e) =>
                           updateStep(idx, "title", e.target.value)
                         }
+                        placeholder="Nhập tiêu đề..."
                       />
-                      <textarea
-                        className="mg-textarea"
-                        rows={4}
-                        placeholder="Mô tả/ghi chú cho bước"
+                    </Form.Item>
+
+                    <Form.Item label="Mô tả chi tiết">
+                      <TextArea
+                        rows={3}
                         value={step.text}
                         onChange={(e) =>
                           updateStep(idx, "text", e.target.value)
                         }
-                        style={{ marginTop: 8 }}
+                        placeholder="Nhập mô tả cho bước này..."
                       />
-                      <div
+                    </Form.Item>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 16,
+                      }}
+                    >
+                      <img
+                        src={step.imagePreview || placeholderImg}
+                        alt="preview"
                         style={{
-                          display: "flex",
-                          gap: 12,
-                          alignItems: "center",
-                          marginTop: 8,
+                          width: 120,
+                          height: 80,
+                          objectFit: "cover",
+                          borderRadius: 6,
+                          border: "1px solid #f0f0f0",
                         }}
+                      />
+                      <Upload
+                        beforeUpload={() => false}
+                        showUploadList={false}
+                        onChange={(info) => handleStepUpload(info, idx)}
+                        accept="image/*"
                       >
-                        <div style={{ width: 140 }}>
-                          <div
-                            className="preview-image"
-                            style={{
-                              height: 90,
-                              backgroundImage: `url(${
-                                step.imagePreview || placeholderImg
-                              })`,
-                              borderRadius: 6,
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => onStepFileChange(idx, e)}
-                          />
-                        </div>
-                      </div>
+                        <Button icon={<FileImageOutlined />}>
+                          Chọn ảnh minh họa
+                        </Button>
+                      </Upload>
                     </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: 10 }}>
-                  <button
-                    type="button"
-                    className="mg-create-btn"
-                    onClick={addStep}
-                  >
-                    Thêm bước
-                  </button>
-                </div>
-              </div>
-
-              <div className="field row">
-                <div style={{ flex: 1 }}>
-                  <label className="field-label">Loại cây (chọn)</label>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      flexWrap: "wrap",
-                      marginTop: 6,
-                    }}
-                  >
-                    {availablePlantTags.map((t) => {
-                      const sel = plantTags.includes(t);
-                      return (
-                        <button
-                          key={t}
-                          type="button"
-                          className={`tag-chip ${sel ? "selected" : ""}`}
-                          onClick={() => {
-                            setPlantTags((prev) =>
-                              prev.includes(t)
-                                ? prev.filter((x) => x !== t)
-                                : [...prev, t]
-                            );
-                          }}
-                        >
-                          {t}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="form-right">
-              <div className="preview-box">
-                <div
-                  className="preview-image"
-                  style={{
-                    backgroundImage: `url(${imagePreview || placeholderImg})`,
-                  }}
-                />
-                <div className="preview-caption">Ảnh minh họa</div>
-              </div>
-
-              <div className="field">
-                <label className="field-label">Chọn ảnh</label>
-                <input type="file" accept="image/*" onChange={onFileChange} />
-              </div>
-
-              <div style={{ marginTop: 20 }}>
-                <button
-                  type="submit"
-                  className="mg-create-btn"
-                  disabled={saving}
+                  </Card>
+                ))}
+                <Button
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  onClick={addStep}
+                  style={{ width: 200, borderRadius: 8 }}
                 >
-                  {saving ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-                <button
-                  type="button"
-                  className="mg-btn mg-cancel"
-                  onClick={() => navigate("/managerguides")}
-                  style={{ marginLeft: 12 }}
+                  Thêm bước mới
+                </Button>
+              </Space>
+            </Card>
+          </Col>
+
+          {/* RIGHT SIDE */}
+          <Col xs={24} lg={8}>
+            <Card
+              title="Ảnh minh họa chính"
+              size="small"
+              bordered={true}
+              style={{
+                textAlign: "center",
+                borderRadius: 10,
+              }}
+            >
+              <img
+                src={imagePreview || placeholderImg}
+                alt="preview"
+                style={{
+                  width: "100%",
+                  height: 220,
+                  objectFit: "cover",
+                  borderRadius: 10,
+                  border: "1px solid #f0f0f0",
+                  marginBottom: 12,
+                }}
+              />
+              <Upload
+                beforeUpload={() => false}
+                showUploadList={false}
+                onChange={handleMainUpload}
+                accept="image/*"
+              >
+                <Button icon={<UploadOutlined />}>Tải ảnh chính</Button>
+              </Upload>
+            </Card>
+
+            <Card
+              style={{ marginTop: 20, borderRadius: 10 }}
+              bordered={false}
+              bodyStyle={{ textAlign: "center" }}
+            >
+              <Space>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={saving}
+                  icon={<SaveOutlined />}
+                  style={{ minWidth: 140 }}
                 >
+                  {saving ? "Đang lưu..." : "Lưu hướng dẫn"}
+                </Button>
+                <Button onClick={() => navigate("/managerguides")}>
                   Hủy
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
+                </Button>
+              </Space>
+            </Card>
+          </Col>
+        </Row>
+      </Form>
+    </Card>
   );
 }

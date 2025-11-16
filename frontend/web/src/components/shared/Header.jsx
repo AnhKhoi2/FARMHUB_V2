@@ -5,6 +5,8 @@ import { logout } from "../../redux/authSlice";
 import { FaUser, FaBars, FaTimes } from "react-icons/fa"; // ❌ bỏ FaShoppingCart
 import NotificationBell from "../NotificationBell";
 import "./Header.css";
+import { RadarChartOutlined } from "@ant-design/icons";
+import { Tooltip } from "antd";
 
 const Header = () => {
   const user = useSelector((state) => state.auth.user);

@@ -127,14 +127,12 @@ export default function ExpertHome({
   const role = profile?.role || "Chuyên gia nông nghiệp";
   const notifications = Number(profile?.notifications || 0);
 
-  // ✅ BỌC BẰNG FRAGMENT ĐỂ CÓ THÊM CHATWIDGET Ở CUỐI
+  // Render the expert UI and the ChatWidget outside the main container
   return (
     <>
       <div className="expert-home">
-        {/* Header */}
         <header className="expert-header">
           <div className="header-container">
-            {/* Logo & Brand */}
             <div className="header-brand">
               <div className="brand-logo">
                 <Leaf className="leaf-icon" />
@@ -218,7 +216,6 @@ export default function ExpertHome({
                 )}
               </button>
 
-              {/* Avatar & Profile Menu */}
               <div className="profile-section">
                 <button
                   className="avatar-btn"
@@ -228,7 +225,6 @@ export default function ExpertHome({
                   <img src={avatar} alt={name} className="avatar-image" />
                 </button>
 
-                {/* Profile Dropdown Menu */}
                 {showProfileMenu && (
                   <div className="profile-dropdown">
                     <div className="profile-header">
@@ -246,7 +242,6 @@ export default function ExpertHome({
 
                     <div className="profile-divider"></div>
 
-                    {/* Hồ sơ */}
                     <button
                       className="profile-menu-item"
                       onClick={() => {
@@ -258,7 +253,6 @@ export default function ExpertHome({
                       <span>Hồ sơ</span>
                     </button>
 
-                    {/* Cài đặt */}
                     <button
                       className="profile-menu-item"
                       onClick={() => {
@@ -272,7 +266,6 @@ export default function ExpertHome({
 
                     <div className="profile-divider"></div>
 
-                    {/* Đăng xuất */}
                     <button
                       className="profile-menu-item logout"
                       onClick={() => {
@@ -291,19 +284,15 @@ export default function ExpertHome({
           </div>
         </header>
 
-        {/* Main Content Area */}
         <main className="expert-main">
           <div className="content-container">
             <section className="welcome-section">
-              <h2 className="welcome-title">
-                Xin chào, {name.split(" ")[1] || name}! 👋
-              </h2>
+              <h2 className="welcome-title">Xin chào, {name.split(" ")[1] || name}! 👋</h2>
               <p className="welcome-subtitle">
                 Quản lý hướng dẫn trồng trọt và trao đổi với người dùng
               </p>
             </section>
 
-            {/* Quick Stats (demo) */}
             <section className="stats-grid">
               <div className="stat-card">
                 <div className="stat-icon stat-icon-guides">
@@ -346,7 +335,6 @@ export default function ExpertHome({
               </div>
             </section>
 
-            {/* Content Placeholder */}
             <section className="content-area">
               <div className="content-placeholder">
                 <p>Nội dung chính sẽ hiển thị ở đây</p>
@@ -359,7 +347,6 @@ export default function ExpertHome({
         </main>
       </div>
 
-      {/* ✅ Chat panel để ngoài .expert-home */}
       <ChatWidget
         open={chatOpen}
         onClose={() => setChatOpen(false)} // ChatWidget gọi onClose() là tắt

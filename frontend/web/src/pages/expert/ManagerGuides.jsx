@@ -1,23 +1,50 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
-import "../../css/expert/ManagerGuides.css";
 import placeholderImg from "../../assets/placeholder.svg";
+
+// Ant Design
+import {
+  Layout,
+  Table,
+  Image,
+  Button,
+  Input,
+  Select,
+  Space,
+  Popconfirm,
+  message,
+  Card,
+  Row,
+  Col,
+  Typography,
+  Divider,
+  Tag,
+} from "antd";
+import {
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  DeleteFilled,
+} from "@ant-design/icons";
+import HeaderExpert from "../../components/shared/HeaderExpert";
+
+const { Content } = Layout;
+const { Title } = Typography;
+const { Search } = Input;
+const { Option } = Select;
 
 export default function ManagerGuides() {
   const navigate = useNavigate();
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [_error, setError] = useState(null);
-
   const [page, setPage] = useState(1);
-  const [limit] = useState(15);
-  const [totalPages, setTotalPages] = useState(1);
-
-  const [search, _setSearch] = useState("");
-  // search by plant name
+  const [limit, setLimit] = useState(15);
+  const [total, setTotal] = useState(0);
   const [plantSearch, setPlantSearch] = useState("");
-  // filter by plant type
   const [category, setCategory] = useState("");
 
   const availablePlantTags = [
@@ -30,237 +57,267 @@ export default function ManagerGuides() {
   ];
 
   const fetchGuides = useCallback(
-    async (p = page) => {
+    async (p = 1, l = limit) => {
       setLoading(true);
-      setError(null);
       try {
-        const params = { page: p, limit };
-        if (search) params.search = search;
+        const params = { page: p, limit: l };
         if (plantSearch) params.plant = plantSearch;
         if (category) params.category = category;
-        console.debug("[ManagerGuides] fetch params:", params);
-        const res = await axiosClient.get("/guides", { params });
 
+        const res = await axiosClient.get("/guides", { params });
         const data = res.data || {};
-        // API shape: { success: true, data: [...], meta: { page, limit, total, pages } }
         const docs = data.docs || data.guides || data.data || [];
         const meta = data.meta || {};
+
         setGuides(docs);
-        setTotalPages(meta.pages || meta.totalPages || meta.total_pages || 1);
+        setTotal(meta.total || meta.count || docs.length || 0);
+        setPage(meta.page || p);
+        setLimit(meta.limit || l);
       } catch (err) {
-        console.warn("ManagerGuides fetch error", err);
-        setError("Không thể tải guides từ server.");
-        setGuides([]);
-        setTotalPages(1);
+        console.error("fetchGuides", err);
+        message.error("Không thể tải danh sách hướng dẫn");
       } finally {
         setLoading(false);
       }
     },
-    [page, limit, search, category, plantSearch]
+    [limit, plantSearch, category]
   );
 
   useEffect(() => {
-    fetchGuides(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, category, plantSearch]);
+    fetchGuides(1, limit);
+  }, [fetchGuides, limit]);
 
-  // if user clears plantSearch or category, fetch all guides immediately
-  useEffect(() => {
-    if (
-      (plantSearch === "" || plantSearch === null) &&
-      (category === "" || category === null)
-    ) {
-      // ensure we fetch page 1 when filters cleared
-      fetchGuides(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plantSearch, category]);
+  const onTableChange = (pagination, filters, sorter) => {
+    const { current = 1, pageSize = limit } = pagination || {};
+    setPage(current);
+    setLimit(pageSize);
+    // có thể xử lý sort/filter ở server nếu cần
+    fetchGuides(current, pageSize);
+  };
 
-  function _onSearchSubmit(e) {
-    e.preventDefault();
-    setPage(1);
-  }
+  const onCreate = () => navigate("/managerguides/create");
+  const onView = (id) => navigate(`/guides/${id}`);
+  const onEdit = (id) => navigate(`/managerguides/edit/${id}`);
 
-  function onPlantSearchSubmit(e) {
-    e.preventDefault();
-    setPage(1);
-    // ensure immediate fetch even if page already equals 1
+  const onDelete = async (id) => {
     try {
-      fetchGuides(1);
-    } catch (e) {
-      void e;
+      await axiosClient.delete(`/guides/${id}`);
+      message.success("Xóa thành công");
+      fetchGuides(page, limit);
+    } catch (err) {
+      console.error("delete", err);
+      message.error("Xóa không thành công");
     }
-  }
+  };
 
-  function gotoPage(p) {
-    setPage(p);
-  }
+  // custom text search filter
+  const getColumnSearchProps = (dataIndex, placeholder = "Tìm kiếm...") => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          placeholder={placeholder}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => confirm()}
+          style={{ width: 188, marginBottom: 8, display: "block" }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => confirm()}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Tìm
+          </Button>
+          <Button onClick={clearFilters} size="small" style={{ width: 90 }}>
+            Xóa
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered) => (
+      <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
+    ),
+    onFilter: (value, record) =>
+      record[dataIndex]?.toString().toLowerCase().includes(value.toLowerCase()),
+  });
 
-  function onCreate() {
-    navigate("/managerguides/create");
-  }
-
-  function onView(id) {
-    navigate(`/guides/${id}`);
-  }
-
-  function onEdit(id) {
-    navigate(`/managerguides/edit/${id}`);
-  }
-
-  function onDelete(id) {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa hướng dẫn này?")) return;
-    (async () => {
-      try {
-        setLoading(true);
-        await axiosClient.delete(`/guides/${id}`);
-        // refetch current page
-        // if after deletion current page might be empty and page > 1, go to previous page
-        const remaining = guides.length - 1;
-        if (remaining <= 0 && page > 1) {
-          setPage(page - 1);
-          fetchGuides(page - 1);
-        } else {
-          fetchGuides(page);
-        }
-      } catch (err) {
-        console.error("Delete guide failed", err);
-        alert("Xóa không thành công. Vui lòng thử lại.");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }
+  const columns = [
+    {
+      title: "Ảnh",
+      dataIndex: "image",
+      key: "image",
+      width: 120,
+      render: (val, record) => (
+        <Image
+          src={val || record.thumbnail || placeholderImg}
+          width={100}
+          height={64}
+          preview={false}
+          alt={record.title}
+          style={{ borderRadius: 8, objectFit: "cover" }}
+        />
+      ),
+    },
+    {
+      title: "Tiêu đề",
+      dataIndex: "title",
+      key: "title",
+      sorter: (a, b) => a.title.localeCompare(b.title),
+      ...getColumnSearchProps("title", "Tìm theo tiêu đề"),
+    },
+    {
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
+      ellipsis: true,
+      ...getColumnSearchProps("description", "Tìm trong mô tả"),
+      render: (t) => t || "—",
+    },
+    {
+      title: "Loại cây",
+      dataIndex: "category",
+      key: "category",
+      filters: availablePlantTags.map((t) => ({ text: t, value: t })),
+      onFilter: (value, record) => record.category === value,
+      render: (cat) => <Tag color="green">{cat || "Không có"}</Tag>,
+    },
+    {
+      title: "Ngày tạo",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      sorter: (a, b) =>
+        new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime(),
+      render: (val) =>
+        val ? new Date(val).toLocaleDateString("vi-VN") : "—",
+    },
+    {
+      title: "Hành động",
+      key: "actions",
+      width: 160,
+      align: "center",
+      render: (_t, record) => (
+        <Space>
+          <Button
+            type="default"
+            icon={<EyeOutlined />}
+            onClick={() => onView(record._id || record.id)}
+          />
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => onEdit(record._id || record.id)}
+          />
+          <Popconfirm
+            title="Bạn có chắc muốn xóa hướng dẫn này?"
+            okText="Có"
+            cancelText="Hủy"
+            onConfirm={() => onDelete(record._id || record.id)}
+          >
+            <Button danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
   return (
-    <div className="manager-guides-page">
-      <header className="mg-header">
-        <h2 className="mg-title">Danh sách hướng dẫn</h2>
-        <div className="mg-toolbar">
-          <form onSubmit={onPlantSearchSubmit} className="mg-search-box">
-            <input
-              className="mg-input mg-search-input"
-              placeholder="Tìm theo tên cây hoặc tiêu đề"
-              value={plantSearch}
-              onChange={(e) => setPlantSearch(e.target.value)}
+    <>
+      <HeaderExpert />
+
+      <Layout style={{ background: "#fff", padding: 24, borderRadius: 12 }}>
+        <Content>
+          <Card bordered={false}>
+            <Row justify="space-between" align="middle">
+              <Col>
+                <Title level={3} style={{ margin: 0 }}>
+                  Quản lý hướng dẫn trồng cây
+                </Title>
+              </Col>
+              <Col>
+                <Space>
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={() => {
+                      setPlantSearch("");
+                      setCategory("");
+                      fetchGuides(1, limit);
+                    }}
+                  >
+                    Làm mới
+                  </Button>
+                  <Button
+                    icon={<DeleteFilled />}
+                    onClick={() => navigate("/managerguides/trash")}
+                  >
+                    Thùng rác
+                  </Button>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={onCreate}
+                  >
+                    Tạo mới
+                  </Button>
+                </Space>
+              </Col>
+            </Row>
+
+            <Divider />
+
+            <Space style={{ marginBottom: 16, flexWrap: "wrap" }} size="middle">
+              <Search
+                placeholder="Tìm theo tên cây hoặc tiêu đề"
+                onSearch={(v) => {
+                  setPlantSearch(v);
+                  fetchGuides(1, limit);
+                }}
+                allowClear
+                enterButton={<SearchOutlined />}
+                style={{ minWidth: 280 }}
+              />
+
+              <Select
+                value={category}
+                onChange={(v) => {
+                  setCategory(v);
+                  fetchGuides(1, limit);
+                }}
+                style={{ minWidth: 220 }}
+                allowClear
+                placeholder="-- Lọc theo loại cây --"
+              >
+                {availablePlantTags.map((t) => (
+                  <Option key={t} value={t}>
+                    {t}
+                  </Option>
+                ))}
+              </Select>
+            </Space>
+
+            <Table
+              rowKey={(r) => r._id || r.id}
+              columns={columns}
+              dataSource={guides}
+              loading={loading}
+              pagination={{
+                current: page,
+                pageSize: limit,
+                total,
+                showSizeChanger: true,
+                pageSizeOptions: [10, 15, 20, 50],
+                showTotal: (total) => `Tổng ${total} mục`,
+              }}
+              locale={{ emptyText: "Không có hướng dẫn" }}
+              onChange={onTableChange}
+              bordered
+              size="middle"
+              style={{ marginTop: 12 }}
             />
-            <button className="mg-search-btn" type="submit">
-              Tìm
-            </button>
-          </form>
-
-          <div>
-            <select
-              value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
-                setPage(1);
-              }}
-              className="mg-select"
-            >
-              <option value="">-- Lọc theo loại cây --</option>
-              {availablePlantTags.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button
-              className="mg-clear-btn"
-              onClick={() => {
-                setPlantSearch("");
-                setCategory("");
-                setPage(1);
-                fetchGuides(1);
-              }}
-            >
-              Xóa bộ lọc
-            </button>
-            <button
-              className="mg-clear-btn"
-              onClick={() => navigate("/managerguides/trash")}
-            >
-              Thùng rác
-            </button>
-            <button className="mg-create-btn" onClick={onCreate}>
-              Tạo mới
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div className="mg-grid-container">
-        {loading ? (
-          <div className="mg-loading">Đang tải...</div>
-        ) : guides.length === 0 ? (
-          <div className="mg-empty">Không có hướng dẫn nào.</div>
-        ) : (
-          <div className="mg-grid">
-            {guides.map((g) => (
-              <div className="mg-card" key={g._id || g.id}>
-                <div
-                  className="mg-thumb"
-                  style={{
-                    backgroundImage: `url(${
-                      g.image || g.thumbnail || placeholderImg
-                    })`,
-                  }}
-                />
-                <div className="mg-card-body">
-                  <div className="mg-card-title">{g.title || "(No title)"}</div>
-                  <div className="mg-card-sub">
-                    {g.description || g.summary || g.excerpt || "—"}
-                  </div>
-                </div>
-
-                <div className="mg-card-actions">
-                  <button
-                    className="mg-btn mg-btn-view"
-                    onClick={() => onView(g._id || g.id)}
-                  >
-                    Xem
-                  </button>
-                  <button
-                    className="mg-btn mg-btn-edit"
-                    onClick={() => onEdit(g._id || g.id)}
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    className="mg-btn mg-btn-delete"
-                    onClick={() => onDelete(g._id || g.id)}
-                  >
-                    Xóa
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="mg-pagination">
-        <button
-          className="mg-page-btn"
-          disabled={page <= 1}
-          onClick={() => gotoPage(Math.max(1, page - 1))}
-        >
-          &lt; Trước
-        </button>
-        <span className="mg-page-info">
-          Trang {page} / {totalPages}
-        </span>
-        <button
-          className="mg-page-btn"
-          disabled={page >= totalPages}
-          onClick={() => gotoPage(Math.min(totalPages, page + 1))}
-        >
-          Tiếp &gt;
-        </button>
-      </div>
-    </div>
+          </Card>
+        </Content>
+      </Layout></>
   );
 }
