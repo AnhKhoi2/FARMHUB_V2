@@ -14,6 +14,7 @@ import StreakPopup from "../../components/shared/StreakPopup"; // ← path theo 
 
 
 const Login = () => {
+  const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
@@ -52,13 +53,23 @@ const Login = () => {
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    const result = await dispatch(loginThunk({ username, password }));
-    const { success, role } = result || {};
-    if (success) {
-      await afterLogin(role);
-    }
-  };
+  e.preventDefault();
+
+  const cleanedUsername = username.trim();
+
+  const result = await dispatch(
+    loginThunk({
+      username: cleanedUsername,   // 👈 CHỈ GỬI USERNAME
+      password,
+    })
+  );
+
+  const { success, role } = result || {};
+  if (success) {
+    await afterLogin(role);
+  }
+};
+
 
   const handleGoogleSuccess = async (cred) => {
     const idToken = cred?.credential;
@@ -100,17 +111,36 @@ const Login = () => {
             </div>
 
             <div className="input-box">
-              <span className="icon">
-                <ion-icon name="lock-closed"></ion-icon>
-              </span>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <label>Password</label>
-            </div>
+  {/* <span className="icon">
+    <ion-icon name="lock-closed"></ion-icon>
+  </span> */}
+
+  <input
+    type={showPassword ? "text" : "password"}     // 👈 đổi type
+    required
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+  />
+
+  {/* Nút toggle icon */}
+  <span
+    className="toggle-password"
+    onClick={() => setShowPassword((prev) => !prev)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      cursor: "pointer",
+      fontSize: "20px",
+    }}
+  >
+    <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
+  </span>
+
+  <label>Password</label>
+</div>
+
 
             <button type="submit" className="btn" disabled={loading}>
               {loading ? "Logging in..." : "Login"}

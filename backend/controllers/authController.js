@@ -193,12 +193,23 @@ export const authController = {
   }),
 
   // Đăng nhập
- login: asyncHandler(async (req, res, next) => {
-  const { emailOrUsername, password } = req.body;
+ // Đăng nhập CHỈ bằng username
+login: asyncHandler(async (req, res) => {
+  const { username, emailOrUsername, password } = req.body;
 
-  const user = await User.findOne({
-    $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
-  });
+  // Chỉ dùng username; emailOrUsername chỉ là alias cho username (nếu FE cũ còn gửi)
+  const identifier = (username || emailOrUsername || "").trim();
+
+  if (!identifier || !password) {
+    throw new AppError(
+      ERROR_CODES.MISSING_FIELDS.message,
+      ERROR_CODES.MISSING_FIELDS.statusCode,
+      "MISSING_FIELDS"
+    );
+  }
+
+  // ❗ Chỉ tìm theo username
+  const user = await User.findOne({ username: identifier });
 
   if (!user) {
     throw new AppError(
@@ -220,8 +231,13 @@ export const authController = {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
-  return ok(res, { user, accessToken, refreshToken });
+  // Ẩn password cho sạch dữ liệu trả về
+  const userSafe = user.toObject ? user.toObject() : { ...user._doc };
+  delete userSafe.password;
+
+  return ok(res, { user: userSafe, accessToken, refreshToken });
 }),
+
 
   // Refresh token
   refresh: asyncHandler(async (req, res) => {

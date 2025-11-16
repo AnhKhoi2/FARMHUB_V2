@@ -8,6 +8,7 @@ import Register from "../pages/auth/register_v1.jsx";
 import VerifyEmail from "../pages/auth/VerifyEmail";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword"; // <- thêm từ code 2
+import WeatherPage from "../pages/WeatherPage";
 
 // Guards
 import PrivateRoute from "./shared/PrivateRoute"; // dùng path kiểu code 1
@@ -92,6 +93,8 @@ export default function AppRoutes() {
         <Route path="/auth/verify/:token" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
+
+        <Route path="/weather" element={<WeatherPage />} />
         {/* <- từ code 2 */}
         {/* ===== Protected app (từ code 2) ===== */}
         <Route
