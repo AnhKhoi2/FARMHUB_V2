@@ -2,9 +2,9 @@
 import axiosClient from "./axiosClient";
 
 const authApi = {
-  loginApi({ emailOrUsername, password }) {
+  loginApi(credentials) {
     // ✅ chỉ gửi đúng 2 trường backend yêu cầu
-    return axiosClient.post("/auth/login", { emailOrUsername, password });
+    return  axiosClient.post("/auth/login", credentials);
   },
 
   registerApi(data) {

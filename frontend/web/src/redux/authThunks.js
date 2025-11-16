@@ -8,8 +8,6 @@ export const loginThunk = (credentials) => async (dispatch) => {
     dispatch(loginStart());
     const res = await authApi.loginApi(credentials);
 
-    // BE có thể trả { success, data: { user, accessToken } }
-    // hoặc { user, accessToken } trực tiếp
     const payload = res?.data?.data || res?.data || {};
     const { user, accessToken } = payload;
 
@@ -28,25 +26,21 @@ export const loginThunk = (credentials) => async (dispatch) => {
 
     const data = err?.response?.data;
 
-    // ƯU TIÊN lấy message từ BE
     const backendMessage =
-      data?.message ||              // { message: "..." }
-      data?.error?.message ||       // { error: { message: "..." } }
-      data?.errorMessage ||         // một số API dùng key này
-      data?.errors?.[0]?.msg ||     // trường hợp validation kiểu array
+      data?.message ||
+      data?.error?.message ||
+      data?.errorMessage ||
+      data?.errors?.[0]?.msg ||
       err.message;
 
     const backendCode =
-      data?.code ||                 // { code: "INVALID_CREDENTIALS" }
+      data?.code ||
       data?.error?.code;
 
-    // text hiển thị cho user
     let uiMessage =
       backendMessage ||
       "Đăng nhập thất bại. Vui lòng thử lại.";
 
-    // Nếu muốn, có thể show code để debug
-    // ví dụ: [INVALID_CREDENTIALS] Tên đăng nhập hoặc mật khẩu không đúng.
     if (backendCode) {
       uiMessage = ` ${uiMessage}`;
     }
@@ -55,6 +49,7 @@ export const loginThunk = (credentials) => async (dispatch) => {
     return { success: false };
   }
 };
+
 
 // các thunk khác giữ nguyên...
 export const logoutThunk = () => (dispatch) => {

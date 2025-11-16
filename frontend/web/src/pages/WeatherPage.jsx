@@ -6,8 +6,14 @@ import {
   translateDescription,
   translateWeather,
 } from "../utils/weatherTranslation";
+import plantAdviceApi from "../api/plantAdviceApi.js";
+import PlantAdviceCard from "../components/PlantAdviceCard.jsx";
 
-const DEFAULT_QUERY = "Ho Chi Minh City";
+const DEFAULT_QUERY = "";
+
+// (giả sử bạn có DEFAULT_LAT/LON ở đâu đó, nếu không thì thêm vào đây)
+const DEFAULT_LAT = 10.7769;
+const DEFAULT_LON = 106.7009;
 
 const getAqiInfo = (aqi) => {
   switch (aqi) {
@@ -62,6 +68,11 @@ const WeatherPage = () => {
 
   // lưu tọa độ đang dùng (từ search hoặc vị trí hiện tại)
   const [coords, setCoords] = useState(null);
+
+  // ---- STATE CHO GỢI Ý CHĂM SÓC CÂY ----
+  const [advice, setAdvice] = useState(null);
+  const [adviceLoading, setAdviceLoading] = useState(false);
+  const [selectedPlantGroup, setSelectedPlantGroup] = useState("leaf_vegetable");
 
   // lịch sử
   const todayISO = new Date().toISOString().slice(0, 10);
@@ -151,7 +162,7 @@ const WeatherPage = () => {
         historyEnd
       );
 
-      // openweather history trả về list[] dạng hourly theo type=hour :contentReference[oaicite:4]{index=4}
+      // openweather history trả về list[] dạng hourly theo type=hour
       const raw = res.data?.data;
       const list = raw?.list || [];
 
@@ -176,7 +187,7 @@ const WeatherPage = () => {
       }
       setPlace(p);
 
-      // Place model: latitude / longitude :contentReference[oaicite:4]{index=4}
+      // Place model: latitude / longitude
       await loadByCoords(p.latitude, p.longitude);
     } catch (err) {
       console.error(err);
@@ -184,11 +195,41 @@ const WeatherPage = () => {
     }
   };
 
-  // load default lần đầu
+  // ---- CALL API GỢI Ý CHĂM SÓC KHI CÓ COORDS HOẶC ĐỔI NHÓM CÂY ----
   useEffect(() => {
-    handleSearch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  if (!coords) return;
+
+  const fetchAdvice = async () => {
+    try {
+      setAdviceLoading(true);
+      const res = await plantAdviceApi.getAdvice(
+        coords.lat,
+        coords.lon,
+        selectedPlantGroup
+      );
+
+      // BE trả thẳng JSON => res.data chính là object advice
+      setAdvice(res.data);
+    } catch (err) {
+      console.error(
+        "Lỗi lấy gợi ý chăm sóc cây:",
+        err.response?.data || err.message
+      );
+      setAdvice(null);
+    } finally {
+      setAdviceLoading(false);
+    }
+  };
+
+  fetchAdvice();
+}, [coords, selectedPlantGroup]);
+
+
+  // load default lần đầu (tuỳ bạn muốn auto load HCM hay để trống)
+  // useEffect(() => {
+  //   handleSearch();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   const aqiValue = air?.list?.[0]?.main?.aqi;
   const aqiInfo = getAqiInfo(aqiValue);
@@ -246,6 +287,30 @@ const WeatherPage = () => {
           </button>
         </div>
       </form>
+
+      {/* Chọn nhóm cây trồng để tư vấn */}
+      <div className="row g-2 mb-3">
+        <div className="col-md-4">
+          <label className="form-label small">Nhóm cây trồng</label>
+          <select
+            className="form-select"
+            value={selectedPlantGroup}
+            onChange={(e) => setSelectedPlantGroup(e.target.value)}
+          >
+            <option value="leaf_vegetable">Rau ăn lá</option>
+            <option value="root_vegetable">Rau/cây củ</option>
+            <option value="fruit_short_term">Rau, quả ngắn ngày</option>
+            <option value="fruit_long_term">Cây ăn quả dài ngày</option>
+            <option value="bean_family">Cây họ đậu</option>
+            <option value="herb">Cây gia vị</option>
+            <option value="flower_vegetable">Rau ăn hoa</option>
+            <option value="other">Khác</option>
+          </select>
+          <small className="text-muted">
+            Dùng để gợi ý chăm sóc cây phù hợp với loại cây bạn trồng.
+          </small>
+        </div>
+      </div>
 
       {place && (
         <p className="text-muted">
@@ -375,6 +440,29 @@ const WeatherPage = () => {
               </div>
             </div>
           </div>
+
+          {/* Gợi ý chăm sóc cây theo thời tiết */}
+          <div className="card shadow-sm mt-3">
+            <div className="card-body">
+              <h5 className="card-title mb-3">
+                Gợi ý chăm sóc cây theo thời tiết
+              </h5>
+
+              {adviceLoading && <p>Đang tải gợi ý chăm sóc...</p>}
+
+              {!adviceLoading && advice && (
+                <PlantAdviceCard data={advice} />
+              )}
+
+              {!adviceLoading && !advice && (
+                <p className="text-muted mb-0">
+                  Chưa có gợi ý. Hãy tìm địa điểm hoặc dùng vị trí hiện tại để
+                  lấy dữ liệu thời tiết.
+                </p>
+              )}
+            </div>
+          </div>
+
           {/* Lịch sử thời tiết */}
           <div className="card shadow-sm mt-3">
             <div className="card-body">
@@ -442,7 +530,9 @@ const WeatherPage = () => {
                             <td>{timeStr}</td>
                             <td>{temp != null ? Math.round(temp) : "-"}</td>
                             <td>{humidity != null ? humidity : "-"}</td>
-                            <td className="text-capitalize">{desc || "-"}</td>
+                            <td className="text-capitalize">
+                              {desc || "-"}
+                            </td>
                           </tr>
                         );
                       })}
