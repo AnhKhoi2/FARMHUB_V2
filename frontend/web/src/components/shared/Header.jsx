@@ -9,7 +9,7 @@ import authApi from "../../api/shared/authApi";
 import NotificationBell from "../NotificationBell";
 import "./Header.css";
 import { RadarChartOutlined } from "@ant-design/icons";
-import { Tooltip } from "antd"; 
+import { Tooltip } from "antd";
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
@@ -43,15 +43,15 @@ const Header = () => {
       await authApi.logout();
     } catch (e) {
       // ignore network error but continue clearing client state
-      console.warn('Logout API failed:', e?.response?.data || e?.message || e);
+      console.warn("Logout API failed:", e?.response?.data || e?.message || e);
     }
 
     // clear client-side state
     dispatch(logout());
     setDropdownOpen(false);
     setMenuOpen(false);
-    toast.info('Bạn đã đăng xuất.');
-    navigate('/login');
+    toast.info("Bạn đã đăng xuất.");
+    navigate("/login");
   };
 
   const toggleSubmenu = () => {
@@ -97,8 +97,17 @@ const Header = () => {
                 <Link to="/">Trang Chủ</Link>
               </li>
 
-              <li className={currentPath.startsWith("/weather") ? "active" : ""}>
+              <li
+                className={currentPath.startsWith("/weather") ? "active" : ""}
+              >
                 <Link to="/weather">Thời Tiết</Link>
+              </li>
+              <li
+                className={
+                  currentPath.startsWith("/plant-diagnosis") ? "active" : ""
+                }
+              >
+                <Link to="/plant-diagnosis">Chẩn đoán bằng hình ảnh</Link>
               </li>
 
               {/* NHẬT KÝ LÀM VƯỜN – SUBMENU */}
@@ -142,7 +151,9 @@ const Header = () => {
                 <Link to="/market">Chợ</Link>
               </li>
 
-              <li className={currentPath.startsWith("/experts") ? "active" : ""}>
+              <li
+                className={currentPath.startsWith("/experts") ? "active" : ""}
+              >
                 <Link to="/experts">Chuyên gia</Link>
               </li>
 
@@ -152,10 +163,14 @@ const Header = () => {
                 </li>
               )}
               {/* streak */}
-                <li className={currentPath.startsWith("/farmer/streak") ? "active" : ""}>
+              <li
+                className={
+                  currentPath.startsWith("/farmer/streak") ? "active" : ""
+                }
+              >
                 <Link to="/farmer/streak">
                   <Tooltip title="Xếp hạng Streak">
-                    <RadarChartOutlined style={{ fontSize: '18px' }} />
+                    <RadarChartOutlined style={{ fontSize: "18px" }} />
                   </Tooltip>
                 </Link>
               </li>
@@ -164,7 +179,10 @@ const Header = () => {
               <li className="user-menu">
                 {user ? (
                   <div className="user-dropdown">
-                    <div className="user-info" onClick={handleToggleUserDropdown}>
+                    <div
+                      className="user-info"
+                      onClick={handleToggleUserDropdown}
+                    >
                       <img
                         src={user.avatar || "https://via.placeholder.com/40"}
                         alt="Avatar"
