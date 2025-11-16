@@ -193,28 +193,23 @@ export const authController = {
   }),
 
   // Đăng nhập
- login: asyncHandler(async (req, res, next) => {
-  const { emailOrUsername, password } = req.body;
-console.log(emailOrUsername, password);
+ // Đăng nhập CHỈ bằng username
+login: asyncHandler(async (req, res) => {
+  const { username, emailOrUsername, password } = req.body;
 
-  if (!emailOrUsername || !password) {
-    const { message, statusCode } = ERROR_CODES.MISSING_FIELDS;
-    throw new AppError(message, statusCode, "MISSING_FIELDS");
+  // Chỉ dùng username; emailOrUsername chỉ là alias cho username (nếu FE cũ còn gửi)
+  const identifier = (username || emailOrUsername || "").trim();
+
+  if (!identifier || !password) {
+    throw new AppError(
+      ERROR_CODES.MISSING_FIELDS.message,
+      ERROR_CODES.MISSING_FIELDS.statusCode,
+      "MISSING_FIELDS"
+    );
   }
 
-  // Normalize input: trim and lowercase for email lookup
-  const identifier = String(emailOrUsername).trim();
-
-  // escape for use in regex
-  const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const usernameQuery = { username: { $regex: `^${escapeRegExp(identifier)}$`, $options: "i" } };
-
-  const user = await User.findOne({
-    $or: [
-      { email: identifier.toLowerCase() },
-      usernameQuery,
-    ],
-  });
+  // ❗ Chỉ tìm theo username
+  const user = await User.findOne({ username: identifier });
 
   if (!user) {
     // Avoid leaking which side failed
@@ -254,8 +249,13 @@ console.log(emailOrUsername, password);
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
-  return ok(res, { user, accessToken, refreshToken });
+  // Ẩn password cho sạch dữ liệu trả về
+  const userSafe = user.toObject ? user.toObject() : { ...user._doc };
+  delete userSafe.password;
+
+  return ok(res, { user: userSafe, accessToken, refreshToken });
 }),
+
 
   // Refresh token
   refresh: asyncHandler(async (req, res) => {

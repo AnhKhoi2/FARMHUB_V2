@@ -175,3 +175,22 @@
     text-decoration: underline;
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;    /* 👈 Căn giữa toàn bộ */
+  gap: 10px;                  /* Khoảng cách 2 line và chữ */
+  margin: 20px 0;
+}
+
+.divider .line {
+  flex: 1;                    /* 👈 2 đường kẻ dài ra cân đối */
+  height: 1px;
+  background: #ccc;
+}
+
+.divider span {
+  white-space: nowrap;
+  font-size: 14px;
+  color: #666;
+}
