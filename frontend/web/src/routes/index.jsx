@@ -8,7 +8,8 @@ import Register from "../pages/auth/register_v1.jsx";
 import VerifyEmail from "../pages/auth/VerifyEmail";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword"; // <- thêm từ code 2
-import WeatherPage from "../pages/WeatherPage";
+import WeatherPage from "../pages/WeatherPage.jsx";
+import PlantDiagnosisPage from "../pages/PlantDiagnosisPage";
 
 // Guards
 import PrivateRoute from "./shared/PrivateRoute"; // dùng path kiểu code 1
@@ -53,7 +54,6 @@ import FarmerGuideDetail from "../pages/farmer/GuideDetail";
 import Guides from "../pages/farmer/Guides";
 import GuideEdit from "../pages/expert/GuideEdit";
 import TrashGuides from "../pages/expert/TrashGuides";
-import WeatherPage from "../pages/Weather";
 import PostDetail from "../pages/PostDetail";
 
 // Farmer Pages - Notebook
@@ -101,6 +101,8 @@ export default function AppRoutes() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
 
         <Route path="/weather" element={<WeatherPage />} />
+
+        <Route path="/plant-diagnosis" element={<PlantDiagnosisPage />} />
         {/* <- từ code 2 */}
         {/* ===== Protected app (từ code 2) ===== */}
         <Route
