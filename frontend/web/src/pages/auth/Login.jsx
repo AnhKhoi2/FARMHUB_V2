@@ -37,23 +37,28 @@ const Login = () => {
     const dest = nextRouteByRole(role);
     setRedirectTo(dest);
 
-    try {
-      const { data } = await streakApi.record(); // { success, data: { streak } } tuỳ cấu trúc axiosClient
-      const streak = data?.data?.streak || data?.streak || null;
-      if (streak) {
-        setStreakData(streak);  // mở popup
-        return;                 // chờ user bấm OK rồi mới navigate
+    // Only record streak for farmers (do not record for experts, admins, moderators)
+    if (role === "user") {
+      try {
+        const { data } = await streakApi.record(); // { success, data: { streak } }
+        const streak = data?.data?.streak || data?.streak || null;
+        if (streak) {
+          setStreakData(streak); // open popup and wait for user
+          return; // wait for popup close before navigating
+        }
+      } catch (e) {
+        // errors recording streak shouldn't block navigation
+        console.warn("streak record failed:", e?.message || e);
       }
-    } catch (e) {
-      // lỗi record streak không chặn điều hướng
-      console.warn("streak record failed:", e?.message || e);
     }
+
+    // For non-farmers or if no streak, navigate immediately
     navigate(dest);
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const result = await dispatch(loginThunk({ username, password }));
+    const result = await dispatch(loginThunk({ emailOrUsername: username, password }));
     const { success, role } = result || {};
     if (success) {
       await afterLogin(role);

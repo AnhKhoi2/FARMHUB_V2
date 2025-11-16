@@ -194,9 +194,8 @@ export const authController = {
 
   // Đăng nhập
  login: asyncHandler(async (req, res, next) => {
-  // Accept multiple possible field names from clients for compatibility
-  const emailOrUsername = req.body.emailOrUsername || req.body.username || req.body.email;
-  const password = req.body.password;
+  const { emailOrUsername, password } = req.body;
+console.log(emailOrUsername, password);
 
   if (!emailOrUsername || !password) {
     const { message, statusCode } = ERROR_CODES.MISSING_FIELDS;

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import collectionsApi from "../../api/farmer/collectionsApi";
 import CreateCollectionModal from "../../components/farmer/CreateCollectionModal";
 import "../../css/farmer/Collections.css";
+import Header from "../../components/shared/Header";
 
 const Collections = () => {
   const navigate = useNavigate();
@@ -111,114 +112,119 @@ const Collections = () => {
   }
 
   return (
-    <div className="collections-container">
-      {/* Header */}
-      <div className="collections-header">
-        <h1>📚 Bộ sưu tập của tôi</h1>
-        <button
-          className="btn-create-collection"
-          onClick={() => setShowCreateModal(true)}
-        >
-          + Tạo bộ sưu tập mới
-        </button>
-      </div>
+    <>
+      <Header />
+      <div className="collections-container">
+        {/* Header */}
+        <div className="collections-header">
+          <h1>📚 Bộ sưu tập của tôi</h1>
+          <button
+            className="btn-create-collection"
+            onClick={() => setShowCreateModal(true)}
+          >
+            + Tạo bộ sưu tập mới
+          </button>
+        </div>
 
-      {/* Search Bar */}
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder="Tìm kiếm bộ sưu tập..."
-          value={searchKeyword}
-          onChange={(e) => setSearchKeyword(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-        />
-        <button onClick={handleSearch}>🔍 Tìm kiếm</button>
-      </div>
+        {/* Search Bar */}
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Tìm kiếm bộ sưu tập..."
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <button onClick={handleSearch}>🔍 Tìm kiếm</button>
+        </div>
 
-      {error && <div className="error-message">{error}</div>}
+        {error && <div className="error-message">{error}</div>}
 
-      {/* Collections Grid */}
-      <div className="collections-grid">
-        {collections.length === 0 ? (
-          <div className="empty-state">
-            <p>📭 Chưa có bộ sưu tập nào</p>
-            <p>Tạo bộ sưu tập đầu tiên để tổ chức các nhật ký của bạn!</p>
-          </div>
-        ) : (
-          collections.map((collection) => (
-            <div
-              key={collection._id}
-              className="collection-card"
-              onClick={() => handleViewCollection(collection._id)}
-            >
-              <div className="collection-cover">
-                {collection.cover_image ? (
-                  <img
-                    src={collection.cover_image}
-                    alt={collection.collection_name}
-                  />
-                ) : (
-                  <div className="cover-placeholder">📚</div>
-                )}
-              </div>
-
-              <div className="collection-info">
-                <h3>{collection.collection_name}</h3>
-                {collection.description && (
-                  <p className="collection-description">
-                    {collection.description}
-                  </p>
-                )}
-
-                <div className="collection-meta">
-                  <span className="notebook-count">
-                    📓 {collection.notebook_count} nhật ký
-                  </span>
-                  <span className="created-date">
-                    {new Date(collection.createdAt).toLocaleDateString("vi-VN")}
-                  </span>
+        {/* Collections Grid */}
+        <div className="collections-grid">
+          {collections.length === 0 ? (
+            <div className="empty-state">
+              <p>📭 Chưa có bộ sưu tập nào</p>
+              <p>Tạo bộ sưu tập đầu tiên để tổ chức các nhật ký của bạn!</p>
+            </div>
+          ) : (
+            collections.map((collection) => (
+              <div
+                key={collection._id}
+                className="collection-card"
+                onClick={() => handleViewCollection(collection._id)}
+              >
+                <div className="collection-cover">
+                  {collection.cover_image ? (
+                    <img
+                      src={collection.cover_image}
+                      alt={collection.collection_name}
+                    />
+                  ) : (
+                    <div className="cover-placeholder">📚</div>
+                  )}
                 </div>
 
-                {collection.tags && collection.tags.length > 0 && (
-                  <div className="collection-tags">
-                    {collection.tags.map((tag, index) => (
-                      <span key={index} className="tag">
-                        {tag}
-                      </span>
-                    ))}
+                <div className="collection-info">
+                  <h3>{collection.collection_name}</h3>
+                  {collection.description && (
+                    <p className="collection-description">
+                      {collection.description}
+                    </p>
+                  )}
+
+                  <div className="collection-meta">
+                    <span className="notebook-count">
+                      📓 {collection.notebook_count} nhật ký
+                    </span>
+                    <span className="created-date">
+                      {new Date(collection.createdAt).toLocaleDateString(
+                        "vi-VN"
+                      )}
+                    </span>
                   </div>
-                )}
-              </div>
 
-              <div
-                className="collection-actions"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="btn-delete"
-                  onClick={() =>
-                    handleDeleteCollection(
-                      collection._id,
-                      collection.collection_name
-                    )
-                  }
-                  title="Xóa"
+                  {collection.tags && collection.tags.length > 0 && (
+                    <div className="collection-tags">
+                      {collection.tags.map((tag, index) => (
+                        <span key={index} className="tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className="collection-actions"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  🗑️
-                </button>
+                  <button
+                    className="btn-delete"
+                    onClick={() =>
+                      handleDeleteCollection(
+                        collection._id,
+                        collection.collection_name
+                      )
+                    }
+                    title="Xóa"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
 
-      {/* Create Collection Modal */}
-      <CreateCollectionModal
-        show={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateCollection}
-      />
-    </div>
+        {/* Create Collection Modal */}
+        <CreateCollectionModal
+          show={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateCollection}
+        />
+      </div>{" "}
+    </>
   );
 };
 

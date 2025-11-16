@@ -27,6 +27,7 @@ import AdminLeaderboard from "../pages/admin/AdminLeaderboard";
 import AdminWeather from "../pages/admin/AdminWeather";
 import AdminExperts from "../pages/admin/AdminExperts";
 import AdminExpertApplications from "../pages/admin/AdminExpertApplications";
+import AdminProfile from "../pages/admin/AdminProfile";
 import AdminModels from "../pages/admin/Models";
 import AdminPost from "../pages/admin/AdminPost";
 import AdminGuides from "../pages/admin/AdminGuides";
@@ -43,11 +44,16 @@ import ManagerReport from "../pages/moderator/ManagerReport";
 
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
+import ApplyExpert from "../pages/expert/ApplyExpert";
 import ExpertModels from "../pages/expert/Models";
 import ManagerGuides from "../pages/expert/ManagerGuides";
 import GuideDetail from "../pages/expert/GuideDetail";
+import FarmerGuideDetail from "../pages/farmer/GuideDetail";
+import Guides from "../pages/farmer/Guides";
 import GuideEdit from "../pages/expert/GuideEdit";
 import TrashGuides from "../pages/expert/TrashGuides";
+import WeatherPage from "../pages/Weather";
+import PostDetail from "../pages/PostDetail";
 
 // Farmer Pages - Notebook
 import NotebookList from "../pages/farmer/NotebookList";
@@ -178,6 +184,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/admin/profile"
+          element={
+            <AdminRoute>
+              <AdminProfile />
+            </AdminRoute>
+          }
+        />
+        <Route
           path="/admin/expert-applications"
           element={
             <AdminRoute>
@@ -227,6 +241,14 @@ export default function AppRoutes() {
           element={
             <PrivateRoute>
               <ExpertHome />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/expert/apply"
+          element={
+            <PrivateRoute>
+              <ApplyExpert />
             </PrivateRoute>
           }
         />
@@ -301,6 +323,8 @@ export default function AppRoutes() {
         <Route path="/managerguides/create" element={<GuideEdit />} />
         <Route path="/managerguides/edit/:id" element={<GuideEdit />} />
         <Route path="/managerguides/detail/:id" element={<GuideDetail />} />
+        {/* Farmer-facing guides list */}
+        <Route path="/guides" element={<Guides />} />
         <Route path="/managerguides/trash" element={<TrashGuides />} />
         {/* 🔹 NEW: Cụm /admin có AdminLayout để gắn trang Experts (nested route) */}
         <Route
@@ -314,8 +338,11 @@ export default function AppRoutes() {
           {/* chỉ thêm experts ở đây để không ảnh hưởng route cũ */}
           <Route path="experts" element={<ExpertContent />} />
         </Route>
-        {/* Route xem chi tiết guide theo id (nếu nơi khác có dùng) */}
-        <Route path="/guides/:id" element={<GuideDetail />} />
+        {/* Route xem chi tiết guide cho farmer (public) */}
+        <Route path="/guides/:id" element={<FarmerGuideDetail />} />
+        <Route path="/weather" element={<WeatherPage />} />
+        <Route path="/posts/:id" element={<PostDetail />} />
+        
         {/* Expert nested bundle (nếu bạn có thêm nhiều trang con dưới /expert) */}
         <Route path="/expert/*" element={<ExpertRoutes />} />
         {/* Direct expert home route for quick access/testing */}
