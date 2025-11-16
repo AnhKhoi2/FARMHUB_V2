@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
+import { Card, Row, Col, Typography, Input, Button, Spin, Alert } from 'antd';
 import Header from '../components/shared/Header';
 import weatherApi from '../api/farmer/weatherApi';
 
+const { Title, Text } = Typography;
+
 export default function WeatherPage() {
-  const [q, setQ] = useState('Hanoi');
+  const [q, setQ] = useState('Can tho');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
   const fetchWeather = async () => {
+    if (!q) return;
     setLoading(true);
     setError(null);
+    setData(null);
     try {
       const res = await weatherApi.getWeatherUser(q);
-      const payload = res?.data?.data || res?.data || null;
+      const payload = res?.data?.data?.data || null;
       setData(payload);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Error');
@@ -25,23 +30,77 @@ export default function WeatherPage() {
   return (
     <>
       <Header />
-      <div className="container p-4">
-        <h1>Thời tiết</h1>
-        <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:12}}>
-          <input value={q} onChange={e=>setQ(e.target.value)} className="form-control" />
-          <button className="btn btn-primary" onClick={fetchWeather} disabled={loading}>{loading? 'Đang tải':'Lấy thời tiết'}</button>
-        </div>
+      <div style={{ maxWidth: 600, margin: '20px auto', padding: '0 16px' }}>
+        <Title level={2} style={{ textAlign: 'center', marginBottom: 24 }}>
+          Thời tiết
+        </Title>
 
-        {error && <div className="alert alert-danger">{error}</div>}
+        {/* Search */}
+        <Row gutter={8} style={{ marginBottom: 24 }}>
+          <Col flex="auto">
+            <Input
+              placeholder="Nhập tên thành phố"
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              onPressEnter={fetchWeather}
+            />
+          </Col>
+          <Col>
+            <Button type="primary" onClick={fetchWeather} loading={loading}>
+              Lấy thời tiết
+            </Button>
+          </Col>
+        </Row>
 
-        {data ? (
-          <div>
-            <h4>{data.location?.name || data.city || 'Unknown'}</h4>
-            <p>{data.current?.temp_c ?? data.current?.temp ?? '--'}°C • {data.current?.condition?.text}</p>
-            <pre style={{whiteSpace:'pre-wrap'}}>{JSON.stringify(data, null, 2)}</pre>
+        {/* Error */}
+        {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
+
+        {/* Loading */}
+        {loading && (
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <Spin tip="Đang tải..." />
           </div>
-        ) : (
-          <div className="text-muted">Chưa có dữ liệu. Bấm 'Lấy thời tiết'.</div>
+        )}
+
+        {/* Weather Card */}
+        {data && data.raw && (
+          <Card hoverable>
+            <Row gutter={16} align="middle">
+              <Col>
+                <img
+                  src={`https:${data.raw.current.condition.icon}`}
+                  alt={data.raw.current.condition.text}
+                  width={64}
+                  height={64}
+                />
+              </Col>
+              <Col>
+                <Title level={4}>
+                  {data.raw.location.name}, {data.raw.location.country}
+                </Title>
+                <Text>{data.raw.current.condition.text}</Text>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '8px 0' }}>
+                  {data.raw.current.temp_c}°C
+                </div>
+                <Text type="secondary">
+                  Cảm giác: {data.raw.current.feelslike_c}°C
+                </Text>
+                <br />
+                <Text type="secondary">
+                  Độ ẩm: {data.raw.current.humidity}% | Gió: {data.raw.current.wind_kph} km/h
+                </Text>
+                <br />
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Cập nhật: {data.raw.current.last_updated}
+                </Text>
+              </Col>
+            </Row>
+          </Card>
+        )}
+
+        {/* No Data */}
+        {!loading && !data && !error && (
+          <Text type="secondary">Chưa có dữ liệu. Bấm "Lấy thời tiết".</Text>
         )}
       </div>
     </>

@@ -38,7 +38,7 @@ const Login = () => {
     setRedirectTo(dest);
 
     // Only record streak for farmers (do not record for experts, admins, moderators)
-    if (role === "farmer") {
+    if (role === "user") {
       try {
         const { data } = await streakApi.record(); // { success, data: { streak } }
         const streak = data?.data?.streak || data?.streak || null;
@@ -58,7 +58,7 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const result = await dispatch(loginThunk({ username, password }));
+    const result = await dispatch(loginThunk({ emailOrUsername: username, password }));
     const { success, role } = result || {};
     if (success) {
       await afterLogin(role);

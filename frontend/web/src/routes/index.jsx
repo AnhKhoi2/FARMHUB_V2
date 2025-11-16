@@ -44,6 +44,7 @@ import ManagerReport from "../pages/moderator/ManagerReport";
 
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
+import ApplyExpert from "../pages/expert/ApplyExpert";
 import ExpertModels from "../pages/expert/Models";
 import ManagerGuides from "../pages/expert/ManagerGuides";
 import GuideDetail from "../pages/expert/GuideDetail";
@@ -240,6 +241,14 @@ export default function AppRoutes() {
           element={
             <PrivateRoute>
               <ExpertHome />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/expert/apply"
+          element={
+            <PrivateRoute>
+              <ApplyExpert />
             </PrivateRoute>
           }
         />

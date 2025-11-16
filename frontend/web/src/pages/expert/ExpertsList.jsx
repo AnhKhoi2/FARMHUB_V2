@@ -7,6 +7,7 @@ import "../../css/ExpertsList.css";
 
 // ⬇️ Chat widget
 import ChatWidget from "./ChatWidget";
+import Header from "../../components/shared/Header";
 
 const API_LIST = "/api/experts?is_public=true&review_status=approved";
 
@@ -252,6 +253,8 @@ export default function ExpertsList() {
   };
 
   return (
+    <>
+    <Header/>
     <div className="ex-page user-expert-page">
       <div className="ex-hero">
         <h1>Experts</h1>
@@ -297,6 +300,6 @@ export default function ExpertsList() {
         onClose={(v) => setChatOpen(Boolean(v))} 
         initialOpenPayload={chatPeer} // ⬅️ đúng prop ChatWidget đang nhận
       />
-    </div>
+    </div></>
   );
 }
