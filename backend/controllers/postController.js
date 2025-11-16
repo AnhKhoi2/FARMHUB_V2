@@ -101,6 +101,14 @@ export const postController = {
     return ok(res, item);
   }),
 
+  // Public detail view (no auth) used by marketplace front-end
+  detailPublic: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const item = await MarketPost.findById(id).populate({ path: 'userId', select: 'username' });
+    if (!item) throw new AppError('Post not found', 404, 'NOT_FOUND');
+    return ok(res, item);
+  }),
+
   create: asyncHandler(async (req, res) => {
     const userId = req.user?.id;
     const {

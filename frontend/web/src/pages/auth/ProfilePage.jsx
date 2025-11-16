@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { profileApi } from "../../api/shared/profileApi.js";
+import axiosClient from "../../api/shared/axiosClient.js";
 import { toast } from "react-toastify";
 import authApi from "../../api/shared/authApi.js";
 import expertApplicationApi from "../../api/shared/expertApplicationApi.js";
 import "../../css/auth/ProfilePage.css";
 import "../../css/auth/Profile.css";
+import Header from "../../components/shared/Header.jsx";
 
 function toDateDisplay(d) {
   if (!d) return "-";
@@ -120,6 +123,7 @@ function ExpertApplicationModal({
   applySaving,
   hasApproved,
   hasPending,
+  applyFieldErrors,
 }) {
   if (!isOpen) return null;
 
@@ -225,25 +229,41 @@ function ExpertApplicationModal({
           <div>
             <label className="agri-label">Chứng chỉ / Portfolio (URL)</label>
             <div className="space-y-2">
-              {applyForm.certificates.map((url, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={url}
-                    onChange={(e) => setCertAt(i, e.target.value)}
-                    className="flex-1 agri-input"
-                  />
-                  {i === applyForm.certificates.length - 1 && (
-                    <button
-                      type="button"
-                      onClick={addCertField}
-                      className="px-3 py-2 rounded-xl border text-agri-primary hover:bg-agri-green-light"
-                    >
-                      +
-                    </button>
-                  )}
-                </div>
-              ))}
+              {applyForm.certificates.map((url, i) => {
+                // local helper for modal-only errors (applyFieldErrors is passed from parent)
+                const getErr = (p) => {
+                  if (!applyFieldErrors) return undefined;
+                  if (applyFieldErrors[p]) return applyFieldErrors[p];
+                  const dotKey = p.replace(/\[(\d+)\]/g, '.$1');
+                  if (applyFieldErrors[dotKey]) return applyFieldErrors[dotKey];
+                  const bracketKey = p.replace(/\.(\d+)/g, '[$1]');
+                  if (applyFieldErrors[bracketKey]) return applyFieldErrors[bracketKey];
+                  return undefined;
+                };
+
+                return (
+                  <div key={i} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={url}
+                      onChange={(e) => setCertAt(i, e.target.value)}
+                      className="flex-1 agri-input"
+                    />
+                    {i === applyForm.certificates.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={addCertField}
+                        className="px-3 py-2 rounded-xl border text-agri-primary hover:bg-agri-green-light"
+                      >
+                        +
+                      </button>
+                    )}
+                    {getErr(`certificates.${i}`) || getErr(`certificates[${i}]`) ? (
+                      <p className="text-sm text-red-600 w-full mt-1">{getErr(`certificates.${i}`) || getErr(`certificates[${i}]`)}</p>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -306,9 +326,59 @@ export default function ProfilePage() {
     phone_number: "",
     certificates: [""],
   });
+  const [applyFieldErrors, setApplyFieldErrors] = useState({});
+  const getApplyError = (path) => {
+    if (!applyFieldErrors) return undefined;
+    if (applyFieldErrors[path]) return applyFieldErrors[path];
+    const dotKey = path.replace(/\[(\d+)\]/g, '.$1');
+    if (applyFieldErrors[dotKey]) return applyFieldErrors[dotKey];
+    const bracketKey = path.replace(/\.(\d+)/g, '[$1]');
+    if (applyFieldErrors[bracketKey]) return applyFieldErrors[bracketKey];
+    return undefined;
+  };
 
-  const avatarPreview = useMemo(() => form.avatar?.trim(), [form.avatar]);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const avatarPreview = previewUrl || (form.avatar ? String(form.avatar).trim() : null);
   const needsSetPassword = hasPassword === false;
+
+  const fileInputRef = useRef(null);
+  const navigate = useNavigate();
+
+  const handleAvatarSelect = (e) => {
+    const f = e?.target?.files?.[0];
+    if (!f) return;
+    setPendingAvatarFile(f);
+    setFieldErrors((prev) => ({ ...prev, avatar: undefined }));
+  };
+
+  // preview handling for pending file or existing avatar URL
+  useEffect(() => {
+    let objectUrl;
+    if (pendingAvatarFile) {
+      objectUrl = URL.createObjectURL(pendingAvatarFile);
+      setPreviewUrl(objectUrl);
+    } else {
+      setPreviewUrl(form.avatar || null);
+    }
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [pendingAvatarFile, form.avatar]);
+
+  const clearAvatar = () => {
+    setPendingAvatarFile(null);
+    setForm((prev) => ({ ...prev, avatar: "" }));
+    try { if (fileInputRef.current) fileInputRef.current.value = ""; } catch(e){ void e; }
+  };
+
+  const isDirty = useMemo(() => {
+    try {
+      return JSON.stringify(form || {}) !== JSON.stringify(snapshot || {});
+    } catch {
+      return true;
+    }
+  }, [form, snapshot]);
 
   const BADGE_META = {
     "hat-giong": { label: "Hạt Giống", emoji: "🌱" },
@@ -388,16 +458,41 @@ export default function ProfilePage() {
 
   function handleCancel() {
     if (snapshot) setForm(snapshot);
+    // reset file input and avatar preview when cancelling
+    try {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch {
+      // ignore
+    }
     setEditMode(false);
   }
 
   async function handleSave() {
     setSaving(true);
     try {
-      const payload = {
-        ...form,
-        dob: form.dob ? new Date(form.dob).toISOString() : undefined,
-      };
+      // If user selected a new avatar file, upload it first
+      const payload = { ...form };
+      if (form.dob) payload.dob = new Date(form.dob).toISOString();
+
+      if (pendingAvatarFile) {
+        const fd = new FormData();
+        fd.append("image", pendingAvatarFile);
+        const res = await axiosClient.post("/api/upload", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const url = res?.data?.data?.url || res?.data?.url;
+        if (!url) throw new Error("Upload avatar thất bại");
+        // make absolute if needed
+        let full = url;
+        try {
+          if (typeof axiosClient.defaults?.baseURL === "string" && url.startsWith("/")) {
+            full = new URL(url, axiosClient.defaults.baseURL).toString();
+          }
+        } catch {
+          full = url;
+        }
+        payload.avatar = full;
+      }
 
       const { data } = await profileApi.updateProfile(payload);
       const updated = data?.data || {};
@@ -409,6 +504,8 @@ export default function ProfilePage() {
       };
 
       setForm(normalized);
+      // update local serverUser if backend returned user info
+      if (updated.user) setServerUser((prev) => ({ ...(prev || {}), ...updated.user }));
       setSnapshot(normalized);
       setEditMode(false);
       toast.success("Đã lưu hồ sơ thành công");
@@ -495,6 +592,7 @@ export default function ProfilePage() {
     }
 
     setApplySaving(true);
+    setApplyFieldErrors({});
     try {
       const payload = {
         ...applyForm,
@@ -509,7 +607,29 @@ export default function ProfilePage() {
       const res = await expertApplicationApi.getMine();
       setMyApps(res?.data?.data || []);
     } catch (err) {
-      toast.error(err?.response?.data?.error || "Nộp đơn thất bại");
+      const status = err?.response?.status;
+      const body = err?.response?.data;
+      if (status === 422 || status === 400) {
+        // Try to parse validation errors from backend (Joi or custom)
+        const errors = {};
+        if (body?.errors && typeof body.errors === "object") {
+          Object.assign(errors, body.errors);
+        } else if (Array.isArray(body?.details)) {
+          body.details.forEach((d) => {
+            const path = Array.isArray(d.path) ? d.path.join(".") : d.path;
+            errors[path] = d.message;
+          });
+        } else if (body?.message && body?._original && Array.isArray(body.details)) {
+          body.details.forEach((d) => {
+            const path = Array.isArray(d.path) ? d.path.join(".") : d.path;
+            errors[path] = d.message;
+          });
+        }
+        setApplyFieldErrors(errors);
+        toast.error(body?.message || "Vui lòng kiểm tra các trường");
+      } else {
+        toast.error(body?.message || body?.error || "Nộp đơn thất bại");
+      }
     } finally {
       setApplySaving(false);
     }
@@ -529,11 +649,17 @@ export default function ProfilePage() {
   }
 
   return (
+    <>
+      <Header/>
+  
     <div className="profile-page">
       <div className="agri-theme-container">
         <h1 className="text-3xl font-bold mb-4 agri-theme-heading">
           🌿 Hồ sơ cá nhân
         </h1>
+                {getApplyError('full_name') && (
+                  <p className="text-sm text-red-600 mt-1">{getApplyError('full_name')}</p>
+                )}
 
         {serverUser && (
           <p className="text-sm text-agri-gray mb-6">
@@ -555,6 +681,9 @@ export default function ProfilePage() {
         =============================== */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
+                {getApplyError('expertise_area') && (
+                  <p className="text-sm text-red-600 mt-1">{getApplyError('expertise_area')}</p>
+                )}
           {/* ========== CỘT 1: AVATAR =========== */}
           <div className="agri-card avatar-section">
             <div className="avatar-wrapper">
@@ -628,14 +757,25 @@ export default function ProfilePage() {
                 )}
 
                 <div>
-                  <label className="agri-label">Avatar URL</label>
-                  <input
-                    type="text"
-                    name="avatar"
-                    value={form.avatar || ""}
-                    onChange={handleChange}
-                    className="agri-input"
-                  />
+                  <label className="agri-label">Ảnh đại diện</label>
+                  <div className="flex items-center gap-3">
+                    <div className="w-20 h-20 rounded overflow-hidden border bg-gray-50">
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full grid place-items-center text-sm text-agri-gray">Chưa có</div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarSelect} className="hidden" />
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} className="agri-btn-secondary">Tải ảnh lên</button>
+                        <button type="button" onClick={clearAvatar} className="agri-btn-secondary">Xóa</button>
+                      </div>
+                      {fieldErrors.avatar && <p className="text-sm text-red-600">{fieldErrors.avatar}</p>}
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -715,10 +855,10 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={handleSave}
-                    disabled={saving}
+                    disabled={saving || !isDirty}
                     className="agri-btn-primary disabled:opacity-60"
                   >
-                    {saving ? "Đang lưu…" : "💾 Lưu thay đổi"}
+                    {saving ? "Đang lưu…" : !isDirty ? "Không có thay đổi" : "💾 Lưu thay đổi"}
                   </button>
 
                   <button
@@ -757,7 +897,7 @@ export default function ProfilePage() {
                 {!hasApproved && !hasPending && (
                   <button
                     type="button"
-                    onClick={() => setAppModalOpen(true)}
+                    onClick={() => navigate('/expert/apply')}
                     className="agri-btn-primary"
                   >
                     ✉️ Nộp đơn Expert
@@ -857,7 +997,8 @@ export default function ProfilePage() {
         applySaving={applySaving}
         hasApproved={hasApproved}
         hasPending={hasPending}
+        applyFieldErrors={applyFieldErrors}
       />
-    </div>
+    </div>  </>
   );
 }

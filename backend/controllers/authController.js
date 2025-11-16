@@ -108,8 +108,8 @@ export const authController = {
     const hashed = await bcrypt.hash(password, salt);
 
     const newUser = new User({
-      username,
-      email,
+      username: String(username).trim(),
+      email: String(email).toLowerCase().trim(),
       password: hashed,
       isVerified: false,
     });
@@ -212,6 +212,7 @@ login: asyncHandler(async (req, res) => {
   const user = await User.findOne({ username: identifier });
 
   if (!user) {
+    // Avoid leaking which side failed
     throw new AppError(
       ERROR_CODES.INVALID_CREDENTIALS.message,
       ERROR_CODES.INVALID_CREDENTIALS.statusCode,
@@ -219,7 +220,24 @@ login: asyncHandler(async (req, res) => {
     );
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  // If account registered via OAuth/provider and has no password
+  if (!user.password) {
+    // Better message for client, but keep generic code to avoid leaking too much
+    throw new AppError(
+      "Tài khoản này không có mật khẩu. Vui lòng đăng nhập bằng nhà cung cấp đã liên kết hoặc tạo mật khẩu.",
+      400,
+      "NO_PASSWORD_SET"
+    );
+  }
+
+  let isMatch = false;
+  try {
+    isMatch = await bcrypt.compare(password, user.password);
+  } catch (err) {
+    console.error("login bcrypt.compare error:", err);
+    // Fall through to invalid credentials
+  }
+
   if (!isMatch) {
     throw new AppError(
       ERROR_CODES.INVALID_CREDENTIALS.message,

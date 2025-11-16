@@ -428,7 +428,7 @@ const Home = () => {
         )}
 
         {/* Falling Leaves Animation */}
-        <div className="falling-leaves">
+        {/* <div className="falling-leaves">
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
@@ -438,7 +438,7 @@ const Home = () => {
               🍃
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
       <Footer />
     </>

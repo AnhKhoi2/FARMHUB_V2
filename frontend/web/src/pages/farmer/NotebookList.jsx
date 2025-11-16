@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Header from "../../components/shared/Header";
 import { useNavigate } from "react-router-dom";
 import notebookApi from "../../api/farmer/notebookApi";
 import "../../css/farmer/NotebookList.css";
@@ -139,6 +140,7 @@ const NotebookList = () => {
   if (loading) {
     return (
       <div className="notebook-list-container">
+        <Header />
         <div className="loading-container">
           <div className="spinner"></div>
           <p>Đang tải...</p>
@@ -149,6 +151,7 @@ const NotebookList = () => {
 
   return (
     <div className="notebook-list-container">
+      <Header />
       {/* Header */}
       <div className="page-header">
         <div className="header-content">

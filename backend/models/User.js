@@ -2,8 +2,9 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true, unique: true },
-    email:    { type: String, required: true, unique: true },
+    // Normalize username/email to avoid case/whitespace mismatches on lookup
+    username: { type: String, required: true, unique: true, trim: true },
+    email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
 
     // 🔧 Chỉ yêu cầu mật khẩu với tài khoản local
     password: {

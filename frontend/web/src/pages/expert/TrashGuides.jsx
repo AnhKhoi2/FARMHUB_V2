@@ -1,8 +1,30 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
-import "../../css/expert/ManagerGuides.css";
+
+import {
+  Card,
+  Button,
+  Row,
+  Col,
+  Popconfirm,
+  Pagination,
+  Empty,
+  Spin,
+  Typography,
+  Image,
+  message,
+} from "antd";
+
+import {
+  RollbackOutlined,
+  DeleteOutlined,
+  ArrowLeftOutlined,
+} from "@ant-design/icons";
+
 import placeholderImg from "../../assets/placeholder.svg";
+
+const { Title, Text } = Typography;
 
 export default function TrashGuides() {
   const navigate = useNavigate();
@@ -11,24 +33,23 @@ export default function TrashGuides() {
   const [page, setPage] = useState(1);
   const [limit] = useState(8);
   const [totalPages, setTotalPages] = useState(1);
-  const [_error, setError] = useState(null);
 
   const fetchTrash = useCallback(
     async (p = page) => {
       setLoading(true);
-      setError(null);
       try {
         const res = await axiosClient.get("/guides/trash", {
           params: { page: p, limit },
         });
+
         const data = res.data || {};
         const docs = data.data || data.docs || [];
         const meta = data.meta || {};
+
         setGuides(docs);
         setTotalPages(meta.pages || 1);
       } catch (e) {
-        console.error(e);
-        setError("Không thể tải thùng rác");
+        message.error("Không thể tải thùng rác.");
       } finally {
         setLoading(false);
       }
@@ -40,110 +61,120 @@ export default function TrashGuides() {
     fetchTrash(page);
   }, [page, fetchTrash]);
 
-  async function onRestore(id) {
-    if (!window.confirm("Bạn có muốn khôi phục hướng dẫn này?")) return;
+  const onRestore = async (id) => {
     try {
-      setLoading(true);
       await axiosClient.post(`/guides/${id}/restore`);
+      message.success("Đã khôi phục.");
       fetchTrash(page);
     } catch (e) {
-      console.error(e);
-      alert("Khôi phục thất bại");
-    } finally {
-      setLoading(false);
+      message.error("Khôi phục thất bại");
     }
-  }
+  };
 
-  async function onPermanentDelete(id) {
-    if (!window.confirm("Xóa vĩnh viễn? Hành động không thể quay lại.")) return;
+  const onPermanentDelete = async (id) => {
     try {
-      setLoading(true);
       await axiosClient.delete(`/guides/${id}/permanent`);
-      // if no items left on page, go back a page
+      message.success("Đã xóa vĩnh viễn");
+
       const remaining = guides.length - 1;
       if (remaining <= 0 && page > 1) {
         setPage(page - 1);
-        fetchTrash(page - 1);
-      } else fetchTrash(page);
+      } else {
+        fetchTrash(page);
+      }
     } catch (e) {
-      console.error(e);
-      alert("Xóa vĩnh viễn thất bại");
-    } finally {
-      setLoading(false);
+      message.error("Xóa vĩnh viễn thất bại");
     }
-  }
+  };
 
   return (
-    <div className="manager-guides-page">
-      <header className="mg-header">
-        <h2 className="mg-title">Thùng rác - Hướng dẫn đã xóa</h2>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button className="mg-btn" onClick={() => navigate("/managerguides")}>
-            Quay lại danh sách
-          </button>
-        </div>
-      </header>
+    <div style={{ padding: 24 }}>
+      {/* --- Header --- */}
+      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
+        <Title level={3} style={{ margin: 0 }}>
+          Thùng rác – Hướng dẫn đã xóa
+        </Title>
 
-      <div className="mg-grid-container">
-        {loading ? (
-          <div className="mg-loading">Đang tải...</div>
-        ) : guides.length === 0 ? (
-          <div className="mg-empty">Không có hướng dẫn đã xóa.</div>
-        ) : (
-          <div className="mg-grid">
-            {guides.map((g) => (
-              <div className="mg-card" key={g._id || g.id}>
-                <div
-                  className="mg-thumb"
-                  style={{
-                    backgroundImage: `url(${g.image || placeholderImg})`,
-                  }}
+        <Button
+          icon={<ArrowLeftOutlined />}
+          type="default"
+          onClick={() => navigate(-1)}
+        >
+          Quay lại danh sách
+        </Button>
+      </Row>
+
+      {/* --- Loading Spinner --- */}
+      {loading ? (
+        <Spin
+          tip="Đang tải..."
+          size="large"
+          style={{ width: "100%", marginTop: 50 }}
+        />
+      ) : guides.length === 0 ? (
+        <Empty
+          description="Không có hướng dẫn đã xóa"
+          style={{ marginTop: 80 }}
+        />
+      ) : (
+        <Row gutter={[16, 16]}>
+          {guides.map((g) => (
+            <Col xs={24} sm={12} md={8} lg={6} key={g._id}>
+              <Card
+                hoverable
+                cover={
+                  <Image
+                    src={g.image || placeholderImg}
+                    alt="thumbnail"
+                    height={160}
+                    style={{ objectFit: "cover" }}
+                    preview={false}
+                  />
+                }
+                actions={[
+                  <Popconfirm
+                    title="Khôi phục?"
+                    okText="Có"
+                    cancelText="Không"
+                    onConfirm={() => onRestore(g._id)}
+                  >
+                    <RollbackOutlined style={{ color: "#1890ff" }} />
+                  </Popconfirm>,
+
+                  <Popconfirm
+                    title="Xóa vĩnh viễn? Không thể khôi phục."
+                    okText="Xóa"
+                    cancelText="Hủy"
+                    okType="danger"
+                    onConfirm={() => onPermanentDelete(g._id)}
+                  >
+                    <DeleteOutlined style={{ color: "red" }} />
+                  </Popconfirm>,
+                ]}
+              >
+                <Card.Meta
+                  title={g.title}
+                  description={
+                    <Text type="secondary">
+                      {g.description || g.summary || "Không có mô tả"}
+                    </Text>
+                  }
                 />
-                <div className="mg-card-body">
-                  <div className="mg-card-title">{g.title}</div>
-                  <div className="mg-card-sub">
-                    {g.description || g.summary || "—"}
-                  </div>
-                </div>
-                <div className="mg-card-actions">
-                  <button
-                    className="mg-btn"
-                    onClick={() => onRestore(g._id || g.id)}
-                  >
-                    Khôi phục
-                  </button>
-                  <button
-                    className="mg-btn mg-btn-delete"
-                    onClick={() => onPermanentDelete(g._id || g.id)}
-                  >
-                    Xóa vĩnh viễn
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      )}
 
-      <div className="mg-pagination">
-        <button
-          className="mg-page-btn"
-          disabled={page <= 1}
-          onClick={() => setPage(Math.max(1, page - 1))}
-        >
-          &lt; Trước
-        </button>
-        <span className="mg-page-info">
-          Trang {page} / {totalPages}
-        </span>
-        <button
-          className="mg-page-btn"
-          disabled={page >= totalPages}
-          onClick={() => setPage(Math.min(totalPages, page + 1))}
-        >
-          Tiếp &gt;
-        </button>
-      </div>
+      {/* --- Pagination --- */}
+      <Pagination
+        style={{ marginTop: 24, textAlign: "center" }}
+        current={page}
+        total={totalPages * limit}
+        pageSize={limit}
+        onChange={(p) => setPage(p)}
+        showSizeChanger={false}
+      />
     </div>
   );
 }
