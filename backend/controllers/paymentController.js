@@ -71,6 +71,12 @@ export const paymentController = {
     const txnRef = makeTxnRef();
     const orderInfo = `Thanh toan goi ${plan.toUpperCase()} cho user ${userId}`;
 
+    // Chuẩn hóa IP address (xử lý ::1, ::ffff:)
+    let clientIp = req.ip || req.connection?.remoteAddress || "127.0.0.1";
+    if (clientIp.includes("::1") || clientIp.includes("::ffff:")) {
+      clientIp = "127.0.0.1";
+    }
+
     let payUrl;
     if (hasVNPayConfig()) {
       // Force VNPay QR unless explicitly overridden
@@ -78,7 +84,7 @@ export const paymentController = {
         amount,
         orderInfo,
         txnRef,
-        ipAddr: req.ip || req.connection?.remoteAddress,
+        ipAddr: clientIp,
         bankCode: bankCode || "VNPAYQR",
       });
     } else {
@@ -191,10 +197,16 @@ export const paymentController = {
   createPaymentUrl: asyncHandler(async (req, res) => {
     // Rewritten to use `buildVNPayUrl` in `utils/vnpay.js` for consistent signing logic
     try {
-      const ipAddr =
+      // Chuẩn hóa IP address
+      let ipAddr =
         req.headers["x-forwarded-for"] ||
-        req.connection.remoteAddress ||
-        req.ip;
+        req.connection?.remoteAddress ||
+        req.ip ||
+        "127.0.0.1";
+
+      if (ipAddr.includes("::1") || ipAddr.includes("::ffff:")) {
+        ipAddr = "127.0.0.1";
+      }
 
       const {
         amount: rawAmount,
