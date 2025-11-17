@@ -68,8 +68,18 @@ const Login = () => {
       password,
     })
   );
+  let { success, role } = result || {};
+  // If backend response shape didn't include role for some reason,
+  // fall back to persisted user in localStorage or redux state.
+  if (!role) {
+    try {
+      const persisted = JSON.parse(localStorage.getItem("user") || "null");
+      if (persisted?.role) role = persisted.role;
+    } catch (e) {
+      // ignore parse errors
+    }
+  }
 
-  const { success, role } = result || {};
   if (success) {
     await afterLogin(role);
   }

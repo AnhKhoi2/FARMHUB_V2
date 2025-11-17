@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/expert/ExpertHome.css";
-import Header from "../../components/shared/Header";
 import ChatWidget from "./ChatWidget";
 import axiosClient from "../../api/shared/axiosClient";
 import {
@@ -131,7 +130,6 @@ export default function ExpertHome({
   // Render the expert UI and the ChatWidget outside the main container
   return (
     <>
-      <Header />
       <div className="expert-home">
         <header className="expert-header">
           <div className="header-container">
