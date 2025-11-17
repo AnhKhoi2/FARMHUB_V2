@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import axiosClient from "../../api/shared/axiosClient.js";
 import "./PlantCarePricing.css";
 
 const plans = [
@@ -98,40 +97,7 @@ const PlantCarePricing = () => {
     setSelectedPlan(planKey);
     setVerified(false);
     setCountdown(10);
-    // if paid plan, start payment flow
-    if (planKey !== "basic") {
-      processPayment(planKey);
-    }
-  };
-
-  const processPayment = async (planKey) => {
-    if (!user) {
-      alert("Bạn cần đăng nhập để nâng cấp gói");
-      return;
-    }
-    try {
-      setVerified(false);
-      setCountdown(10);
-      // show placeholder UI while waiting
-      // create payment on backend
-      const body = {
-        plan: planKey,
-        // amount is determined by backend for security
-        baseUrl: window.location.origin,
-      };
-
-      const resp = await axiosClient.post("/api/payment/create-payment", body);
-      if (resp?.data?.code === 0 && resp.data.data?.paymentUrl) {
-        // redirect user to VNPay
-        window.location.href = resp.data.data.paymentUrl;
-      } else {
-        console.error("Payment create failed", resp?.data);
-        alert("Không thể tạo yêu cầu thanh toán. Vui lòng thử lại.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Lỗi khi tạo thanh toán. Kiểm tra console.");
-    }
+    // Payment functionality removed - placeholder for future implementation
   };
 
   return (

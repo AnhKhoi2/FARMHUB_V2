@@ -31,8 +31,7 @@ import expertApplicationsRouter from "./routes/expertApplications.js";
 import expertRatingRoutes from "./routes/expertRating.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import notificationRoutes from "./routes/notifications.js";
-import paymentRouter from "./routes/payment.js";
-import { paymentController } from "./controllers/paymentController.js";
+import vnpayRoutes from "./routes/vnpay.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
 
@@ -45,11 +44,14 @@ connectDB();
 // Middleware
 // Allow the frontend dev server (supports multiple dev ports and an env override)
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+// Include optional BASE_URL (if frontend served at same domain) in allowed origins
+const baseUrl = (process.env.BASE_URL || process.env.VNP_BASE_URL || "").trim();
 const allowedOrigins = [
   clientUrl,
   "http://localhost:5173",
   "http://localhost:5174",
 ];
+if (baseUrl) allowedOrigins.push(baseUrl);
 app.use(
   cors({
     origin: (origin, cb) => {
@@ -93,7 +95,7 @@ app.use("/layouts", layoutsRoutes);
 app.use("/admin/managerpost", postRoutes);
 // (legacy alias removed) '/admin/managerpost' is the canonical path for post management
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/payment", paymentRouter);
+app.use("/api/vnpay", vnpayRoutes);
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);

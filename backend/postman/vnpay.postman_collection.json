@@ -1,0 +1,230 @@
+{
+  "info": {
+    "name": "VNPay Payment Integration",
+    "_postman_id": "vnpay-payment-api",
+    "description": "API collection for testing VNPay payment integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Create Payment URL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 50000,\n  \"orderDescription\": \"Thanh toán gói Pro 1 tháng\",\n  \"userId\": \"673900d8ee2bcbc1cd3a9999\",\n  \"items\": [\n    {\n      \"name\": \"Gói Pro 1 tháng\",\n      \"quantity\": 1,\n      \"price\": 50000\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/vnpay/create_payment_url",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "vnpay", "create_payment_url"]
+        },
+        "description": "Tạo URL thanh toán VNPay. Response sẽ trả về paymentUrl để redirect user."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Get Order by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/vnpay/order/:orderId",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "vnpay", "order", ":orderId"],
+          "variable": [
+            {
+              "key": "orderId",
+              "value": "673abc123def456789",
+              "description": "Order ID từ MongoDB"
+            }
+          ]
+        },
+        "description": "Lấy thông tin chi tiết đơn hàng theo ID"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Get User Orders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/vnpay/orders/user/:userId?page=1&limit=20",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "vnpay", "orders", "user", ":userId"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Trang hiện tại"
+            },
+            {
+              "key": "limit",
+              "value": "20",
+              "description": "Số order mỗi trang"
+            },
+            {
+              "key": "status",
+              "value": "confirmed",
+              "disabled": true,
+              "description": "Filter theo status (optional)"
+            },
+            {
+              "key": "paymentStatus",
+              "value": "paid",
+              "disabled": true,
+              "description": "Filter theo paymentStatus (optional)"
+            }
+          ],
+          "variable": [
+            {
+              "key": "userId",
+              "value": "673900d8ee2bcbc1cd3a9999",
+              "description": "User ID"
+            }
+          ]
+        },
+        "description": "Lấy danh sách đơn hàng của user với phân trang"
+      },
+      "response": []
+    },
+    {
+      "name": "4. VNPay Return Callback (Manual Test)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/vnpay/return?vnp_Amount=5000000&vnp_BankCode=NCB&vnp_CardType=ATM&vnp_OrderInfo=Thanh+toan+don+hang+ORD20241117123456&vnp_ResponseCode=00&vnp_TmnCode=XEDZ32MY&vnp_TransactionNo=14402597&vnp_TxnRef=ORD20241117123456&vnp_SecureHash=abc123",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "vnpay", "return"],
+          "query": [
+            {
+              "key": "vnp_Amount",
+              "value": "5000000",
+              "description": "Số tiền x 100"
+            },
+            {
+              "key": "vnp_BankCode",
+              "value": "NCB"
+            },
+            {
+              "key": "vnp_CardType",
+              "value": "ATM"
+            },
+            {
+              "key": "vnp_OrderInfo",
+              "value": "Thanh+toan+don+hang+ORD20241117123456"
+            },
+            {
+              "key": "vnp_ResponseCode",
+              "value": "00",
+              "description": "00 = success"
+            },
+            {
+              "key": "vnp_TmnCode",
+              "value": "XEDZ32MY"
+            },
+            {
+              "key": "vnp_TransactionNo",
+              "value": "14402597"
+            },
+            {
+              "key": "vnp_TxnRef",
+              "value": "ORD20241117123456",
+              "description": "Order Ref"
+            },
+            {
+              "key": "vnp_SecureHash",
+              "value": "abc123",
+              "description": "Hash từ VNPay"
+            }
+          ]
+        },
+        "description": "Endpoint này thường được VNPay gọi tự động. Chỉ test manual để kiểm tra flow."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Test Create Payment - Multiple Scenarios",
+      "item": [
+        {
+          "name": "Small Amount (10k)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 10000,\n  \"orderDescription\": \"Test 10k VND\",\n  \"userId\": \"673900d8ee2bcbc1cd3a9999\",\n  \"items\": [{\"name\": \"Test Item\", \"quantity\": 1, \"price\": 10000}]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vnpay/create_payment_url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vnpay", "create_payment_url"]
+            }
+          }
+        },
+        {
+          "name": "Large Amount (1M)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1000000,\n  \"orderDescription\": \"Test 1 triệu VND\",\n  \"userId\": \"673900d8ee2bcbc1cd3a9999\",\n  \"items\": [{\"name\": \"Gói Premium\", \"quantity\": 1, \"price\": 1000000}]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vnpay/create_payment_url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vnpay", "create_payment_url"]
+            }
+          }
+        },
+        {
+          "name": "Multiple Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 150000,\n  \"orderDescription\": \"Mua nhiều sản phẩm\",\n  \"userId\": \"673900d8ee2bcbc1cd3a9999\",\n  \"items\": [\n    {\"name\": \"Sản phẩm A\", \"quantity\": 2, \"price\": 50000},\n    {\"name\": \"Sản phẩm B\", \"quantity\": 1, \"price\": 50000}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vnpay/create_payment_url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vnpay", "create_payment_url"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ]
+}
