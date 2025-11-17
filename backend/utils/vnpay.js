@@ -77,7 +77,7 @@ export function buildVNPayUrl({
   vnp_Params = sortObject(vnp_Params);
 
   // B3: Tạo chuỗi để ký
-  // Cho phép chuyển chế độ ký qua ENV: VNP_SIGN_MODE = RAW | ENCODED (mặc định ENCODED theo nhiều sample chính thức)
+  // Cho phép chuyển chế độ ký qua ENV: VNP_SIGN_MODE = RAW | ENCODED (mặc định RAW theo spec VNPay)
   const signMode = (process.env.VNP_SIGN_MODE || "RAW").toUpperCase();
   const signDataRaw = Object.keys(vnp_Params)
     .map((key) => `${key}=${vnp_Params[key]}`)
@@ -93,11 +93,10 @@ export function buildVNPayUrl({
     .join("&");
   const signData = signMode === "RAW" ? signDataRaw : signDataEncoded;
 
-  // B4: Hash (VNPay hỗ trợ cả SHA512 và SHA256 - thử SHA256 nếu SHA512 lỗi)
-  // Một số merchant sandbox chỉ dùng SHA256
-  const hashType = process.env.VNP_HASH_TYPE || "SHA512";
+  // B4: Hash (sử dụng ENV VNP_HASH_TYPE, mặc định SHA256 vì VNPay sandbox phổ biến dùng SHA256)
+  const hashType = (process.env.VNP_HASH_TYPE || "SHA256").toUpperCase();
   const hmac = crypto.createHmac(
-    hashType.toLowerCase() === "sha256" ? "sha256" : "sha512",
+    hashType === "SHA256" ? "sha256" : "sha512",
     VNP_HASH_SECRET
   );
   const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
@@ -154,55 +153,41 @@ export function verifyVNPayReturn(params) {
   let vnp_Params = { ...params };
 
   const receivedHash = vnp_Params.vnp_SecureHash;
-  // Capture hash type sent by VNPay (if any) - prefer that, otherwise fall back to env
   const receivedHashType = vnp_Params.vnp_SecureHashType;
-  delete vnp_Params.vnp_SecureHash;
-  delete vnp_Params.vnp_SecureHashType;
 
-  // Sort params (RAW values) per VNPay spec
+  // 🚨 QUAN TRỌNG: Xóa tất cả field không tham gia ký (VNPay có thể gửi các field khuyến mãi)
+  const excludeFields = [
+    "vnp_SecureHash",
+    "vnp_SecureHashType",
+    "vnp_PromotionCode",
+    "vnp_PromotionAmount",
+    "vnp_DiscountAmount",
+  ];
+  excludeFields.forEach((f) => delete vnp_Params[f]);
+
+  // Sort params (RAW values)
   vnp_Params = sortObject(vnp_Params);
-  const signDataRaw = Object.keys(vnp_Params)
+  const signData = Object.keys(vnp_Params)
     .map((key) => `${key}=${vnp_Params[key]}`)
     .join("&");
-  const signDataEncoded = Object.keys(vnp_Params)
-    .map(
-      (key) =>
-        `${key}=${encodeURIComponent(String(vnp_Params[key])).replace(
-          /%20/g,
-          "+"
-        )}`
-    )
-    .join("&");
 
-  // Use hash type from VNPay response when available, else environment default
-  const hashType = (
-    receivedHashType ||
-    process.env.VNP_HASH_TYPE ||
-    "SHA512"
-  ).toUpperCase();
+  // Sử dụng hash type từ ENV hoặc mặc định SHA256 (phổ biến trên sandbox)
+  const hashType = (process.env.VNP_HASH_TYPE || "SHA256").toUpperCase();
   const algo = hashType === "SHA256" ? "sha256" : "sha512";
-  const hmac1 = crypto.createHmac(algo, VNP_HASH_SECRET);
-  const checkHashRaw = hmac1
-    .update(Buffer.from(signDataRaw, "utf-8"))
-    .digest("hex");
-  const hmac2 = crypto.createHmac(algo, VNP_HASH_SECRET);
-  const checkHashEncoded = hmac2
-    .update(Buffer.from(signDataEncoded, "utf-8"))
+  const hmac = crypto.createHmac(algo, VNP_HASH_SECRET);
+  const computedHash = hmac
+    .update(Buffer.from(signData, "utf-8"))
     .digest("hex");
 
   const received = String(receivedHash || "").toLowerCase();
-  const computedRaw = String(checkHashRaw || "").toLowerCase();
-  const computedEncoded = String(checkHashEncoded || "").toLowerCase();
-
-  const ok = received === computedRaw || received === computedEncoded;
+  const computed = String(computedHash || "").toLowerCase();
+  const ok = received === computed;
 
   // Debug log
   if (process.env.NODE_ENV !== "production") {
     console.log("----- VNPay RETURN VERIFY DEBUG -----");
-    console.log("signData RAW:", signDataRaw);
-    console.log("computed hash RAW:", checkHashRaw);
-    console.log("signData ENCODED:", signDataEncoded);
-    console.log("computed hash ENCODED:", checkHashEncoded);
+    console.log("signData:", signData);
+    console.log("computed hash:", computedHash);
     console.log("received hash:", receivedHash);
     console.log("Match:", ok);
     console.log("-----------------------------");
@@ -212,7 +197,7 @@ export function verifyVNPayReturn(params) {
     const info = {
       time: new Date().toISOString(),
       received: receivedHash,
-      computed: checkHash,
+      computed: computedHash,
       signData,
       params: vnp_Params,
       env: {

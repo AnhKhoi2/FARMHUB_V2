@@ -184,7 +184,6 @@ console.log(`
 
 3. Test với URL này trên browser xem có lỗi gì:
 `);
-console.log(paymentUrl);
 
 console.log("\n========== SO SÁNH VỚI DOCS VNPAY ==========");
 console.log(`
