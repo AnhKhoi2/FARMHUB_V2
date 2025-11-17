@@ -70,6 +70,8 @@ import ExpertContent from "../pages/ExpertContent.jsx";
 import AIChatWidget from "../components/shared/AIChatWidget";
 import StreakScreen from "../pages/farmer/StreakScreen.jsx";
 import PlantCarePricing from "../pages/Subscription/PlantCarePricing";
+import PaymentSuccess from "../pages/Subscription/PaymentSuccess";
+import PaymentFailed from "../pages/Subscription/PaymentFailed";
 import { useLocation } from "react-router-dom";
 
 export default function AppRoutes() {
@@ -325,6 +327,8 @@ export default function AppRoutes() {
         <Route path="/experthome/models" element={<ExpertModels />} />
         <Route path="/experts" element={<ExpertsList />} />
         <Route path="/pricing" element={<PlantCarePricing />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/failed" element={<PaymentFailed />} />
         <Route path="/guides/:id" element={<GuideDetail />} />
         <Route
           path="/managerguides/trash"

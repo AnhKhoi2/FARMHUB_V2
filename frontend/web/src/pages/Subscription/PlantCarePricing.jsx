@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import "./PlantCarePricing.css";
+import vnpayService from "../../api/vnpayService";
 
 const plans = [
   {
@@ -55,8 +56,8 @@ const plans = [
 
 const PlantCarePricing = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [verified, setVerified] = useState(false);
-  const [countdown, setCountdown] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [currentPlan, setCurrentPlan] = useState("basic");
 
   const user = useSelector((s) => s.auth.user);
@@ -65,46 +66,75 @@ const PlantCarePricing = () => {
     if (user && user.plan) setCurrentPlan(user.plan);
   }, [user]);
 
-  useEffect(() => {
-    if (selectedPlan && !verified) {
-      if (selectedPlan === "basic") {
-        setVerified(true);
-        return;
-      }
+  const handleUpgrade = async (planKey) => {
+    // Nếu là gói basic (miễn phí), không cần thanh toán
+    if (planKey === "basic") {
+      alert("Bạn đang sử dụng gói miễn phí!");
+      return;
+    }
 
-      const timer = setInterval(() => setCountdown((p) => p - 1), 1000);
-      const autoVerify = setTimeout(() => {
-        setVerified(true);
-        alert("Xác thực thành công! Gói đã được kích hoạt.");
-      }, 10000);
+    // Kiểm tra user đã đăng nhập chưa
+    if (!user || !user._id) {
+      alert("Vui lòng đăng nhập để nâng cấp gói!");
+      return;
+    }
 
-      return () => {
-        clearInterval(timer);
-        clearTimeout(autoVerify);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const plan = plans.find((p) => p.key === planKey);
+
+      // Tạo payment URL từ VNPay
+      const paymentData = {
+        amount: plan.price,
+        orderDescription: `Nang cap goi ${plan.name}`,
+        userId: user._id,
+        items: [
+          {
+            itemType: "Subscription",
+            name: `Gói ${plan.name}`,
+            quantity: 1,
+            price: plan.price,
+          },
+        ],
       };
-    }
-  }, [selectedPlan, verified]);
 
-  useEffect(() => {
-    if (verified && selectedPlan) {
-      // update locally
-      setCurrentPlan(selectedPlan);
-      // TODO: call backend API to create payment / update user plan
-    }
-  }, [verified, selectedPlan]);
+      console.log("Creating payment for:", paymentData);
 
-  const handleUpgrade = (planKey) => {
-    setSelectedPlan(planKey);
-    setVerified(false);
-    setCountdown(10);
-    // Payment functionality removed - placeholder for future implementation
+      const response = await vnpayService.createPaymentUrl(paymentData);
+
+      if (response.code === "00" && response.paymentUrl) {
+        // Lưu thông tin plan vào localStorage để xử lý sau khi thanh toán
+        localStorage.setItem("pendingPlan", planKey);
+        localStorage.setItem("orderId", response.orderId);
+
+        // Redirect đến trang thanh toán VNPay
+        window.location.href = response.paymentUrl;
+      } else {
+        throw new Error(response.message || "Không thể tạo thanh toán");
+      }
+    } catch (err) {
+      console.error("Payment error:", err);
+      setError(err.message || "Có lỗi xảy ra khi tạo thanh toán");
+      alert("Lỗi: " + (err.message || "Không thể tạo thanh toán"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="pricing-page bg-dark text-white p-4">
       <div className="text-center mb-4">
         <h1 className="display-4 text-success">Nâng cấp gói của bạn</h1>
+        {!user && (
+          <p className="text-warning">
+            Vui lòng <Link to="/login">đăng nhập</Link> để nâng cấp gói
+          </p>
+        )}
       </div>
+
+      {error && <div className="alert alert-danger text-center">{error}</div>}
 
       <div className="plans-grid">
         {plans.map((plan) => (
@@ -122,13 +152,15 @@ const PlantCarePricing = () => {
             </p>
             <p className="desc">{plan.description}</p>
             <button
-              disabled={plan.key === currentPlan}
+              disabled={plan.key === currentPlan || loading || !user}
               onClick={() => handleUpgrade(plan.key)}
               className={`btn ${
                 plan.key === currentPlan ? "btn-disabled" : "btn-upgrade"
               }`}
             >
-              {plan.key === currentPlan
+              {loading
+                ? "Đang xử lý..."
+                : plan.key === currentPlan
                 ? "Gói hiện tại của bạn"
                 : plan.buttonText}
             </button>
@@ -141,27 +173,10 @@ const PlantCarePricing = () => {
         ))}
       </div>
 
-      {selectedPlan && selectedPlan !== "basic" && (
+      {loading && (
         <div className="checkout-panel">
-          <h4>
-            Thanh toán gói <strong>{selectedPlan}</strong>
-          </h4>
-          <div className="qr-placeholder">[QR CODE]</div>
-          {!verified ? (
-            <>
-              <p>({countdown}s sẽ tự động xác thực sau thanh toán)</p>
-              <button
-                className="btn back"
-                onClick={() => setSelectedPlan(null)}
-              >
-                Quay lại
-              </button>
-            </>
-          ) : (
-            <div className="text-success">
-              ✅ Gói {selectedPlan} đã được kích hoạt!
-            </div>
-          )}
+          <h4>Đang tạo thanh toán...</h4>
+          <p>Vui lòng đợi, bạn sẽ được chuyển đến trang thanh toán VNPay</p>
         </div>
       )}
     </div>
