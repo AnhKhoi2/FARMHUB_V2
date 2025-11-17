@@ -5,7 +5,7 @@ import { MessageCircle, Star, BadgeCheck, Search } from "lucide-react";
 import axiosClient from "../../api/shared/axiosClient";
 import "../../css/ExpertsList.css";
 
-// ⬇️ Chat widget
+// ⬇️ Widget trò chuyện
 import ChatWidget from "./ChatWidget";
 import Header from "../../components/shared/Header";
 
@@ -16,7 +16,7 @@ const placeholderAvatar = (seed) =>
     seed || "expert"
   )}`;
 
-// ---------- Star UI ----------
+// ---------- UI ngôi sao đánh giá ----------
 function StarRow({ value = 0, onSelect, canRate }) {
   const [hover, setHover] = useState(0);
   const v = hover || value;
@@ -30,7 +30,7 @@ function StarRow({ value = 0, onSelect, canRate }) {
           onMouseEnter={() => canRate && setHover(n)}
           onMouseLeave={() => canRate && setHover(0)}
           onClick={() => canRate && onSelect?.(n)}
-          aria-label={`Rate ${n}`}
+          aria-label={`Đánh giá ${n} sao`}
           title={canRate ? `Đánh giá ${n} sao` : `${value} sao`}
           style={{
             background: "transparent",
@@ -69,7 +69,7 @@ function ExpertCard({ expert, myScore, onRate, onChat }) {
       <div className="ex-thumb">
         <img src={avatar} alt={expert.full_name} />
         {expert.review_status === "approved" && (
-          <span className="ex-badge" title="Approved expert">
+          <span className="ex-badge" title="Chuyên gia đã được duyệt">
             <BadgeCheck size={18} />
           </span>
         )}
@@ -96,7 +96,9 @@ function ExpertCard({ expert, myScore, onRate, onChat }) {
             <span className="ex-sub"> ({expert.total_reviews || 0})</span>
           </span>
           <span className="ex-dot">•</span>
-          <span className="ex-kpi">{expert.experience_years || 0} yrs</span>
+          <span className="ex-kpi">
+            {expert.experience_years || 0} năm kinh nghiệm
+          </span>
         </div>
       </div>
 
@@ -105,11 +107,11 @@ function ExpertCard({ expert, myScore, onRate, onChat }) {
           type="button"
           className="ex-btn"
           onClick={() => onChat?.(expert)}
-          aria-label={`Chat with ${expert.full_name}`}
-          title="Chat"
+          aria-label={`Trò chuyện với ${expert.full_name}`}
+          title="Trò chuyện"
         >
           <MessageCircle size={18} />
-          <span>Chat</span>
+          <span>Trò chuyện</span>
         </button>
       </div>
     </div>
@@ -126,7 +128,7 @@ export default function ExpertsList() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatPeer, setChatPeer] = useState(null); // payload truyền cho ChatWidget
 
-  // fetch experts
+  // Lấy danh sách chuyên gia
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -137,7 +139,7 @@ export default function ExpertsList() {
         if (!cancelled) setExperts(Array.isArray(items) ? items : []);
       } catch (e) {
         if (!cancelled) setExperts([]);
-        console.error("Fetch experts failed:", e);
+        console.error("Lỗi tải danh sách chuyên gia:", e);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -147,7 +149,7 @@ export default function ExpertsList() {
     };
   }, []);
 
-  // fetch my ratings
+  // Lấy đánh giá của tôi
   useEffect(() => {
     let cancelled = false;
     async function fetchMine() {
@@ -188,7 +190,7 @@ export default function ExpertsList() {
     });
   }, [q, experts]);
 
-  // rate
+  // Gửi đánh giá
   const handleRate = async (expert, score) => {
     const id = expert.expert_id || expert._id;
     if (!id) return;
@@ -213,12 +215,14 @@ export default function ExpertsList() {
       const code = e?.response?.status;
       const msg =
         e?.response?.data?.error ||
-        (code === 409 ? "Bạn đã đánh giá chuyên gia này rồi" : "Đánh giá thất bại");
+        (code === 409
+          ? "Bạn đã đánh giá chuyên gia này rồi"
+          : "Đánh giá thất bại");
       alert(msg);
     }
   };
 
-  // ✅ mở chat với expert được chọn (truyền payload đúng chuẩn ChatWidget/BE)
+  // ✅ Mở chat với chuyên gia được chọn (truyền payload đúng chuẩn ChatWidget/BE)
   const handleChat = (expert) => {
     // expertId có thể là UUID (expert.expert_id) hoặc ObjectId (expert._id)
     const expertId = expert.expert_id || expert._id || null;
@@ -228,7 +232,7 @@ export default function ExpertsList() {
       return;
     }
 
-    // (tuỳ chọn) avatar để widget hiển thị tạm thời trước khi load conv xong
+    // (tuỳ chọn) avatar để widget hiển thị tạm thời trước khi load cuộc trò chuyện
     const avatar =
       (expert?.user?.avatar && String(expert.user.avatar).trim()) ||
       placeholderAvatar(
@@ -241,10 +245,10 @@ export default function ExpertsList() {
 
     // payload FE → ChatWidget.openWith: chỉ cần expertId
     const payload = {
-      expertId,     // ⬅️ ChatWidget sẽ gửi { expertId } cho /api/chat/open (role=user)
-      expert,       // ⬅️ đính kèm để ChatWidget có thể fallback lấy id khác nếu cần
+      expertId, // ⬅️ ChatWidget sẽ gửi { expertId } cho /api/chat/open (role=user)
+      expert, // ⬅️ đính kèm để ChatWidget có thể fallback lấy id khác nếu cần
       avatar,
-      name: expert.full_name || "Expert",
+      name: expert.full_name || "Chuyên gia",
     };
 
     // Quan trọng: set payload trước, rồi mở widget (tránh race)
@@ -257,8 +261,11 @@ export default function ExpertsList() {
     <Header/>
     <div className="ex-page user-expert-page">
       <div className="ex-hero">
-        <h1>Experts</h1>
-        <p>Find trusted agricultural experts and start a conversation.</p>
+        <h1>Chuyên gia</h1>
+        <p>
+          Kết nối với các chuyên gia nông nghiệp uy tín và bắt đầu trò chuyện
+          ngay.
+        </p>
       </div>
 
       <div className="ex-toolbar">
@@ -267,16 +274,16 @@ export default function ExpertsList() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by name, expertise..."
-            aria-label="Search experts"
+            placeholder="Tìm theo tên, lĩnh vực chuyên môn..."
+            aria-label="Tìm kiếm chuyên gia"
           />
         </div>
       </div>
 
       {loading ? (
-        <div className="ex-empty">Loading experts…</div>
+        <div className="ex-empty">Đang tải danh sách chuyên gia…</div>
       ) : filtered.length === 0 ? (
-        <div className="ex-empty">No experts found.</div>
+        <div className="ex-empty">Không tìm thấy chuyên gia nào.</div>
       ) : (
         <div className="ex-grid">
           {filtered.map((ex) => {
@@ -297,7 +304,7 @@ export default function ExpertsList() {
       {/* ChatWidget gắn ở cuối trang để overlay */}
       <ChatWidget
         open={chatOpen}
-        onClose={(v) => setChatOpen(Boolean(v))} 
+        onClose={(v) => setChatOpen(Boolean(v))}
         initialOpenPayload={chatPeer} // ⬅️ đúng prop ChatWidget đang nhận
       />
     </div></>
