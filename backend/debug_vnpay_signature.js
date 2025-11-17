@@ -71,37 +71,80 @@ sortedKeys.forEach((key) => {
 console.log("\n2. PARAMS (đã sort theo alphabet):");
 console.log(JSON.stringify(sortedParams, null, 2));
 
-// Build signData
-const signData = sortedKeys.map((k) => `${k}=${sortedParams[k]}`).join("&");
-
-console.log("\n3. SIGN DATA (chuỗi dùng để hash):");
-console.log(signData);
-console.log("\nLength:", signData.length);
-
-// Hash SHA512
-const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
-const vnp_SecureHash = hmac
-  .update(Buffer.from(signData, "utf-8"))
-  .digest("hex");
-
-console.log("\n4. SECURE HASH (SHA512):");
-console.log(vnp_SecureHash);
-console.log("Length:", vnp_SecureHash.length);
-
-// Build final URL
-sortedParams.vnp_SecureHash = vnp_SecureHash;
-
-const urlParams = Object.keys(sortedParams)
+// Build signData RAW & ENCODED
+const signDataRaw = sortedKeys.map((k) => `${k}=${sortedParams[k]}`).join("&");
+const signDataEncoded = sortedKeys
   .map(
-    (key) =>
-      `${key}=${encodeURIComponent(sortedParams[key]).replace(/%20/g, "+")}`
+    (k) =>
+      `${k}=${encodeURIComponent(String(sortedParams[k])).replace(/%20/g, "+")}`
   )
   .join("&");
 
-const paymentUrl = VNP_URL + "?" + urlParams;
+console.log("\n3. SIGN DATA VARIANTS:");
+console.log("RAW:     ", signDataRaw);
+console.log("ENCODED: ", signDataEncoded);
 
-console.log("\n5. FINAL PAYMENT URL:");
-console.log(paymentUrl);
+// Hash using both algorithms for both variants
+const h = (algo, data) =>
+  crypto
+    .createHmac(algo, VNP_HASH_SECRET)
+    .update(Buffer.from(data, "utf-8"))
+    .digest("hex");
+
+const hashes = {
+  sha512_raw: h("sha512", signDataRaw),
+  sha512_encoded: h("sha512", signDataEncoded),
+  sha256_raw: h("sha256", signDataRaw),
+  sha256_encoded: h("sha256", signDataEncoded),
+};
+
+console.log("\n4. SECURE HASH VARIANTS:");
+console.log(
+  "SHA512 RAW:     ",
+  hashes.sha512_raw,
+  `(len=${hashes.sha512_raw.length})`
+);
+console.log(
+  "SHA512 ENCODED: ",
+  hashes.sha512_encoded,
+  `(len=${hashes.sha512_encoded.length})`
+);
+console.log(
+  "SHA256 RAW:     ",
+  hashes.sha256_raw,
+  `(len=${hashes.sha256_raw.length})`
+);
+console.log(
+  "SHA256 ENCODED: ",
+  hashes.sha256_encoded,
+  `(len=${hashes.sha256_encoded.length})`
+);
+
+// Build final URLs for each combination
+const withHash = (hash) => ({ ...sortedParams, vnp_SecureHash: hash });
+const withRawSHA512 = withHash(hashes.sha512_raw);
+const withEncSHA512 = withHash(hashes.sha512_encoded);
+const withRawSHA256 = withHash(hashes.sha256_raw);
+const withEncSHA256 = withHash(hashes.sha256_encoded);
+
+const toQuery = (obj) =>
+  Object.keys(obj)
+    .map(
+      (key) =>
+        `${key}=${encodeURIComponent(String(obj[key])).replace(/%20/g, "+")}`
+    )
+    .join("&");
+
+const urlRawSHA512 = VNP_URL + "?" + toQuery(withRawSHA512);
+const urlEncSHA512 = VNP_URL + "?" + toQuery(withEncSHA512);
+const urlRawSHA256 = VNP_URL + "?" + toQuery(withRawSHA256);
+const urlEncSHA256 = VNP_URL + "?" + toQuery(withEncSHA256);
+
+console.log("\n5. FINAL PAYMENT URL CANDIDATES:");
+console.log("RAW + SHA512:     ", urlRawSHA512);
+console.log("ENCODED + SHA512: ", urlEncSHA512);
+console.log("RAW + SHA256:     ", urlRawSHA256);
+console.log("ENCODED + SHA256: ", urlEncSHA256);
 
 console.log("\n========== CHECK THEO DOCS VNPAY ==========");
 
@@ -151,8 +194,11 @@ key1=value1&key2=value2&key3=value3
 VÍ DỤ từ docs:
 vnp_Amount=1000000&vnp_BankCode=NCB&vnp_Command=pay&...
 
-So sánh với signData của bạn:
-${signData.substring(0, 100)}...
+So sánh với signData của bạn (RAW):
+${signDataRaw.substring(0, 100)}...
+
+Và (ENCODED):
+${signDataEncoded.substring(0, 100)}...
 
 Nếu format đúng → lỗi ở HASH_SECRET
 Nếu format sai → lỗi ở cách build signData
