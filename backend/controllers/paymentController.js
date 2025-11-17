@@ -229,7 +229,15 @@ export const paymentController = {
           message: `plan is required (${Object.keys(PLAN_PRICES).join("|")})`,
         });
 
-      const amount = Number(rawAmount) || PLAN_PRICES[plan] || 10000;
+      // Always use server-side price for security (ignore amount from FE)
+      const amount = PLAN_PRICES[plan];
+      if (!amount) {
+        return res.status(500).json({
+          code: 1,
+          message: "Plan price not configured",
+        });
+      }
+
       const txnRef = new mongoose.Types.ObjectId().toString();
 
       const payment = await Payment.create({

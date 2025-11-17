@@ -22,7 +22,7 @@ const plans = [
   {
     key: "smart",
     name: "Thông Minh",
-    price: 69000,
+    price: 99000,
     unit: "VNĐ/tháng",
     description: "Tự động hóa việc chăm sóc với công nghệ AI",
     features: [
@@ -38,7 +38,7 @@ const plans = [
   {
     key: "pro",
     name: "Chuyên Gia",
-    price: 149000,
+    price: 199000,
     unit: "VNĐ/tháng",
     description: "Toàn quyền truy cập, hỗ trợ chuyên sâu và thương mại",
     features: [
@@ -116,7 +116,7 @@ const PlantCarePricing = () => {
       // create payment on backend
       const body = {
         plan: planKey,
-        amount: plans.find((p) => p.key === planKey)?.price || 0,
+        // amount is determined by backend for security
         baseUrl: window.location.origin,
       };
 

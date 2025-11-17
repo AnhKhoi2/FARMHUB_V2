@@ -15,12 +15,12 @@ const VNP_RETURN_URL = (
   `http://localhost:${process.env.PORT || 5000}/api/payment/vnpay/return`
 ).trim();
 
-// Helper: sort và encode params chuẩn VNPay
+// Helper: sort params theo thứ tự alphabet (KHÔNG encode - VNPay yêu cầu hash RAW values)
 function sortObject(obj) {
   const sorted = {};
   const keys = Object.keys(obj).sort();
   for (const key of keys) {
-    sorted[key] = encodeURIComponent(obj[key]).replace(/%20/g, "+");
+    sorted[key] = obj[key]; // GIỮ NGUYÊN giá trị, KHÔNG encode
   }
   return sorted;
 }
@@ -76,8 +76,10 @@ export function buildVNPayUrl({
   // B2: Sort & encode chuẩn
   vnp_Params = sortObject(vnp_Params);
 
-  // B3: Tạo chuỗi để ký (RAW values sau khi encode)
-  const signData = qs.stringify(vnp_Params, { encode: false });
+  // B3: Tạo chuỗi để ký (key=value&key=value... - RAW values)
+  const signData = Object.keys(vnp_Params)
+    .map((key) => `${key}=${vnp_Params[key]}`)
+    .join("&");
 
   // B4: Hash SHA512
   const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
@@ -87,9 +89,16 @@ export function buildVNPayUrl({
   vnp_Params["vnp_SecureHashType"] = "SHA512";
   vnp_Params["vnp_SecureHash"] = signed;
 
-  // B6: Tạo URL thanh toán
+  // B6: Tạo URL thanh toán (encode URL-safe)
   const paymentUrl =
-    VNP_URL + "?" + qs.stringify(vnp_Params, { encode: false });
+    VNP_URL +
+    "?" +
+    Object.keys(vnp_Params)
+      .map(
+        (key) =>
+          `${key}=${encodeURIComponent(vnp_Params[key]).replace(/%20/g, "+")}`
+      )
+      .join("&");
 
   // Debug log in non-production
   if (process.env.NODE_ENV !== "production") {
@@ -115,7 +124,9 @@ export function verifyVNPayReturn(params) {
 
   // Sort & encode params chuẩn VNPay
   vnp_Params = sortObject(vnp_Params);
-  const signData = qs.stringify(vnp_Params, { encode: false });
+  const signData = Object.keys(vnp_Params)
+    .map((key) => `${key}=${vnp_Params[key]}`)
+    .join("&");
 
   const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
   const checkHash = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
