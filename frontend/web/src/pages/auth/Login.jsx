@@ -17,7 +17,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const { status, error } = useSelector((s) => s.auth);
   const loading = status === "loading";
@@ -60,11 +60,11 @@ const Login = () => {
   const handleLogin = async (e) => {
   e.preventDefault();
 
-  const cleanedUsername = username.trim();
+  const cleanedIdentifier = emailOrUsername.trim();
 
   const result = await dispatch(
     loginThunk({
-      username: cleanedUsername,   // 👈 CHỈ GỬI USERNAME
+      emailOrUsername: cleanedIdentifier, // send as `emailOrUsername` to match API
       password,
     })
   );
@@ -119,10 +119,10 @@ const Login = () => {
               <input
                 type="text"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={emailOrUsername}
+                onChange={(e) => setEmailOrUsername(e.target.value)}
               />
-              <label>Username</label>
+              <label>Email or Username</label>
             </div>
 
             <div className="input-box">
