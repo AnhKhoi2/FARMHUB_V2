@@ -81,12 +81,17 @@ export function buildVNPayUrl({
     .map((key) => `${key}=${vnp_Params[key]}`)
     .join("&");
 
-  // B4: Hash SHA512
-  const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
+  // B4: Hash (VNPay hỗ trợ cả SHA512 và SHA256 - thử SHA256 nếu SHA512 lỗi)
+  // Một số merchant sandbox chỉ dùng SHA256
+  const hashType = process.env.VNP_HASH_TYPE || "SHA512";
+  const hmac = crypto.createHmac(
+    hashType.toLowerCase() === "sha256" ? "sha256" : "sha512",
+    VNP_HASH_SECRET
+  );
   const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
   // B5: Gắn hash type và hash
-  vnp_Params["vnp_SecureHashType"] = "SHA512";
+  vnp_Params["vnp_SecureHashType"] = hashType;
   vnp_Params["vnp_SecureHash"] = signed;
 
   // B6: Tạo URL thanh toán (encode URL-safe)
@@ -102,14 +107,27 @@ export function buildVNPayUrl({
 
   // Debug log in non-production
   if (process.env.NODE_ENV !== "production") {
-    console.log("----- VNPay BUILD URL DEBUG START -----");
-    console.log("vnp_Params (sorted & encoded):", vnp_Params);
-    console.log("signData (to hash):", signData);
-    console.log("computed vnp_SecureHash:", signed);
-    console.log("paymentUrl:", paymentUrl);
+    console.log("\n----- VNPay BUILD URL DEBUG START -----");
+    console.log("Hash Type:", hashType);
     console.log("VNP_TMN_CODE:", VNP_TMN_CODE);
+    console.log(
+      "VNP_HASH_SECRET:",
+      VNP_HASH_SECRET
+        ? `${VNP_HASH_SECRET.substring(0, 4)}...${VNP_HASH_SECRET.substring(
+            VNP_HASH_SECRET.length - 4
+          )}`
+        : "EMPTY"
+    );
     console.log("VNP_HASH_SECRET length:", VNP_HASH_SECRET.length);
-    console.log("----- VNPay BUILD URL DEBUG END -----");
+    console.log("\nParams to sign:");
+    console.log(JSON.stringify(vnp_Params, null, 2));
+    console.log("\nSignData (RAW):");
+    console.log(signData);
+    console.log("\nComputed Hash:");
+    console.log(signed);
+    console.log("\nFull Payment URL:");
+    console.log(paymentUrl);
+    console.log("----- VNPay BUILD URL DEBUG END -----\n");
   }
 
   return paymentUrl;
@@ -119,16 +137,25 @@ export function verifyVNPayReturn(params) {
   let vnp_Params = { ...params };
 
   const receivedHash = vnp_Params.vnp_SecureHash;
+  // Capture hash type sent by VNPay (if any) - prefer that, otherwise fall back to env
+  const receivedHashType = vnp_Params.vnp_SecureHashType;
   delete vnp_Params.vnp_SecureHash;
   delete vnp_Params.vnp_SecureHashType;
 
-  // Sort & encode params chuẩn VNPay
+  // Sort params (RAW values) per VNPay spec
   vnp_Params = sortObject(vnp_Params);
   const signData = Object.keys(vnp_Params)
     .map((key) => `${key}=${vnp_Params[key]}`)
     .join("&");
 
-  const hmac = crypto.createHmac("sha512", VNP_HASH_SECRET);
+  // Use hash type from VNPay response when available, else environment default
+  const hashType = (
+    receivedHashType ||
+    process.env.VNP_HASH_TYPE ||
+    "SHA512"
+  ).toUpperCase();
+  const algo = hashType === "SHA256" ? "sha256" : "sha512";
+  const hmac = crypto.createHmac(algo, VNP_HASH_SECRET);
   const checkHash = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
   const received = String(receivedHash || "").toLowerCase();
