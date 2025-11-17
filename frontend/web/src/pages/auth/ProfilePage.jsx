@@ -374,6 +374,8 @@ export default function ProfilePage() {
 
   const isDirty = useMemo(() => {
     try {
+      // consider a pending avatar file as a change as well
+      if (pendingAvatarFile) return true;
       return JSON.stringify(form || {}) !== JSON.stringify(snapshot || {});
     } catch {
       return true;
@@ -477,9 +479,8 @@ export default function ProfilePage() {
       if (pendingAvatarFile) {
         const fd = new FormData();
         fd.append("image", pendingAvatarFile);
-        const res = await axiosClient.post("/api/upload", fd, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        // Let axios set the Content-Type including boundary
+        const res = await axiosClient.post("/api/upload", fd);
         const url = res?.data?.data?.url || res?.data?.url;
         if (!url) throw new Error("Upload avatar thất bại");
         // make absolute if needed
@@ -858,7 +859,7 @@ export default function ProfilePage() {
                     disabled={saving || !isDirty}
                     className="agri-btn-primary disabled:opacity-60"
                   >
-                    {saving ? "Đang lưu…" : !isDirty ? "Không có thay đổi" : "💾 Lưu thay đổi"}
+                    {saving ? "Đang lưu…" : "💾 Lưu thay đổi"}
                   </button>
 
                   <button

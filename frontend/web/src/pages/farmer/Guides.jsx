@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import guidesApi from "../../api/shared/guidesApi";
-import { Card, Row, Col, Typography, Spin, message, Input } from "antd";
+import { Card, Row, Col, Typography, Spin, message, Input, Pagination } from "antd";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/Header";
 
@@ -10,14 +10,37 @@ export default function Guides() {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [total, setTotal] = useState(0);
 
-  const fetchGuides = async (search = "") => {
+  const fetchGuides = async (search = "", pageParam = 1, limitParam = pageSize) => {
     setLoading(true);
     try {
-      const res = await guidesApi.getAllGuides({ q: search, limit: 50 });
-      const data = res?.data?.data || res?.data || [];
-      const list = Array.isArray(data) ? data : data.items || data.docs || [];
-      setGuides(list);
+      const res = await guidesApi.getAllGuides({ q: search, page: pageParam, limit: limitParam });
+      const payload = res?.data?.data || res?.data || {};
+
+      let items = [];
+      let totalCount = 0;
+
+      if (Array.isArray(payload)) {
+        items = payload;
+        totalCount = payload.length;
+      } else if (payload.docs) {
+        items = payload.docs;
+        totalCount = payload.totalDocs || payload.total || items.length;
+      } else if (payload.items) {
+        items = payload.items;
+        totalCount = payload.total || items.length;
+      } else if (payload.items === undefined && payload.docs === undefined) {
+        const maybeItems = payload.items || payload.data || [];
+        items = Array.isArray(maybeItems) ? maybeItems : [];
+        totalCount = payload.total || items.length;
+      }
+
+      setGuides(items);
+      setTotal(Number(totalCount) || 0);
+      setPage(Number(pageParam));
     } catch (err) {
       console.error("Failed to load guides", err);
       message.error("Không thể tải hướng dẫn");
@@ -27,12 +50,19 @@ export default function Guides() {
   };
 
   useEffect(() => {
-    fetchGuides();
+    fetchGuides(q, 1, pageSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onSearch = (val) => {
     setQ(val);
-    fetchGuides(val);
+    fetchGuides(val, 1, pageSize);
+  };
+
+  const onPageChange = (p, pSize) => {
+    setPage(p);
+    setPageSize(pSize);
+    fetchGuides(q, p, pSize);
   };
 
   return (
@@ -97,6 +127,19 @@ export default function Guides() {
                 </Link>
               </Col>
             ))}
+
+            {total > 0 && (
+              <Col span={24} style={{ textAlign: 'center', marginTop: 12 }}>
+                <Pagination
+                  current={page}
+                  pageSize={pageSize}
+                  total={total}
+                  showQuickJumper
+                  onChange={onPageChange}
+                  style={{ display: 'inline-block' }}
+                />
+              </Col>
+            )}
           </Row>
         )}
       </div>

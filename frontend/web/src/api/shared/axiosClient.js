@@ -27,6 +27,16 @@ axiosClient.interceptors.request.use((config) => {
   if (token && !isPublicAuth) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // If sending FormData, remove default JSON content-type so browser/axios can set multipart boundary
+  try {
+    if (config.data instanceof FormData) {
+      if (config.headers && config.headers['Content-Type']) {
+        delete config.headers['Content-Type'];
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
   return config;
 });
 

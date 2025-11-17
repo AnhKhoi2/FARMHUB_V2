@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../../redux/authSlice";
+import { logoutThunk } from "../../redux/authThunks";
 import {
   FaClock,
   FaLeaf,
@@ -417,7 +417,7 @@ const Home = () => {
                 </h5>
                 <p className="text-muted">Chào mừng bạn trở lại với FarmHub</p>
                 <button
-                  onClick={() => dispatch(logout())}
+                  onClick={() => dispatch(logoutThunk())}
                   className="btn btn-outline-danger"
                 >
                   Đăng xuất

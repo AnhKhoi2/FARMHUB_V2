@@ -8,10 +8,30 @@ export const loginThunk = (credentials) => async (dispatch) => {
     dispatch(loginStart());
     const res = await authApi.loginApi(credentials);
 
-    // BE có thể trả { success, data: { user, accessToken } }
-    // hoặc { user, accessToken } trực tiếp
-    const payload = res?.data?.data || res?.data || {};
-    const { user, accessToken } = payload;
+    // BE có thể trả nhiều dạng: { data: { user, accessToken } } hoặc { user, accessToken }
+    // Hãy parse một cách an toàn và log role để debug nếu cần.
+    const data = res?.data;
+    let user = null;
+    let accessToken = null;
+    if (data) {
+      if (data.data) {
+        user = data.data.user ?? data.data;
+        accessToken = data.data.accessToken ?? data.data.token ?? null;
+      } else {
+        user = data.user ?? data;
+        accessToken = data.accessToken ?? data.token ?? null;
+      }
+    }
+
+    // Sanity: if payload nested unexpectedly (e.g., user.user)
+    if (user && user.user) user = user.user;
+
+    // Debug log (dev only)
+    try {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[auth] login response user role:", user?.role, "user:", user);
+      }
+    } catch (e) {}
 
     if (!user || !accessToken) {
       throw new Error("Phản hồi đăng nhập không hợp lệ từ server");
@@ -19,10 +39,11 @@ export const loginThunk = (credentials) => async (dispatch) => {
 
     dispatch(loginSuccess({ user, accessToken }));
 
+    // Persist an toàn
     localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("accessToken", accessToken);
+    if (accessToken) localStorage.setItem("accessToken", accessToken);
 
-    return { success: true, role: user.role };
+    return { success: true, role: user?.role };
   } catch (err) {
     console.error("Login error:", err?.response?.data || err);
 
@@ -57,7 +78,15 @@ export const loginThunk = (credentials) => async (dispatch) => {
 };
 
 // các thunk khác giữ nguyên...
-export const logoutThunk = () => (dispatch) => {
+export const logoutThunk = () => async (dispatch) => {
+  try {
+    // Attempt server-side logout to clear refresh cookie
+    await authApi.logout();
+  } catch (err) {
+    // ignore network errors but continue to clear client state
+    console.warn("logout API failed:", err?.response?.data || err?.message || err);
+  }
+
   dispatch(logout());
   localStorage.removeItem("user");
   localStorage.removeItem("accessToken");

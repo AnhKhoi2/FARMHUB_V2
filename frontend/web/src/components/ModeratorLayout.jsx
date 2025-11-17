@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { logout } from "../redux/authSlice";
+import { logoutThunk } from "../redux/authThunks";
 import { FaHome, FaClipboardList, FaFlag, FaSignOutAlt } from "react-icons/fa";
 
 const STORAGE_KEY = "moderatorSidebarCollapsed";
@@ -33,7 +33,7 @@ export default function ModeratorLayout({ children }) {
 	};
 
 	const doLogout = () => {
-		dispatch(logout());
+		dispatch(logoutThunk());
 		navigate("/login");
 	};
 

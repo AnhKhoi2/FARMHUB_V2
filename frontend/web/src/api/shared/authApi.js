@@ -2,8 +2,10 @@
 import axiosClient from "./axiosClient";
 
 const authApi = {
-  loginApi({ emailOrUsername, password }) {
-    // ✅ chỉ gửi đúng 2 trường backend yêu cầu
+  loginApi(payload) {
+    // Accept either { emailOrUsername, password } or { username, password }
+    const emailOrUsername = payload?.emailOrUsername || payload?.username || payload?.email || "";
+    const password = payload?.password;
     return axiosClient.post("/auth/login", { emailOrUsername, password });
   },
 
