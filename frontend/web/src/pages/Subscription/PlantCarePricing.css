@@ -1,0 +1,86 @@
+.pricing-page {
+    min-height: 80vh;
+}
+
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.plan-card {
+    background: #111;
+    border: 1px solid #2c2c2c;
+    padding: 1.25rem;
+    border-radius: 8px;
+    position: relative;
+}
+
+.plan-card.current {
+    box-shadow: 0 4px 18px rgba(0, 128, 0, 0.15);
+    border-color: #28a745;
+}
+
+.badge-popular {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #28a745;
+    color: #050505;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: 700
+}
+
+.features {
+    margin-top: 0.75rem;
+    color: #ddd
+}
+
+.btn-upgrade {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 999px
+}
+
+.btn-disabled {
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 999px
+}
+
+.checkout-panel {
+    margin-top: 1.25rem;
+    background: #0b2b0b;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #163a16
+}
+
+.qr-placeholder {
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.75rem auto
+}
+
+.back {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #ccc;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px
+}

@@ -1132,6 +1132,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                     <option value="every_2_days">2 ngày/lần</option>
                     <option value="every_3_days">3 ngày/lần</option>
                     <option value="weekly">Hàng tuần</option>
+                    <option value="once">Một lần (chỉ xuất hiện 1 lần)</option>
                   </select>
                 </div>
 
