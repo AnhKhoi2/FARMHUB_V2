@@ -40,6 +40,7 @@ import weatherRoute from './routes/weather_v2.js';
 import airRoute from './routes/air.js';
 import tilesRoute from './routes/tiles.js';
 import plantRoute from './routes/plant.js';
+import AppError from './utils/AppError.js';
 const PORT = process.env.PORT || 5000;
 
 const app = express();
