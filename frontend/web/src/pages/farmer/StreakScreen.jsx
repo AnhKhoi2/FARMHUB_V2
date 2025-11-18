@@ -30,15 +30,23 @@ const streakLevels = [
 
 export default function StreakScreen() {
   const [streakInfo, setStreakInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
   const currentRef = useRef(null);
   const user = useSelector((state) => state.auth.user);
 
   const fetchStreak = async () => {
+    setLoading(true);
     try {
       const res = await axiosClient.get("/admin/streaks/me");
-      setStreakInfo(res.data.data.item);
-    } catch {
+      // backend trả { item: null } nếu chưa có bản ghi — chuyển về giá trị mặc định
+      const item = res?.data?.data?.item ?? { current_streak: 0, max_streak: 0 };
+      setStreakInfo(item);
+    } catch (err) {
       message.error("Không tải được streak.");
+      // đảm bảo component không bị treo ở trạng thái loading
+      setStreakInfo({ current_streak: 0, max_streak: 0 });
+    } finally {
+      setLoading(false);
     }
   };
   // write switch case for streak levels them hinh
@@ -81,9 +89,10 @@ export default function StreakScreen() {
     }
   }, [streakInfo]);
 
-  if (!streakInfo) return <Text>Đang tải...</Text>;
+  if (loading) return <Text>Đang tải...</Text>;
 
-  const currentStreak = streakInfo.current_streak;
+
+  const currentStreak = Number(streakInfo.current_streak || 0);
   const maxStreak = streakLevels[streakLevels.length - 1].point;
   const currentLevel =
     streakLevels.filter((lv) => lv.point <= currentStreak).slice(-1)[0] ||
@@ -145,7 +154,7 @@ export default function StreakScreen() {
             color: "#333",
           }}
         >
-          {user.username.toUpperCase()}, bạn đã duy trì chuỗi siêng năng được{" "}
+          {user?.username ? user.username.toUpperCase() : "Bạn"}, bạn đã duy trì chuỗi siêng năng được{" "}
           <strong>{currentStreak} ngày</strong> liên tiếp! Hãy tiếp tục phát huy
           nhé!
         </div>

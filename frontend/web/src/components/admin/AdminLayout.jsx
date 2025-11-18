@@ -1,14 +1,14 @@
 import React from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { logout } from "../../redux/authSlice";
+import { logoutThunk } from "../../redux/authThunks";
 
 export default function AdminLayout({ children }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const doLogout = () => {
-    dispatch(logout());
+    dispatch(logoutThunk());
     navigate("/login");
   };
 

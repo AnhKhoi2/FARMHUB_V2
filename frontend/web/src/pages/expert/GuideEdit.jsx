@@ -146,14 +146,17 @@ export default function GuideEdit() {
   const onSubmit = async () => {
     setSaving(true);
     try {
-      const form = new FormData();
+    const form = new FormData();
       form.append("title", title);
       form.append("description", description);
       if (file) form.append("image", file);
       const stepsPayload = steps.map((s) => ({
         title: s.title,
         text: s.text,
-        image: s.imagePreview,
+        // If a new file is provided for this step, omit the image field
+        // so backend will prefer the uploaded file. Only include image
+        // when there's an existing URL (editing existing guide without new file).
+        image: s.file ? undefined : s.imagePreview || undefined,
       }));
       form.append("steps", JSON.stringify(stepsPayload));
       steps.forEach((s, idx) => {
@@ -161,22 +164,41 @@ export default function GuideEdit() {
       });
       form.append("plantTags", JSON.stringify(plantTags));
 
+      // Dev debug: list FormData entries so we can confirm fields/files
+      try {
+        // Only in development, guard to avoid verbose logs in production
+        if (process.env.NODE_ENV !== "production") {
+          console.groupCollapsed("[debug] Guide FormData contents");
+          for (const pair of form.entries()) {
+            // pair[1] may be File object; log name/type for clarity
+            const v = pair[1];
+            if (v instanceof File) {
+              console.log(pair[0], { name: v.name, type: v.type, size: v.size });
+            } else {
+              console.log(pair[0], v);
+            }
+          }
+          console.groupEnd();
+        }
+      } catch (e) {
+        console.warn("Could not inspect FormData", e);
+      }
+
+      // Let axios/browser set the multipart Content-Type (with proper boundary)
       if (id) {
-        await axiosClient.put(`/guides/${id}`, form, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await axiosClient.put(`/guides/${id}`, form);
       } else {
-        await axiosClient.post("/guides", form, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await axiosClient.post("/guides", form);
       }
 
       message.success("Lưu hướng dẫn thành công");
       navigate("/managerguides");
     } catch (err) {
-      console.warn(err);
-      message.error("Lưu thất bại");
-      setError("Lưu thất bại");
+      console.warn("upload error:", err);
+      // Try to surface a useful server message if available
+      const serverMsg = err?.response?.data?.message || err?.response?.data || err?.message;
+      message.error(serverMsg || "Lưu thất bại");
+      setError(String(serverMsg || "Lưu thất bại"));
     } finally {
       setSaving(false);
     }

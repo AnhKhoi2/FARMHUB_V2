@@ -99,6 +99,14 @@ export const getGuides = async (req, res) => {
 // Optional: POST /guides to create sample guides (protected in production)
 export const createGuide = async (req, res) => {
   // Support multipart/form-data: handle files (image, stepImage_<i>) and steps JSON
+  // Debug: log incoming files/body to help diagnose upload issues
+  try {
+    console.log('[upload-debug] createGuide req.files =', Array.isArray(req.files) ? req.files.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, filename: f.filename, size: f.size })) : req.files);
+    // Don't stringify huge bodies in production
+    console.log('[upload-debug] createGuide req.body keys =', Object.keys(req.body || {}));
+  } catch (e) {
+    console.warn('[upload-debug] failed to log createGuide request', e);
+  }
   const { title, description, content, tags, plantTags, expert_id } = req.body;
   const guideData = { title, description, content };
   if (tags !== undefined) {
@@ -340,6 +348,13 @@ export const permanentDeleteGuide = async (req, res) => {
 // PUT /guides/:id - update guide, accept multipart/form-data with optional file field 'image'
 export const updateGuide = async (req, res) => {
   const id = req.params.id;
+  // Debug: log incoming files/body to help diagnose upload issues
+  try {
+    console.log('[upload-debug] updateGuide id=', id, ' req.files =', Array.isArray(req.files) ? req.files.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, filename: f.filename, size: f.size })) : req.files);
+    console.log('[upload-debug] updateGuide req.body keys =', Object.keys(req.body || {}));
+  } catch (e) {
+    console.warn('[upload-debug] failed to log updateGuide request', e);
+  }
   const updates = {};
   const { title, summary, content, tags } = req.body;
   if (title !== undefined) updates.title = title;

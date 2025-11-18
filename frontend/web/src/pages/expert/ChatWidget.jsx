@@ -83,7 +83,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
       if (user?._id) setCurrentUser(user);
-    } catch { }
+    } catch {}
   }, []);
 
   /* =========================
@@ -178,14 +178,14 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
         prev.map((c) =>
           String(c._id) === String(activeConv._id)
             ? {
-              ...c,
-              lastMessage: {
-                text: lastIncoming?.text || c.lastMessage?.text,
-                at: lastIncoming?.createdAt || c.updatedAt,
-                sender: lastIncoming?.sender || c.lastMessage?.sender,
-              },
-              updatedAt: lastIncoming?.createdAt || c.updatedAt,
-            }
+                ...c,
+                lastMessage: {
+                  text: lastIncoming?.text || c.lastMessage?.text,
+                  at: lastIncoming?.createdAt || c.updatedAt,
+                  sender: lastIncoming?.sender || c.lastMessage?.sender,
+                },
+                updatedAt: lastIncoming?.createdAt || c.updatedAt,
+              }
             : c
         )
       );
@@ -248,7 +248,9 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
 
       setActiveConv(normalized);
       setConversations((prev) => {
-        const exists = prev.some((c) => String(c._id) === String(normalized._id));
+        const exists = prev.some(
+          (c) => String(c._id) === String(normalized._id)
+        );
         return exists ? prev : [normalized, ...prev];
       });
       await loadMessages(normalized._id);
@@ -303,7 +305,16 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   /* =========================
      UI
   ========================= */
-  if (!open)
+
+  // Khi widget ĐANG ĐÓNG
+  if (!open) {
+    // 👉 Nếu là CHUYÊN GIA: không hiển thị nút tròn Chat with expert
+    if (currentUser && currentUser.role === "expert") {
+      // vẫn trả ra container rỗng để không lỗi CSS
+      return <div className="chat-widget" />;
+    }
+
+    // 👉 Nếu là USER thường: hiển thị nút tròn như cũ
     return (
       <div className="chat-widget">
         <button className="cw-fab" onClick={() => onClose?.(true)}>
@@ -311,7 +322,9 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
         </button>
       </div>
     );
+  }
 
+  // Khi widget ĐANG MỞ -> panel chat hiển thị cho cả user & expert
   return (
     <div className={`chat-widget ${open ? "open" : ""}`}>
       <div className="cw-panel">
@@ -337,8 +350,9 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
                 conversations.map((c) => (
                   <div
                     key={c._id}
-                    className={`cw-conv ${activeConv && activeConv._id === c._id ? "active" : ""
-                      }`}
+                    className={`cw-conv ${
+                      activeConv && activeConv._id === c._id ? "active" : ""
+                    }`}
                     onClick={() => {
                       setActiveConv(c);
                       loadMessages(c._id);

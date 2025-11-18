@@ -108,8 +108,8 @@ export const authController = {
     const hashed = await bcrypt.hash(password, salt);
 
     const newUser = new User({
-      username,
-      email,
+      username: String(username).trim(),
+      email: String(email).toLowerCase().trim(),
       password: hashed,
       isVerified: false,
     });
@@ -193,52 +193,69 @@ export const authController = {
   }),
 
   // Đăng nhập
-  login: asyncHandler(async (req, res) => {
-    // TEMP LOG: ghi lại body để debug khi frontend trả về 400
-    console.log("[DEBUG] POST /auth/login body:", req.body);
-    const { username, password } = req.body;
+ // Đăng nhập CHỈ bằng username
+login: asyncHandler(async (req, res) => {
+  const { username, emailOrUsername, password } = req.body;
 
-    if (!username || !password) {
-      throw new AppError("Thiếu thông tin đăng nhập", 400, "MISSING_CREDENTIALS");
-    }
-    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-    if (!usernameRegex.test(username)) {
-      throw new AppError("Tên đăng nhập không hợp lệ", 400, "INVALID_USERNAME");
-    }
+  // Chỉ dùng username; emailOrUsername chỉ là alias cho username (nếu FE cũ còn gửi)
+  const identifier = (username || emailOrUsername || "").trim();
 
-    const user = await User.findOne({ username });
-    if (!user) {
-      throw new AppError("Thông tin đăng nhập không chính xác", 401, "INVALID_CREDENTIALS");
-    }
+  if (!identifier || !password) {
+    throw new AppError(
+      ERROR_CODES.MISSING_FIELDS.message,
+      ERROR_CODES.MISSING_FIELDS.statusCode,
+      "MISSING_FIELDS"
+    );
+  }
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      const { message, statusCode } = ERROR_CODES.INVALID_CREDENTIALS;
-      throw new AppError(message, statusCode, "INVALID_CREDENTIALS");
-    }
+  // ❗ Chỉ tìm theo username
+  const user = await User.findOne({ username: identifier });
 
-    if (!user.isVerified) {
-      const { message, statusCode } = ERROR_CODES.ACCOUNT_NOT_VERIFIED;
-      throw new AppError(message, statusCode, "ACCOUNT_NOT_VERIFIED");
-    }
+  if (!user) {
+    // Avoid leaking which side failed
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
+  }
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+  // If account registered via OAuth/provider and has no password
+  if (!user.password) {
+    // Better message for client, but keep generic code to avoid leaking too much
+    throw new AppError(
+      "Tài khoản này không có mật khẩu. Vui lòng đăng nhập bằng nhà cung cấp đã liên kết hoặc tạo mật khẩu.",
+      400,
+      "NO_PASSWORD_SET"
+    );
+  }
 
-    await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: refreshToken } });
+  let isMatch = false;
+  try {
+    isMatch = await bcrypt.compare(password, user.password);
+  } catch (err) {
+    console.error("login bcrypt.compare error:", err);
+    // Fall through to invalid credentials
+  }
 
-    const { password: _pw, ...userInfo } = user._doc;
+  if (!isMatch) {
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
+  }
 
-    // set cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-    });
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
 
-    return ok(res, { user: userInfo, accessToken });
-  }),
+  // Ẩn password cho sạch dữ liệu trả về
+  const userSafe = user.toObject ? user.toObject() : { ...user._doc };
+  delete userSafe.password;
+
+  return ok(res, { user: userSafe, accessToken, refreshToken });
+}),
+
 
   // Refresh token
   refresh: asyncHandler(async (req, res) => {

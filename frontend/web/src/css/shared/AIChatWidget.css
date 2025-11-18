@@ -79,3 +79,13 @@
   /* keep responsive behavior on small screens */
   .ai-chat-panel { width: 92vw; right: 4vw; bottom: 80px; max-height: 80vh; }
 }
+
+/* Ẩn chat AI ở tất cả trang */
+.ai-chat-widget {
+  display: none !important;
+}
+
+/* Chỉ hiện khi trang có class user-home-page */
+body:has(.user-home-page) .ai-chat-widget {
+  display: block !important;
+}

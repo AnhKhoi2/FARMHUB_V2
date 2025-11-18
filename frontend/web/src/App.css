@@ -41,4 +41,15 @@
 
 .read-the-docs {
   color: #888;
+}body {
+  background-color: #F9FBE7; /* Background Light */
+  color: #2E7D32; /* Dark Green cho text chính */
+  font-family: 'Arial, sans-serif';
+}
+.ant-layout {
+  background-color: #F9FBE7;
+}
+.ant-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E0E0E0; /* Neutral Gray */
 }

@@ -1,0 +1,66 @@
+.forecast-cards {
+  row-gap: 12px;
+}
+
+.forecast-card {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 576px) {
+  .forecast-card {
+    min-width: 100px;
+  }
+}
+
+.aqi-badge {
+  border-radius: 999px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  color: #fff;
+}
+
+.aqi-badge-main {
+  font-size: 14px;
+}
+
+/* Legend chip nhỏ */
+.aqi-legend-chip {
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* Màu cho từng mức AQI */
+.aqi-good {
+  background-color: #28a745; /* xanh lá */
+}
+
+.aqi-fair {
+  background-color: #8bc34a; /* xanh nhạt */
+}
+
+.aqi-moderate {
+  background-color: #ffc107; /* vàng */
+  color: #212529;
+}
+
+.aqi-poor {
+  background-color: #ff9800; /* cam */
+}
+
+.aqi-very-poor {
+  background-color: #f44336; /* đỏ */
+}
+
+.aqi-unknown {
+  background-color: #6c757d; /* xám */
+}
+
+
+.history-table-wrapper {
+  max-height: 260px;
+  overflow-y: auto;
+}

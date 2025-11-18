@@ -1,351 +1,309 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  Table,
+  Button,
+  Drawer,
+  Space,
+  Pagination,
+  Spin,
+  Tag,
+  Typography,
+  message,
+  Empty,
+} from "antd";
 import AdminLayout from "../../components/AdminLayout";
-import PortalModal from "../../components/shared/PortalModal";
 import axiosClient from "../../api/shared/axiosClient";
+import {
+  EyeOutlined,
+  DeleteOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  UndoOutlined,
+} from "@ant-design/icons";
+
+const { Text, Title } = Typography;
 
 export default function AdminPost() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
-  const [showTrash, setShowTrash] = useState(false);
-  const [showReports, setShowReports] = useState(false);
-  const [showDetail, setShowDetail] = useState(false);
-  const [current, setCurrent] = useState(null);
 
-  const [reportsList, setReportsList] = useState([]);
-  const [reportsLoading, setReportsLoading] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerContent, setDrawerContent] = useState(null); // post details or reports
 
-  const fetchItems = async (p = page) => {
-    setLoading(true);
-    try {
-      let res;
-      const params = { limit, page: p };
+  const fetchPosts = useCallback(
+    async (p = page) => {
+      setLoading(true);
       try {
-        res = await axiosClient.get(`/admin/managerpost`, { params });
-      } catch (e) {
-        console.warn('Admin managerpost fetch failed, trying public endpoint', e?.response?.status);
-        res = await axiosClient.get(`/admin/managerpost/public`, { params });
+        let res;
+        const params = { limit, page: p };
+        try {
+          res = await axiosClient.get(`/admin/managerpost`, { params });
+        } catch {
+          res = await axiosClient.get(`/admin/managerpost/public`, { params });
+        }
+        const data = res.data?.data || res.data || {};
+        const items = data.items || data.data?.items || data.docs || [];
+        const tot = data.total || data.meta?.total || items.length;
+        setPosts(items);
+        setTotal(Number(tot || 0));
+        setPage(Number(p));
+      } catch (err) {
+        console.error(err);
+        message.error("Không thể tải bài viết");
+      } finally {
+        setLoading(false);
       }
-      const data = res.data?.data || res.data || {};
-      const items = data.items || data.data?.items || data.docs || res.data || [];
-      const tot = data.total || data.meta?.total || items.length;
-      setItems(items || []);
-      setTotal(Number(tot || 0));
-      setPage(Number(p));
+    },
+    [page, limit]
+  );
+
+  useEffect(() => {
+    fetchPosts(page);
+  }, [page, fetchPosts]);
+
+  const changeStatus = async (id, status) => {
+    try {
+      await axiosClient.patch(`/admin/managerpost/${id}/status`, { status });
+      message.success(`Đã chuyển trạng thái thành ${status}`);
+      fetchPosts(page);
     } catch (err) {
-      console.error('Failed to load posts', err);
-    } finally {
-      setLoading(false);
+      console.error(err);
+      message.error("Không thể thay đổi trạng thái");
     }
   };
-
-  useEffect(() => { fetchItems(page); }, [page]);
 
   const handleHide = async (id) => {
     try {
       await axiosClient.patch(`/admin/managerpost/${id}/hide`);
-      fetchItems();
-    } catch (err) { console.error(err); alert('Không thể xóa bài viết'); }
+      message.success("Đã xóa bài viết");
+      fetchPosts(page);
+    } catch (err) {
+      console.error(err);
+      message.error("Không thể xóa bài viết");
+    }
   };
 
   const handleRestore = async (id) => {
     try {
       await axiosClient.patch(`/admin/managerpost/${id}/restore`);
-      fetchItems();
-    } catch (err) { console.error(err); alert('Không thể hoàn tác'); }
+      message.success("Đã hoàn tác");
+      fetchPosts(page);
+    } catch (err) {
+      console.error(err);
+      message.error("Không thể hoàn tác");
+    }
   };
 
-  const changeStatus = async (id, status) => {
-    try {
-      await axiosClient.patch(`/admin/managerpost/${id}/status`, { status });
-      fetchItems();
-    } catch (err) { console.error(err); alert('Không thể thay đổi trạng thái'); }
-  };
+  const columns = [
+    {
+      title: "STT",
+      width: 60,
+      render: (_, __, idx) => (page - 1) * limit + idx + 1,
+    },
+    {
+      title: "Tiêu đề",
+      dataIndex: "title",
+      render: (t) => t || "(Không có tiêu đề)",
+    },
+    {
+      title: "Người đăng",
+      dataIndex: "userId",
+      render: (u) => u?.username || u?.email || "—",
+    },
+    {
+      title: "Điện thoại",
+      dataIndex: "phone",
+      render: (p) => p || "—",
+    },
+    {
+      title: "Địa điểm",
+      dataIndex: "location",
+      render: (l) => l?.address || "—",
+    },
+    {
+      title: "Ngày",
+      dataIndex: "createdAt",
+      render: (d) => (d ? new Date(d).toLocaleString() : "—"),
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      render: (s) => {
+        let color = "default";
+        if (s === "approved") color = "green";
+        else if (s === "rejected") color = "volcano";
+        else color = "gold";
+        return <Tag color={color}>{s}</Tag>;
+      },
+      filters: [
+        { text: "approved", value: "approved" },
+        { text: "rejected", value: "rejected" },
+        { text: "pending", value: "pending" },
+      ],
+      onFilter: (value, record) => record.status === value,
+    },
+    {
+      title: "Hành động",
+      width: 280,
+      render: (_, record) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => {
+              setDrawerContent({ type: "detail", post: record });
+              setDrawerVisible(true);
+            }}
+          />
+          {record.status !== "approved" && (
+            <Button
+              type="primary"
+              size="small"
+              icon={<CheckOutlined />}
+              onClick={() => changeStatus(record._id, "approved")}
+              style={{ backgroundColor: "#4CAF50", borderColor: "#4CAF50" }}
+            >
+              Duyệt
+            </Button>
+          )}
+          {record.status !== "rejected" && (
+            <Button
+              type="default"
+              size="small"
+              icon={<CloseOutlined />}
+              onClick={() => changeStatus(record._id, "rejected")}
+              style={{ backgroundColor: "#FFEB3B", borderColor: "#FFEB3B" }}
+            >
+              Từ chối
+            </Button>
+          )}
+          {!record.isDeleted ? (
+            <Button
+              type="default"
+              size="small"
+              icon={<DeleteOutlined />}
+              danger
+              onClick={() => handleHide(record._id)}
+            >
+              Xóa
+            </Button>
+          ) : (
+            <Button
+              type="default"
+              size="small"
+              icon={<UndoOutlined />}
+              onClick={() => handleRestore(record._id)}
+            >
+              Hoàn tác
+            </Button>
+          )}
+        </Space>
+      ),
+    },
+  ];
 
   return (
     <AdminLayout>
-      <div className="container-fluid">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h3>Quản lý bài viết</h3>
-          <div>
-            <button className="btn btn-sm btn-outline-danger me-2" onClick={() => setShowReports(true)}>Báo cáo</button>
-            <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => setShowTrash(true)}>Thùng rác</button>
-            <button className="btn btn-sm btn-primary" onClick={() => fetchItems()}>Làm mới</button>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-hover mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th style={{width:60}}>STT</th>
-                    <th>Tiêu đề</th>
-                    <th>Người đăng</th>
-                    <th>Điện thoại</th>
-                    <th>Địa điểm</th>
-                    <th>Ngày</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan={8}>Đang tải...</td></tr>
-                  ) : items.length === 0 ? (
-                    <tr><td colSpan={8}>Chưa có bài đăng</td></tr>
-                  ) : (
-                    items.map((it, idx) => (
-                      <tr key={it._id}>
-                        <td className="small text-muted">{(page - 1) * limit + idx + 1}</td>
-                        <td>{it.title}</td>
-                        <td>{it.userId?.username || (it.userId?.email || '—')}</td>
-                        <td>{it.phone || '—'}</td>
-                        <td>{it.location?.address || '—'}</td>
-                        <td>{new Date(it.createdAt).toLocaleString()}</td>
-                        <td>{it.status}</td>
-                        <td>
-                          <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setCurrent(it); setShowDetail(true); }}>Xem</button>
-                          {it.status !== 'approved' && (
-                            <button className="btn btn-sm btn-success me-1" onClick={() => changeStatus(it._id, 'approved')}>Duyệt</button>
-                          )}
-                          {it.status !== 'rejected' && (
-                            <button className="btn btn-sm btn-warning me-1" onClick={() => changeStatus(it._id, 'rejected')}>Từ chối</button>
-                          )}
-                          {!it.isDeleted ? (
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleHide(it._id)}>Xóa</button>
-                          ) : (
-                            <button className="btn btn-sm btn-success" onClick={() => handleRestore(it._id)}>Hoàn tác</button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Pagination controls */}
-        <div className="d-flex justify-content-between align-items-center mt-2">
-          <div className="text-muted small">Tổng: {total} mục</div>
-          <nav>
-            <ul className="pagination pagination-sm mb-0">
-              {(() => {
-                const totalPages = Math.max(1, Math.ceil(total / limit));
-                const pages = [];
-                let start = Math.max(1, page - 2);
-                let end = Math.min(totalPages, page + 2);
-                if (start > 1) { pages.push(1); if (start > 2) pages.push('...'); }
-                for (let p = start; p <= end; p++) pages.push(p);
-                if (end < totalPages) { if (end < totalPages - 1) pages.push('...'); pages.push(totalPages); }
-                return [
-                  <li key="prev" className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => page > 1 && setPage(page - 1)}>Prev</button>
-                  </li>,
-                  pages.map((p, i) => (
-                    typeof p === 'number' ? (
-                      <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
-                        <button className="page-link" onClick={() => setPage(p)}>{p}</button>
-                      </li>
-                    ) : (
-                      <li key={`dot-${i}`} className="page-item disabled"><span className="page-link">{p}</span></li>
-                    )
-                  )),
-                  <li key="next" className={`page-item ${page >= totalPages ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => page < totalPages && setPage(page + 1)}>Next</button>
-                  </li>
-                ];
-              })()}
-            </ul>
-          </nav>
-        </div>
-
-        {showTrash && (
-          <PortalModal onClose={() => setShowTrash(false)}>
-            <TrashModal onClose={() => setShowTrash(false)} onRestore={handleRestore} />
-          </PortalModal>
-        )}
-
-        {showReports && (
-          <PortalModal onClose={() => setShowReports(false)}>
-            <ReportsModal onClose={() => setShowReports(false)} onViewReports={async (postId) => {
-              try {
-                const res = await axiosClient.get(`/admin/managerpost/${postId}/reports`);
-                const data = res.data?.data || res.data || {};
-                // show reports in detail modal
-                setCurrent({ ...data.postOwner, reports: data.reports, _id: postId });
-                setShowDetail(true);
-              } catch (err) { console.error(err); alert('Không thể tải báo cáo'); }
-            }} onBanUser={async (postId) => {
-              if (!window.confirm('Cấm user này? Hành động sẽ ẩn tất cả bài đăng của họ và chặn tài khoản.')) return;
-              try {
-                await axiosClient.patch(`/admin/managerpost/${postId}/ban-user`);
-                alert('User đã bị cấm và bài viết đã bị ẩn');
-                setShowReports(false);
-                fetchItems();
-              } catch (err) { console.error(err); alert('Không thể cấm user'); }
-            }} />
-          </PortalModal>
-        )}
-
-        {showDetail && current && (
-          <PortalModal onClose={() => { setShowDetail(false); setCurrent(null); }}>
-            <DetailModal item={current} onClose={() => { setShowDetail(false); setCurrent(null); }} />
-          </PortalModal>
-        )}
+      <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Title level={3} style={{ margin: 0 }}>Quản lý bài viết</Title>
+        <Space>
+          <Button onClick={() => fetchPosts(page)}>Làm mới</Button>
+        </Space>
       </div>
+
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 50 }}>
+          <Spin size="large" />
+        </div>
+      ) : posts.length === 0 ? (
+        <Empty description="Chưa có bài đăng" />
+      ) : (
+        <>
+          <Table
+            rowKey={(record) => record._id || record.id}
+            dataSource={posts}
+            columns={columns}
+            pagination={false}
+          />
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+            <Pagination
+              current={page}
+              total={total}
+              pageSize={limit}
+              onChange={(p) => setPage(p)}
+              size="small"
+              showSizeChanger={false}
+            />
+          </div>
+        </>
+      )}
+
+      <PostDrawer
+        visible={drawerVisible}
+        content={drawerContent}
+        onClose={() => {
+          setDrawerVisible(false);
+          setDrawerContent(null);
+        }}
+      />
     </AdminLayout>
   );
 }
 
-function TrashModal({ onClose, onRestore }) {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetch = async () => {
-    setLoading(true);
-    try {
-      const res = await axiosClient.get('/admin/managerpost/trash');
-      const data = res.data?.data || res.data || [];
-      setItems(data || []);
-    } catch (err) { console.error(err); }
-    setLoading(false);
-  };
-
-  useEffect(() => { fetch(); }, []);
+function PostDrawer({ visible, content, onClose }) {
+  if (!content) return null;
+  const { type, post } = content;
 
   return (
-      <div style={{ minWidth: 700 }}>
-      <div className="modal-header">
-        <h5 className="modal-title">Thùng rác - Bài viết</h5>
-        <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
-      </div>
-      <div className="modal-body">
-        {loading ? <p>Đang tải...</p> : (
-          <div className="list-group">
-            {items.length === 0 ? <p>Không có bài đã xóa</p> : items.map((t) => (
-              <div key={t._id} className="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <div><strong>{t.title}</strong> — {t.userId?.username || t.userId?.email}</div>
-                  <div className="small text-muted">{t.description}</div>
-                </div>
-                <div>
-                  <button className="btn btn-sm btn-success" onClick={() => { onRestore(t._id); fetch(); }}>Hoàn tác</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onClose}>Đóng</button>
-      </div>
-    </div>
-  );
-}
-
-function ReportsModal({ onClose, onViewReports, onBanUser }) {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetch = async () => {
-    setLoading(true);
-    try {
-      const res = await axiosClient.get('/admin/managerpost/reported');
-      const data = res.data?.data || res.data || [];
-      setItems(data || []);
-    } catch (err) { console.error(err); alert('Không thể tải danh sách báo cáo'); }
-    setLoading(false);
-  };
-
-  useEffect(() => { fetch(); }, []);
-
-  return (
-    <div style={{ minWidth: 800 }}>
-      <div className="modal-header">
-        <h5 className="modal-title">Bài bị báo cáo</h5>
-        <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
-      </div>
-      <div className="modal-body">
-        {loading ? <p>Đang tải...</p> : (
-          <div className="list-group">
-            {items.length === 0 ? <p>Không có bài bị báo cáo</p> : items.map((p) => (
-              <div key={p._id} className="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <div><strong>{p.title}</strong> — <small className="text-muted">{p.userId?.username || p.userId?.email}</small></div>
-                  <div className="small text-muted">{p.reports?.length || 0} báo cáo — {new Date(p.updatedAt).toLocaleString()}</div>
-                  <div className="small">{p.description?.slice(0, 200)}</div>
-                </div>
-                <div className="d-flex gap-2">
-                  <button className="btn btn-sm btn-outline-primary" onClick={() => onViewReports(p._id)}>Xem báo cáo</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => onBanUser(p._id)}>Cấm user</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onClose}>Đóng</button>
-      </div>
-    </div>
-  );
-}
-
-function DetailModal({ item, onClose }) {
-  return (
-    <div style={{ minWidth: 700 }}>
-      <div className="modal-header">
-        <h5 className="modal-title">Chi tiết bài đăng</h5>
-        <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
-      </div>
-      <div className="modal-body">
-        {item.title && <h5>{item.title}</h5>}
-        {item.userId && <p><strong>Người đăng:</strong> {item.userId?.username || item.userId?.email}</p>}
-        {item.phone && <p><strong>Điện thoại:</strong> {item.phone || '—'}</p>}
-        {item.location && <p><strong>Địa điểm:</strong> {item.location?.address || '—'}</p>}
-        {item.description && <>
-          <p><strong>Mô tả:</strong></p>
-          <p>{item.description}</p>
-        </>}
-
-        {/* If this item contains reports (from reportsForPost), render them */}
-        {item.reports && Array.isArray(item.reports) && item.reports.length > 0 && (
-          <div className="mt-3">
-            <h6>Báo cáo ({item.reports.length})</h6>
-            <div className="list-group">
-              {item.reports.map((r, i) => (
-                <div key={i} className="list-group-item">
-                  <div><strong>{r.userId?.username || r.userId?.email || 'Người dùng'}</strong> — <small className="text-muted">{new Date(r.createdAt).toLocaleString()}</small></div>
-                  <div className="small text-muted">{r.reason}</div>
-                  <div>{r.message}</div>
+    <Drawer
+      title={type === "detail" ? "Chi tiết bài đăng" : "Thông tin"}
+      width={600}
+      onClose={onClose}
+      open={visible}
+      footer={
+        <div style={{ textAlign: "right" }}>
+          <Button onClick={onClose}>Đóng</Button>
+        </div>
+      }
+    >
+      {type === "detail" && post && (
+        <>
+          <Title level={5}>{post.title}</Title>
+          <Text strong>Người đăng: </Text>
+          <Text>{post.userId?.username || post.userId?.email || "—"}</Text>
+          <br />
+          <Text strong>Điện thoại: </Text>
+          <Text>{post.phone || "—"}</Text>
+          <br />
+          <Text strong>Địa điểm: </Text>
+          <Text>{post.location?.address || "—"}</Text>
+          <br />
+          {post.description && (
+            <>
+              <Text strong>Mô tả:</Text>
+              <p>{post.description}</p>
+            </>
+          )}
+          {post.reports && post.reports.length > 0 && (
+            <>
+              <Title level={5}>Báo cáo ({post.reports.length})</Title>
+              {post.reports.map((r, i) => (
+                <div key={i} style={{ marginBottom: 8, padding: 8, border: "1px solid #eee", borderRadius: 4 }}>
+                  <Text strong>{r.userId?.username || r.userId?.email || "Người dùng"}</Text>
+                  <br />
+                  <Text type="secondary">{new Date(r.createdAt).toLocaleString()}</Text>
+                  <p>{r.reason}</p>
+                  <Text>{r.message}</Text>
                 </div>
               ))}
-            </div>
-            <div className="mt-2">
-              <button className="btn btn-sm btn-danger" onClick={async () => {
-                if (!window.confirm('Cấm user này?')) return;
-                try {
-                  await axiosClient.patch(`/admin/managerpost/${item._id}/ban-user`);
-                  alert('User đã bị cấm');
-                  onClose();
-                } catch (err) {
-                  console.error(err);
-                  alert('Không thể cấm user');
-                }
-              }}>Cấm user</button>
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onClose}>Đóng</button>
-      </div>
-    </div>
+            </>
+          )}
+        </>
+      )}
+    </Drawer>
   );
 }

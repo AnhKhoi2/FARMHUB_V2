@@ -3,48 +3,51 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/expert/ExpertHome.css";
+import Header from "../../components/shared/Header";
 import ChatWidget from "./ChatWidget";
 import axiosClient from "../../api/shared/axiosClient";
+
 import {
   MessageCircle,
   Leaf,
   BarChart3,
   User,
-  Bell,
-  Settings,
   LogOut,
+  Layers,
 } from "lucide-react";
 
-// Fallback lấy user từ localStorage (tuỳ theo dự án bạn lưu key gì)
 function getLocalUserFallback() {
   try {
-    const keys = ["authUser", "user", "profile"]; // thử vài key phổ biến
+    const keys = ["authUser", "user", "profile"];
     for (const k of keys) {
       const raw = localStorage.getItem(k);
       if (raw) {
         const u = JSON.parse(raw);
         if (u && (u.username || u.fullName || u.email)) {
-          const name = u.fullName || u.username || (u.email ? u.email.split("@")[0] : "Expert");
+          const name =
+            u.fullName ||
+            u.username ||
+            (u.email ? u.email.split("@")[0] : "Expert");
           return {
             name,
             email: u.email || "",
             role: "Chuyên gia nông nghiệp",
             avatar:
               u.avatar ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
-            notifications: 0,
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                name
+              )}`,
           };
         }
       }
     }
-  } catch (_) {}
-  // fallback mặc định cuối
+  } catch (_) { }
+
   return {
     name: "Expert",
     email: "",
     role: "Chuyên gia nông nghiệp",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=expert",
-    notifications: 0,
   };
 }
 
@@ -59,12 +62,76 @@ export default function ExpertHome({
   const [profile, setProfile] = useState(null);
   const navigate = useNavigate();
 
-  // ✅ THÊM: state mở/đóng ChatWidget
+  const [guides, setGuides] = useState([]);
+  const [models, setModels] = useState([]);
+  const [templates, setTemplates] = useState([]); // ⬅️ thêm state plant template
   const [chatOpen, setChatOpen] = useState(false);
 
+  // ---------------------- LẤY 3 HƯỚNG DẪN ----------------------
+  useEffect(() => {
+    const fetchGuides = async () => {
+      try {
+        const res = await axiosClient.get("/guides?limit=3&page=1");
+        setGuides(res.data.data || []);
+      } catch (err) {
+        console.error("Lỗi lấy hướng dẫn:", err);
+      }
+    };
+
+    fetchGuides();
+  }, []);
+
+  // ---------------------- LẤY 3 MÔ HÌNH TRỒNG ----------------------
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const res = await axiosClient.get("/admin/models?limit=3");
+        setModels(res.data.data || []);
+      } catch (err) {
+        console.error("Lỗi lấy mô hình:", err);
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  // ---------------------- LẤY 3 PLANT TEMPLATE ----------------------
+  // ---------------------- LẤY 3 PLANT TEMPLATE ----------------------
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        // ĐÚNG: trùng với controller: GET /api/plant-templates
+        const res = await axiosClient.get(
+          "/api/plant-templates?status=active"
+        );
+
+        const payload = res.data;
+        const list =
+          payload?.templates ||        // { templates, count, message }
+          payload?.data?.templates ||  // nếu bọc thêm data
+          payload?.data ||             // fallback
+          [];
+
+        setTemplates((list || []).slice(0, 3));
+      } catch (err) {
+        console.error("Lỗi lấy plant template:", err);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
+
+
+  const handleChatClick = () => {
+    if (typeof onChatClick === "function") {
+      onChatClick();
+    }
+    setChatOpen(true);
+  };
+
+  // ---------------------- LẤY PROFILE CHUYÊN GIA ----------------------
   useEffect(() => {
     (async () => {
-      // Một số dự án set baseURL = http://.../api, số khác là http://...
       const candidates = ["/api/experts/me/basic", "/experts/me/basic"];
       let ok = false;
       for (const url of candidates) {
@@ -81,20 +148,13 @@ export default function ExpertHome({
                 `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
                   data.name || "expert"
                 )}`,
-              notifications: Number(data.notifications || 0),
             });
             ok = true;
             break;
           }
-        } catch (e) {
-          // thử path tiếp theo
-          // console.warn("Fetch failed", url, e?.response?.status, e?.message);
-        }
+        } catch { }
       }
-      if (!ok) {
-        // Không chặn UI nữa — dùng local/mặc định
-        setProfile(getLocalUserFallback());
-      }
+      if (!ok) setProfile(getLocalUserFallback());
       setLoading(false);
     })();
   }, []);
@@ -111,11 +171,10 @@ export default function ExpertHome({
   const name = profile?.name || "Expert";
   const email = profile?.email || "";
   const role = profile?.role || "Chuyên gia nông nghiệp";
-  const notifications = Number(profile?.notifications || 0);
 
-  // Render the expert UI and the ChatWidget outside the main container
   return (
     <>
+      <Header />
       <div className="expert-home">
         <header className="expert-header">
           <div className="header-container">
@@ -123,14 +182,23 @@ export default function ExpertHome({
               <div className="brand-logo">
                 <Leaf className="leaf-icon" />
               </div>
-              <h1 className="brand-name">Trang chuyên gia</h1>
+              <h1
+                className="brand-name clickable"
+                onClick={() => {
+                  navigate("/expert");        // để index route redirect sang /expert/home
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                Trang chuyên gia
+              </h1>
+
+
             </div>
 
             <nav className="header-nav">
               <button
                 className="nav-button nav-button-chat"
-                onClick={onChatClick}
-                title="Trao đổi với người dùng"
+                onClick={handleChatClick}
               >
                 <MessageCircle size={20} />
                 <span>Trò chuyện</span>
@@ -139,14 +207,9 @@ export default function ExpertHome({
               <button
                 className="nav-button nav-button-add"
                 onClick={() => {
-                  try {
-                    if (onAddGuideClick) onAddGuideClick();
-                  } catch (e) {
-                    void e;
-                  }
+                  if (onAddGuideClick) onAddGuideClick();
                   navigate("/managerguides");
                 }}
-                title="Quản lý hướng dẫn"
               >
                 <span>Quản lý hướng dẫn</span>
               </button>
@@ -154,7 +217,6 @@ export default function ExpertHome({
               <button
                 className="nav-button nav-button-dashboard"
                 onClick={() => navigate("/experthome/models")}
-                title="Mô hình trồng"
               >
                 <Leaf size={20} />
                 <span>Mô hình trồng</span>
@@ -163,15 +225,17 @@ export default function ExpertHome({
               <button
                 className="nav-button nav-button-template"
                 onClick={() => navigate("/expert/plant-templates")}
-                title="Plant Templates"
               >
                 <span>Bộ Mẫu Cây Trồng</span>
               </button>
 
               <button
                 className="nav-button nav-button-analytics"
-                onClick={onAnalyticsClick}
-                title="Phân tích"
+                onClick={() => {
+                  if (typeof onAnalyticsClick === "function") {
+                    onAnalyticsClick();
+                  }
+                }}
               >
                 <BarChart3 size={20} />
                 <span>Phân tích</span>
@@ -179,18 +243,10 @@ export default function ExpertHome({
             </nav>
 
             <div className="header-right">
-              <button className="notification-btn" title="Thông báo">
-                <Bell size={20} />
-                {notifications > 0 && (
-                  <span className="notification-badge">{notifications}</span>
-                )}
-              </button>
-
               <div className="profile-section">
                 <button
                   className="avatar-btn"
                   onClick={() => setShowProfileMenu((v) => !v)}
-                  title="Mở hồ sơ"
                 >
                   <img src={avatar} alt={name} className="avatar-image" />
                 </button>
@@ -198,7 +254,7 @@ export default function ExpertHome({
                 {showProfileMenu && (
                   <div className="profile-dropdown">
                     <div className="profile-header">
-                      <img src={avatar} alt={name} className="profile-avatar" />
+                      <img src={avatar} className="profile-avatar" />
                       <div className="profile-info">
                         <p className="profile-name">{name}</p>
                         <p className="profile-email">{email}</p>
@@ -217,17 +273,6 @@ export default function ExpertHome({
                     >
                       <User size={18} />
                       <span>Hồ sơ</span>
-                    </button>
-
-                    <button
-                      className="profile-menu-item"
-                      onClick={() => {
-                        setShowProfileMenu(false);
-                        navigate("/settings");
-                      }}
-                    >
-                      <Settings size={18} />
-                      <span>Cài đặt</span>
                     </button>
 
                     <div className="profile-divider"></div>
@@ -253,67 +298,148 @@ export default function ExpertHome({
         <main className="expert-main">
           <div className="content-container">
             <section className="welcome-section">
-              <h2 className="welcome-title">Xin chào, {name.split(" ")[1] || name}! 👋</h2>
+              <h2 className="welcome-title">
+                Xin chào, {name.split(" ")[1] || name}! 👋
+              </h2>
               <p className="welcome-subtitle">
                 Quản lý hướng dẫn trồng trọt và trao đổi với người dùng
               </p>
             </section>
 
-            <section className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon stat-icon-guides">
-                  <Leaf />
-                </div>
-                <div className="stat-content">
-                  <h3>Hướng dẫn</h3>
-                  <p className="stat-value">24</p>
-                </div>
+            {/* ---------------------- MÔ HÌNH TRỒNG ---------------------- */}
+            <div className="models-section">
+              <h2 className="section-title">
+                🌱 Mô Hình Trồng
+              </h2>
+
+              <div className="card-grid">
+                {models.map((m) => (
+                  <div className="item-card" key={m._id}>
+                    <img
+                      src={m.image || "/placeholder.jpg"}
+                      alt={m.name}
+                      className="item-image"
+                    />
+
+                    <h3 className="item-name">{m.name}</h3>
+
+                    <p className="item-desc">
+                      {m.description?.slice(0, 80)}...
+                    </p>
+
+                    <button
+                      className="item-btn"
+                      onClick={() =>
+                        navigate(`/experthome/models/${m._id}`)
+                      }
+                    >
+                      Xem chi tiết
+                    </button>
+                  </div>
+                ))}
               </div>
 
-              <div className="stat-card">
-                <div className="stat-icon stat-icon-chat">
-                  <MessageCircle />
-                </div>
-                <div className="stat-content">
-                  <h3>Tin nhắn</h3>
-                  <p className="stat-value">156</p>
-                </div>
+              {models.length === 0 && (
+                <p className="subtitle">Chưa có mô hình nào!</p>
+              )}
+            </div>
+
+            {/* ---------------------- HƯỚNG DẪN TRỒNG ---------------------- */}
+            <div className="guides-section">
+              <h2 className="section-title">📘 3 Hướng Dẫn Nổi Bật</h2>
+
+              <div className="card-grid">
+                {guides.map((g) => (
+                  <div className="item-card" key={g._id}>
+                    <img
+                      src={g.image || "/placeholder.jpg"}
+                      alt={g.title}
+                      className="item-image"
+                    />
+
+                    <h3 className="item-name">{g.title}</h3>
+
+                    <p className="item-desc">
+                      {g.summary?.slice(0, 80) ||
+                        g.description?.slice(0, 80)}
+                      ...
+                    </p>
+
+                    <button
+                      className="item-btn"
+                      onClick={() => navigate(`/guides/${g._id}`)}
+                    >
+                      Xem chi tiết
+                    </button>
+                  </div>
+                ))}
               </div>
 
-              <div className="stat-card">
-                <div className="stat-icon stat-icon-users">
-                  <User />
-                </div>
-                <div className="stat-content">
-                  <h3>Người dùng</h3>
-                  <p className="stat-value">342</p>
-                </div>
+              {guides.length === 0 && (
+                <p className="subtitle">Chưa có hướng dẫn nào!</p>
+              )}
+            </div>
+
+            {/* ---------------------- PLANT TEMPLATE ---------------------- */}
+            <div className="templates-section">
+              <h2 className="section-title">🧩 3 Bộ Mẫu Cây Trồng</h2>
+
+              <div className="card-grid">
+                {templates.map((t) => (
+                  <div className="item-card" key={t._id}>
+                    <div className="template-icon-wrapper">
+                      <Layers className="template-icon" />
+                    </div>
+
+                    <h3 className="item-name">{t.template_name}</h3>
+
+                    <p className="item-meta">
+                      {t.plant_group || "Nhóm cây chung"} ·{" "}
+                      {t.total_days ||
+                        t.total_duration ||
+                        t.totalDays ? (
+                        <>
+                          {t.total_days ||
+                            t.total_duration ||
+                            t.totalDays}{" "}
+                          ngày
+                        </>
+                      ) : (
+                        <>
+                          {t.stages?.length || 0} giai đoạn
+                        </>
+                      )}
+                    </p>
+
+                    <p className="item-desc">
+                      {t.description?.slice(0, 80) ||
+                        "Template chăm sóc cây với các giai đoạn chi tiết."}
+                      ...
+                    </p>
+
+                    <button
+                      className="item-btn"
+                      onClick={() =>
+                        navigate(`/expert/plant-templates/${t._id}`)
+                      }
+                    >
+                      Xem chi tiết
+                    </button>
+                  </div>
+                ))}
               </div>
 
-              <div className="stat-card">
-                <div className="stat-icon stat-icon-analytics">
-                  <BarChart3 />
-                </div>
-                <div className="stat-content">
-                  <h3>Tương tác</h3>
-                  <p className="stat-value">1.2K</p>
-                </div>
-              </div>
-            </section>
-
-            <section className="content-area">
-              <div className="content-placeholder">
-                <p>Nội dung chính sẽ hiển thị ở đây</p>
-                <p className="subtitle">Chọn một trong 4 nút phía trên để bắt đầu</p>
-              </div>
-            </section>
+              {templates.length === 0 && (
+                <p className="subtitle">Chưa có bộ mẫu nào!</p>
+              )}
+            </div>
           </div>
         </main>
       </div>
 
       <ChatWidget
         open={chatOpen}
-        onClose={(v) => setChatOpen(Boolean(v))}
+        onClose={() => setChatOpen(false)}
         initialOpenPayload={null}
       />
     </>

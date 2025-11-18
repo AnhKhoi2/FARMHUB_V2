@@ -34,7 +34,12 @@ import notificationRoutes from "./routes/notifications.js";
 import vnpayRoutes from "./routes/vnpay.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
-
+import pino from 'pino-http';
+import geocodeRoute from './routes/geocode.js';
+import weatherRoute from './routes/weather_v2.js';
+import airRoute from './routes/air.js';
+import tilesRoute from './routes/tiles.js';
+import plantRoute from './routes/plant.js';
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -66,6 +71,16 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+// app.use(express.json({ limit: "10mb" }));
+// app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+
+app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.use('/api/geocode', geocodeRoute);
+app.use('/api/weather', weatherRoute);
+app.use('/api/air', airRoute);
+app.use('/api/plant', plantRoute);
+app.use('/api/ow/tiles', tilesRoute);
 app.use("/auth", authRoute);
 app.use("/profile", profileRoute);
 app.use("/admin/diseases", diseaseRoutes);
@@ -108,4 +123,28 @@ startTaskReminderJob(); // Chạy hàng ngày lúc 9:00 sáng - nhắc nhở tas
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
+});
+
+
+// 404 cho route không tồn tại (optional)
+app.use((req, res, next) => {
+  next(new AppError("Route không tồn tại", 404, "NOT_FOUND"));
+});
+
+// ERROR HANDLER
+app.use((err, req, res, next) => {
+  console.error("🔥 ERROR:", err);
+
+  const statusCode = err.statusCode || 500;
+  const code = err.code || "INTERNAL_ERROR";
+
+  const message =
+    err.message ||
+    ERROR_CODES.INTERNAL_ERROR.message;
+
+  res.status(statusCode).json({
+    success: false,
+    code,
+    message,
+  });
 });

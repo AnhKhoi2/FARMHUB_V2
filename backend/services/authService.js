@@ -73,6 +73,9 @@ export const registerUser = async (email, password, username) => {
   }
 };
 
+// Helper to escape user input for regex searches (used for case-insensitive username lookup)
+const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const verifyEmailToken = async (token) => {
   try {
     if (!token) {
@@ -128,8 +131,9 @@ export const loginUser = async (username, password) => {
       throw new AppError("Tên đăng nhập không hợp lệ", 400, "INVALID_USERNAME");
     }
 
-    // Tìm user
-    const user = await User.findOne({ username });
+  // Tìm user (case-insensitive match on username)
+  const usernameQuery = { username: { $regex: `^${escapeRegExp(username)}$`, $options: 'i' } };
+  const user = await User.findOne(usernameQuery);
     if (!user) {
       throw new AppError("Thông tin đăng nhập không chính xác", 401, "INVALID_CREDENTIALS");
     }

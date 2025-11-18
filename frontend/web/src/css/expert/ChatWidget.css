@@ -26,14 +26,14 @@
 .chat-widget .cw-fab {
   position: fixed;
   right: 20px;
-  bottom: 20px;
+  bottom: 90px;
   pointer-events: auto;
   border: none;
   outline: none;
   border-radius: 50%;
   background: #16a34a;
   color: #fff;
-  padding: 14px;
+  padding: 21px;
   box-shadow: 0 6px 20px rgba(0,0,0,.25);
   display: grid;
   place-items: center;
@@ -63,6 +63,28 @@
   z-index: 61;                /* trên overlay */
 }
 .chat-widget.open .cw-panel { right: 0; }
+.chat-widget .cw-fab:hover::after {
+  content: "Chat With Expert";
+  position: absolute;
+  right: 70px;        /* chỉnh vị trí tooltip */
+  top: 50%;
+  transform: translateY(-50%);
+  background: #14532d;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  pointer-events: none;
+  opacity: 1;
+}
+
+/* hiệu ứng fade */
+.chat-widget .cw-fab::after {
+  opacity: 0;
+  transition: opacity .15s ease;
+}
 
 /* Responsive mobile */
 @media (max-width: 768px) {

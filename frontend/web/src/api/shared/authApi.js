@@ -2,9 +2,11 @@
 import axiosClient from "./axiosClient";
 
 const authApi = {
-  loginApi({ username, password }) {
-    // ✅ chỉ gửi đúng 2 trường backend yêu cầu
-    return axiosClient.post("/auth/login", { username, password });
+  loginApi(payload) {
+    // Accept either { emailOrUsername, password } or { username, password }
+    const emailOrUsername = payload?.emailOrUsername || payload?.username || payload?.email || "";
+    const password = payload?.password;
+    return axiosClient.post("/auth/login", { emailOrUsername, password });
   },
 
   registerApi(data) {
@@ -24,6 +26,9 @@ const authApi = {
 loginWithGoogle(idToken) {
   return axiosClient.post("/auth/google", { idToken });
 },
+  logout() {
+    return axiosClient.post('/auth/logout');
+  },
 };
 
 export default authApi;
