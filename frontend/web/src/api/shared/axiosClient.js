@@ -3,8 +3,8 @@ import axios from "axios";
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:5000",
-  headers: { "Content-Type": "application/json" },
-  // Nếu backend dùng cookie session, bật thêm: withCredentials: true,
+  // Do not force a default Content-Type here so browser/axios can set
+  // the correct header (including multipart boundary) when sending FormData.
   withCredentials: true,
 });
 
@@ -30,8 +30,14 @@ axiosClient.interceptors.request.use((config) => {
   // If sending FormData, remove default JSON content-type so browser/axios can set multipart boundary
   try {
     if (config.data instanceof FormData) {
-      if (config.headers && config.headers['Content-Type']) {
-        delete config.headers['Content-Type'];
+      // axios may expose headers with different casing depending on environment;
+      // remove both common variants so the browser/axios can set multipart boundary.
+      if (config.headers) {
+        if (config.headers['Content-Type']) delete config.headers['Content-Type'];
+        if (config.headers['content-type']) delete config.headers['content-type'];
+        // also remove any common nested keys used by axios
+        if (config.headers.common && config.headers.common['Content-Type']) delete config.headers.common['Content-Type'];
+        if (config.headers.common && config.headers.common['content-type']) delete config.headers.common['content-type'];
       }
     }
   } catch (e) {

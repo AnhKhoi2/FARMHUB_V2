@@ -108,6 +108,8 @@ export const createGuide = async (req, res) => {
     console.warn('[upload-debug] failed to log createGuide request', e);
   }
   const { title, description, content, tags, plantTags, expert_id } = req.body;
+  console.log(req.files);
+  
   const guideData = { title, description, content };
   if (tags !== undefined) {
     try { guideData.tags = typeof tags === 'string' ? JSON.parse(tags) : tags; } catch(e) { guideData.tags = tags; }
@@ -346,96 +348,84 @@ export const permanentDeleteGuide = async (req, res) => {
 };
 
 // PUT /guides/:id - update guide, accept multipart/form-data with optional file field 'image'
+// router.put('/:id', upload.any(), updateGuide);  // giữ nguyên
 export const updateGuide = async (req, res) => {
-  const id = req.params.id;
-  // Debug: log incoming files/body to help diagnose upload issues
   try {
-    console.log('[upload-debug] updateGuide id=', id, ' req.files =', Array.isArray(req.files) ? req.files.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, filename: f.filename, size: f.size })) : req.files);
-    console.log('[upload-debug] updateGuide req.body keys =', Object.keys(req.body || {}));
-  } catch (e) {
-    console.warn('[upload-debug] failed to log updateGuide request', e);
-  }
-  const updates = {};
-  const { title, summary, content, tags } = req.body;
-  if (title !== undefined) updates.title = title;
-  // support both 'summary' and 'description' coming from various clients
-  if (summary !== undefined) updates.summary = summary;
-  if (req.body.description !== undefined) {
-    // persist description field and keep summary in sync for search/legacy uses
-    updates.description = req.body.description;
-    // keep summary updated as well so components/search expecting 'summary' work
-    updates.summary = req.body.description;
-  }
-  if (content !== undefined) updates.content = content;
-  if (tags !== undefined) {
-    try { updates.tags = typeof tags === 'string' ? JSON.parse(tags) : tags; } catch(e) { updates.tags = tags; }
-  }
-  // plantTags (array of strings)
-  if (req.body.plantTags !== undefined) {
-    try { updates.plantTags = typeof req.body.plantTags === 'string' ? JSON.parse(req.body.plantTags) : req.body.plantTags; } catch(e) { updates.plantTags = req.body.plantTags; }
-  }
+    // Debug (rất hữu ích khi dev)
+    console.log("Files received:", req.files?.map(f => ({ 
+      field: f.fieldname, 
+      name: f.originalname, 
+      size: f.size 
+    })) || "No files");
+    console.log("Body keys:", Object.keys(req.body));
 
-  // normalize req.files into a map by fieldname (supports upload.any())
-  const filesMap = {};
-  if (Array.isArray(req.files)) {
-    for (const f of req.files) {
-      if (!filesMap[f.fieldname]) filesMap[f.fieldname] = [];
-      filesMap[f.fieldname].push(f);
+    const updates = {};
+
+    // Cập nhật các field text
+    if (req.body.title) updates.title = req.body.title.trim();
+    if (req.body.description !== undefined) updates.description = req.body.description;
+
+    // plantTags
+    if (req.body.plantTags) {
+      try {
+        updates.plantTags = typeof req.body.plantTags === "string"
+          ? JSON.parse(req.body.plantTags)
+          : req.body.plantTags;
+      } catch (e) {
+        console.warn("plantTags parse error:", e);
+      }
     }
-  } else if (req.files && typeof req.files === 'object') {
-    Object.assign(filesMap, req.files);
-  }
 
-  // handle uploaded main image (fieldname 'image')
-  if (filesMap.image && filesMap.image.length) {
-    const f = filesMap.image[0];
-    const rel = `guides/${f.filename}`;
-    updates.image = rel;
-    updates.$push = { images: rel };
-  }
+    // === ẢNH CHÍNH - CHỈ CẬP NHẬT KHI THỰC SỰ CÓ FILE MỚI ===
+    const mainImageFile = req.files?.find(f => f.fieldname === "image");
+    if (mainImageFile && mainImageFile.size > 0) {
+      updates.image = `/uploads/guides/${mainImageFile.filename}`;
+    }
+    // Nếu không có file mới → giữ nguyên ảnh cũ (không làm gì cả)
 
-  // handle structured steps if provided
-  // expect req.body.steps to be a JSON string: [{title,text,image?}]
-  if (req.body.steps) {
-    try {
-      let incoming = typeof req.body.steps === 'string' ? JSON.parse(req.body.steps) : req.body.steps;
-      const mapped = incoming.map((s, idx) => {
-        const step = { title: s.title || '', text: s.text || '' };
-        // support per-step file fields named stepImage_0, stepImage_1, etc.
-        const fileField = `stepImage_${idx}`;
-        if (filesMap[fileField] && filesMap[fileField].length) {
-          step.image = `guides/${filesMap[fileField][0].filename}`;
-        } else if (s.image) {
-          step.image = s.image;
-        }
-        return step;
+    // === CÁC BƯỚC HƯỚNG DẪN ===
+    if (req.body.steps) {
+      let steps = typeof req.body.steps === "string" 
+        ? JSON.parse(req.body.steps) 
+        : req.body.steps;
+
+      // Map lại từng bước + thay ảnh nếu có file mới
+      steps = steps.map((step, idx) => {
+        const stepFile = req.files?.find(f => f.fieldname === `stepImage_${idx}`);
+
+        return {
+          title: step.title?.trim() || "",
+          text: step.text?.trim() || "",
+          // Nếu có file mới → dùng file mới
+          // Nếu không → giữ nguyên URL cũ (nếu có)
+          image: stepFile && stepFile.size > 0 
+            ? `/uploads/guides/${stepFile.filename}` 
+            : (step.image || null),
+        };
       });
-      updates.steps = mapped;
-    } catch (e) {
-      // ignore parse errors - do not block saving other fields
+
+      updates.steps = steps;
     }
-  }
 
-  // apply update
-  const opts = { new: true, runValidators: true, lean: true };
-  // If using $push we need to use findByIdAndUpdate with that operator
-  let guide;
-  if (updates.$push) {
-    const push = updates.$push;
-    delete updates.$push;
-    guide = await Guide.findByIdAndUpdate(id, { $set: updates, $push: push }, opts).populate('expert_id', 'username email');
-  } else {
-    guide = await Guide.findByIdAndUpdate(id, updates, opts).populate('expert_id', 'username email');
-  }
-  if (!guide) return res.status(404).json({ success: false, message: 'Guide not found' });
+    // Cập nhật vào DB
+    const guide = await Guide.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).populate("expert_id", "username fullname avatar");
 
-  // normalize image to full URL (reuse logic above)
-  if (guide.image && !/^https?:\/\//i.test(guide.image)) {
-    const port = process.env.PORT || 5000;
-    const prefix = `http://localhost:${port}`;
-    if (guide.image.startsWith('/')) guide.image = `${prefix}${guide.image}`;
-    else guide.image = `${prefix}/uploads/${guide.image}`;
-  }
+    if (!guide) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy hướng dẫn" });
+    }
 
-  return ok(res, guide);
+    return res.json({ success: true, data: guide });
+
+  } catch (error) {
+    console.error("Update guide error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Lỗi server", 
+      error: error.message 
+    });
+  }
 };
