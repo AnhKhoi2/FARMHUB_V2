@@ -89,6 +89,32 @@ export const getGuides = async (req, res) => {
         // ignore filesystem errors
       }
     }
+    // Ensure a `category` field is present for the frontend. Priority:
+    // 1) explicit `category` in DB
+    // 2) tag prefixed with 'Loại:' (e.g. 'Loại:Trồng trong chung cư')
+    // 3) a matching value from `plantTags` that the frontend expects
+    try {
+      let cat = out.category || "";
+      if (!cat && Array.isArray(out.tags)) {
+        const tag = out.tags.find(t => typeof t === 'string' && t.startsWith('Loại:'));
+        if (tag) cat = String(tag).replace(/^Loại:/, '').trim();
+      }
+      if (!cat && Array.isArray(out.plantTags)) {
+        const candidates = [
+          "Rau củ dễ chăm",
+          "Trái cây ngắn hạn",
+          "Cây gia vị",
+          "Trồng trong chung cư",
+          "Ít thời gian chăm sóc",
+          "Cây leo nhỏ",
+        ];
+        const found = out.plantTags.find(pt => candidates.includes(pt));
+        if (found) cat = found;
+      }
+      out.category = cat || "";
+    } catch (e) {
+      out.category = out.category || "";
+    }
     return out;
   });
 
@@ -257,6 +283,30 @@ export const getGuideById = async (req, res) => {
 
   // debug log - remove in production
   console.log("[guides] returning guide id=", id, "image=", guide.image);
+
+  // Ensure `category` is present on single guide responses as well
+  try {
+    let cat = guide.category || "";
+    if (!cat && Array.isArray(guide.tags)) {
+      const tag = guide.tags.find(t => typeof t === 'string' && t.startsWith('Loại:'));
+      if (tag) cat = String(tag).replace(/^Loại:/, '').trim();
+    }
+    if (!cat && Array.isArray(guide.plantTags)) {
+      const candidates = [
+        "Rau củ dễ chăm",
+        "Trái cây ngắn hạn",
+        "Cây gia vị",
+        "Trồng trong chung cư",
+        "Ít thời gian chăm sóc",
+        "Cây leo nhỏ",
+      ];
+      const found = guide.plantTags.find(pt => candidates.includes(pt));
+      if (found) cat = found;
+    }
+    guide.category = cat || "";
+  } catch (e) {
+    guide.category = guide.category || "";
+  }
 
   return ok(res, guide);
 };
