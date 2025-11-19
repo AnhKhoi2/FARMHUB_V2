@@ -15,6 +15,7 @@ import {
 
 
 import { OAuth2Client } from "google-auth-library";
+import Profile from "../models/Profile.js";
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // =========================
 // Email helpers (inlined)
@@ -210,7 +211,7 @@ login: asyncHandler(async (req, res) => {
 
   // ❗ Chỉ tìm theo username
   const user = await User.findOne({ username: identifier });
-
+const profile = await Profile.findOne({ userId: user._id });
   if (!user) {
     // Avoid leaking which side failed
     throw new AppError(
@@ -252,8 +253,8 @@ login: asyncHandler(async (req, res) => {
   // Ẩn password cho sạch dữ liệu trả về
   const userSafe = user.toObject ? user.toObject() : { ...user._doc };
   delete userSafe.password;
-
-  return ok(res, { user: userSafe, accessToken, refreshToken });
+const userProfile = profile ? profile.toObject() : null;
+  return ok(res, { user: userSafe, profile: userProfile, accessToken, refreshToken });
 }),
 
 

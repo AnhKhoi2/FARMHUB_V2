@@ -8,13 +8,16 @@ import {
   message,
   Badge,
   Button,
+  Spin, // Thêm Spin để thay thế Text "Đang tải"
 } from "antd";
 import axiosClient from "../../api/shared/axiosClient";
 import Header from "../../components/shared/Header";
 import { useSelector } from "react-redux";
+import { FireFilled, TrophyFilled } from "@ant-design/icons"; // Thêm icon
 
 const { Title, Text } = Typography;
 
+// Giữ nguyên level streak
 const streakLevels = [
   { point: 0, title: "Mới Bắt Đầu", icon: "/streak/none.png" },
   { point: 11, title: "Người Gieo", icon: "/streak/seed.png" },
@@ -28,6 +31,10 @@ const streakLevels = [
   { point: 369, title: "Người Giữ Rừng", icon: "/streak/forest.png" },
 ];
 
+// Định nghĩa màu sắc Chợ Tốt cơ bản
+const CHOTOT_GREEN = "#00b25e"; // Màu xanh lá cây chủ đạo của Chợ Tốt
+const CHOTOT_GREY_LIGHT = "#f8f8f8"; // Màu nền nhẹ
+
 export default function StreakScreen() {
   const [streakInfo, setStreakInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -38,42 +45,23 @@ export default function StreakScreen() {
     setLoading(true);
     try {
       const res = await axiosClient.get("/admin/streaks/me");
-      // backend trả { item: null } nếu chưa có bản ghi — chuyển về giá trị mặc định
       const item = res?.data?.data?.item ?? { current_streak: 0, max_streak: 0 };
       setStreakInfo(item);
     } catch (err) {
       message.error("Không tải được streak.");
-      // đảm bảo component không bị treo ở trạng thái loading
       setStreakInfo({ current_streak: 0, max_streak: 0 });
     } finally {
       setLoading(false);
     }
   };
-  // write switch case for streak levels them hinh
 
   const getStreakLevel = (streak) => {
-    switch (true) {
-      case streak >= 369:
-        return { title: "Người Giữ Rừng", icon: "/streak/forest.png" };
-      case streak >= 300:
-        return { title: "Bậc Thầy (Vườn Tược)", icon: "/streak/master.png" };
-      case streak >= 200:
-        return { title: "Chuyên Gia (Bonsai)", icon: "/streak/bonsai.png" };
-      case streak >= 150:
-        return { title: "Nghệ Nhân", icon: "/streak/craft.png" };
-      case streak >= 100:
-        return { title: "Thợ Vườn", icon: "/streak/tree.png" };
-      case streak >= 76:
-        return { title: "Mát Tay", icon: "/streak/tree-small.png" };
-      case streak >= 42:
-        return { title: "Tay Chăm", icon: "/streak/plant.png" };
-      case streak >= 22:
-        return { title: "Bạn Của Đất", icon: "/streak/sprout.png" };
-      case streak >= 11:
-        return { title: "Người Gieo", icon: "/streak/seed.png" };
-      default:
-        return { title: "Mới Bắt Đầu", icon: "/streak/none.png" };
+    for (let i = streakLevels.length - 1; i >= 0; i--) {
+      if (streak >= streakLevels[i].point) {
+        return streakLevels[i];
+      }
     }
+    return streakLevels[0];
   };
 
   useEffect(() => {
@@ -89,183 +77,218 @@ export default function StreakScreen() {
     }
   }, [streakInfo]);
 
-  if (loading) return <Text>Đang tải...</Text>;
-
+  if (loading)
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <Spin size="large" tip="Đang tải..." />
+      </div>
+    );
 
   const currentStreak = Number(streakInfo.current_streak || 0);
   const maxStreak = streakLevels[streakLevels.length - 1].point;
-  const currentLevel =
-    streakLevels.filter((lv) => lv.point <= currentStreak).slice(-1)[0] ||
-    streakLevels[0];
+  const currentLevel = getStreakLevel(currentStreak);
+  const nextLevelIndex = streakLevels.findIndex(
+    (lv) => lv.point > currentStreak
+  );
+  const nextLevel =
+    nextLevelIndex !== -1
+      ? streakLevels[nextLevelIndex]
+      : { point: maxStreak, title: "Đã đạt cấp độ tối đa" };
+
+  // Tính toán phần trăm thanh tiến trình
+  const prevLevelPoint = currentLevel.point;
+  const nextLevelPoint = nextLevel.point;
+  let progressPercent = 0;
+  if (nextLevelPoint > prevLevelPoint) {
+    progressPercent =
+      ((currentStreak - prevLevelPoint) / (nextLevelPoint - prevLevelPoint)) *
+      100;
+  } else if (currentStreak >= maxStreak) {
+    progressPercent = 100;
+  }
 
   return (
     <>
       <Header />
-      <Card
-        style={{
-          maxWidth: "100%",
-          borderRadius: 20,
-          padding: "40px 30px",
-          background: "linear-gradient(145deg, #fff3e0, #e0f7fa)",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-        }}
-      >
-        <Title
-          level={2}
-          style={{ color: "#ff6f00", textShadow: "1px 1px 2px #fff" }}
-        >
-          Chuỗi ngày siêng năng
-        </Title>
-        {/* hiện streak theo current streak */}
-        <img
-          src={getStreakLevel(currentStreak).icon}
-          alt={getStreakLevel(currentStreak).title}
+      <div style={{ padding: 15, backgroundColor: CHOTOT_GREY_LIGHT }}>
+        <Card
+          bordered={false}
           style={{
-            display: "block",
-            margin: "0 auto 20px",
-            width: 150,
-            height: 150,
-            borderRadius: "50%",
-          }}
-        />
-        <div style={{ textAlign: "center", marginBottom: 10 }}>
-          <Text style={{ fontSize: 16, color: "#555" }}>
-            Cấp độ hiện tại của bạn:
-          </Text>
-          <Button
-            type="primary"
-            style={{
-              display: "block",
-              margin: "0 auto 20px",
-              backgroundColor: "#ff6f00",
-              borderColor: "#ff6f00",
-              fontWeight: "bold",
-              marginBottom: 20,
-            }}
-          >
-            {getStreakLevel(currentStreak).title}
-          </Button>
-        </div>
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: 30,
-            fontSize: 18,
-            color: "#333",
+            maxWidth: 700,
+            margin: "20px auto",
+            borderRadius: 8,
+            padding: "20px",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
           }}
         >
-          {user?.username ? user.username.toUpperCase() : "Bạn"}, bạn đã duy trì chuỗi siêng năng được{" "}
-          <strong>{currentStreak} ngày</strong> liên tiếp! Hãy tiếp tục phát huy
-          nhé!
-        </div>
-        {/* Vòng tròn current streak */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: 25,
-          }}
-        >
-          <Progress
-            type="line"
-            percent={Math.min((currentStreak / maxStreak) * 100, 100)}
-            format={() => (
-              <div
-                style={{ fontSize: 32, fontWeight: "bold", color: "#ff6f00" }}
-              >
+          <div style={{ textAlign: "center", marginBottom: 30 }}>
+            <Title level={3} style={{ color: CHOTOT_GREEN, marginBottom: 5 }}>
+              <FireFilled style={{ marginRight: 8 }} />
+              Chuỗi Ngày Siêng Năng
+            </Title>
+            <Text style={{ color: "#777" }}>
+              Tiếp tục duy trì để đạt được các danh hiệu cao hơn!
+            </Text>
+          </div>
+
+          {/* Vùng thông tin Streak hiện tại */}
+          <Row gutter={16} align="middle" style={{ marginBottom: 30 }}>
+            <Col xs={24} sm={8} style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <img
+                src={currentLevel.icon}
+                alt={currentLevel.title}
+                style={{
+                  width: 100,
+                  height: 100,
+                  objectFit: "cover",
+                  borderRadius: "50%",
+                  border: `3px solid ${CHOTOT_GREEN}`,
+                  padding: 3,
+                  marginBottom: 10,
+                }}
+              />
+              <Text strong style={{ color: CHOTOT_GREEN, fontSize: 16 }}>
+                {currentLevel.title}
+              </Text>
+            </Col>
+            <Col xs={24} sm={16}>
+              <Text type="secondary" style={{ display: "block", marginBottom: 5 }}>
+                Chuỗi hiện tại:
+              </Text>
+              <Title level={1} style={{ margin: 0, color: CHOTOT_GREEN }}>
                 {currentStreak}
-                <div style={{ fontSize: 14, fontWeight: 400 }}>ngày</div>
-              </div>
-            )}
-            strokeWidth={16}
-            strokeColor={{
-              "0%": "#ffe57f",
-              "100%": "#ff6f00",
-            }}
-            width={180}
-          />
-        </div>
-        {/* Các mốc danh hiệu */}
-        <div>
-          <Title level={3} style={{ color: "#00796b", marginBottom: 20 }}>
-            Các mốc tiếp theo
+                <span style={{ fontSize: 20, fontWeight: 400, marginLeft: 5 }}>
+                  ngày
+                </span>
+              </Title>
+              <Text type="secondary" style={{ display: "block", marginTop: 10 }}>
+                Kỷ lục cá nhân: **{streakInfo.max_streak || 0} ngày**
+              </Text>
+              <Text type="secondary" style={{ display: "block" }}>
+                Chào mừng,{" "}
+                <Text strong style={{ color: CHOTOT_GREEN }}>
+                  {user?.username ? user.username.toUpperCase() : "Bạn"}
+                </Text>
+                !
+              </Text>
+            </Col>
+          </Row>
+
+          {/* Thanh Tiến Trình Level Tiếp Theo */}
+          {currentStreak < maxStreak && (
+            <div
+              style={{
+                background: CHOTOT_GREY_LIGHT,
+                padding: "15px",
+                borderRadius: 8,
+                marginBottom: 30,
+              }}
+            >
+              <Text style={{ fontWeight: 600, color: "#333" }}>
+                Tiến trình lên cấp {nextLevel.title} (
+                {nextLevel.point - currentStreak} ngày nữa)
+              </Text>
+              <Progress
+                percent={progressPercent}
+                showInfo={false}
+                strokeColor={CHOTOT_GREEN}
+                trailColor="#e0e0e0"
+                style={{ margin: "5px 0" }}
+              />
+              <Row justify="space-between">
+                <Text style={{ fontSize: 12, color: "#666" }}>
+                  {currentLevel.point} ngày
+                </Text>
+                <Text style={{ fontSize: 12, color: "#666" }}>
+                  {nextLevel.point} ngày
+                </Text>
+              </Row>
+            </div>
+          )}
+
+          {/* Danh sách các mốc danh hiệu */}
+          <Title level={4} style={{ color: "#333", borderBottom: "1px solid #eee", paddingBottom: 10 }}>
+            <TrophyFilled style={{ marginRight: 8, color: CHOTOT_GREEN }} />
+            Các Mốc Danh Hiệu
           </Title>
-          <Row gutter={[20, 20]} justify="center">
+          <Row gutter={[16, 16]} justify="center">
             {streakLevels.map((lv) => {
               const isReached = currentStreak >= lv.point;
               const isCurrent = lv.point === currentLevel.point;
 
               return (
-                <Col key={lv.point}>
-                  <Badge
-                    count={lv.point}
+                <Col
+                  xs={12}
+                  sm={8}
+                  md={6}
+                  key={lv.point}
+                  style={{ textAlign: "center" }}
+                >
+                  <div
+                    ref={isCurrent ? currentRef : null}
                     style={{
+                      padding: 10,
+                      borderRadius: 8,
+                      border: isCurrent
+                        ? `2px solid ${CHOTOT_GREEN}`
+                        : "1px solid #ddd",
                       backgroundColor: isCurrent
-                        ? "#ff6f00"
+                        ? "#e6ffed"
                         : isReached
-                        ? "#69f0ae"
-                        : "#ccc",
-                      color: "white",
-                      fontSize: 14,
-                      minWidth: 28,
-                      height: 28,
+                        ? "#f0f0f0"
+                        : "#fff",
+                      opacity: isReached ? 1 : 0.6,
+                      transition: "all 0.3s",
+                      boxShadow: isCurrent ? "0 0 8px rgba(0,178,94,0.3)" : "none",
                     }}
                   >
-                    <div
-                      ref={isCurrent ? currentRef : null}
+                    <Badge
+                      count={lv.point === 0 ? "Bắt đầu" : lv.point + " ngày"}
                       style={{
-                        width: 150,
-                        height: 150,
-                        borderRadius: "50%",
-                        border: isCurrent
-                          ? "3px solid #ff6f00"
-                          : "1px solid #ddd",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexDirection: "column",
-                        backgroundColor: "#fff",
-                        padding: 8,
-                        boxShadow: isCurrent
-                          ? "0 0 15px rgba(255,111,0,0.5)"
-                          : "0 3px 6px rgba(0,0,0,0.1)",
-                        transition: "transform 0.3s",
+                        backgroundColor: isCurrent ? CHOTOT_GREEN : isReached ? "#95de64" : "#bfbfbf",
+                        color: "white",
+                        fontSize: 12,
+                        marginBottom: 10,
+                      }}
+                    />
+                    <img
+                      src={lv.icon}
+                      alt={lv.title}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        display: "block",
+                        margin: "0 auto 5px",
+                      }}
+                    />
+                    <Text
+                      strong
+                      style={{
+                        fontSize: 13,
+                        color: isCurrent
+                          ? CHOTOT_GREEN
+                          : isReached
+                          ? "#333"
+                          : "#999",
+                        display: "block",
                       }}
                     >
-                      {lv.icon && (
-                        <img
-                          src={lv.icon}
-                          alt={lv.title}
-                          style={{
-                            width: 50,
-                            height: 50,
-                            marginBottom: 6,
-                            borderRadius: "50%",
-                          }}
-                        />
-                      )}
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: isCurrent
-                            ? "#ff6f00"
-                            : isReached
-                            ? "#00796b"
-                            : "#999",
-                          textAlign: "center",
-                        }}
-                      >
-                        {lv.title}
-                      </Text>
-                    </div>
-                  </Badge>
+                      {lv.title}
+                    </Text>
+                  </div>
                 </Col>
               );
             })}
           </Row>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </>
   );
 }
