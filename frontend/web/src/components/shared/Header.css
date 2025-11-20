@@ -170,6 +170,21 @@
     font-weight: 500;
 }
 
+/* hide username in top bar to preserve the pre-login header layout */
+.user-info .username {
+    display: none;
+}
+
+/* truncate long usernames if they ever appear in other contexts */
+.username.truncate {
+    max-width: 140px;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
 /* ĐỔI TÊN CLASS TRÁNH ĐỤNG BOOTSTRAP */
 .user-dropdown-menu {
     /* sổ xuống dạng cột */
@@ -201,6 +216,11 @@
     visibility: visible;
     pointer-events: auto;
     transform: translateY(0);
+}
+
+/* dropdown header block (shown when user opens menu) */
+.user-dropdown-menu .user-menu-header {
+    padding: 0.65rem 0.9rem;
 }
 
 /* ===== MÀU MENU USER – GIỐNG BẢN GỐC ===== */

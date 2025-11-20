@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { logout } from "../redux/authSlice";
+import { logoutThunk } from "../redux/authThunks";
 import { FaTachometerAlt, FaUsers, FaBug, FaFolderOpen, FaCloudSun, FaTrophy, FaSeedling, FaShoppingCart, FaBook } from 'react-icons/fa';
 
 /*
@@ -34,7 +34,7 @@ export default function AdminLayout({ children }) {
   };
 
   const doLogout = () => {
-    dispatch(logout());
+    dispatch(logoutThunk());
     navigate("/login");
   };
 

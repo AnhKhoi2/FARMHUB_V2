@@ -156,6 +156,11 @@ const Header = () => {
               >
                 <Link to="/experts">Chuyên gia</Link>
               </li>
+              <li
+                className={currentPath.startsWith("/pricing") ? "active" : ""}
+              >
+                <Link to="/pricing">Gói Dịch Vụ</Link>
+              </li>
 
               {user && (
                 <li className="notification-item">
@@ -182,15 +187,13 @@ const Header = () => {
                     <div
                       className="user-info"
                       onClick={handleToggleUserDropdown}
+                      title={user?.username || user?.email}
                     >
                       <img
-                        src={user.avatar || "https://via.placeholder.com/40"}
+                        src={user?.avatar || "/logo192.png"}
                         alt="Avatar"
                         className="avatar"
                       />
-                      <span className="username">
-                        {user.username || user.email} ▾
-                      </span>
                     </div>
 
                     <ul
@@ -198,6 +201,35 @@ const Header = () => {
                         dropdownOpen ? "show" : ""
                       }`}
                     >
+                      <li
+                        className="user-menu-header"
+                        style={{
+                          padding: "0.75rem 1rem",
+                          borderBottom: "1px solid #eee",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
+                        >
+                          <img
+                            src={user?.avatar || "/logo192.png"}
+                            alt="avatar"
+                            style={{ width: 36, height: 36, borderRadius: 18 }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 700 }}>
+                              {user?.username || user?.email}
+                            </div>
+                            <div style={{ fontSize: 12, color: "#666" }}>
+                              {user?.email}
+                            </div>
+                          </div>
+                        </div>
+                      </li>
                       <li>
                         <Link
                           to="/profile"

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import plantApi from "../api/plantApi"; // chỉnh lại path nếu khác
+import Header from "../components/shared/Header";
 
 // Mapping “vấn đề sức khỏe” -> tiếng Việt + hướng dẫn
 const mapIssueToVi = (name) => {
@@ -235,8 +236,10 @@ const PlantDiagnosisPage = () => {
   };
 
   return (
-    <div className="container mt-4 mb-5">
-      <h2 className="mb-3">Chẩn đoán cây trồng bằng hình ảnh</h2>
+    <>
+      <Header />
+      <div className="container mt-4 mb-5">
+        <h2 className="mb-3">Chẩn đoán cây trồng bằng hình ảnh</h2>
       <p className="text-muted">
         Tải ảnh lá, thân hoặc toàn bộ cây để hệ thống nhận diện và gợi ý tình trạng cây bằng dữ
         liệu từ Plant.id.
@@ -393,7 +396,8 @@ const PlantDiagnosisPage = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

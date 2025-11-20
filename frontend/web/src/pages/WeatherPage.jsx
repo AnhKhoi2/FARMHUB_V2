@@ -8,6 +8,7 @@ import {
 } from "../utils/weatherTranslation";
 import plantAdviceApi from "../api/plantAdviceApi.js";
 import PlantAdviceCard from "../components/PlantAdviceCard.jsx";
+import Header from "../components/shared/Header";
 
 const DEFAULT_QUERY = "";
 
@@ -251,8 +252,10 @@ const WeatherPage = () => {
     place?.name || currentWeather?.name || "Địa điểm không xác định";
 
   return (
-    <div className="container py-4">
-      <h1 className="mb-3">Thời tiết & Chất lượng không khí</h1>
+    <>
+      <Header />
+      <div className="container py-4">
+        <h1 className="mb-3">Thời tiết & Chất lượng không khí</h1>
 
       {/* Search */}
       <form className="row g-2 mb-4" onSubmit={handleSearch}>
@@ -617,7 +620,8 @@ const WeatherPage = () => {
           </div>
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

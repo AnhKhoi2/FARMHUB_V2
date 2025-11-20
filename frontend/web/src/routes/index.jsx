@@ -76,13 +76,17 @@ import ExpertRoutes from "./expert/ExpertRoutes.jsx";
 import ExpertContent from "../pages/ExpertContent.jsx";
 import AIChatWidget from "../components/shared/AIChatWidget";
 import StreakScreen from "../pages/farmer/StreakScreen.jsx";
-import { useLocation } from 'react-router-dom';
+import PlantCarePricing from "../pages/Subscription/PlantCarePricing";
+import PaymentSuccess from "../pages/Subscription/PaymentSuccess";
+import PaymentFailed from "../pages/Subscription/PaymentFailed";
+import { useLocation } from "react-router-dom";
 
 export default function AppRoutes() {
   function ChatWrapper() {
     const location = useLocation();
     // don't show chat widget on admin paths
-    if (location.pathname && location.pathname.startsWith('/admin')) return null;
+    if (location.pathname && location.pathname.startsWith("/admin"))
+      return null;
     return <AIChatWidget />;
   }
   return (
@@ -220,7 +224,7 @@ export default function AppRoutes() {
           path="/moderator"
           element={
             // <ModeratorRoute>
-              <ModeratorHome />
+            <ModeratorHome />
             // </ModeratorRoute>
           }
         />
@@ -354,6 +358,9 @@ export default function AppRoutes() {
         <Route path="/experthome" element={<ExpertHome />} />
         <Route path="/experthome/models" element={<ExpertModels />} />
         <Route path="/experts" element={<ExpertsList />} />
+        <Route path="/pricing" element={<PlantCarePricing />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/failed" element={<PaymentFailed />} />
         <Route path="/guides/:id" element={<GuideDetail />} />
         <Route
           path="/managerguides/trash"
