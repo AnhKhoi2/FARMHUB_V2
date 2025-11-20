@@ -157,6 +157,11 @@ const Header = () => {
               >
                 <Link to="/experts">Chuyên gia</Link>
               </li>
+              <li
+                className={currentPath.startsWith("/pricing") ? "active" : ""}
+              >
+                <Link to="/pricing">Gói Dịch Vụ</Link>
+              </li>
 
               {user && (
                 <>
