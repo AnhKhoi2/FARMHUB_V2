@@ -77,14 +77,6 @@ const handleLogin = async (e) => {
       // ignore parse errors
     }
 
-<<<<<<< HEAD
-    if (success) {
-      await afterLogin(role);
-    }
-  };
-
-=======
->>>>>>> 8dfac535c5a8334d48ac859ab55f87651cdc4299
   const handleGoogleSuccess = async (cred) => {
     const idToken = cred?.credential;
     if (!idToken) return alert("Không lấy được Google credential");
