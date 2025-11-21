@@ -41,6 +41,11 @@ import weatherRoute from "./routes/weather_v2.js";
 import airRoute from "./routes/air.js";
 import tilesRoute from "./routes/tiles.js";
 import plantRoute from "./routes/plant.js";
+
+import airRoute from './routes/air.js';
+import tilesRoute from './routes/tiles.js';
+import plantRoute from './routes/plant.js';
+import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -75,12 +80,13 @@ app.use(cookieParser());
 // app.use(express.json({ limit: "10mb" }));
 // app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-app.get("/api/health", (req, res) => res.json({ ok: true }));
-app.use("/api/geocode", geocodeRoute);
-app.use("/api/weather", weatherRoute);
-app.use("/api/air", airRoute);
-app.use("/api/plant", plantRoute);
-app.use("/api/ow/tiles", tilesRoute);
+app.use("/api", plantAdviceRoutes);
+app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.use('/api/geocode', geocodeRoute);
+app.use('/api/weather', weatherRoute);
+app.use('/api/air', airRoute);
+app.use('/api/plant', plantRoute);
+app.use('/api/ow/tiles', tilesRoute);
 app.use("/auth", authRoute);
 app.use("/profile", profileRoute);
 app.use("/admin/diseases", diseaseRoutes);

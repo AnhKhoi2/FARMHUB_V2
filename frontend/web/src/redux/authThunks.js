@@ -2,23 +2,29 @@
 import { loginStart, loginSuccess, loginFailure, logout } from "./authSlice";
 import authApi from "../api/shared/authApi.js";
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { useEffect } from "react";
 
 export const loginThunk = (credentials) => async (dispatch) => {
   try {
     dispatch(loginStart());
     const res = await authApi.loginApi(credentials);
 
+    // const payload = res?.data?.data || res?.data || {};
+    // const { user, accessToken } = payload;
     // BE có thể trả nhiều dạng: { data: { user, accessToken } } hoặc { user, accessToken }
     // Hãy parse một cách an toàn và log role để debug nếu cần.
     const data = res?.data;
     let user = null;
+    let profile = null;
     let accessToken = null;
     if (data) {
       if (data.data) {
         user = data.data.user ?? data.data;
+        profile = data.data.profile ?? null;
         accessToken = data.data.accessToken ?? data.data.token ?? null;
       } else {
         user = data.user ?? data;
+        profile = data.profile ?? null;
         accessToken = data.accessToken ?? data.token ?? null;
       }
     }
@@ -29,18 +35,26 @@ export const loginThunk = (credentials) => async (dispatch) => {
     // Debug log (dev only)
     try {
       if (process.env.NODE_ENV !== "production") {
-        console.log("[auth] login response user role:", user?.role, "user:", user);
+        console.log(
+          "[auth] login response user role:",
+          user?.role,
+          "user:",
+          user
+        );
       }
-    } catch (e) {}
+    } catch (e) {
+      // ignore logging errors
+    }
 
     if (!user || !accessToken) {
       throw new Error("Phản hồi đăng nhập không hợp lệ từ server");
     }
 
     dispatch(loginSuccess({ user, accessToken }));
+    const users = { ...user, profile };
 
     // Persist an toàn
-    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("user", JSON.stringify(users));
     if (accessToken) localStorage.setItem("accessToken", accessToken);
 
     return { success: true, role: user?.role };
@@ -49,25 +63,21 @@ export const loginThunk = (credentials) => async (dispatch) => {
 
     const data = err?.response?.data;
 
-    // ƯU TIÊN lấy message từ BE
     const backendMessage =
-      data?.message ||              // { message: "..." }
-      data?.error?.message ||       // { error: { message: "..." } }
-      data?.errorMessage ||         // một số API dùng key này
-      data?.errors?.[0]?.msg ||     // trường hợp validation kiểu array
+      data?.message ||
+      data?.error?.message ||
+      data?.errorMessage ||
+      data?.errors?.[0]?.msg ||
       err.message;
 
     const backendCode =
-      data?.code ||                 // { code: "INVALID_CREDENTIALS" }
+      data?.code ||
       data?.error?.code;
 
-    // text hiển thị cho user
     let uiMessage =
       backendMessage ||
       "Đăng nhập thất bại. Vui lòng thử lại.";
 
-    // Nếu muốn, có thể show code để debug
-    // ví dụ: [INVALID_CREDENTIALS] Tên đăng nhập hoặc mật khẩu không đúng.
     if (backendCode) {
       uiMessage = ` ${uiMessage}`;
     }
@@ -77,6 +87,7 @@ export const loginThunk = (credentials) => async (dispatch) => {
   }
 };
 
+
 // các thunk khác giữ nguyên...
 export const logoutThunk = () => async (dispatch) => {
   try {
@@ -84,7 +95,10 @@ export const logoutThunk = () => async (dispatch) => {
     await authApi.logout();
   } catch (err) {
     // ignore network errors but continue to clear client state
-    console.warn("logout API failed:", err?.response?.data || err?.message || err);
+    console.warn(
+      "logout API failed:",
+      err?.response?.data || err?.message || err
+    );
   }
 
   dispatch(logout());
@@ -101,7 +115,7 @@ export const registerThunk = (formData) => async () => {
     // Ưu tiên lấy message từ BE
     const data = res?.data;
     const message =
-      data?.message || 
+      data?.message ||
       data?.msg ||
       "Đăng ký thành công! Vui lòng kiểm tra email xác nhận.";
 
@@ -123,7 +137,6 @@ export const registerThunk = (formData) => async () => {
   }
 };
 
-
 export const loginWithGoogleThunk = createAsyncThunk(
   "auth/loginWithGoogle",
   async (idToken, { rejectWithValue }) => {
@@ -136,7 +149,9 @@ export const loginWithGoogleThunk = createAsyncThunk(
       }
       return { user: inner.user, accessToken: inner.accessToken };
     } catch (err) {
-      return rejectWithValue(err?.response?.data || { message: "Google login failed" });
+      return rejectWithValue(
+        err?.response?.data || { message: "Google login failed" }
+      );
     }
   }
 );

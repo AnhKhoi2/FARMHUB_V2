@@ -15,6 +15,7 @@ import {
 
 
 import { OAuth2Client } from "google-auth-library";
+import Profile from "../models/Profile.js";
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // =========================
 // Email helpers (inlined)
@@ -192,58 +193,30 @@ export const authController = {
     return ok(res, { message: "Xác thực email thành công! Bạn có thể đăng nhập." });
   }),
 
-  // Đăng nhập
- // Đăng nhập CHỈ bằng username
+// Đăng nhập CHỈ bằng username
 login: asyncHandler(async (req, res) => {
   const { username, emailOrUsername, password } = req.body;
 
-  // Chỉ dùng username; emailOrUsername chỉ là alias cho username (nếu FE cũ còn gửi)
+  // FE mới chỉ gửi username; emailOrUsername chỉ để tương thích cũ
   const identifier = (username || emailOrUsername || "").trim();
 
   if (!identifier || !password) {
-    throw new AppError(
-      ERROR_CODES.MISSING_FIELDS.message,
-      ERROR_CODES.MISSING_FIELDS.statusCode,
-      "MISSING_FIELDS"
-    );
+    const { message, statusCode } = ERROR_CODES.MISSING_FIELDS;
+    throw new AppError(message, statusCode, "MISSING_FIELDS");
   }
 
-  // ❗ Chỉ tìm theo username
+  // 🔍 CHỈ tìm theo username
   const user = await User.findOne({ username: identifier });
-
+const profile = await Profile.findOne({ userId: user._id });
   if (!user) {
-    // Avoid leaking which side failed
-    throw new AppError(
-      ERROR_CODES.INVALID_CREDENTIALS.message,
-      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
-      "INVALID_CREDENTIALS"
-    );
+    const { message, statusCode } = ERROR_CODES.INVALID_CREDENTIALS;
+    throw new AppError(message, statusCode, "INVALID_CREDENTIALS");
   }
 
-  // If account registered via OAuth/provider and has no password
-  if (!user.password) {
-    // Better message for client, but keep generic code to avoid leaking too much
-    throw new AppError(
-      "Tài khoản này không có mật khẩu. Vui lòng đăng nhập bằng nhà cung cấp đã liên kết hoặc tạo mật khẩu.",
-      400,
-      "NO_PASSWORD_SET"
-    );
-  }
-
-  let isMatch = false;
-  try {
-    isMatch = await bcrypt.compare(password, user.password);
-  } catch (err) {
-    console.error("login bcrypt.compare error:", err);
-    // Fall through to invalid credentials
-  }
-
+  const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new AppError(
-      ERROR_CODES.INVALID_CREDENTIALS.message,
-      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
-      "INVALID_CREDENTIALS"
-    );
+    const { message, statusCode } = ERROR_CODES.INVALID_CREDENTIALS;
+    throw new AppError(message, statusCode, "INVALID_CREDENTIALS");
   }
 
   const accessToken = generateAccessToken(user);
@@ -252,9 +225,12 @@ login: asyncHandler(async (req, res) => {
   // Ẩn password cho sạch dữ liệu trả về
   const userSafe = user.toObject ? user.toObject() : { ...user._doc };
   delete userSafe.password;
-
-  return ok(res, { user: userSafe, accessToken, refreshToken });
+const userProfile = profile ? profile.toObject() : null;
+  return ok(res, { user: userSafe, profile: userProfile, accessToken, refreshToken });
 }),
+
+
+
 
 
   // Refresh token
