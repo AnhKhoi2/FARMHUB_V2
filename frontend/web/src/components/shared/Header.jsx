@@ -138,6 +138,9 @@ const Header = () => {
                     <Link to="/farmer/notebooks">Nhật ký cơ bản</Link>
                   </li>
                   <li>
+                    <Link to="/farmer/notebooks/stats">Thống kê nhật ký</Link>
+                  </li>
+                  <li>
                     <Link to="/farmer/collections">Bộ sưu tập</Link>
                   </li>
                 </ul>

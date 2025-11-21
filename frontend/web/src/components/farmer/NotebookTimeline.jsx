@@ -112,20 +112,7 @@ const NotebookTimeline = ({ notebookId }) => {
                 </div>
               )}
 
-              {stage.observations && stage.observations.length > 0 && (
-                <div className="stage-observations">
-                  <p>
-                    <strong>Quan sát:</strong>
-                  </p>
-                  <ul>
-                    {stage.observations.map((obs, idx) => (
-                      <li key={idx}>
-                        {obs.key}: {obs.value ? "✓ Có" : "✗ Không"}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Ẩn phần hiển thị stage-observations ở timeline tiến trình */}
             </div>
 
             {index < timeline.timeline.length - 1 && (

@@ -63,6 +63,24 @@ const notebookApi = {
 
   calculateStage: (notebookId) =>
     api.get(`/notebooks/${notebookId}/calculate-stage`),
+
+  // Daily Status & Overdue Management
+  getDailyStatus: (notebookId) =>
+    api.get(`/notebooks/${notebookId}/daily/status`),
+
+  // Stats
+  getNotebookStats: () => api.get(`/notebooks/stats`),
+
+  getOverdueDetail: (notebookId) =>
+    api.get(`/notebooks/${notebookId}/daily/overdue/detail`),
+
+  skipOverdueTasks: (notebookId) =>
+    api.post(`/notebooks/${notebookId}/daily/overdue/skip`),
+
+  completeOverdueTask: (notebookId, taskName) =>
+    api.post(`/notebooks/${notebookId}/daily/overdue/complete`, {
+      task_name: taskName,
+    }),
 };
 
 export default notebookApi;

@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import Notebook from "../models/Notebook.js";
 import { sendDailyReminderNotification } from "../controllers/notificationController.js";
+import { getVietnamToday, toVietnamMidnight } from "../utils/timezone.js";
 
 /**
  * Kiểm tra notebook có tasks chưa hoàn thành từ ngày hôm trước
@@ -12,17 +13,14 @@ const checkIncompleteTasksForNotebook = async (notebook) => {
       return;
     }
 
-    const yesterday = new Date();
+    const today = getVietnamToday();
+    const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
     // Đếm số tasks chưa hoàn thành từ ngày hôm qua
     const incompleteTasks = notebook.daily_checklist.filter((task) => {
-      const taskDate = new Date(task.created_at);
-      taskDate.setHours(0, 0, 0, 0);
+      if (!task.created_at) return false;
+      const taskDate = toVietnamMidnight(task.created_at);
 
       // Task được tạo hôm qua và chưa completed
       return taskDate.getTime() === yesterday.getTime() && !task.is_completed;

@@ -5,6 +5,7 @@ import DailyChecklist from "../../components/farmer/DailyChecklist";
 import StageObservations from "../../components/farmer/StageObservations";
 import NotebookTimeline from "../../components/farmer/NotebookTimeline";
 import ImageUploader from "../../components/farmer/ImageUploader";
+import OverduePopup from "../../components/farmer/OverduePopup";
 import { generateNotebookPDF } from "../../utils/pdfGenerator";
 import "../../css/farmer/NotebookDetail.css";
 
@@ -17,10 +18,13 @@ const NotebookDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [journalText, setJournalText] = useState("");
+  const [overdueSummary, setOverdueSummary] = useState(null);
+  const [showOverduePopup, setShowOverduePopup] = useState(false);
 
   useEffect(() => {
     if (id && id !== "undefined") {
       fetchNotebookData();
+      checkDailyStatus();
     }
   }, [id]);
 
@@ -56,6 +60,32 @@ const NotebookDetail = () => {
       setError("Không thể tải dữ liệu nhật ký");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkDailyStatus = async () => {
+    try {
+      const response = await notebookApi.getDailyStatus(id);
+      const data = response.data?.data || response.data;
+
+      // Hiển thị popup nếu có overdue
+      if (data.overdue_summary && data.overdue_summary.overdue_count > 0) {
+        setOverdueSummary(data.overdue_summary);
+        setShowOverduePopup(true);
+      }
+    } catch (err) {
+      console.error("Error checking daily status:", err);
+    }
+  };
+
+  const handleSkipOverdue = async () => {
+    try {
+      await notebookApi.skipOverdueTasks(id);
+      setShowOverduePopup(false);
+      setOverdueSummary(null);
+    } catch (err) {
+      console.error("Error skipping overdue tasks:", err);
+      alert("Không thể bỏ qua công việc");
     }
   };
 
@@ -521,6 +551,16 @@ const NotebookDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Overdue Popup */}
+      {showOverduePopup && overdueSummary && (
+        <OverduePopup
+          overdueSummary={overdueSummary}
+          notebookId={id}
+          onSkip={handleSkipOverdue}
+          onClose={() => setShowOverduePopup(false)}
+        />
+      )}
     </div>
   );
 };
