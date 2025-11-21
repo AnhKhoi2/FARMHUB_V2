@@ -57,25 +57,30 @@ export default function AdminDetailGuides() {
       <Flex vertical gap={20} style={{ padding: 24 }}>
         {/* HEADER */}
         <Flex justify="space-between" align="center">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-            Quay lại
-          </Button>
+          <Button
+            size="small"
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(-1)}
+            title="Quay lại"
+          />
 
           <Flex gap={10}>
             <Button
-              type="primary"
-              icon={<EditOutlined />}
+              size="small"
+              type="text"
+              icon={<EditOutlined style={{ color: "#4CAF50" }} />}
               onClick={() => navigate(`/managerguides/edit/${guide._id}`)}
-            >
-              Chỉnh sửa
-            </Button>
+              title="Chỉnh sửa"
+            />
 
             <Button
-              icon={<UnorderedListOutlined />}
+              size="small"
+              type="text"
+              icon={<UnorderedListOutlined style={{ color: "#2E7D32" }} />}
               onClick={() => navigate("/managerguides")}
-            >
-              Danh sách
-            </Button>
+              title="Danh sách"
+            />
           </Flex>
         </Flex>
 

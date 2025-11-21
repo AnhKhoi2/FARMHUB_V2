@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import AdminLayout from "../../components/AdminLayout.jsx"; // Layout wrapper
 import usersApi from "../../api/usersApi.js";
+import { FiTrash2, FiRotateCcw, FiX } from 'react-icons/fi';
 
 const ROLE_OPTIONS = ["user", "expert", "moderator", "admin"];
+const ROLE_LABELS = { user: 'Người dùng', expert: 'Chuyên gia', moderator: 'Điều phối', admin: 'Quản trị' };
 
 export default function AdminUsers() {
   const [items, setItems] = useState([]);
@@ -93,60 +95,79 @@ export default function AdminUsers() {
         <div className="text-muted small">Tổng: <strong>{total}</strong></div>
       </div>
 
-      <div className="row g-2 mb-3">
-        <div className="col-auto">
+      <div className="d-flex align-items-center mb-3" style={{ gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <input
             className="form-control form-control-sm"
             placeholder="Tìm username hoặc email"
             value={q}
             onChange={(e) => { setQ(e.target.value); setPage(1); }}
+            style={{ width: 240, minWidth: 140 }}
           />
-        </div>
-        <div className="col-auto">
-          <select
-            className="form-select form-select-sm"
-            value={roleFilter}
-            onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
+          <button
+            className="btn btn-sm"
+            title="Xóa tìm kiếm"
+            onClick={() => { setQ(''); setPage(1); }}
+            style={{
+              padding: 0,
+              width: 34,
+              height: 34,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 6,
+              border: '1px solid #ced4da',
+              background: '#fff'
+            }}
+            aria-label="clear-search"
           >
-            <option value="">-- Role --</option>
-            {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
+            <FiX size={14} />
+          </button>
         </div>
-        <div className="col-auto form-check d-flex align-items-center">
+
+        <select
+          className="form-select form-select-sm"
+          value={roleFilter}
+          onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
+          style={{ width: 160, minWidth: 140 }}
+        >
+          <option value="">-- Role --</option>
+          {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
+
+        <label className="d-flex align-items-center gap-1 small" style={{ margin: 0 }}>
           <input
             id="includeDeleted"
-            className="form-check-input me-1"
+            className="form-check-input"
             type="checkbox"
             checked={includeDeleted}
             onChange={(e) => { setIncludeDeleted(e.target.checked); setPage(1); }}
+            style={{ width: 16, height: 16 }}
           />
-          <label htmlFor="includeDeleted" className="form-check-label small">Hiển thị đã xóa</label>
-        </div>
-        <div className="col-auto">
-          <button className="btn btn-sm btn-outline-secondary" onClick={() => { setQ(""); setRoleFilter(""); setIncludeDeleted(false); setPage(1); }}>Reset</button>
-        </div>
+          <span>Hiển thị đã xóa</span>
+        </label>
       </div>
 
-  {error && <div className="alert alert-danger py-1 small mb-2">{error}</div>}
+      {error && <div className="alert alert-danger py-1 small mb-2">{error}</div>}
 
       <div className="table-responsive bg-white shadow-sm rounded border">
         <table className="table table-sm table-hover mb-0">
           <thead className="table-light">
             <tr>
               <th style={{width:60}}>STT</th>
-              <th>Username</th>
+              <th>Tên đăng nhập</th>
               <th>Email</th>
-              <th>Role</th>
+              <th>Vai trò</th>
               <th>Trạng thái</th>
-              <th style={{width:150}}>Actions</th>
+              <th style={{width:150}}>Hành động</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={5} className="text-center py-4">Đang tải...</td></tr>
+              <tr><td colSpan={6} className="text-center py-4">Đang tải...</td></tr>
             )}
             {!loading && items.length === 0 && (
-              <tr><td colSpan={5} className="text-center py-4">Không có dữ liệu</td></tr>
+              <tr><td colSpan={6} className="text-center py-4">Không có dữ liệu</td></tr>
             )}
             {!loading && items.map((u, idx) => (
               <tr key={u._id} className={u.isDeleted ? "table-danger" : ""}>
@@ -162,18 +183,36 @@ export default function AdminUsers() {
                     onChange={(e) => changeRole(u._id, e.target.value)}
                     disabled={u.isDeleted}
                   >
-                    {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                    {ROLE_OPTIONS.map(r => <option key={r} value={r}>{ROLE_LABELS[r] || r}</option>)}
                   </select>
                 </td>
                 <td className="small">
                   {u.isDeleted ? <span className="badge bg-danger">Đã xóa</span> : <span className="badge bg-success">Hoạt động</span>}
                 </td>
                 <td>
-                  {!u.isDeleted ? (
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => softDelete(u._id)}>Xóa</button>
-                  ) : (
-                    <button className="btn btn-sm btn-outline-primary" onClick={() => restore(u._id)}>Khôi phục</button>
-                  )}
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    {!u.isDeleted ? (
+                      <button
+                        className="btn btn-sm btn-link"
+                        title="Xóa"
+                        onClick={() => softDelete(u._id)}
+                        aria-label={`delete-${u._id}`}
+                        style={{ color: '#FF4D4F', padding: 4, margin: 0, lineHeight: 1 }}
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-sm btn-link"
+                        title="Khôi phục"
+                        onClick={() => restore(u._id)}
+                        aria-label={`restore-${u._id}`}
+                        style={{ color: '#1890ff', padding: 4, margin: 0, lineHeight: 1 }}
+                      >
+                        <FiRotateCcw size={16} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -202,7 +241,7 @@ export default function AdminUsers() {
 
               return [
                 <li key="prev" className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
-                  <button className="page-link" onClick={() => page > 1 && setPage(page - 1)}>Prev</button>
+                  <button className="page-link" onClick={() => page > 1 && setPage(page - 1)}>Trước</button>
                 </li>,
                 pages.map((p, i) => (
                   typeof p === 'number' ? (
@@ -214,7 +253,7 @@ export default function AdminUsers() {
                   )
                 )),
                 <li key="next" className={`page-item ${page >= totalPagesLocal ? 'disabled' : ''}`}>
-                  <button className="page-link" onClick={() => page < totalPagesLocal && setPage(page + 1)}>Next</button>
+                  <button className="page-link" onClick={() => page < totalPagesLocal && setPage(page + 1)}>Tiếp</button>
                 </li>
               ];
             })()}
@@ -235,10 +274,10 @@ export default function AdminUsers() {
                 {detailLoading && <div>Đang tải...</div>}
                 {!detailLoading && selected && (
                   <div className="vstack gap-1">
-                    <div><strong>Username:</strong> {selected.username}</div>
+                    <div><strong>Tên đăng nhập:</strong> {selected.username}</div>
                     <div><strong>Email:</strong> {selected.email}</div>
-                    <div><strong>Role:</strong> {selected.role}</div>
-                    <div><strong>Verified:</strong> {selected.isVerified ? "Yes" : "No"}</div>
+                    <div><strong>Vai trò:</strong> {ROLE_LABELS[selected.role] || selected.role}</div>
+                    <div><strong>Đã xác minh:</strong> {selected.isVerified ? "Có" : "Không"}</div>
                     <div><strong>Trạng thái:</strong> {selected.isDeleted ? "Đã xóa" : "Hoạt động"}</div>
                     <div><strong>Tạo lúc:</strong> {new Date(selected.createdAt).toLocaleString()}</div>
                     <div><strong>Cập nhật:</strong> {new Date(selected.updatedAt).toLocaleString()}</div>

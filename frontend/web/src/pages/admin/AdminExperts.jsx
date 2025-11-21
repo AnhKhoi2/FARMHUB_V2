@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import AdminLayout from '../../components/AdminLayout';
 import axiosClient from '../../api/shared/axiosClient';
+import { FiEye, FiTrash2 } from 'react-icons/fi';
+import { Button } from 'antd';
 
 export default function AdminExperts() {
   const [items, setItems] = useState([]);
@@ -134,15 +136,16 @@ export default function AdminExperts() {
         </div>
 
         <div className="col-auto">
-          <button
-            className="btn btn-sm btn-outline-secondary"
+          <Button
+            size="small"
+            style={{ borderColor: '#E0E0E0', background: '#fff', color: '#2E7D32', textTransform: 'uppercase', padding: '4px 10px' }}
             onClick={() => {
               setQ('');
               setReviewStatus('');
             }}
           >
-            Đặt lại
-          </button>
+            ĐẶT LẠI
+          </Button>
         </div>
       </div>
 
@@ -225,23 +228,25 @@ export default function AdminExperts() {
                       <td>{it.total_reviews ?? 0}</td>
 
                       <td>
-                        <div className="btn-group btn-group-sm">
-                          {/* Nút XEM chi tiết – dùng expert_id cho khớp BE */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                           <button
-                            className="btn btn-outline-primary"
-                            type="button"
+                            className="btn btn-sm btn-link"
+                            title="Xem"
                             onClick={() => handleView(it.expert_id)}
+                            aria-label={`view-${it.expert_id}`}
+                            style={{ color: '#2E7D32', padding: 4, margin: 0, lineHeight: 1 }}
                           >
-                            Xem
+                            <FiEye size={16} />
                           </button>
 
-                          {/* Nút XÓA – dùng expert_id */}
                           <button
-                            className="btn btn-outline-danger"
-                            type="button"
+                            className="btn btn-sm btn-link"
+                            title="Xóa"
                             onClick={() => handleDelete(it.expert_id)}
+                            aria-label={`delete-${it.expert_id}`}
+                            style={{ color: '#FF4D4F', padding: 4, margin: 0, lineHeight: 1 }}
                           >
-                            Xóa
+                            <FiTrash2 size={16} />
                           </button>
                         </div>
                       </td>
