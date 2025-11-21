@@ -16,6 +16,24 @@ const DEFAULT_QUERY = "";
 const DEFAULT_LAT = 10.7769;
 const DEFAULT_LON = 106.7009;
 
+// --- Component Progress Bar mới ---
+const ProgressBar = ({ value, max, colorClass, label }) => {
+  // Giới hạn giá trị ở mức 100%
+  const percentage = Math.min((value / max) * 100, 100);
+  return (
+    <div className="mt-1">
+      <small className="text-muted d-block fw-semibold">{label}: {value}{label === 'Độ ẩm' ? '%' : ''}</small>
+      <div className={`visual-progress`}>
+        <div 
+          className={`visual-progress-bar ${colorClass}`} 
+          style={{ width: `${percentage}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
+// ---------------------------------
+
 const getAqiInfo = (aqi) => {
   switch (aqi) {
     case 1:
@@ -255,7 +273,7 @@ const WeatherPage = () => {
     <>
       <Header />
       <div className="container py-4">
-        <h1 className="mb-3">Thời tiết & Chất lượng không khí</h1>
+        <h1 className="mb-4 text-success fw-bold app-header">🌾 Thời tiết & Nông nghiệp</h1>
 
       {/* Search */}
       <form className="row g-2 mb-4" onSubmit={handleSearch}>
@@ -263,7 +281,7 @@ const WeatherPage = () => {
           <input
             type="text"
             className="form-control"
-            placeholder="Nhập tên địa điểm (ví dụ: Ho Chi Minh City)"
+            placeholder="Nhập tên khu vực (ví dụ: Đồng Tháp)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -275,28 +293,28 @@ const WeatherPage = () => {
             className="btn btn-success w-100"
             disabled={loading}
           >
-            Tìm kiếm
+            🔍 Tìm kiếm
           </button>
         </div>
 
         <div className="col-md-4">
           <button
             type="button"
-            className="btn btn-outline-primary w-100"
+            className="btn btn-outline-success w-100" 
             onClick={handleUseMyLocation}
             disabled={loading || usingMyLocation}
           >
-            {usingMyLocation ? "Đang lấy vị trí..." : "Dùng vị trí hiện tại"}
+            {usingMyLocation ? "Đang lấy vị trí..." : "📍 Dùng vị trí hiện tại"}
           </button>
         </div>
       </form>
 
-      {/* Chọn nhóm cây trồng để tư vấn */}
+      {/* Chọn nhóm cây trồng để tư vấn - Đưa lên cao */}
       <div className="row g-2 mb-3">
         <div className="col-md-4">
-          <label className="form-label small">Nhóm cây trồng</label>
+          <label className="form-label small fw-bold text-success">Chọn loại cây trồng:</label>
           <select
-            className="form-select"
+            className="form-select border-success"
             value={selectedPlantGroup}
             onChange={(e) => setSelectedPlantGroup(e.target.value)}
           >
@@ -316,22 +334,22 @@ const WeatherPage = () => {
       </div>
 
       {place && (
-        <p className="text-muted">
-          Địa điểm:{" "}
-          <strong>
+        <p className="text-muted mb-4">
+          Địa điểm đang xem:{" "}
+          <strong className="text-success">
             {place.name}
             {place.admin1 ? `, ${place.admin1}` : ""}
             {place.country ? `, ${place.country}` : ""}
           </strong>
           {place.latitude && place.longitude && (
-            <span className="ms-2">
-              ({place.latitude.toFixed(3)}, {place.longitude.toFixed(3)})
+            <span className="ms-2 small">
+              (Tọa độ: {place.latitude.toFixed(3)}, {place.longitude.toFixed(3)})
             </span>
           )}
         </p>
       )}
 
-      {loading && <p>Đang tải dữ liệu...</p>}
+      {loading && <p className="text-success">Đang tải dữ liệu...</p>}
       {error && <p className="text-danger">{error}</p>}
 
       {!loading && !error && (
@@ -342,38 +360,66 @@ const WeatherPage = () => {
             <div className="col-md-6 mb-3">
               <div className="card shadow-sm h-100">
                 <div className="card-body">
-                  <h5 className="card-title">Thời tiết hiện tại</h5>
-                  <p className="mb-1 fw-bold">{cityName}</p>
+                  <h5 className="card-title">☀️ Điều kiện hiện tại</h5>
+                  <p className="mb-1 fw-bold fs-5 text-success">{cityName}</p>
 
                   {currentWeather ? (
                     <>
-                      <div className="d-flex align-items-center mb-2">
+                      <div className="d-flex align-items-center mb-3 main-weather-info">
                         {icon && (
                           <img
-                            src={`https://openweathermap.org/img/wn/${icon}@2x.png`}
+                            src={`https://openweathermap.org/img/wn/${icon}@4x.png`} // Icon lớn hơn
                             alt="weather icon"
-                            style={{ width: 64, height: 64 }}
+                            style={{ width: 100, height: 100 }}
                           />
                         )}
                         <div className="ms-3">
-                          <h2 className="mb-0">{Math.round(temp)}°C</h2>
+                          <h2 className="mb-0">
+                            <span className="temp-val">{Math.round(temp)}</span>
+                            °C
+                          </h2>
                           {description && (
-                            <div className="text-capitalize text-muted">
-                              {description}
+                            <div className="text-capitalize text-success fw-bold">
+                              {translateDescription(description)} 
                             </div>
                           )}
                         </div>
                       </div>
 
-                      <ul className="list-unstyled mb-0">
+                      <div className="row g-3">
                         {feelsLike != null && (
-                          <li>Cảm giác như: {Math.round(feelsLike)}°C</li>
+                          <div className="col-md-6">
+                            🌡️ Cảm giác như:{" "}
+                            <span className="detail-val">
+                              {Math.round(feelsLike)}°C
+                            </span>
+                          </div>
                         )}
-                        {humidity != null && <li>Độ ẩm: {humidity}%</li>}
+                        
+                        {/* THÊM PROGRESS BAR CHO ĐỘ ẨM */}
+                        {humidity != null && (
+                          <div className="col-md-6">
+                            <ProgressBar 
+                              value={humidity} 
+                              max={100} 
+                              colorClass="bg-info" 
+                              label="Độ ẩm" 
+                            />
+                          </div>
+                        )}
+
+                        {/* THÊM PROGRESS BAR CHO TỐC ĐỘ GIÓ */}
                         {windSpeed != null && (
-                          <li>Tốc độ gió: {windSpeed} m/s</li>
+                          <div className="col-md-6">
+                            <ProgressBar 
+                              value={windSpeed} 
+                              max={15} /* Giả định max 15 m/s là gió mạnh */ 
+                              colorClass="bg-success" 
+                              label="Tốc độ gió (m/s)" 
+                            />
+                          </div>
                         )}
-                      </ul>
+                      </div>
                     </>
                   ) : (
                     <p>Chưa có dữ liệu thời tiết.</p>
@@ -386,41 +432,43 @@ const WeatherPage = () => {
             <div className="col-md-6 mb-3">
               <div className="card shadow-sm h-100">
                 <div className="card-body">
-                  <h5 className="card-title">Chất lượng không khí (AQI)</h5>
+                  <h5 className="card-title">💨 Chất lượng không khí (AQI)</h5>
 
                   {aqiValue ? (
                     <>
                       {/* Badge màu theo mức AQI */}
-                      <div className={`aqi-badge mb-2 ${aqiInfo.colorClass}`}>
+                      <div className={`aqi-badge mb-3 ${aqiInfo.colorClass}`}>
                         <span className="aqi-badge-main">
                           AQI {aqiValue} – {aqiInfo.label}
                         </span>
                       </div>
 
                       {/* Mô tả ngắn mức AQI */}
-                      <p className="mb-2 small">{aqiInfo.desc}</p>
+                      <p className="mb-3 fw-semibold text-dark">
+                        {aqiInfo.desc}
+                      </p>
 
                       {/* Các thông số chi tiết với kí hiệu + tên tiếng Việt */}
                       <p className="mb-1 small">
-                        <strong>PM2.5</strong> (bụi mịn &le; 2,5&nbsp;µm):{" "}
-                        {formatVal(pm2_5)} µg/m³ &nbsp;—&nbsp;
-                        <strong>PM10</strong> (bụi thô &le; 10&nbsp;µm):{" "}
-                        {formatVal(pm10)} µg/m³
+                        <strong>PM2.5</strong> (bụi mịn):{" "}
+                        <span className="fw-bold">{formatVal(pm2_5)}</span> µg/m³
+                        &nbsp;—&nbsp;
+                        <strong>PM10</strong> (bụi thô):{" "}
+                        <span className="fw-bold">{formatVal(pm10)}</span> µg/m³
                       </p>
 
                       <p className="mb-2 small">
-                        <strong>O₃</strong> (ozon tầng thấp): {formatVal(o3)}{" "}
-                        µg/m³ &nbsp;—&nbsp;
-                        <strong>NO₂</strong> (nitơ dioxit): {formatVal(no2)}{" "}
-                        µg/m³ &nbsp;—&nbsp;
-                        <strong>SO₂</strong> (lưu huỳnh dioxit):{" "}
-                        {formatVal(so2)} µg/m³ &nbsp;—&nbsp;
-                        <strong>CO</strong> (carbon monoxit): {formatVal(co)}{" "}
-                        µg/m³
+                        <strong>O₃</strong> (ozon): {formatVal(o3)} µg/m³
+                        &nbsp;—&nbsp;
+                        <strong>NO₂</strong> (nitơ): {formatVal(no2)} µg/m³
+                        &nbsp;—&nbsp;
+                        <strong>SO₂</strong> (lưu huỳnh): {formatVal(so2)} µg/m³
+                        &nbsp;—&nbsp;
+                        <strong>CO</strong> (carbon): {formatVal(co)} µg/m³
                       </p>
 
                       <small className="text-muted d-block">
-                        Đơn vị: µg/m³. Nguồn: OpenWeather Air Pollution API.
+                        Đơn vị: µg/m³.
                       </small>
                     </>
                   ) : (
@@ -432,11 +480,11 @@ const WeatherPage = () => {
                     <span className="aqi-legend-chip aqi-good">1 – Tốt</span>
                     <span className="aqi-legend-chip aqi-fair">2 – Khá</span>
                     <span className="aqi-legend-chip aqi-moderate">
-                      3 – Trung bình
+                      3 – T.Bình
                     </span>
                     <span className="aqi-legend-chip aqi-poor">4 – Kém</span>
                     <span className="aqi-legend-chip aqi-very-poor">
-                      5 – Rất kém
+                      5 – Rất Kém
                     </span>
                   </div>
                 </div>
@@ -444,14 +492,12 @@ const WeatherPage = () => {
             </div>
           </div>
 
-          {/* Gợi ý chăm sóc cây theo thời tiết */}
-          <div className="card shadow-sm mt-3">
+          {/* Gợi ý chăm sóc cây theo thời tiết - Card nổi bật */}
+          <div className="card shadow-lg mt-4 plant-advice-card-wow">
             <div className="card-body">
-              <h5 className="card-title mb-3">
-                Gợi ý chăm sóc cây theo thời tiết
-              </h5>
+              <h5 className="card-title">🌱 Gợi ý chăm sóc cây trồng</h5>
 
-              {adviceLoading && <p>Đang tải gợi ý chăm sóc...</p>}
+              {adviceLoading && <p className="text-success">Đang phân tích thời tiết và đưa ra gợi ý...</p>}
 
               {!adviceLoading && advice && (
                 <PlantAdviceCard data={advice} />
@@ -459,17 +505,86 @@ const WeatherPage = () => {
 
               {!adviceLoading && !advice && (
                 <p className="text-muted mb-0">
-                  Chưa có gợi ý. Hãy tìm địa điểm hoặc dùng vị trí hiện tại để
-                  lấy dữ liệu thời tiết.
+                  Chưa có gợi ý. Hãy tìm địa điểm, chọn loại cây và tải dữ liệu thời tiết để nhận tư vấn.
                 </p>
               )}
             </div>
           </div>
 
-          {/* Lịch sử thời tiết */}
-          <div className="card shadow-sm mt-3">
+          {/* Forecast 3h – dạng thẻ */}
+          <div className="card shadow-sm mt-4">
             <div className="card-body">
-              <h5 className="card-title mb-3">Lịch sử nhiệt độ (theo giờ)</h5>
+              <h5 className="card-title">⏰ Dự báo 24 giờ tới (Mỗi 3h)</h5>
+              {forecast.length > 0 ? (
+                <div className="d-flex flex-wrap gap-3 forecast-cards">
+                  {forecast.map((item, index) => {
+                    const date = item.dt_txt
+                      ? new Date(item.dt_txt)
+                      : new Date(item.dt * 1000);
+
+                    const hour = date.toLocaleTimeString("vi-VN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+
+                    const day = date.toLocaleDateString("vi-VN", {
+                      weekday: "short",
+                      day: "2-digit",
+                      month: "2-digit",
+                    });
+
+                    const temp = Math.round(item.main?.temp);
+                    const hum = item.main?.humidity;
+                    const desc = item.weather?.[0]?.description;
+                    const icon = item.weather?.[0]?.icon;
+                    const translatedDesc = translateDescription(desc); // Dịch mô tả
+
+                    return (
+                      <div
+                        key={item.dt}
+                        className="forecast-card border rounded p-2 text-center"
+                        style={{ animationDelay: `${index * 0.1}s` }} /* Thêm delay cho hiệu ứng trượt */
+                      >
+                        <div className="small text-muted">{day}</div>
+                        <div className="fw-bold">{hour}</div>
+
+                        {icon && (
+                          <img
+                            src={`https://openweathermap.org/img/wn/${icon}.png`}
+                            alt="icon"
+                            style={{ width: 40, height: 40 }}
+                            className="my-1"
+                          />
+                        )}
+
+                        <div className="fw-bold text-success fs-5">{temp}°C</div>
+
+                        {translatedDesc && (
+                          <div className="small text-capitalize">
+                            {translatedDesc}
+                          </div>
+                        )}
+
+                        {hum != null && (
+                          <div className="small text-muted mt-1">
+                            💧 {hum}%
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p>Chưa có dữ liệu dự báo.</p>
+              )}
+            </div>
+          </div>
+
+
+          {/* Lịch sử thời tiết */}
+          <div className="card shadow-sm mt-4">
+            <div className="card-body">
+              <h5 className="card-title">📊 Lịch sử nhiệt độ (Theo giờ)</h5>
 
               {/* Chọn khoảng ngày */}
               <div className="row g-2 mb-3">
@@ -494,7 +609,7 @@ const WeatherPage = () => {
                 <div className="col-md-4 d-flex align-items-end">
                   <button
                     type="button"
-                    className="btn btn-outline-secondary w-100"
+                    className="btn btn-success w-100" 
                     onClick={handleLoadHistory}
                     disabled={historyLoading}
                   >
@@ -527,14 +642,17 @@ const WeatherPage = () => {
                         const temp = item.main?.temp;
                         const humidity = item.main?.humidity;
                         const desc = item.weather?.[0]?.description;
+                        const translatedDesc = translateDescription(desc); // Dịch mô tả
 
                         return (
                           <tr key={item.dt}>
                             <td>{timeStr}</td>
-                            <td>{temp != null ? Math.round(temp) : "-"}</td>
+                            <td className="fw-bold text-success">
+                              {temp != null ? Math.round(temp) : "-"}
+                            </td>
                             <td>{humidity != null ? humidity : "-"}</td>
-                            <td className="text-capitalize">
-                              {desc || "-"}
+                            <td className="text-capitalize small">
+                              {translatedDesc || "-"}
                             </td>
                           </tr>
                         );
@@ -547,74 +665,6 @@ const WeatherPage = () => {
                   Chưa có dữ liệu lịch sử. Hãy chọn khoảng ngày và bấm "Xem lịch
                   sử".
                 </p>
-              )}
-            </div>
-          </div>
-
-          {/* Forecast 3h – dạng thẻ */}
-          <div className="card shadow-sm mt-3">
-            <div className="card-body">
-              <h5 className="card-title mb-3">
-                Dự báo trong ~24 giờ tới (3h / lần)
-              </h5>
-              {forecast.length > 0 ? (
-                <div className="d-flex flex-wrap gap-3 forecast-cards">
-                  {forecast.map((item) => {
-                    const date = item.dt_txt
-                      ? new Date(item.dt_txt)
-                      : new Date(item.dt * 1000);
-
-                    const hour = date.toLocaleTimeString("vi-VN", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    });
-
-                    const day = date.toLocaleDateString("vi-VN", {
-                      weekday: "short",
-                      day: "2-digit",
-                      month: "2-digit",
-                    });
-
-                    const temp = Math.round(item.main?.temp);
-                    const hum = item.main?.humidity;
-                    const desc = item.weather?.[0]?.description;
-                    const icon = item.weather?.[0]?.icon;
-
-                    return (
-                      <div
-                        key={item.dt}
-                        className="forecast-card border rounded p-2 text-center"
-                        style={{ minWidth: 110, maxWidth: 140 }}
-                      >
-                        <div className="small text-muted">{day}</div>
-                        <div className="fw-semibold">{hour}</div>
-
-                        {icon && (
-                          <img
-                            src={`https://openweathermap.org/img/wn/${icon}.png`}
-                            alt="icon"
-                            style={{ width: 40, height: 40 }}
-                            className="my-1"
-                          />
-                        )}
-
-                        <div className="fw-bold">{temp}°C</div>
-
-                        {desc && (
-                          <div className="small text-capitalize">{desc}</div>
-                        )}
-
-                        {hum != null && (
-                          <div className="small text-muted mt-1">
-                            Độ ẩm: {hum}%
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p>Chưa có dữ liệu dự báo.</p>
               )}
             </div>
           </div>

@@ -6,6 +6,7 @@ import axios from "axios";
 const isDev =
   process.env.NODE_ENV === "development" ||
   (typeof window !== "undefined" && window.location.hostname === "localhost");
+
 const defaultBase = isDev
   ? "http://localhost:5000"
   : (typeof window !== "undefined" &&
@@ -20,30 +21,43 @@ const axiosClient = axios.create({
 });
 
 // ===== REQUEST INTERCEPTOR =====
-axiosClient.interceptors.request.use((config) => {
-  // Support both current key and legacy 'token' key
-  const token =
-    localStorage.getItem("accessToken") || localStorage.getItem("token");
+axiosClient.interceptors.request.use(
+  (config) => {
+    // Support both current key and legacy 'token' key
+    const token =
+      localStorage.getItem("accessToken") || localStorage.getItem("token");
 
-  const publicAuthPaths = [
-    "/auth/login",
-    "/auth/register",
-    "/auth/password/forgot",
-    "/auth/password/reset",
-    "/auth/google",
-  ];
+    const publicAuthPaths = [
+      "/auth/login",
+      "/auth/register",
+      "/auth/password/forgot",
+      "/auth/password/reset",
+      "/auth/google",
+    ];
 
-  const isPublicAuth = publicAuthPaths.some((p) =>
-    (config.url || "").startsWith(p)
-  );
+    const isPublicAuth = publicAuthPaths.some((p) =>
+      (config.url || "").startsWith(p)
+    );
 
-  if (token && !isPublicAuth) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-<<<<<<< HEAD
+    if (token && !isPublicAuth) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
 
-  return config;
-});
+    // ===== Handle FormData =====
+    try {
+      if (config.data instanceof FormData) {
+        if (config.headers && config.headers["Content-Type"]) {
+          delete config.headers["Content-Type"];
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // ===== RESPONSE INTERCEPTOR =====
 axiosClient.interceptors.response.use(
@@ -65,19 +79,4 @@ axiosClient.interceptors.response.use(
   }
 );
 
-=======
-  // If sending FormData, remove default JSON content-type so browser/axios can set multipart boundary
-  try {
-    if (config.data instanceof FormData) {
-      if (config.headers && config.headers['Content-Type']) {
-        delete config.headers['Content-Type'];
-      }
-    }
-  } catch (e) {
-    // ignore
-  }
-  return config;
-});
-
->>>>>>> 281966e41b76ea3a3109a95335c8b754dd60d424
 export default axiosClient;
