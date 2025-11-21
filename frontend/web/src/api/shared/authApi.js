@@ -2,14 +2,17 @@
 import axiosClient from "./axiosClient";
 
 const authApi = {
-  // loginApi(credentials) {
-  //   // ✅ chỉ gửi đúng 2 trường backend yêu cầu
-  //   return  axiosClient.post("/auth/login", credentials);
+  // Đăng nhập CHỈ dùng username (FE có thể truyền username hoặc emailOrUsername, nhưng BE luôn nhận username)
   loginApi(payload) {
-    // Accept either { emailOrUsername, password } or { username, password }
-    const emailOrUsername = payload?.emailOrUsername || payload?.username || payload?.email || "";
-    const password = payload?.password;
-    return axiosClient.post("/auth/login", { emailOrUsername, password });
+    // Ưu tiên username, fallback từ emailOrUsername / email cho tương thích cũ
+    const username =
+      payload?.username ||
+      payload?.emailOrUsername ||
+      payload?.email ||
+      "";
+    const password = payload?.password || "";
+
+    return axiosClient.post("/auth/login", { username, password });
   },
 
   registerApi(data) {
@@ -21,16 +24,24 @@ const authApi = {
   },
 
   resetPassword(token, newPassword) {
-    return axiosClient.post(`/auth/password/reset/${token}`, { newPassword });
+    return axiosClient.post(`/auth/password/reset/${token}`, {
+      newPassword,
+    });
   },
+
   changePassword(oldPassword, newPassword) {
-  return axiosClient.put("/auth/password/change", { oldPassword, newPassword });
-},
-loginWithGoogle(idToken) {
-  return axiosClient.post("/auth/google", { idToken });
-},
+    return axiosClient.put("/auth/password/change", {
+      oldPassword,
+      newPassword,
+    });
+  },
+
+  loginWithGoogle(idToken) {
+    return axiosClient.post("/auth/google", { idToken });
+  },
+
   logout() {
-    return axiosClient.post('/auth/logout');
+    return axiosClient.post("/auth/logout");
   },
 };
 

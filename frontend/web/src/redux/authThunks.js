@@ -2,99 +2,59 @@
 import { loginStart, loginSuccess, loginFailure, logout } from "./authSlice";
 import authApi from "../api/shared/authApi.js";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { useEffect } from "react";
 
+// =========================
+// LOGIN – chỉ dùng username
+// =========================
 export const loginThunk = (credentials) => async (dispatch) => {
   try {
     dispatch(loginStart());
+
     const res = await authApi.loginApi(credentials);
 
-    // const payload = res?.data?.data || res?.data || {};
-    // const { user, accessToken } = payload;
-    // BE có thể trả nhiều dạng: { data: { user, accessToken } } hoặc { user, accessToken }
-    // Hãy parse một cách an toàn và log role để debug nếu cần.
-    const data = res?.data;
-    let user = null;
-    let profile = null;
-    let accessToken = null;
-    if (data) {
-      if (data.data) {
-        user = data.data.user ?? data.data;
-        profile = data.data.profile ?? null;
-        accessToken = data.data.accessToken ?? data.data.token ?? null;
-      } else {
-        user = data.user ?? data;
-        profile = data.profile ?? null;
-        accessToken = data.accessToken ?? data.token ?? null;
-      }
-    }
+    // BE: ok(res, { user: userSafe, accessToken, refreshToken })
+    const base = res?.data;
+    const data = base?.data || base || {};
 
-    // Sanity: if payload nested unexpectedly (e.g., user.user)
-    if (user && user.user) user = user.user;
-
-    // Debug log (dev only)
-    try {
-      if (process.env.NODE_ENV !== "production") {
-        console.log(
-          "[auth] login response user role:",
-          user?.role,
-          "user:",
-          user
-        );
-      }
-    } catch (e) {
-      // ignore logging errors
-    }
+    const user = data.user;
+    const accessToken = data.accessToken;
 
     if (!user || !accessToken) {
       throw new Error("Phản hồi đăng nhập không hợp lệ từ server");
     }
 
+    // Cập nhật Redux
     dispatch(loginSuccess({ user, accessToken }));
-    const users = { ...user, profile };
 
-    // Persist an toàn
-    localStorage.setItem("user", JSON.stringify(users));
-    if (accessToken) localStorage.setItem("accessToken", accessToken);
+    // Lưu LocalStorage
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("accessToken", accessToken);
 
-    return { success: true, role: user?.role };
+    return { success: true, role: user.role };
   } catch (err) {
     console.error("Login error:", err?.response?.data || err);
 
     const data = err?.response?.data;
-
     const backendMessage =
       data?.message ||
       data?.error?.message ||
       data?.errorMessage ||
       data?.errors?.[0]?.msg ||
-      err.message;
-
-    const backendCode =
-      data?.code ||
-      data?.error?.code;
-
-    let uiMessage =
-      backendMessage ||
+      err.message ||
       "Đăng nhập thất bại. Vui lòng thử lại.";
 
-    if (backendCode) {
-      uiMessage = ` ${uiMessage}`;
-    }
-
-    dispatch(loginFailure(uiMessage));
+    dispatch(loginFailure(backendMessage));
     return { success: false };
   }
 };
 
-
-// các thunk khác giữ nguyên...
+// =========================
+// LOGOUT
+// =========================
 export const logoutThunk = () => async (dispatch) => {
   try {
-    // Attempt server-side logout to clear refresh cookie
     await authApi.logout();
   } catch (err) {
-    // ignore network errors but continue to clear client state
     console.warn(
       "logout API failed:",
       err?.response?.data || err?.message || err
@@ -106,13 +66,13 @@ export const logoutThunk = () => async (dispatch) => {
   localStorage.removeItem("accessToken");
 };
 
-// src/redux/authThunks.js
-
+// =========================
+// REGISTER – dùng lại logic cũ của bạn
+// =========================
 export const registerThunk = (formData) => async () => {
   try {
     const res = await authApi.registerApi(formData);
 
-    // Ưu tiên lấy message từ BE
     const data = res?.data;
     const message =
       data?.message ||
@@ -124,8 +84,6 @@ export const registerThunk = (formData) => async () => {
     console.error("Register error:", err?.response?.data || err);
 
     const data = err?.response?.data;
-
-    // CHỈ LẤY MESSAGE, KHÔNG DÙNG CODE
     const uiMessage =
       data?.message ||
       data?.error?.message ||
@@ -137,17 +95,29 @@ export const registerThunk = (formData) => async () => {
   }
 };
 
+// =========================
+/* GOOGLE LOGIN */
+// =========================
 export const loginWithGoogleThunk = createAsyncThunk(
   "auth/loginWithGoogle",
   async (idToken, { rejectWithValue }) => {
     try {
       const res = await authApi.loginWithGoogle(idToken);
-      const { data } = res || {};
-      const { data: inner } = data || {};
-      if (!inner?.user || !inner?.accessToken) {
+
+      const base = res?.data;
+      const inner = base?.data || base || {};
+
+      const user = inner?.user;
+      const accessToken = inner?.accessToken;
+
+      if (!user || !accessToken) {
         throw new Error("Phản hồi Google login không hợp lệ");
       }
-      return { user: inner.user, accessToken: inner.accessToken };
+
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("accessToken", accessToken);
+
+      return { user, accessToken };
     } catch (err) {
       return rejectWithValue(
         err?.response?.data || { message: "Google login failed" }
