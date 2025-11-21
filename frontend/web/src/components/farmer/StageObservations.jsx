@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import NOTEBOOK_TEMPLATE_API from "../../api/farmer/notebookTemplateApi";
+import notebookApi from "../../api/farmer/notebookApi";
 import "../../css/farmer/StageObservations.css";
 
 const StageObservations = ({ notebookId }) => {
@@ -7,10 +8,21 @@ const StageObservations = ({ notebookId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [notebookInfo, setNotebookInfo] = useState(null);
 
   useEffect(() => {
     fetchObservations();
+    fetchNotebookInfo();
   }, [notebookId]);
+
+  const fetchNotebookInfo = async () => {
+    try {
+      const response = await notebookApi.getNotebookById(notebookId);
+      setNotebookInfo(response.data?.data || response.data);
+    } catch (err) {
+      setNotebookInfo(null);
+    }
+  };
 
   const fetchObservations = async () => {
     try {
@@ -93,7 +105,26 @@ const StageObservations = ({ notebookId }) => {
   };
 
   if (loading) return <div className="observations-loading">Đang tải...</div>;
+
+  if (loading) return <div className="observations-loading">Đang tải...</div>;
   if (error) return <div className="observations-error">{error}</div>;
+
+  // Show completion message if notebook is fully completed
+  if (
+    notebookInfo &&
+    (notebookInfo.progress === 100 || notebookInfo.progress === "100")
+  ) {
+    return (
+      <div className="observations-completed">
+        <h3>🎉 Notebook đã hoàn thành toàn bộ tiến trình!</h3>
+        <p>
+          Tất cả điều kiện quan sát đã được kiểm tra. Bạn có thể xem lại kết quả
+          hoặc bắt đầu một notebook mới.
+        </p>
+      </div>
+    );
+  }
+
   if (observations.length === 0)
     return (
       <div className="observations-empty">

@@ -34,9 +34,14 @@ import notificationRoutes from "./routes/notifications.js";
 import vnpayRoutes from "./routes/vnpay.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
-import pino from 'pino-http';
-import geocodeRoute from './routes/geocode.js';
-import weatherRoute from './routes/weather_v2.js';
+import pino from "pino-http";
+import ApiError, { NotFound } from "./utils/ApiError.js";
+import geocodeRoute from "./routes/geocode.js";
+import weatherRoute from "./routes/weather_v2.js";
+import airRoute from "./routes/air.js";
+import tilesRoute from "./routes/tiles.js";
+import plantRoute from "./routes/plant.js";
+
 import airRoute from './routes/air.js';
 import tilesRoute from './routes/tiles.js';
 import plantRoute from './routes/plant.js';
@@ -104,6 +109,8 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/api/plant-templates", plantTemplateRoutes);
 app.use("/api/upload", uploadRoutes);
+// Legacy/compatibility: some frontends post to /upload (no /api prefix)
+app.use("/upload", uploadRoutes);
 app.use("/api/collections", collectionsRoute);
 app.use("/admin/models", modelsRoutes);
 app.use("/layouts", layoutsRoutes);
@@ -126,26 +133,37 @@ app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });
 
-
 // 404 cho route không tồn tại (optional)
 app.use((req, res, next) => {
-  next(new AppError("Route không tồn tại", 404, "NOT_FOUND"));
+  // Route not found -> use NotFound helper to create ApiError (status 404)
+  next(NotFound("Route không tồn tại"));
 });
 
 // ERROR HANDLER
 app.use((err, req, res, next) => {
   console.error("🔥 ERROR:", err);
 
+  // Multer errors (file upload)
+  if (err && err.name === "MulterError") {
+    // Common Multer codes: LIMIT_FILE_SIZE, LIMIT_UNEXPECTED_FILE, etc.
+    const multerMessage = err.message || "Lỗi trong quá trình upload file";
+    const multerCode = err.code || "MULTER_ERROR";
+    return res
+      .status(400)
+      .json({ success: false, code: multerCode, message: multerMessage });
+  }
+
+  // If it's our ApiError instance (created by helpers like BadRequest/NotFound)
+  if (err instanceof ApiError || err?.isOperational) {
+    const statusCode = err.statusCode || 400;
+    const code = err.code || "ERROR";
+    const message = err.message || "Có lỗi xảy ra";
+    return res.status(statusCode).json({ success: false, code, message });
+  }
+
+  // Fallback: unexpected error -> 500
   const statusCode = err.statusCode || 500;
   const code = err.code || "INTERNAL_ERROR";
-
-  const message =
-    err.message ||
-    ERROR_CODES.INTERNAL_ERROR.message;
-
-  res.status(statusCode).json({
-    success: false,
-    code,
-    message,
-  });
+  const message = err.message || "Internal Server Error";
+  res.status(statusCode).json({ success: false, code, message });
 });

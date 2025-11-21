@@ -2,14 +2,28 @@ import React, { useState, useEffect } from "react";
 import NOTEBOOK_TEMPLATE_API from "../../api/farmer/notebookTemplateApi";
 import "../../css/farmer/DailyChecklist.css";
 
+// Helper to fetch notebook info for completion check
+import notebookApi from "../../api/farmer/notebookApi";
+
 const DailyChecklist = ({ notebookId, onTaskComplete }) => {
   const [checklist, setChecklist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notebookInfo, setNotebookInfo] = useState(null);
 
   useEffect(() => {
     fetchChecklist();
+    fetchNotebookInfo();
   }, [notebookId]);
+
+  const fetchNotebookInfo = async () => {
+    try {
+      const response = await notebookApi.getNotebookById(notebookId);
+      setNotebookInfo(response.data?.data || response.data);
+    } catch (err) {
+      setNotebookInfo(null);
+    }
+  };
 
   const fetchChecklist = async () => {
     try {
@@ -57,6 +71,25 @@ const DailyChecklist = ({ notebookId, onTaskComplete }) => {
       <div className="checklist-error">
         <p>⚠️ {error}</p>
         <small>Bạn cần gán template cho notebook này để tạo checklist.</small>
+      </div>
+    );
+  }
+
+  // Show completion message if notebook is fully completed
+  if (
+    notebookInfo &&
+    (notebookInfo.progress === 100 || notebookInfo.progress === "100") &&
+    Array.isArray(notebookInfo.stages_tracking) &&
+    notebookInfo.stages_tracking.length > 0 &&
+    notebookInfo.stages_tracking.every((stage) => stage.status === "completed")
+  ) {
+    return (
+      <div className="checklist-completed">
+        <h3>
+          🎉 Chúc mừng! Bạn đã hoàn thành tất cả công việc và giai đoạn của
+          notebook này.
+        </h3>
+        <p>Hãy xem lại tiến trình, ghi chú hoặc bắt đầu một notebook mới!</p>
       </div>
     );
   }

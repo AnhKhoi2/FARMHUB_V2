@@ -61,6 +61,8 @@ import NotebookList from "../pages/farmer/NotebookList";
 import NotebookDetail from "../pages/farmer/NotebookDetail";
 import NotebookCreate from "../pages/farmer/NotebookCreate";
 import NotebookEdit from "../pages/farmer/NotebookEdit";
+import OverdueDetail from "../pages/farmer/OverdueDetail";
+import NotebookStatsPage from "../pages/farmer/NotebookStatsPage";
 
 // Farmer Pages - Collections
 import Collections from "../pages/farmer/Collections";
@@ -107,9 +109,7 @@ export default function AppRoutes() {
         <Route path="/auth/verify/:token" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
-
         <Route path="/weather" element={<WeatherPage />} />
-
         <Route path="/plant-diagnosis" element={<PlantDiagnosisPage />} />
         {/* <- từ code 2 */}
         {/* ===== Protected app (từ code 2) ===== */}
@@ -363,7 +363,6 @@ export default function AppRoutes() {
         <Route path="/guides/:id" element={<FarmerGuideDetail />} />
         <Route path="/weather" element={<WeatherPage />} />
         <Route path="/posts/:id" element={<PostDetail />} />
-        
         {/* Expert nested bundle (nếu bạn có thêm nhiều trang con dưới /expert) */}
         <Route path="/expert/*" element={<ExpertRoutes />} />
         {/* Direct expert home route for quick access/testing */}
@@ -408,6 +407,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/farmer/notebooks/stats"
+          element={
+            <PrivateRoute>
+              <NotebookStatsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/farmer/notebooks/create"
           element={
             <PrivateRoute>
@@ -428,6 +435,14 @@ export default function AppRoutes() {
           element={
             <PrivateRoute>
               <NotebookEdit />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/notebooks/:id/overdue"
+          element={
+            <PrivateRoute>
+              <OverdueDetail />
             </PrivateRoute>
           }
         />
