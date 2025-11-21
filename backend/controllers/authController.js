@@ -15,7 +15,6 @@ import {
 
 
 import { OAuth2Client } from "google-auth-library";
-import Profile from "../models/Profile.js";
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // =========================
 // Email helpers (inlined)
@@ -109,8 +108,8 @@ export const authController = {
     const hashed = await bcrypt.hash(password, salt);
 
     const newUser = new User({
-      username: String(username).trim(),
-      email: String(email).toLowerCase().trim(),
+      username,
+      email,
       password: hashed,
       isVerified: false,
     });
@@ -193,30 +192,40 @@ export const authController = {
     return ok(res, { message: "Xác thực email thành công! Bạn có thể đăng nhập." });
   }),
 
-// Đăng nhập CHỈ bằng username
+  // Đăng nhập
+ // Đăng nhập CHỈ bằng username
 login: asyncHandler(async (req, res) => {
   const { username, emailOrUsername, password } = req.body;
 
-  // FE mới chỉ gửi username; emailOrUsername chỉ để tương thích cũ
+  // Chỉ dùng username; emailOrUsername chỉ là alias cho username (nếu FE cũ còn gửi)
   const identifier = (username || emailOrUsername || "").trim();
 
   if (!identifier || !password) {
-    const { message, statusCode } = ERROR_CODES.MISSING_FIELDS;
-    throw new AppError(message, statusCode, "MISSING_FIELDS");
+    throw new AppError(
+      ERROR_CODES.MISSING_FIELDS.message,
+      ERROR_CODES.MISSING_FIELDS.statusCode,
+      "MISSING_FIELDS"
+    );
   }
 
-  // 🔍 CHỈ tìm theo username
+  // ❗ Chỉ tìm theo username
   const user = await User.findOne({ username: identifier });
-const profile = await Profile.findOne({ userId: user._id });
+
   if (!user) {
-    const { message, statusCode } = ERROR_CODES.INVALID_CREDENTIALS;
-    throw new AppError(message, statusCode, "INVALID_CREDENTIALS");
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    const { message, statusCode } = ERROR_CODES.INVALID_CREDENTIALS;
-    throw new AppError(message, statusCode, "INVALID_CREDENTIALS");
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
   }
 
   const accessToken = generateAccessToken(user);
@@ -225,12 +234,9 @@ const profile = await Profile.findOne({ userId: user._id });
   // Ẩn password cho sạch dữ liệu trả về
   const userSafe = user.toObject ? user.toObject() : { ...user._doc };
   delete userSafe.password;
-const userProfile = profile ? profile.toObject() : null;
-  return ok(res, { user: userSafe, profile: userProfile, accessToken, refreshToken });
+
+  return ok(res, { user: userSafe, accessToken, refreshToken });
 }),
-
-
-
 
 
   // Refresh token

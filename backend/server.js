@@ -39,10 +39,7 @@ import ApiError, { NotFound } from "./utils/ApiError.js";
 import geocodeRoute from "./routes/geocode.js";
 import weatherRoute from "./routes/weather_v2.js";
 import airRoute from "./routes/air.js";
-import tilesRoute from "./routes/tiles.js";
-import plantRoute from "./routes/plant.js";
 
-import airRoute from './routes/air.js';
 import tilesRoute from './routes/tiles.js';
 import plantRoute from './routes/plant.js';
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
