@@ -15,6 +15,9 @@ const defaultBase = isDev
     "http://localhost:5000";
 
 const axiosClient = axios.create({
+  baseURL: "http://localhost:5000",
+  // Do not force a default Content-Type here so browser/axios can set
+  // the correct header (including multipart boundary) when sending FormDat
   baseURL: defaultBase,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,

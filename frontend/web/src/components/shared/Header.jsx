@@ -12,6 +12,7 @@ import { RadarChartOutlined } from "@ant-design/icons";
 import { Tooltip } from "antd";
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
+
   const dispatch = useDispatch();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -163,23 +164,25 @@ const Header = () => {
               </li>
 
               {user && (
-                <li className="notification-item">
-                  <NotificationBell />
-                </li>
-              )}
-              {/* streak */}
-              <li
-                className={
-                  currentPath.startsWith("/farmer/streak") ? "active" : ""
-                }
-              >
-                <Link to="/farmer/streak">
-                  <Tooltip title="Xếp hạng Streak">
-                    <RadarChartOutlined style={{ fontSize: "18px" }} />
-                  </Tooltip>
-                </Link>
-              </li>
+                <>
+                  <li className="notification-item">
+                    <NotificationBell />
+                  </li>
 
+                  {/* streak */}
+                  <li
+                    className={
+                      currentPath.startsWith("/farmer/streak") ? "active" : ""
+                    }
+                  >
+                    <Link to="/farmer/streak">
+                      <Tooltip title="Xếp hạng Streak">
+                        <RadarChartOutlined style={{ fontSize: "18px" }} />
+                      </Tooltip>
+                    </Link>
+                  </li>
+                </>
+              )}
               {/* USER MENU */}
               <li className="user-menu">
                 {user ? (
@@ -190,7 +193,7 @@ const Header = () => {
                       title={user?.username || user?.email}
                     >
                       <img
-                        src={user?.avatar || "/logo192.png"}
+                        src={user?.profile?.avatar}
                         alt="Avatar"
                         className="avatar"
                       />
@@ -216,7 +219,7 @@ const Header = () => {
                           }}
                         >
                           <img
-                            src={user?.avatar || "/logo192.png"}
+                            src={user?.profile?.avatar }
                             alt="avatar"
                             style={{ width: 36, height: 36, borderRadius: 18 }}
                           />
