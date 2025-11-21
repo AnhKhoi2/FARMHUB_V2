@@ -53,34 +53,38 @@ const Login = () => {
     navigate(dest);
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+// Login.jsx
 
-    const cleanedIdentifier = emailOrUsername.trim();
+const handleLogin = async (e) => {
+  e.preventDefault();
 
-    const result = await dispatch(
-      loginThunk({
-        emailOrUsername: cleanedIdentifier, // send as `emailOrUsername` to match API
-        password,
-      })
-    );
-    let { success, role } = result || {};
-    // If backend response shape didn't include role for some reason,
-    // fall back to persisted user in localStorage or redux state.
-    if (!role) {
-      try {
-        const persisted = JSON.parse(localStorage.getItem("user") || "null");
-        if (persisted?.role) role = persisted.role;
-      } catch (e) {
-        // ignore parse errors
-      }
+  const cleanedIdentifier = emailOrUsername.trim();
+
+  const result = await dispatch(
+    loginThunk({
+      emailOrUsername: cleanedIdentifier, // send as `emailOrUsername` to match API
+      password,
+    })
+  );
+  let { success, role } = result || {};
+  // If backend response shape didn't include role for some reason,
+  // fall back to persisted user in localStorage or redux state.
+  if (!role) {
+    try {
+      const persisted = JSON.parse(localStorage.getItem("user") || "null");
+      if (persisted?.role) role = persisted.role;
+    } catch (e) {
+      // ignore parse errors
     }
 
+<<<<<<< HEAD
     if (success) {
       await afterLogin(role);
     }
   };
 
+=======
+>>>>>>> 8dfac535c5a8334d48ac859ab55f87651cdc4299
   const handleGoogleSuccess = async (cred) => {
     const idToken = cred?.credential;
     if (!idToken) return alert("Không lấy được Google credential");
