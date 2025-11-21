@@ -2,6 +2,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { BadRequest } from "../utils/ApiError.js";
 
 // Get __dirname equivalent in ES6
 const __filename = fileURLToPath(import.meta.url);
@@ -32,7 +33,8 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF)"), false);
+    // Use ApiError (BadRequest) so global error handler returns 400 instead of 500
+    cb(BadRequest("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF)"), false);
   }
 };
 
