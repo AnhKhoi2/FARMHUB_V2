@@ -27,22 +27,22 @@ export default function AdminLeaderboard() {
     <AdminLayout>
       <div className="card">
         <div className="card-body">
-          <h5 className="card-title">Streak Leaderboard</h5>
+          <h5 className="card-title">BẢNG XẾP HẠNG</h5>
           {error && <div className="alert alert-danger">{error}</div>}
           <div className="table-responsive">
             <table className="table table-striped">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>User</th>
-                  <th>Current Streak</th>
-                  <th>Max Streak</th>
-                  <th>Total Points</th>
+                  <th>STT</th>
+                  <th>Người dùng</th>
+                  <th>Chuỗi hiện tại</th>
+                  <th>Chuỗi cao nhất</th>
+                  <th>Tổng điểm</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={5}>Loading...</td></tr>
+                  <tr><td colSpan={5}>Đang tải...</td></tr>
                 ) : items.length ? (
                   items.map((it, idx) => (
                     <tr key={it._id || idx}>
@@ -54,7 +54,7 @@ export default function AdminLeaderboard() {
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={5}>No data</td></tr>
+                  <tr><td colSpan={5}>Không có dữ liệu</td></tr>
                 )}
               </tbody>
             </table>

@@ -5,6 +5,9 @@ import axiosClient from "../../api/shared/axiosClient";
 import "../../css/admin/AdminDiseases.css";
 import { toast, Toaster } from 'react-hot-toast';
 import { showError, showSuccess, extractErrorMessage } from '../../utils/notify';
+import { FiEdit, FiTrash2 } from 'react-icons/fi';
+import { PlusOutlined, InboxOutlined } from '@ant-design/icons';
+import { Button, Space } from 'antd';
 
 export default function AdminDiseases() {
   const [items, setItems] = useState([]);
@@ -17,6 +20,7 @@ export default function AdminDiseases() {
   const [showEdit, setShowEdit] = useState(false);
   const [current, setCurrent] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
 
   const fetchItems = async (p = page) => {
     setLoading(true);
@@ -106,7 +110,23 @@ export default function AdminDiseases() {
             <small className="text-muted">Quản lý danh sách bệnh</small>
           </div>
           <div>
-            <button className="btn btn-sm btn-primary" onClick={() => setShowCreate(true)}>Thêm bệnh</button>
+            <Space>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setShowCreate(true)}
+                style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50', fontWeight: 500 }}
+              >
+                Thêm mới
+              </Button>
+              <Button
+                icon={<InboxOutlined />}
+                onClick={() => setShowTrash(true)}
+                style={{ color: '#2E7D32', borderColor: '#E0E0E0', background: '#fff' }}
+              >
+                Thùng rác
+              </Button>
+            </Space>
           </div>
         </div>
 
@@ -115,12 +135,12 @@ export default function AdminDiseases() {
             <thead className="table-light">
               <tr>
                 <th style={{width:60}}>STT</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Plant types</th>
-                <th>Severity</th>
-                <th style={{width:300}}>Description</th>
-                <th style={{width:150}}>Actions</th>
+                <th>Tên</th>
+                <th>Danh mục</th>
+                <th>Loại cây</th>
+                <th>Mức độ</th>
+                <th style={{width:300}}>Mô tả</th>
+                <th style={{width:150}}>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -140,9 +160,28 @@ export default function AdminDiseases() {
                   <td className="small">{(it.plantTypes || []).join(', ')}</td>
                   <td className="small">{it.severity}</td>
                   <td className="small text-truncate" style={{maxWidth:300}}>{it.description ? (it.description.length > 120 ? it.description.substring(0,120) + '...' : it.description) : ''}</td>
-                  <td>
-                    <button className="btn btn-sm btn-outline-primary me-2" onClick={() => { setCurrent(it); setShowEdit(true); }}>Edit</button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => { setCurrent(it); setShowConfirm(true); }}>Delete</button>
+                  <td className="text-center align-middle" style={{width:120}}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <button
+                        className="btn btn-sm btn-link"
+                        title="Chỉnh sửa"
+                        onClick={() => { setCurrent(it); setShowEdit(true); }}
+                        aria-label={`edit-${it._id}`}
+                        style={{ color: '#4CAF50', padding: 4, margin: 0, lineHeight: 1 }}
+                      >
+                        <FiEdit size={18} />
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-link"
+                        title="Xóa"
+                        onClick={() => { setCurrent(it); setShowConfirm(true); }}
+                        aria-label={`delete-${it._id}`}
+                        style={{ color: '#FF4D4F', padding: 4, margin: 0, lineHeight: 1 }}
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -173,8 +212,8 @@ export default function AdminDiseases() {
 
                 return [
                   <li key="prev" className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => page > 1 && setPage(page - 1)}>Prev</button>
-                  </li>,
+                      <button className="page-link" onClick={() => page > 1 && setPage(page - 1)}>Trước</button>
+                    </li>,
                   pages.map((p, i) => (
                     typeof p === 'number' ? (
                       <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
@@ -185,7 +224,7 @@ export default function AdminDiseases() {
                     )
                   )),
                   <li key="next" className={`page-item ${page >= totalPages ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => page < totalPages && setPage(page + 1)}>Next</button>
+                    <button className="page-link" onClick={() => page < totalPages && setPage(page + 1)}>Tiếp</button>
                   </li>
                 ];
               })()}
@@ -196,19 +235,25 @@ export default function AdminDiseases() {
         <div className="mt-3">
           {showCreate && (
             <PortalModal onClose={() => setShowCreate(false)}>
-              <DiseaseModal title="Create Disease" categories={categories} onClose={() => setShowCreate(false)} onSubmit={handleCreate} />
+              <DiseaseModal title="Tạo bệnh" categories={categories} onClose={() => setShowCreate(false)} onSubmit={handleCreate} />
             </PortalModal>
           )}
 
           {showEdit && current && (
             <PortalModal onClose={() => { setShowEdit(false); setCurrent(null); }}>
-              <DiseaseModal title="Edit Disease" initial={current} categories={categories} onClose={() => { setShowEdit(false); setCurrent(null); }} onSubmit={(data) => handleEdit(current._id, data)} />
+              <DiseaseModal title="Chỉnh sửa bệnh" initial={current} categories={categories} onClose={() => { setShowEdit(false); setCurrent(null); }} onSubmit={(data) => handleEdit(current._id, data)} />
             </PortalModal>
           )}
 
           {showConfirm && current && (
             <PortalModal onClose={() => { setShowConfirm(false); setCurrent(null); }}>
-              <ConfirmModal title="Delete disease" message={`Bạn có chắc muốn xóa "${current.name}" không?`} onCancel={() => { setShowConfirm(false); setCurrent(null); }} onConfirm={() => handleDelete(current._id)} />
+              <ConfirmModal title="Xóa bệnh" message={`Bạn có chắc muốn xóa "${current.name}" không?`} onCancel={() => { setShowConfirm(false); setCurrent(null); }} onConfirm={() => handleDelete(current._id)} />
+            </PortalModal>
+          )}
+
+          {showTrash && (
+            <PortalModal onClose={() => setShowTrash(false)}>
+              <DiseaseTrashModal onClose={() => setShowTrash(false)} />
             </PortalModal>
           )}
         </div>
@@ -252,7 +297,7 @@ function DiseaseModal({ title, initial = {}, onClose, onSubmit, categories = [] 
       <div className="modal-body">
         <div className="row g-3">
           <div className="col-md-6">
-            <label className="form-label">Name</label>
+            <label className="form-label">Tên</label>
             <input className="form-control form-control-sm" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="col-md-6">
@@ -260,35 +305,35 @@ function DiseaseModal({ title, initial = {}, onClose, onSubmit, categories = [] 
             <input className="form-control form-control-sm" value={slug} onChange={(e) => setSlug(e.target.value)} />
           </div>
           <div className="col-md-6">
-            <label className="form-label">Category</label>
+            <label className="form-label">Danh mục</label>
             <select className="form-select form-select-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="">-- Chọn category --</option>
+              <option value="">-- Chọn danh mục --</option>
               {categories.map((c) => (
                 <option key={c._id || c.slug || c.name} value={c.slug || c.name}>{c.name}</option>
               ))}
             </select>
           </div>
           <div className="col-md-6">
-            <label className="form-label">Severity</label>
+            <label className="form-label">Mức độ</label>
             <select className="form-select form-select-sm" value={severity} onChange={(e) => setSeverity(e.target.value)}>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
+              <option value="low">Thấp</option>
+              <option value="medium">Trung bình</option>
+              <option value="high">Cao</option>
             </select>
           </div>
           <div className="col-12">
-            <label className="form-label">Plant types (comma separated)</label>
+            <label className="form-label">Loại cây (ngăn cách bằng dấu phẩy)</label>
             <input className="form-control form-control-sm" value={plantTypes} onChange={(e) => setPlantTypes(e.target.value)} />
           </div>
           <div className="col-12">
-            <label className="form-label">Description</label>
+            <label className="form-label">Mô tả</label>
             <textarea className="form-control form-control-sm" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
         </div>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onClose}>Cancel</button>
-        <button className="btn btn-sm btn-primary" onClick={submit}>Save</button>
+        <button className="btn btn-sm btn-secondary" onClick={onClose}>Hủy</button>
+        <button className="btn btn-sm btn-primary" onClick={submit}>Lưu</button>
       </div>
     </div>
   );
@@ -305,9 +350,71 @@ function ConfirmModal({ title, message, onCancel, onConfirm }) {
         <p>{message}</p>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-cancel" onClick={onCancel}>Cancel</button>
-        <button className="btn btn-confirm" onClick={onConfirm}>Delete</button>
+        <button className="btn btn-cancel" onClick={onCancel}>Hủy</button>
+        <button className="btn btn-confirm" onClick={onConfirm}>Xóa</button>
       </div>
+    </div>
+  );
+}
+
+function DiseaseTrashModal({ onClose }) {
+  const [trash, setTrash] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTrash = async () => {
+    setLoading(true);
+    try {
+      // backend exposes deleted items via list with includeDeleted=true
+      const res = await axiosClient.get('/admin/diseases?includeDeleted=true&limit=200');
+      const items = res.data?.data?.items || [];
+      // filter only deleted items
+      const deleted = (items || []).filter((it) => it.isDeleted === true || it.isDeleted === 'true');
+      setTrash(deleted);
+    } catch (err) {
+      console.error('Failed to load disease trash', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchTrash(); }, []);
+
+  const handleRestore = async (id) => {
+    try {
+      await axiosClient.patch(`/admin/diseases/${id}/restore`);
+      fetchTrash();
+    } catch (err) {
+      console.error('Restore failed', err);
+    }
+  };
+
+  return (
+    <div style={{ width: 700, maxWidth: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <h5 className="mb-0">Thùng rác - Bệnh</h5>
+        <Button onClick={onClose} type="text">Đóng</Button>
+      </div>
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div>
+      ) : (
+        <div>
+          {trash.length === 0 ? (
+            <div className="text-muted">Không có bệnh đã xóa</div>
+          ) : (
+            trash.map(t => (
+              <div key={t._id} style={{ display: 'flex', justifyContent: 'space-between', padding: 12, borderBottom: '1px solid #eee' }}>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{t.name}</div>
+                  <div className="small text-muted">{t.description || 'Không có mô tả'}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button onClick={() => handleRestore(t._id)} style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50', color: '#fff' }}>Hoàn tác</Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }

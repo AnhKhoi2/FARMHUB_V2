@@ -161,45 +161,39 @@ export default function AdminPost() {
           />
           {record.status !== "approved" && (
             <Button
-              type="primary"
               size="small"
-              icon={<CheckOutlined />}
+              type="text"
+              icon={<CheckOutlined style={{ color: "#4CAF50" }} />}
               onClick={() => changeStatus(record._id, "approved")}
-              style={{ backgroundColor: "#4CAF50", borderColor: "#4CAF50" }}
-            >
-              Duyệt
-            </Button>
+              title="Duyệt"
+            />
           )}
           {record.status !== "rejected" && (
             <Button
-              type="default"
               size="small"
-              icon={<CloseOutlined />}
+              type="text"
+              icon={<CloseOutlined style={{ color: "#FFB300" }} />}
               onClick={() => changeStatus(record._id, "rejected")}
-              style={{ backgroundColor: "#FFEB3B", borderColor: "#FFEB3B" }}
-            >
-              Từ chối
-            </Button>
+              title="Từ chối"
+            />
           )}
           {!record.isDeleted ? (
             <Button
-              type="default"
               size="small"
-              icon={<DeleteOutlined />}
+              type="text"
               danger
+              icon={<DeleteOutlined style={{ color: "#FF4D4F" }} />}
               onClick={() => handleHide(record._id)}
-            >
-              Xóa
-            </Button>
+              title="Xóa"
+            />
           ) : (
             <Button
-              type="default"
               size="small"
-              icon={<UndoOutlined />}
+              type="text"
+              icon={<UndoOutlined style={{ color: "#1890ff" }} />}
               onClick={() => handleRestore(record._id)}
-            >
-              Hoàn tác
-            </Button>
+              title="Hoàn tác"
+            />
           )}
         </Space>
       ),

@@ -220,7 +220,7 @@ export default function AdminGuides() {
       <Card
         title={
           <h4 style={{ margin: 0, color: NATURE_COLORS.darkText, fontWeight: 600 }}>
-            <FaBook style={{ marginRight: 8 }} /> Quản Lý Hướng Dẫn Trồng Trọt
+             HƯỚNG DẪN TRỒNG
           </h4>
         }
         extra={
@@ -287,7 +287,7 @@ export default function AdminGuides() {
             current={page}
             total={totalPages * limit}
             pageSize={limit}
-            onChange={fetchGuides}
+            onChange={(p) => fetchGuides(p)}
             size="default"
             showTotal={(total) => `Tổng ${total} hướng dẫn`}
           />

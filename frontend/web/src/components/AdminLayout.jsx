@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { profileApi } from "../api/shared/profileApi";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logoutThunk } from "../redux/authThunks";
@@ -31,6 +32,17 @@ export default function AdminLayout({ children }) {
     window.innerWidth <= 768 ? true : (localStorage.getItem(STORAGE_KEY) === "true")
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [profile, setProfile] = useState(() => {
+    try {
+      if (typeof window === 'undefined') return null;
+      const avatar = localStorage.getItem('profile_avatar');
+      const fullName = localStorage.getItem('profile_fullName');
+      if (avatar || fullName) return { avatar: avatar || null, fullName: fullName || null };
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
 
   useEffect(() => {
     try {
@@ -45,6 +57,30 @@ export default function AdminLayout({ children }) {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Load profile for avatar display in header
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await profileApi.getProfile();
+        if (!mounted) return;
+        const p = res.data?.data || null;
+        setProfile(p);
+        try {
+          if (typeof window !== 'undefined' && p) {
+            if (p.avatar) localStorage.setItem('profile_avatar', p.avatar);
+            if (p.fullName) localStorage.setItem('profile_fullName', p.fullName);
+            if (p.logo) localStorage.setItem('profile_logo', p.logo);
+          }
+        } catch (e) { /* ignore */ }
+      } catch (e) {
+        // ignore — header can show fallback avatar
+        // console.warn('AdminLayout: failed to fetch profile', e);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   const toggleDesktop = () => {
@@ -68,6 +104,9 @@ export default function AdminLayout({ children }) {
 
   const currentWidth = collapsed ? COLLAPSED_WIDTH : SIDEBAR_WIDTH;
   const isMobile = window.innerWidth <= 768;
+  const cachedLogo = typeof window !== 'undefined' ? localStorage.getItem('profile_logo') : null;
+  const cachedAvatar = typeof window !== 'undefined' ? localStorage.getItem('profile_avatar') : null;
+  const logoSrc = profile?.logo || cachedLogo || profile?.avatar || cachedAvatar || '/logo192.png';
 
   const linkBase = "nav-link text-white py-2 px-3 d-flex align-items-center gap-2";
   
@@ -137,6 +176,106 @@ export default function AdminLayout({ children }) {
             background-color: #fff; 
             border-bottom: 1px solid #ddd;
         }
+        /* Admin-scoped overrides: remove heavy decorative typography from global card/title rules */
+        .admin-main .card-title,
+        .admin-main h1,
+        .admin-main h2,
+        .admin-main h3,
+        .admin-main h4,
+        .admin-main h5,
+        .admin-main h6 {
+          text-shadow: none !important;
+          font-family: inherit !important;
+          font-weight: 400 !important;
+          color: inherit !important;
+        }
+        /* also clear any drop-shadow filters on icons within admin headers */
+        .admin-main .card-title *,
+        .admin-main .page-header * {
+          filter: none !important;
+        }
+
+        /* Admin table header styling to match sample: light green background, green text, subtle border
+           Scoped to .admin-main to avoid affecting other sections */
+        .admin-main table {
+          border-collapse: separate !important;
+          border-spacing: 0 !important;
+          overflow: hidden;
+          border-radius: 8px;
+          background: #fff;
+        }
+
+        .admin-main table thead th {
+          background: #f6fbf6; /* very light green */
+          color: #2e7d32; /* green text */
+          font-weight: 600;
+          padding: 12px 16px;
+          border-bottom: 1px solid rgba(0,0,0,0.06);
+          text-align: left;
+          vertical-align: middle;
+          font-size: 14px;
+          white-space: nowrap;
+        }
+
+        /* Ant Design specific overrides - ensure AntD tables in admin use the same green header style */
+        .admin-main .ant-table thead > tr > th {
+          background: #f6fbf6 !important;
+          color: #2e7d32 !important;
+          font-weight: 600 !important;
+          padding: 12px 16px !important;
+          border-bottom: 1px solid rgba(0,0,0,0.06) !important;
+        }
+
+        .admin-main .ant-table thead > tr > th .ant-table-cell-scroll {
+          background: transparent !important;
+        }
+
+        /* Make content area page titles uppercase for admin pages (h1/h2/h3) */
+        .admin-main .content-wrapper h1,
+        .admin-main .content-wrapper h2,
+        .admin-main .content-wrapper h3 {
+          text-transform: uppercase;
+          letter-spacing: 0.2px;
+          color: inherit;
+        }
+
+        /* Normalize title sizes across admin pages (keep headings visually consistent) */
+        .admin-main .content-wrapper h1,
+        .admin-main .content-wrapper h2,
+        .admin-main .content-wrapper h3,
+        .admin-main .content-wrapper h4 {
+          font-size: 24px;
+          line-height: 1.15;
+          font-weight: 600;
+          margin-bottom: 12px;
+        }
+
+        @media (max-width: 768px) {
+          .admin-main .content-wrapper h1,
+          .admin-main .content-wrapper h2,
+          .admin-main .content-wrapper h3,
+          .admin-main .content-wrapper h4 {
+            font-size: 20px;
+          }
+        }
+
+        .admin-main table thead th:first-child {
+          border-top-left-radius: 8px;
+        }
+        .admin-main table thead th:last-child {
+          border-top-right-radius: 8px;
+        }
+
+        /* Slight shadow/separation for header row */
+        .admin-main table thead tr {
+          box-shadow: inset 0 -1px 0 rgba(0,0,0,0.02);
+        }
+
+        /* Make sure sort icons or small controls inside headers stay aligned */
+        .admin-main table thead th .sort-indicator {
+          margin-left: 8px;
+          color: rgba(0,0,0,0.45);
+        }
       `}</style>
 
       {/* Overlay cho mobile */}
@@ -149,13 +288,14 @@ export default function AdminLayout({ children }) {
       >
         {/* Sidebar Header/Logo */}
         <div className="d-flex align-items-center px-3 py-3 border-bottom border-white border-opacity-10" style={{ minHeight: 60, justifyContent: collapsed ? 'center' : 'space-between' }}>
-          <div className="admin-logo d-flex align-items-center gap-2" style={{ opacity: collapsed ? 0 : 1, transition: "opacity .15s" }}>
-            <img src="/logo192.png" alt="FarmHub Logo" style={{ width: 30, height: 30, borderRadius: 4 }} />
+          <NavLink to="/admin/dashboard" className="admin-logo d-flex align-items-center gap-2" style={{ opacity: collapsed ? 0 : 1, transition: "opacity .15s", cursor: 'pointer', textDecoration: 'none' }} title="Trang quản trị">
+            {/* Logo image removed per request — show text-only logo */}
             <div style={{ lineHeight: 1 }}>
-              <div style={{ fontWeight: 700, color: PRIMARY_BRIGHT_GREEN }}>FarmHub</div> {/* Logo Text: Primary Bright Green */}
-              <small style={{ color: '#BDC3C7', fontSize: '0.8rem' }}>Admin Panel</small>
+              <h2 className="mb-0 fw-bold">
+                <span className="text-white">FarmHub</span>
+              </h2>
             </div>
-          </div>
+          </NavLink>
           
           {isMobile && (
               <button 
@@ -198,7 +338,7 @@ export default function AdminLayout({ children }) {
               onClick={doLogout} 
               title="Đăng xuất"
               // Đổi màu Đăng xuất thành màu Đỏ/Nguy hiểm
-              style={{ backgroundColor: '#FF4D4F', borderColor: '#FF4D4F', color: '#fff' }}
+              style={{ backgroundColor: '#073909ff', borderColor: '#111010ff', color: '#fff' }}
             >
               {collapsed ? <FaSignOutAlt size={16} /> : "Đăng xuất"}
             </button>
@@ -246,17 +386,24 @@ export default function AdminLayout({ children }) {
           </div>
           {/* User Profile / Info */}
           <div className="d-flex align-items-center gap-3">
-            <div className="small text-muted d-none d-sm-block">Chào, **Admin**</div>
-            <div 
-                style={{ 
+            <div className="small text-muted d-none d-sm-block">Chào Admin</div>
+            <NavLink to="/admin/profile" title="Hồ sơ admin" style={{ textDecoration: 'none' }}>
+              {profile?.avatar ? (
+                // eslint-disable-next-line jsx-a11y/img-redundant-alt
+                <img src={profile.avatar} alt="avatar" style={{ width:36, height:36, borderRadius:18, objectFit: 'cover', cursor: 'pointer' }} />
+              ) : (
+                <div 
+                  style={{ 
                     width:36, height:36, borderRadius:18, 
-                    background:PRIMARY_BRIGHT_GREEN, // Ảnh đại diện dùng Primary Bright Green
+                    background:PRIMARY_BRIGHT_GREEN, 
                     display:'inline-flex', alignItems:'center', justifyContent:'center', 
-                    color:DARK_BASE_GREEN, fontWeight: 'bold' // Chữ trong avatar dùng Dark Base Green
-                }}
-            >
-                A
-            </div>
+                    color:DARK_BASE_GREEN, fontWeight: 'bold', cursor: 'pointer'
+                  }}
+                >
+                  { (profile?.fullName || 'A')[0]?.toUpperCase() }
+                </div>
+              )}
+            </NavLink>
           </div>
         </header>
 
