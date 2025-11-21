@@ -1,3 +1,6 @@
+
+
+
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
@@ -6,14 +9,15 @@ import { GoogleLogin } from "@react-oauth/google";
 import "../../css/auth/Login.css";
 
 // NEW
-import streakApi from "../../api/shared/streakApi.js"; // ← thêm
+import streakApi from "../../api/shared/streakApi.js";     // ← thêm
 import StreakPopup from "../../components/shared/StreakPopup"; // ← path theo dự án của bạn
+
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [emailOrUsername, setEmailOrUsername] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { status, error } = useSelector((s) => s.auth);
   const loading = status === "loading";
@@ -58,24 +62,20 @@ const Login = () => {
 const handleLogin = async (e) => {
   e.preventDefault();
 
-  const cleanedIdentifier = emailOrUsername.trim();
+  const cleanedUsername = username.trim();
 
   const result = await dispatch(
     loginThunk({
-      emailOrUsername: cleanedIdentifier, // send as `emailOrUsername` to match API
+      username: cleanedUsername,   // 👈 CHỈ GỬI USERNAME
       password,
     })
   );
-  let { success, role } = result || {};
-  // If backend response shape didn't include role for some reason,
-  // fall back to persisted user in localStorage or redux state.
-  if (!role) {
-    try {
-      const persisted = JSON.parse(localStorage.getItem("user") || "null");
-      if (persisted?.role) role = persisted.role;
-    } catch (e) {
-      // ignore parse errors
-    }
+
+  const { success, role } = result || {};
+  if (success) {
+    await afterLogin(role);
+  }
+};
 
   const handleGoogleSuccess = async (cred) => {
     const idToken = cred?.credential;
@@ -99,9 +99,10 @@ const handleLogin = async (e) => {
       {/* ...giữ nguyên UI form cũ... */}
       <div className="wrapper">
         <div className="form-box login">
-          <h2>Login</h2>
+      <h2>Login</h2>
           <form onSubmit={handleLogin}>
             {error && <div className="error-message">{error}</div>}
+
             <div className="input-box">
               <span className="icon">
                 <ion-icon name="person"></ion-icon>
@@ -109,42 +110,43 @@ const handleLogin = async (e) => {
               <input
                 type="text"
                 required
-                value={emailOrUsername}
-                onChange={(e) => setEmailOrUsername(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
-              <label>Email or Username</label>
+              <label>Username</label>
             </div>
 
             <div className="input-box">
-              {/* <span className="icon">
+  {/* <span className="icon">
     <ion-icon name="lock-closed"></ion-icon>
   </span> */}
 
-              <input
-                type={showPassword ? "text" : "password"} // 👈 đổi type
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+  <input
+    type={showPassword ? "text" : "password"}     // 👈 đổi type
+    required
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+  />
 
-              {/* Nút toggle icon */}
-              <span
-                className="toggle-password"
-                onClick={() => setShowPassword((prev) => !prev)}
-                style={{
-                  position: "absolute",
-                  right: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                  fontSize: "20px",
-                }}
-              >
-                <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
-              </span>
+  {/* Nút toggle icon */}
+  <span
+    className="toggle-password"
+    onClick={() => setShowPassword((prev) => !prev)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      cursor: "pointer",
+      fontSize: "20px",
+    }}
+  >
+    <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
+  </span>
 
-              <label>Password</label>
-            </div>
+  <label>Password</label>
+</div>
+
 
             <button type="submit" className="btn" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
@@ -166,18 +168,13 @@ const handleLogin = async (e) => {
             <div className="line" />
           </div>
 
-          <div className="google-btn">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => alert("Google login error")}
-            />
-          </div>
+      <div className="google-btn">
+        <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => alert("Google login error")} />
+      </div>
 
-          {/* NEW: Popup */}
-          {streakData && (
-            <StreakPopup streak={streakData} onClose={handleClosePopup} />
-          )}
-        </div>
+      {/* NEW: Popup */}
+      {streakData && <StreakPopup streak={streakData} onClose={handleClosePopup} />}
+      </div>
       </div>
     </div>
   );
