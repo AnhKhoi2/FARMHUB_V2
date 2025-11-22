@@ -621,3 +621,49 @@ body {
 .expert-main::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent-green);
 }
+/* ============================================
+   Chat badge + Floating chat button
+   ============================================ */
+
+   .chat-btn-with-badge {
+    position: relative;
+  }
+  
+  /* Chấm đỏ nhỏ báo tin nhắn chưa đọc */
+  .chat-badge {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--color-error); /* đã khai báo trong :root */
+    display: block;
+    pointer-events: none;
+  }
+  
+  /* Nút chat nổi (góc dưới bên phải) */
+  .floating-chat-btn {
+    position: fixed;
+    right: 20px;
+    bottom: 90px;
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    border: none;
+    outline: none;
+    background: var(--color-accent-green);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    z-index: 1100;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  
+  .floating-chat-btn:hover {
+    transform: translateY(-2px);
+    background: var(--color-success);
+  }
+  

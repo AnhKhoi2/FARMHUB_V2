@@ -30,11 +30,11 @@ export default function AdminExpertApplications() {
 
       setItems(Array.isArray(itemsData) ? itemsData : []);
     } catch (err) {
-      console.error("Load applications error:", err);
+      console.error("Lỗi tải danh sách đơn:", err);
       const res = err.response;
 
       if (!res) {
-        const msg = "Không thể kết nối server.";
+        const msg = "Không thể kết nối đến máy chủ.";
         setError(msg);
         toast.error(msg);
         return;
@@ -54,20 +54,21 @@ export default function AdminExpertApplications() {
   }, [load]);
 
   const approve = async (id) => {
-    const confirm = window.confirm("Bạn có chắc muốn duyệt đơn này?");
+    const confirm = window.confirm("Bạn có chắc muốn *duyệt* đơn này?");
     if (!confirm) return;
 
     try {
       const res = await axiosClient.patch(
         `/api/expert-applications/${id}/approve`
       );
+
       toast.success(
         res.data?.message ||
-          "Duyệt đơn thành công, user đã được chuyển sang role expert."
+          "Duyệt đơn thành công. Người dùng đã được chuyển sang vai trò Chuyên gia."
       );
       load();
     } catch (err) {
-      console.error("Approve error:", err);
+      console.error("Lỗi duyệt đơn:", err);
       const res = err.response;
 
       if (!res) {
@@ -85,14 +86,13 @@ export default function AdminExpertApplications() {
         return;
       }
 
-      toast.error("Lỗi server khi duyệt đơn.");
+      toast.error("Lỗi máy chủ khi duyệt đơn.");
     }
   };
 
   const reject = async (id) => {
     const reason =
       window.prompt("Nhập lý do từ chối (có thể để trống):") ?? "";
-    // Nếu bấm Cancel -> null, nhưng đã xử lý trên; vẫn cho gửi với reason rỗng
 
     try {
       const res = await axiosClient.patch(
@@ -103,7 +103,7 @@ export default function AdminExpertApplications() {
       toast.success(res.data?.message || "Đã từ chối đơn.");
       load();
     } catch (err) {
-      console.error("Reject error:", err);
+      console.error("Lỗi từ chối:", err);
       const res = err.response;
 
       if (!res) {
@@ -137,19 +137,39 @@ export default function AdminExpertApplications() {
     else if (st === "approved") { cls = "bg-success"; label = "Đã duyệt"; }
     else if (st === "rejected") { cls = "bg-danger"; label = "Đã từ chối"; }
 
+    const label =
+      st === "pending"
+        ? "Chờ duyệt"
+        : st === "approved"
+        ? "Đã duyệt"
+        : st === "rejected"
+        ? "Đã từ chối"
+        : st;
+
     return <span className={`badge ${cls}`}>{label}</span>;
   };
+
+  const currentStatusLabel =
+    !status
+      ? "tất cả"
+      : status === "pending"
+      ? "chờ duyệt"
+      : status === "approved"
+      ? "đã duyệt"
+      : status === "rejected"
+      ? "đã từ chối"
+      : status;
 
   return (
     <AdminLayout>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="h5 mb-0">Đơn ứng tuyển chuyên gia</h3>
+        <h3 className="h5 mb-0">Danh sách đơn đăng ký Chuyên gia</h3>
         <div className="text-muted small">
-          Hiển thị: {status === "pending" ? "Đang chờ" : status === "approved" ? "Đã duyệt" : status === "rejected" ? "Đã từ chối" : "Tất cả"}
+          Đang hiển thị: {currentStatusLabel}
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Bộ lọc */}
       <div className="row g-2 mb-3">
         <div className="col-auto">
           <select
@@ -158,7 +178,7 @@ export default function AdminExpertApplications() {
             onChange={(e) => setStatus(e.target.value)}
           >
             <option value="">Tất cả</option>
-            <option value="pending">Đang chờ</option>
+            <option value="pending">Chờ duyệt</option>
             <option value="approved">Đã duyệt</option>
             <option value="rejected">Đã từ chối</option>
           </select>
@@ -167,7 +187,7 @@ export default function AdminExpertApplications() {
           <input
             type="text"
             className="form-control form-control-sm"
-            placeholder="Tìm theo tên / email / chuyên môn..."
+            placeholder="Tìm theo họ tên / email / lĩnh vực chuyên môn..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -178,8 +198,8 @@ export default function AdminExpertApplications() {
             style={{ borderColor: '#E0E0E0', background: '#fff', color: '#2E7D32', textTransform: 'uppercase', padding: '4px 10px' }}
             onClick={resetFilter}
           >
-            ĐẶT LẠI
-          </Button>
+            Đặt lại
+          </button>
         </div>
       </div>
 
@@ -187,35 +207,35 @@ export default function AdminExpertApplications() {
         <div className="alert alert-danger py-1 small">{error}</div>
       )}
 
-      {/* Table */}
+      {/* Bảng */}
       <div className="card">
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-sm table-hover mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Full name</th>
+                  <th>Họ và tên</th>
                   <th>Email</th>
-                  <th>Phone</th>
-                  <th>Expertise</th>
-                  <th>Experience</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>Số điện thoại</th>
+                  <th>Lĩnh vực</th>
+                  <th>Kinh nghiệm</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                      <td colSpan={7} className="text-center py-3">
-                        Đang tải...
-                      </td>
-                    </tr>
+                    <td colSpan={7} className="text-center py-3">
+                      Đang tải...
+                    </td>
+                  </tr>
                 ) : items.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="text-center py-3">
-                        Không có dữ liệu
-                      </td>
-                    </tr>
+                  <tr>
+                    <td colSpan={7} className="text-center py-3">
+                      Không có dữ liệu
+                    </td>
+                  </tr>
                 ) : (
                   items.map((it) => (
                     <tr key={it._id}>

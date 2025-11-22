@@ -76,20 +76,45 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   // nhớ timestamp tin nhắn mới nhất để poll "after"
   const lastTsRef = useRef(null);
 
+  // thời điểm gần nhất user coi chat (dùng cho badge đỏ)
+  const lastReadRef = useRef(0);
+
+  // trạng thái có tin mới để hiện chấm đỏ trên icon
+  const [hasNew, setHasNew] = useState(false);
+
+  /* =========================
+     Helpers cho "đã đọc"
+  ========================= */
+  function markAllSeen() {
+    lastReadRef.current = Date.now();
+    setHasNew(false);
+  }
+
   /* =========================
      Lấy user hiện tại
   ========================= */
   useEffect(() => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (user?._id) setCurrentUser(user);
-    } catch {}
+      const keys = ["user", "authUser", "profile"];
+      for (const k of keys) {
+        const raw = localStorage.getItem(k);
+        if (!raw) continue;
+        const u = JSON.parse(raw);
+        if (u && u._id) {
+          setCurrentUser(u);
+          break;
+        }
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
   /* =========================
      Nạp danh sách hội thoại
+     isPoll = true khi gọi từ background
   ========================= */
-  async function loadConversations() {
+  async function loadConversations(isPoll = false) {
     try {
       const res = await axiosClient.get("/api/chat");
       const list = Array.isArray(res?.data?.data) ? res.data.data : [];
@@ -108,14 +133,47 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
         );
 
       setConversations(mapped);
+
+      // === TÍNH XEM CÓ TIN MỚI KHÔNG (cho icon chấm đỏ) ===
+      // dùng lastReadRef: chỉ coi tin nhắn nào tạo SAU lần cuối đọc
+      if (isPoll && currentUser?._id) {
+        const lastRead = lastReadRef.current || 0;
+        let flag = false;
+
+        mapped.forEach((c) => {
+          const lastAtRaw = c.lastMessage?.at || c.updatedAt;
+          if (!lastAtRaw) return;
+
+          const lastAt = new Date(lastAtRaw).getTime();
+          const sender = c.lastMessage?.sender;
+          const senderId =
+            typeof sender === "object" && sender !== null ? sender._id : sender;
+
+          if (
+            lastAt &&
+            lastAt > lastRead && // mới hơn lần đọc gần nhất
+            String(senderId) !== String(currentUser._id) // không phải mình gửi
+          ) {
+            flag = true;
+          }
+        });
+
+        setHasNew(flag);
+      }
+
+      // nếu load vì mở widget (isPoll = false) -> coi như đã đọc
+      if (!isPoll) {
+        markAllSeen();
+      }
     } catch (err) {
       console.error("loadConversations failed:", err);
       setConversations([]);
+      if (!isPoll) setHasNew(false);
     }
   }
 
   /* =========================
-     Nạp tin nhắn (initial / pull cũ khi click conv)
+     Nạp tin nhắn (initial / khi click conv)
   ========================= */
   async function loadMessages(convId) {
     try {
@@ -129,12 +187,14 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
       setMsgs(mapped);
       setVisibleCount(5);
 
-      // cập nhật mốc "after"
       if (mapped.length) {
         lastTsRef.current = mapped[mapped.length - 1].createdAt;
       } else {
         lastTsRef.current = null;
       }
+
+      // vào phòng chat, coi như đã đọc → clear badge
+      markAllSeen();
 
       setTimeout(scrollToBottom, 50);
     } catch (err) {
@@ -145,7 +205,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   }
 
   /* =========================
-     Lấy tin mới (poll every 2.5s)
+     Lấy tin mới (poll every 2.5s khi ĐANG mở 1 conv)
   ========================= */
   async function fetchNewMessages() {
     if (!activeConv || !lastTsRef.current) return;
@@ -196,13 +256,25 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
     }
   }
 
-  // bật poll khi đang mở 1 conv
+  // bật poll tin mới khi đang mở 1 conv
   useEffect(() => {
     if (!open || !currentUser || !activeConv) return;
     const t = setInterval(fetchNewMessages, 2500);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, currentUser?._id, activeConv?._id]);
+
+  // 🔔 Poll nền để cập nhật hasNew ngay cả khi widget ĐANG ĐÓNG
+  useEffect(() => {
+    if (!currentUser) return;
+    // gọi 1 lần ngay
+    loadConversations(true);
+    const t = setInterval(() => {
+      loadConversations(true);
+    }, 5000); // 5s 1 lần
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?._id]);
 
   /* =========================
      Mở cuộc trò chuyện
@@ -211,7 +283,12 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
     if (!payload) return;
 
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const userRaw =
+        localStorage.getItem("user") ||
+        localStorage.getItem("authUser") ||
+        localStorage.getItem("profile");
+      const user = userRaw ? JSON.parse(userRaw) : null;
+
       if (!user?._id) {
         alert("Không xác định được người dùng hiện tại.");
         return;
@@ -281,10 +358,13 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
             isMine: String(msg.sender?._id) === String(currentUser?._id),
           },
         ]);
-        // cập nhật mốc sau khi mình gửi
         lastTsRef.current = msg.createdAt;
       }
       setText("");
+
+      // mình vừa gửi -> rõ ràng đang xem -> clear badge
+      markAllSeen();
+
       setTimeout(scrollToBottom, 40);
     } catch (err) {
       console.error("sendMessage failed:", err);
@@ -294,10 +374,11 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
     }
   }
 
-  // Khi widget mở
+  // Khi widget mở: load conv + open payload + coi như đã đọc (clear badge)
   useEffect(() => {
     if (!open || !currentUser) return;
-    loadConversations();
+    markAllSeen(); // đánh dấu lần mở widget là đã "xem"
+    loadConversations(false);
     if (initialOpenPayload) openWith(initialOpenPayload);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, currentUser?._id, currentUser?.role, initialOpenPayload]);
@@ -310,14 +391,14 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   if (!open) {
     // 👉 Nếu là CHUYÊN GIA: không hiển thị nút tròn Chat with expert
     if (currentUser && currentUser.role === "expert") {
-      // vẫn trả ra container rỗng để không lỗi CSS
       return <div className="chat-widget" />;
     }
 
-    // 👉 Nếu là USER thường: hiển thị nút tròn như cũ
+    // 👉 Nếu là USER thường: hiển thị nút tròn + chấm đỏ nếu có tin mới
     return (
       <div className="chat-widget">
         <button className="cw-fab" onClick={() => onClose?.(true)}>
+          {hasNew && <span className="cw-fab-badge" />}
           <MessageCircle size={22} />
         </button>
       </div>

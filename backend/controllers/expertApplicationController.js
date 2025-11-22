@@ -271,6 +271,9 @@ export async function create(req, res) {
 // ===============================
 // Approve: PATCH /api/expert-applications/:id/approve
 // ===============================
+// ===============================
+// Approve: PATCH /api/expert-applications/:id/approve
+// ===============================
 export async function approve(req, res) {
   try {
     const { id } = req.params;
@@ -280,7 +283,8 @@ export async function approve(req, res) {
       return res.status(400).json({ error: "Invalid application ID" });
     }
 
-    const app = await ExpertApplication.findById(id);
+    // Lấy đơn (chỉ cần dữ liệu → dùng lean cho nhẹ)
+    const app = await ExpertApplication.findById(id).lean();
     if (!app) {
       return res.status(404).json({ error: "Application not found" });
     }
@@ -308,48 +312,47 @@ export async function approve(req, res) {
       review_notes: review_notes || "",
     };
 
-    // Tạo / cập nhật Expert
-    const expert = await Expert.findOneAndUpdate(
-      { user: app.user, is_deleted: false },
-      { $set: payload },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    // Tạo / cập nhật Expert + cập nhật role user CHẠY SONG SONG
+    const [expert, updatedUser] = await Promise.all([
+      Expert.findOneAndUpdate(
+        { user: app.user, is_deleted: false },
+        { $set: payload },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      ),
+      User.findByIdAndUpdate(
+        app.user,
+        { role: "expert" },
+        { new: true }
+      ),
+    ]);
 
-    // Update role user
-    const updatedUser = await User.findByIdAndUpdate(
-      app.user,
-      { role: "expert" },
-      { new: true }
-    );
-
-    // Gửi mail thông báo cho user
-    if (updatedUser?.email) {
-      try {
-        await sendMail({
-          to: updatedUser.email,
-          subject: "FarmHub - Đơn đăng ký Expert đã được duyệt",
-          html: `
-            <p>Xin chào ${
-              updatedUser.fullName || updatedUser.username || "bạn"
-            },</p>
-            <p>Chúc mừng! Đơn đăng ký trở thành Expert của bạn đã được duyệt 🎉</p>
-            <p>Bạn có thể đăng nhập lại để bắt đầu sử dụng quyền Expert.</p>
-            <p>— FarmHub Team</p>
-          `,
-        });
-      } catch (e) {
-        console.warn("sendMail USER failed:", e?.message);
-      }
-    }
-
-    // Xoá đơn sau khi duyệt (hoặc đổi status='approved' nếu muốn giữ lịch sử)
+    // Xoá đơn sau khi duyệt
     await ExpertApplication.findByIdAndDelete(id);
 
-    return res.status(200).json({
+    // ✅ Trả response CHO FE NGAY → UI không bị khựng vì chờ gửi mail
+    res.status(200).json({
       message:
         "Application approved, expert profile created, and user role updated to expert.",
       expert,
     });
+
+    // 📧 Gửi mail THÊM, fire-and-forget, không chặn response
+    if (updatedUser?.email) {
+      sendMail({
+        to: updatedUser.email,
+        subject: "FarmHub - Đơn đăng ký Expert đã được duyệt",
+        html: `
+          <p>Xin chào ${
+            updatedUser.fullName || updatedUser.username || "bạn"
+          },</p>
+          <p>Chúc mừng! Đơn đăng ký trở thành Expert của bạn đã được duyệt 🎉</p>
+          <p>Bạn có thể đăng nhập lại để bắt đầu sử dụng quyền Expert.</p>
+          <p>— FarmHub Team</p>
+        `,
+      }).catch((e) => {
+        console.warn("sendMail USER failed:", e?.message);
+      });
+    }
   } catch (err) {
     console.error("Approve application error:", err);
     return res.status(500).json({
@@ -358,6 +361,7 @@ export async function approve(req, res) {
     });
   }
 }
+
 
 // ===============================
 // Reject: PATCH /api/expert-applications/:id/reject
@@ -371,7 +375,8 @@ export async function reject(req, res) {
       return res.status(400).json({ error: "Invalid application ID" });
     }
 
-    const application = await ExpertApplication.findById(id);
+    // Lấy đơn nhẹ nhàng với lean()
+    const application = await ExpertApplication.findById(id).lean();
     if (!application) {
       return res.status(404).json({ error: "Không tìm thấy đơn" });
     }
@@ -382,40 +387,41 @@ export async function reject(req, res) {
         .json({ error: "Chỉ có thể từ chối các đơn đang ở trạng thái pending." });
     }
 
-    const user = await User.findById(application.user);
+    // Lấy user cũng lean để nhẹ
+    const user = await User.findById(application.user).lean();
     if (!user) {
       return res.status(404).json({ error: "Không tìm thấy user" });
     }
 
+    // Cập nhật trạng thái đơn → rejected
     await ExpertApplication.findByIdAndUpdate(id, {
       status: "rejected",
       reject_reason: reason || "",
     });
 
-    // Gửi mail thông báo bị từ chối
-    try {
-      if (user.email) {
-        await sendMail({
-          to: user.email,
-          subject: "FarmHub - Đơn đăng ký Expert bị từ chối",
-          html: `
-            <p>Xin chào ${user.fullName || user.username || "bạn"},</p>
-            <p>Rất tiếc, đơn đăng ký Expert của bạn đã bị từ chối.</p>
-            ${
-              reason
-                ? `<p><b>Lý do:</b> ${reason}</p>`
-                : ""
-            }
-            <p>Bạn có thể chỉnh sửa hồ sơ và nộp lại trong tương lai.</p>
-            <p>— FarmHub Team</p>
-          `,
-        });
-      }
-    } catch (e) {
-      console.warn("sendMail USER failed:", e?.message);
-    }
+    // ✅ TRẢ RESPONSE CHO FE NGAY → không phải đợi gửi mail
+    res.json({ message: "Đã từ chối đơn." });
 
-    return res.json({ message: "Đã từ chối đơn." });
+    // 📧 GỬI MAIL SAU, FIRE-AND-FORGET (KHÔNG await)
+    if (user.email) {
+      sendMail({
+        to: user.email,
+        subject: "FarmHub - Đơn đăng ký Expert bị từ chối",
+        html: `
+          <p>Xin chào ${user.fullName || user.username || "bạn"},</p>
+          <p>Rất tiếc, đơn đăng ký Expert của bạn đã bị từ chối.</p>
+          ${
+            reason
+              ? `<p><b>Lý do:</b> ${reason}</p>`
+              : ""
+          }
+          <p>Bạn có thể chỉnh sửa hồ sơ và nộp lại trong tương lai.</p>
+          <p>— FarmHub Team</p>
+        `,
+      }).catch((e) => {
+        console.warn("sendMail USER failed:", e?.message);
+      });
+    }
   } catch (err) {
     console.error("Reject error:", err);
     return res.status(500).json({
@@ -424,3 +430,4 @@ export async function reject(req, res) {
     });
   }
 }
+
