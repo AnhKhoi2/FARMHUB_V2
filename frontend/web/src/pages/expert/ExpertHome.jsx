@@ -41,7 +41,7 @@ function getLocalUserFallback() {
         }
       }
     }
-  } catch (_) { }
+  } catch (_) {}
 
   return {
     name: "Expert",
@@ -64,8 +64,12 @@ export default function ExpertHome({
 
   const [guides, setGuides] = useState([]);
   const [models, setModels] = useState([]);
-  const [templates, setTemplates] = useState([]); // ⬅️ thêm state plant template
+  const [templates, setTemplates] = useState([]);
   const [chatOpen, setChatOpen] = useState(false);
+  const [prevUnread, setPrevUnread] = useState(0);
+
+  // 🔴 số cuộc trò chuyện chưa đọc
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // ---------------------- LẤY 3 HƯỚNG DẪN ----------------------
   useEffect(() => {
@@ -96,20 +100,16 @@ export default function ExpertHome({
   }, []);
 
   // ---------------------- LẤY 3 PLANT TEMPLATE ----------------------
-  // ---------------------- LẤY 3 PLANT TEMPLATE ----------------------
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        // ĐÚNG: trùng với controller: GET /api/plant-templates
-        const res = await axiosClient.get(
-          "/api/plant-templates?status=active"
-        );
+        const res = await axiosClient.get("/api/plant-templates?status=active");
 
         const payload = res.data;
         const list =
-          payload?.templates ||        // { templates, count, message }
-          payload?.data?.templates ||  // nếu bọc thêm data
-          payload?.data ||             // fallback
+          payload?.templates ||
+          payload?.data?.templates ||
+          payload?.data ||
           [];
 
         setTemplates((list || []).slice(0, 3));
@@ -121,12 +121,43 @@ export default function ExpertHome({
     fetchTemplates();
   }, []);
 
+  // ---------------------- LẤY SỐ TIN NHẮN CHƯA ĐỌC ----------------------
+  useEffect(() => {
+    const notifySound = new Audio("/src/assets/sounds/notify.mp3");
+  
+    const fetchUnread = async () => {
+      try {
+        const res = await axiosClient.get("/api/chat/unread");
+  
+        const count =
+          res?.data?.count ??
+          (Array.isArray(res?.data?.data) ? res.data.data.length : 0);
+  
+        // Nếu có tin nhắn MỚI tăng thêm → phát âm thanh
+        if (count > prevUnread) {
+          notifySound.play().catch(() => {});
+        }
+  
+        setPrevUnread(count);
+        setUnreadCount(count || 0);
+  
+      } catch (err) {
+        console.error("Lỗi lấy số tin nhắn chưa đọc:", err);
+      }
+    };
+  
+    fetchUnread();
+    const intervalId = setInterval(fetchUnread, 8000);
+    return () => clearInterval(intervalId);
+  }, [prevUnread]);
+  
 
   const handleChatClick = () => {
     if (typeof onChatClick === "function") {
       onChatClick();
     }
     setChatOpen(true);
+    setUnreadCount(0); // mở chat thì reset badge
   };
 
   // ---------------------- LẤY PROFILE CHUYÊN GIA ----------------------
@@ -152,7 +183,7 @@ export default function ExpertHome({
             ok = true;
             break;
           }
-        } catch { }
+        } catch {}
       }
       if (!ok) setProfile(getLocalUserFallback());
       setLoading(false);
@@ -185,22 +216,21 @@ export default function ExpertHome({
               <h1
                 className="brand-name clickable"
                 onClick={() => {
-                  navigate("/expert");        // để index route redirect sang /expert/home
+                  navigate("/expert");
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
               >
                 Trang chuyên gia
               </h1>
-
-
             </div>
 
             <nav className="header-nav">
               <button
-                className="nav-button nav-button-chat"
+                className="nav-button nav-button-chat chat-btn-with-badge"
                 onClick={handleChatClick}
               >
                 <MessageCircle size={20} />
+                {unreadCount > 0 && <span className="chat-badge" />}
                 <span>Trò chuyện</span>
               </button>
 
@@ -308,9 +338,7 @@ export default function ExpertHome({
 
             {/* ---------------------- MÔ HÌNH TRỒNG ---------------------- */}
             <div className="models-section">
-              <h2 className="section-title">
-                🌱 Mô Hình Trồng
-              </h2>
+              <h2 className="section-title">🌱 Mô Hình Trồng</h2>
 
               <div className="card-grid">
                 {models.map((m) => (
@@ -436,6 +464,18 @@ export default function ExpertHome({
           </div>
         </main>
       </div>
+
+      {/* Nút chat nổi */}
+      <button
+         className={`floating-chat-btn chat-btn-with-badge ${chatOpen ? "hide" : ""}`}
+        onClick={() => {
+          setChatOpen(true);
+          setUnreadCount(0);
+        }}
+      >
+        <MessageCircle size={26} />
+        {unreadCount > 0 && <span className="chat-badge" />}
+      </button>
 
       <ChatWidget
         open={chatOpen}

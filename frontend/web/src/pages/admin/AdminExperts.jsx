@@ -126,7 +126,7 @@ export default function AdminExperts() {
             value={reviewStatus}
             onChange={(e) => setReviewStatus(e.target.value)}
           >
-            <option value="">-- Trạng thái duyệt --</option>
+            <option value="">Tất cả</option>
             <option value="pending">Chờ duyệt</option>
             <option value="approved">Đã duyệt</option>
             <option value="rejected">Đã từ chối</option>

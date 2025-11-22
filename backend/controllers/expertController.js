@@ -1,7 +1,7 @@
 // ===============================
 //  FARMHUB - Expert Controller (service-merged; no add/edit)
 // ===============================
-import mongoose from "mongoose";
+import mongoose from "mongoose";  
 import Expert from "../models/Expert.js";
 import User from "../models/User.js";
 
@@ -81,17 +81,46 @@ export async function getById(req, res) {
 }
 
 // ===============================
-// DELETE /api/experts/:id   (soft delete by expert_id)
+// DELETE /api/experts/:id
+//  - Xóa mềm Expert
+//  - Đồng thời vô hiệu hóa luôn User (isDeleted + isBanned)
 // ===============================
 export async function remove(req, res) {
   try {
-    const result = await Expert.findOneAndUpdate(
-      { expert_id: req.params.id, is_deleted: false },
-      { is_deleted: true, deleted_at: new Date() },
-      { new: true }
-    );
-    if (!result) return res.status(404).json({ error: "Expert not found to delete" });
-    return res.status(204).send();
+    const rawId = (req.params.id || "").trim();
+
+    // Cho phép xoá theo expert_id hoặc _id
+    const orConds = [{ expert_id: rawId }];
+    if (mongoose.Types.ObjectId.isValid(rawId)) {
+      orConds.push({ _id: new mongoose.Types.ObjectId(rawId) });
+    }
+
+    // 1) Tìm expert còn active
+    const expert = await Expert.findOne({ is_deleted: false, $or: orConds });
+    if (!expert) {
+      return res.status(404).json({ error: "Expert not found to delete" });
+    }
+
+    // 2) Soft delete expert
+    expert.is_deleted = true;
+    expert.deleted_at = new Date();
+    await expert.save();
+
+    // 3) Soft delete luôn User tương ứng → tài khoản KHÔNG login được nữa
+    if (expert.user) {
+      await User.findByIdAndUpdate(
+        expert.user,
+        {
+          isDeleted: true,
+          isBanned: true,   // tùy, có thể bỏ nếu không dùng
+        },
+        { new: true }
+      );
+    }
+
+    return res.status(200).json({
+      message: "Xóa mềm chuyên gia và vô hiệu hóa tài khoản thành công.",
+    });
   } catch (err) {
     console.error("Soft delete expert error:", err);
     return res.status(500).json({ error: "Failed to delete expert" });
@@ -136,4 +165,3 @@ export async function getMyBasic(req, res) {
     return res.status(500).json({ error: "Server error" });
   }
 }
-  

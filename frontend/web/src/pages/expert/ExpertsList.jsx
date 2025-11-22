@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { MessageCircle, Star, BadgeCheck, Search } from "lucide-react";
 import axiosClient from "../../api/shared/axiosClient";
 import "../../css/ExpertsList.css";
 
-// ⬇️ Widget trò chuyện
+// ⬇️ Chat widget
 import ChatWidget from "./ChatWidget";
+import Header from "../../components/shared/Header";
 
 const API_LIST = "/api/experts?is_public=true&review_status=approved";
 
@@ -15,9 +16,10 @@ const placeholderAvatar = (seed) =>
     seed || "expert"
   )}`;
 
-// ---------- UI ngôi sao đánh giá ----------
+// ---------- Star UI ----------
 function StarRow({ value = 0, onSelect, canRate }) {
   const [hover, setHover] = useState(0);
+
   const v = hover || value;
   return (
     <div className="ex-stars" style={{ display: "flex", gap: 4 }}>
@@ -28,13 +30,17 @@ function StarRow({ value = 0, onSelect, canRate }) {
           className="ex-star-btn"
           onMouseEnter={() => canRate && setHover(n)}
           onMouseLeave={() => canRate && setHover(0)}
-          onClick={() => canRate && onSelect?.(n)}
+          onClick={() => onSelect?.(n)}
           aria-label={`Đánh giá ${n} sao`}
-          title={canRate ? `Đánh giá ${n} sao` : `${value} sao`}
+          title={
+            canRate
+              ? `Đánh giá ${n} sao`
+              : `${value || 0} sao (bạn đã đánh giá rồi)`
+          }
           style={{
             background: "transparent",
             border: "none",
-            cursor: canRate ? "pointer" : "default",
+            cursor: "pointer",
             padding: 0,
             lineHeight: 0,
           }}
@@ -95,9 +101,7 @@ function ExpertCard({ expert, myScore, onRate, onChat }) {
             <span className="ex-sub"> ({expert.total_reviews || 0})</span>
           </span>
           <span className="ex-dot">•</span>
-          <span className="ex-kpi">
-            {expert.experience_years || 0} năm kinh nghiệm
-          </span>
+          <span className="ex-kpi">{expert.experience_years || 0} năm</span>
         </div>
       </div>
 
@@ -123,11 +127,15 @@ export default function ExpertsList() {
   const [q, setQ] = useState("");
   const [myRatings, setMyRatings] = useState({});
 
-  // ⬇️ state cho ChatWidget
+  // ChatWidget control
   const [chatOpen, setChatOpen] = useState(false);
-  const [chatPeer, setChatPeer] = useState(null); // payload truyền cho ChatWidget
+  const [chatPeer, setChatPeer] = useState(null);
 
-  // Lấy danh sách chuyên gia
+  // === ONLY ADD SOUND HERE (không thay đổi gì khác) ===
+  const [unreadCount, setUnreadCount] = useState(0);
+  const prevUnreadRef = useRef(0);
+
+  // fetch experts
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -138,7 +146,7 @@ export default function ExpertsList() {
         if (!cancelled) setExperts(Array.isArray(items) ? items : []);
       } catch (e) {
         if (!cancelled) setExperts([]);
-        console.error("Lỗi tải danh sách chuyên gia:", e);
+        console.error("Fetch experts failed:", e);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -148,7 +156,39 @@ export default function ExpertsList() {
     };
   }, []);
 
-  // Lấy đánh giá của tôi
+  // ======================= SOUND NOTIFICATION =======================
+  useEffect(() => {
+    const notifySound = new Audio("/src/assets/sounds/notify.mp3");
+  
+    const fetchUnread = async () => {
+      try {
+        const res = await axiosClient.get("/api/chat/unread");
+  
+        const count =
+          res?.data?.count ??
+          (Array.isArray(res?.data?.data) ? res.data.data.length : 0);
+  
+        if (count > prevUnreadRef.current) {
+          notifySound.play().catch(() => {});
+        }
+  
+        prevUnreadRef.current = count;
+        setUnreadCount(count || 0);
+  
+      } catch (err) {
+        console.error("Lỗi unread:", err);
+      }
+    };
+  
+    fetchUnread();
+  
+    const interval = setInterval(fetchUnread, 1000); // 1 giây 1 lần (tốt nhất)
+    return () => clearInterval(interval);
+  }, []);
+  
+  // ======================= END SOUND =======================
+
+  // fetch my ratings
   useEffect(() => {
     let cancelled = false;
     async function fetchMine() {
@@ -189,10 +229,35 @@ export default function ExpertsList() {
     });
   }, [q, experts]);
 
-  // Gửi đánh giá
+  // rate
   const handleRate = async (expert, score) => {
     const id = expert.expert_id || expert._id;
     if (!id) return;
+
+    if (myRatings[id]) {
+      alert("Bạn đã đánh giá chuyên gia này rồi.");
+      return;
+    }
+
+    try {
+      const resCheck = await axiosClient.get(`/api/chat/has-talked/${id}`);
+      const payload = resCheck?.data;
+      const hasTalk =
+        payload?.hasTalked ??
+        payload?.hasChat ??
+        payload?.data?.hasTalked ??
+        payload?.data?.hasChat ??
+        false;
+      if (!hasTalk) {
+        alert("Bạn chỉ có thể đánh giá chuyên gia sau khi đã trò chuyện với họ.");
+        return;
+      }
+    } catch (err) {
+      console.error("check has-talked error:", err);
+      alert("Không kiểm tra được lịch sử trò chuyện.");
+      return;
+    }
+
     try {
       const res = await axiosClient.post(`/api/experts/${id}/rate`, { score });
       const stats = res?.data?.data;
@@ -221,17 +286,15 @@ export default function ExpertsList() {
     }
   };
 
-  // ✅ Mở chat với chuyên gia được chọn (truyền payload đúng chuẩn ChatWidget/BE)
+  // open chat
   const handleChat = (expert) => {
-    // expertId có thể là UUID (expert.expert_id) hoặc ObjectId (expert._id)
     const expertId = expert.expert_id || expert._id || null;
 
     if (!expertId) {
-      alert("Không xác định được expertId để mở trò chuyện.");
+      alert("Không xác định được chuyên gia để mở trò chuyện.");
       return;
     }
 
-    // (tuỳ chọn) avatar để widget hiển thị tạm thời trước khi load cuộc trò chuyện
     const avatar =
       (expert?.user?.avatar && String(expert.user.avatar).trim()) ||
       placeholderAvatar(
@@ -242,68 +305,67 @@ export default function ExpertsList() {
           expert?.full_name
       );
 
-    // payload FE → ChatWidget.openWith: chỉ cần expertId
     const payload = {
-      expertId, // ⬅️ ChatWidget sẽ gửi { expertId } cho /api/chat/open (role=user)
-      expert, // ⬅️ đính kèm để ChatWidget có thể fallback lấy id khác nếu cần
+      expertId,
+      expert,
       avatar,
       name: expert.full_name || "Chuyên gia",
     };
 
-    // Quan trọng: set payload trước, rồi mở widget (tránh race)
     setChatPeer(payload);
     setChatOpen(true);
   };
 
   return (
-    <div className="ex-page user-expert-page">
-      <div className="ex-hero">
-        <h1>Chuyên gia</h1>
-        <p>
-          Kết nối với các chuyên gia nông nghiệp uy tín và bắt đầu trò chuyện
-          ngay.
-        </p>
-      </div>
-
-      <div className="ex-toolbar">
-        <div className="ex-search">
-          <Search size={18} />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Tìm theo tên, lĩnh vực chuyên môn..."
-            aria-label="Tìm kiếm chuyên gia"
-          />
+    <>
+      <Header />
+      <div className="ex-page user-expert-page">
+        <div className="ex-hero">
+          <h1>Chuyên gia</h1>
+          <p>
+            Tìm kiếm và kết nối với các chuyên gia nông nghiệp đáng tin cậy để được tư vấn.
+          </p>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="ex-empty">Đang tải danh sách chuyên gia…</div>
-      ) : filtered.length === 0 ? (
-        <div className="ex-empty">Không tìm thấy chuyên gia nào.</div>
-      ) : (
-        <div className="ex-grid">
-          {filtered.map((ex) => {
-            const id = ex.expert_id || ex._id;
-            return (
-              <ExpertCard
-                key={id}
-                expert={ex}
-                myScore={myRatings[id] || 0}
-                onRate={handleRate}
-                onChat={handleChat}
-              />
-            );
-          })}
+        <div className="ex-toolbar">
+          <div className="ex-search">
+            <Search size={18} />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Tìm theo tên, lĩnh vực chuyên môn..."
+              aria-label="Tìm kiếm chuyên gia"
+            />
+          </div>
         </div>
-      )}
 
-      {/* ChatWidget gắn ở cuối trang để overlay */}
-      <ChatWidget
-        open={chatOpen}
-        onClose={(v) => setChatOpen(Boolean(v))}
-        initialOpenPayload={chatPeer} // ⬅️ đúng prop ChatWidget đang nhận
-      />
-    </div>
+        {loading ? (
+          <div className="ex-empty">Đang tải danh sách chuyên gia…</div>
+        ) : filtered.length === 0 ? (
+          <div className="ex-empty">Không tìm thấy chuyên gia phù hợp.</div>
+        ) : (
+          <div className="ex-grid">
+            {filtered.map((ex) => {
+              const id = ex.expert_id || ex._id;
+              return (
+                <ExpertCard
+                  key={id}
+                  expert={ex}
+                  myScore={myRatings[id] || 0}
+                  onRate={handleRate}
+                  onChat={handleChat}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        <ChatWidget
+          open={chatOpen}
+          onClose={(v) => setChatOpen(Boolean(v))}
+          initialOpenPayload={chatPeer}
+        />
+      </div>
+    </>
   );
 }
