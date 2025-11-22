@@ -179,8 +179,12 @@ const notebookSchema = new mongoose.Schema(
 // Virtual field: Tính số ngày từ khi trồng (theo giờ Việt Nam UTC+7)
 notebookSchema.virtual("current_day").get(function () {
   if (!this.planted_date) return 0;
+  // getDaysDifferenceVN returns 0 when planted_date is today.
+  // Make the first planted day = 1 so observations tied to day_end
+  // appear on the intended final day of the stage.
   const diffDays = getDaysDifferenceVN(this.planted_date, new Date());
-  return diffDays;
+  // Convert to 1-based day count; clamp to 0 for future planted_date
+  return Math.max(0, diffDays + 1);
 });
 
 // Method: Cập nhật progress dựa trên các stage đã hoàn thành + stage hiện tại
