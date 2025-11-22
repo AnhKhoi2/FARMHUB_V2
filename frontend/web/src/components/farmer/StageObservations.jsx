@@ -32,21 +32,41 @@ const StageObservations = ({ notebookId }) => {
       );
       const obsData = response.data?.data || response.data || [];
 
+      // Debug: log raw observations returned from backend
+      if (process.env.NODE_ENV !== "production") {
+        console.log("🔍 Raw observations response:", obsData);
+      }
+
       // Normalize different possible field names from backend templates
       // Backend PlantTemplate observation schema uses { key, label, description }
       // Older docs/examples may use observation_key / observation_name.
       const raw = Array.isArray(obsData) ? obsData : [];
+      const getField = (obj, ...names) => {
+        for (const n of names) {
+          if (obj == null) continue;
+          if (obj[n] !== undefined) return obj[n];
+          // handle Mongoose document where real data may be in _doc
+          if (obj._doc && obj._doc[n] !== undefined) return obj._doc[n];
+        }
+        return undefined;
+      };
+
       const normalized = raw.map((o) => ({
-        // prefer already-correct names, fallback to `key`/`label`
-        observation_key: o.observation_key || o.key || o.observationKey,
+        observation_key:
+          getField(o, "observation_key", "key", "observationKey") ||
+          getField(o.__raw, "key"),
         observation_name:
-          o.observation_name || o.observationName || o.label || o.name,
-        description: o.description || o.desc || "",
-        // preserve any existing value (from stage tracking) or default false
-        value: o.value === undefined ? false : o.value,
-        // keep original object in case other fields are needed
+          getField(o, "observation_name", "observationName", "label", "name") ||
+          getField(o.__raw, "label", "name"),
+        description: getField(o, "description", "desc") || "",
+        value:
+          getField(o, "value") === undefined ? false : getField(o, "value"),
         __raw: o,
       }));
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log("✅ Normalized observations:", normalized);
+      }
 
       setObservations(normalized);
       setError(null);
@@ -59,7 +79,19 @@ const StageObservations = ({ notebookId }) => {
     }
   };
 
-  const handleObservationChange = async (observationKey, value) => {
+  const handleObservationChange = async (obsObj, value) => {
+    // Ensure we have a key from several possible fields
+    const observationKey =
+      obsObj.observation_key ||
+      obsObj.key ||
+      obsObj.observationKey ||
+      obsObj.__raw?.key;
+
+    if (!observationKey) {
+      alert("Không tìm thấy observation key để cập nhật.");
+      return;
+    }
+
     try {
       setSaving(true);
       const response = await NOTEBOOK_TEMPLATE_API.updateObservation(
@@ -68,12 +100,10 @@ const StageObservations = ({ notebookId }) => {
         value
       );
 
-      // Kiểm tra xem có auto-transition không
       const responseData = response.data;
       const autoTransitioned = responseData.meta?.auto_transitioned;
 
       if (autoTransitioned) {
-        // Hiển thị thông báo đặc biệt cho auto-transition
         const newStageName =
           responseData.meta?.stage_name || "giai đoạn tiếp theo";
         alert(
@@ -83,19 +113,12 @@ const StageObservations = ({ notebookId }) => {
           }`
         );
 
-        // Reload sau 1 giây để user đọc message
         setTimeout(() => {
           window.location.reload();
         }, 1000);
       } else {
-        // Cập nhật local state bình thường
-        setObservations((prev) =>
-          prev.map((obs) =>
-            obs.observation_key === observationKey
-              ? { ...obs, value: value }
-              : obs
-          )
-        );
+        // Refetch observations to ensure consistent state (handles missing keys)
+        await fetchObservations();
       }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to update observation");
@@ -157,10 +180,7 @@ const StageObservations = ({ notebookId }) => {
                   type="checkbox"
                   checked={obs.value || false}
                   onChange={(e) =>
-                    handleObservationChange(
-                      obs.observation_key,
-                      e.target.checked
-                    )
+                    handleObservationChange(obs, e.target.checked)
                   }
                   disabled={saving}
                 />

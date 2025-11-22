@@ -537,6 +537,8 @@ export const checkNotebookStageStatus = async (notebook) => {
  * Đánh dấu hoàn thành task trong checklist
  */
 const completeChecklistTask = async (notebookId, taskName) => {
+  // Ensure today's checklist exists (generate if needed) so progress calculation is accurate
+  await generateDailyChecklist(notebookId);
   const notebook = await Notebook.findById(notebookId).populate("template_id");
 
   if (!notebook) {
@@ -593,6 +595,7 @@ const completeChecklistTask = async (notebookId, taskName) => {
   }
 
   if (currentStageTracking) {
+    // Update today's daily_log based on the (possibly newly generated) daily_checklist
     const todayDate = getVietnamToday();
     const today = todayDate.toISOString().split("T")[0];
 
@@ -600,18 +603,14 @@ const completeChecklistTask = async (notebookId, taskName) => {
       `🔍 Checking daily_logs for stage ${notebook.current_stage} on ${today}`
     );
 
-    let dailyLog = currentStageTracking.daily_logs?.find(
+    if (!currentStageTracking.daily_logs) currentStageTracking.daily_logs = [];
+
+    let dailyLog = currentStageTracking.daily_logs.find(
       (log) => log.date?.toISOString().split("T")[0] === today
     );
 
     if (!dailyLog) {
-      if (!currentStageTracking.daily_logs) {
-        currentStageTracking.daily_logs = [];
-      }
-      dailyLog = {
-        date: todayDate,
-        daily_progress: 0,
-      };
+      dailyLog = { date: todayDate, daily_progress: 0 };
       currentStageTracking.daily_logs.push(dailyLog);
       console.log(`➕ Created new daily_log for ${today}`);
     } else {
@@ -1411,16 +1410,30 @@ export const getCurrentObservations = asyncHandler(async (req, res) => {
 // 📝 Cập nhật observation
 export const updateObservation = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  // Accept multiple possible key names from different frontends
   const { observation_key, value } = req.body;
+  const altKey =
+    req.body.key || req.body.observationKey || req.body.observation_key;
 
-  if (!observation_key || value === undefined) {
+  // Log request body for easier debugging in development
+  if (process.env.NODE_ENV !== "production") {
+    console.log("🔔 updateObservation called", {
+      notebookId: id,
+      body: req.body,
+    });
+  }
+
+  if (!altKey || value === undefined) {
     return res.status(400).json({
       success: false,
       message: "observation_key and value are required",
     });
   }
 
-  const notebook = await updateStageObservation(id, observation_key, value);
+  // Normalize to observation_key variable
+  const observationKey = altKey;
+
+  const notebook = await updateStageObservation(id, observationKey, value);
 
   // Kiểm tra xem có chuyển stage không
   const currentStage = notebook.stages_tracking.find((s) => s.is_current);
@@ -1792,24 +1805,35 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
   }
 
   // Update today's daily_log progress to include this makeup completion
+  // Ensure we have today's checklist generated so progress math is correct
+  await generateDailyChecklist(notebook._id);
+
+  // Reload notebook to get updated daily_checklist
+  const refreshedNotebook = await Notebook.findById(notebook._id).populate(
+    "template_id"
+  );
+
   const todayDate = getVietnamToday();
   const today = todayDate.toISOString().split("T")[0];
 
-  if (!currentStageTracking.daily_logs) {
-    currentStageTracking.daily_logs = [];
-  }
+  const refreshedStageTracking = refreshedNotebook.stages_tracking.find(
+    (s) => s.stage_number === refreshedNotebook.current_stage
+  );
 
-  let dailyLog = currentStageTracking.daily_logs.find(
+  if (!refreshedStageTracking.daily_logs)
+    refreshedStageTracking.daily_logs = [];
+
+  let dailyLog = refreshedStageTracking.daily_logs.find(
     (log) => log.date?.toISOString().split("T")[0] === today
   );
 
   if (!dailyLog) {
     dailyLog = { date: todayDate, daily_progress: 0 };
-    currentStageTracking.daily_logs.push(dailyLog);
+    refreshedStageTracking.daily_logs.push(dailyLog);
   }
 
   // Compute new daily progress: existing completed today + this makeup / total today tasks
-  const todayTasks = notebook.daily_checklist || [];
+  const todayTasks = refreshedNotebook.daily_checklist || [];
   const completedTodayTasks = todayTasks.filter((t) => t.is_completed).length;
   const totalTodayTasks = todayTasks.length || 0;
 
@@ -1828,10 +1852,12 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
   }
 
   // Recalculate overall progress
-  if (notebook.template_id && notebook.template_id.stages) {
-    await notebook.updateProgress(notebook.template_id.stages);
+  if (refreshedNotebook.template_id && refreshedNotebook.template_id.stages) {
+    await refreshedNotebook.updateProgress(
+      refreshedNotebook.template_id.stages
+    );
     console.log(
-      `📊 Progress updated after completing overdue task: ${notebook.progress}%`
+      `📊 Progress updated after completing overdue task: ${refreshedNotebook.progress}%`
     );
   }
   // Recompute overdue_summary count and notify flag
@@ -1839,28 +1865,28 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
     (t) => t.status === "overdue"
   ).length;
 
-  if (!currentStageTracking.overdue_summary) {
-    currentStageTracking.overdue_summary = {
+  if (!refreshedStageTracking.overdue_summary) {
+    refreshedStageTracking.overdue_summary = {
       date: null,
       overdue_count: 0,
       ready_to_notify: false,
     };
   }
 
-  currentStageTracking.overdue_summary.overdue_count = remainingOverdue;
+  refreshedStageTracking.overdue_summary.overdue_count = remainingOverdue;
   if (remainingOverdue === 0) {
-    currentStageTracking.overdue_summary.ready_to_notify = false;
-    currentStageTracking.overdue_summary.notified_at = new Date();
+    refreshedStageTracking.overdue_summary.ready_to_notify = false;
+    refreshedStageTracking.overdue_summary.notified_at = new Date();
   }
 
-  await notebook.save();
+  await refreshedNotebook.save();
 
   return ok(
     res,
     {
-      notebook_id: notebook._id,
-      stage_completion: notebook.stage_completion,
-      progress: notebook.progress,
+      notebook_id: refreshedNotebook._id,
+      stage_completion: await refreshedNotebook.getCurrentStageCompletion(),
+      progress: refreshedNotebook.progress,
     },
     null,
     "Overdue task completed successfully"
