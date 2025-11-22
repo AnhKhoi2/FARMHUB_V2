@@ -29,7 +29,10 @@ const NotebookCreate = () => {
 
   const fetchGuides = async () => {
     try {
-      const response = await axiosClient.get("/guides");
+      // Request with a large limit so frontend gets all published guides
+      const response = await axiosClient.get("/guides", {
+        params: { limit: 1000, page: 1 },
+      });
       const guidesData = response.data?.data || response.data || [];
       setGuides(
         Array.isArray(guidesData)

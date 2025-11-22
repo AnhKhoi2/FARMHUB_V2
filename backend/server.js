@@ -31,9 +31,18 @@ import expertApplicationsRouter from "./routes/expertApplications.js";
 import expertRatingRoutes from "./routes/expertRating.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import notificationRoutes from "./routes/notifications.js";
+import vnpayRoutes from "./routes/vnpay.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
+import pino from "pino-http";
+import ApiError, { NotFound } from "./utils/ApiError.js";
+import geocodeRoute from "./routes/geocode.js";
+import weatherRoute from "./routes/weather_v2.js";
+import airRoute from "./routes/air.js";
 
+import tilesRoute from './routes/tiles.js';
+import plantRoute from './routes/plant.js';
+import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -43,11 +52,14 @@ connectDB();
 // Middleware
 // Allow the frontend dev server (supports multiple dev ports and an env override)
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+// Include optional BASE_URL (if frontend served at same domain) in allowed origins
+const baseUrl = (process.env.BASE_URL || process.env.VNP_BASE_URL || "").trim();
 const allowedOrigins = [
   clientUrl,
   "http://localhost:5173",
   "http://localhost:5174",
 ];
+if (baseUrl) allowedOrigins.push(baseUrl);
 app.use(
   cors({
     origin: (origin, cb) => {
@@ -62,6 +74,16 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+// app.use(express.json({ limit: "10mb" }));
+// app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+app.use("/api", plantAdviceRoutes);
+app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.use('/api/geocode', geocodeRoute);
+app.use('/api/weather', weatherRoute);
+app.use('/api/air', airRoute);
+app.use('/api/plant', plantRoute);
+app.use('/api/ow/tiles', tilesRoute);
 app.use("/auth", authRoute);
 app.use("/profile", profileRoute);
 app.use("/admin/diseases", diseaseRoutes);
@@ -84,6 +106,8 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/api/plant-templates", plantTemplateRoutes);
 app.use("/api/upload", uploadRoutes);
+// Legacy/compatibility: some frontends post to /upload (no /api prefix)
+app.use("/upload", uploadRoutes);
 app.use("/api/collections", collectionsRoute);
 app.use("/admin/models", modelsRoutes);
 app.use("/layouts", layoutsRoutes);
@@ -91,6 +115,7 @@ app.use("/layouts", layoutsRoutes);
 app.use("/admin/managerpost", postRoutes);
 // (legacy alias removed) '/admin/managerpost' is the canonical path for post management
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/vnpay", vnpayRoutes);
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
@@ -105,26 +130,37 @@ app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });
 
-
 // 404 cho route không tồn tại (optional)
 app.use((req, res, next) => {
-  next(new AppError("Route không tồn tại", 404, "NOT_FOUND"));
+  // Route not found -> use NotFound helper to create ApiError (status 404)
+  next(NotFound("Route không tồn tại"));
 });
 
 // ERROR HANDLER
 app.use((err, req, res, next) => {
   console.error("🔥 ERROR:", err);
 
+  // Multer errors (file upload)
+  if (err && err.name === "MulterError") {
+    // Common Multer codes: LIMIT_FILE_SIZE, LIMIT_UNEXPECTED_FILE, etc.
+    const multerMessage = err.message || "Lỗi trong quá trình upload file";
+    const multerCode = err.code || "MULTER_ERROR";
+    return res
+      .status(400)
+      .json({ success: false, code: multerCode, message: multerMessage });
+  }
+
+  // If it's our ApiError instance (created by helpers like BadRequest/NotFound)
+  if (err instanceof ApiError || err?.isOperational) {
+    const statusCode = err.statusCode || 400;
+    const code = err.code || "ERROR";
+    const message = err.message || "Có lỗi xảy ra";
+    return res.status(statusCode).json({ success: false, code, message });
+  }
+
+  // Fallback: unexpected error -> 500
   const statusCode = err.statusCode || 500;
   const code = err.code || "INTERNAL_ERROR";
-
-  const message =
-    err.message ||
-    ERROR_CODES.INTERNAL_ERROR.message;
-
-  res.status(statusCode).json({
-    success: false,
-    code,
-    message,
-  });
+  const message = err.message || "Internal Server Error";
+  res.status(statusCode).json({ success: false, code, message });
 });

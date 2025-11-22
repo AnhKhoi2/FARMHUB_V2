@@ -193,50 +193,51 @@ export const authController = {
   }),
 
   // Đăng nhập
-  login: asyncHandler(async (req, res) => {
-    const { username, password } = req.body;
+ // Đăng nhập CHỈ bằng username
+login: asyncHandler(async (req, res) => {
+  const { username, emailOrUsername, password } = req.body;
 
-    if (!username || !password) {
-      throw new AppError("Thiếu thông tin đăng nhập", 400, "MISSING_CREDENTIALS");
-    }
-    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-    if (!usernameRegex.test(username)) {
-      throw new AppError("Tên đăng nhập không hợp lệ", 400, "INVALID_USERNAME");
-    }
+  // Chỉ dùng username; emailOrUsername chỉ là alias cho username (nếu FE cũ còn gửi)
+  const identifier = (username || emailOrUsername || "").trim();
 
-    const user = await User.findOne({ username });
-    if (!user) {
-      throw new AppError("Thông tin đăng nhập không chính xác", 401, "INVALID_CREDENTIALS");
-    }
+  if (!identifier || !password) {
+    throw new AppError(
+      ERROR_CODES.MISSING_FIELDS.message,
+      ERROR_CODES.MISSING_FIELDS.statusCode,
+      "MISSING_FIELDS"
+    );
+  }
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      const { message, statusCode } = ERROR_CODES.INVALID_CREDENTIALS;
-      throw new AppError(message, statusCode, "INVALID_CREDENTIALS");
-    }
+  // ❗ Chỉ tìm theo username
+  const user = await User.findOne({ username: identifier });
 
-    if (!user.isVerified) {
-      const { message, statusCode } = ERROR_CODES.ACCOUNT_NOT_VERIFIED;
-      throw new AppError(message, statusCode, "ACCOUNT_NOT_VERIFIED");
-    }
+  if (!user) {
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
+  }
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
+  }
 
-    await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: refreshToken } });
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
 
-    const { password: _pw, ...userInfo } = user._doc;
+  // Ẩn password cho sạch dữ liệu trả về
+  const userSafe = user.toObject ? user.toObject() : { ...user._doc };
+  delete userSafe.password;
 
-    // set cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-    });
+  return ok(res, { user: userSafe, accessToken, refreshToken });
+}),
 
-    return ok(res, { user: userInfo, accessToken });
-  }),
 
   // Refresh token
   refresh: asyncHandler(async (req, res) => {

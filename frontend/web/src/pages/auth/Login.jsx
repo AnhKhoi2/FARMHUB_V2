@@ -1,6 +1,4 @@
-
-
-
+// Login.jsx
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
@@ -9,15 +7,18 @@ import { GoogleLogin } from "@react-oauth/google";
 import "../../css/auth/Login.css";
 
 // NEW
-import streakApi from "../../api/shared/streakApi.js";     // ← thêm
-import StreakPopup from "../../components/shared/StreakPopup"; // ← path theo dự án của bạn
-
+import streakApi from "../../api/shared/streakApi.js";
+import StreakPopup from "../../components/shared/StreakPopup";
 
 const Login = () => {
+  const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // ⭐ Chỉ dùng username
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
   const { status, error } = useSelector((s) => s.auth);
   const loading = status === "loading";
 
@@ -32,33 +33,50 @@ const Login = () => {
     return "/";
   };
 
-  const afterLogin = async (role) => {
+  const afterLogin = async (role = "user") => {
     // xác định đích
     const dest = nextRouteByRole(role);
     setRedirectTo(dest);
 
-    try {
-      const { data } = await streakApi.record(); // { success, data: { streak } } tuỳ cấu trúc axiosClient
-      const streak = data?.data?.streak || data?.streak || null;
-      if (streak) {
-        setStreakData(streak);  // mở popup
-        return;                 // chờ user bấm OK rồi mới navigate
+    // Chỉ ghi streak cho user thường
+    if (role === "user") {
+      try {
+        const { data } = await streakApi.record(); // { success, data: { streak } } tuỳ cấu trúc
+        const streak = data?.data?.streak || data?.streak || null;
+        if (streak) {
+          setStreakData(streak); // mở popup, chờ user đóng rồi mới navigate
+          return;
+        }
+      } catch (e) {
+        console.warn("streak record failed:", e?.message || e);
       }
-    } catch (e) {
-      // lỗi record streak không chặn điều hướng
-      console.warn("streak record failed:", e?.message || e);
     }
+
+    // Nếu không phải user hoặc không có streak → đi luôn
     navigate(dest);
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    const result = await dispatch(loginThunk({ username, password }));
-    const { success, role } = result || {};
-    if (success) {
-      await afterLogin(role);
-    }
-  };
+const handleLogin = async (e) => {
+  e.preventDefault();
+
+  const cleanedUsername = username.trim();
+  if (!cleanedUsername || !password) return;
+
+  // loginThunk của bạn trả về { success, role }
+  const result = await dispatch(
+    loginThunk({
+      username: cleanedUsername,
+      password,
+    })
+  );
+
+  const { success, role } = result || {};
+
+  if (success) {
+    await afterLogin(role || "user");
+  }
+};
+
 
   const handleGoogleSuccess = async (cred) => {
     const idToken = cred?.credential;
@@ -66,7 +84,7 @@ const Login = () => {
     try {
       const res = await dispatch(loginWithGoogleThunk(idToken)).unwrap();
       const { user } = res || {};
-      await afterLogin(user?.role);
+      await afterLogin(user?.role || "user");
     } catch (e) {
       alert(e?.message || "Đăng nhập Google thất bại");
     }
@@ -79,10 +97,9 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      {/* ...giữ nguyên UI form cũ... */}
       <div className="wrapper">
         <div className="form-box login">
-      <h2>Login</h2>
+          <h2>Login</h2>
           <form onSubmit={handleLogin}>
             {error && <div className="error-message">{error}</div>}
 
@@ -99,16 +116,32 @@ const Login = () => {
               <label>Username</label>
             </div>
 
-            <div className="input-box">
-              <span className="icon">
-                <ion-icon name="lock-closed"></ion-icon>
-              </span>
+            <div className="input-box" style={{ position: "relative" }}>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+
+              {/* Nút toggle icon */}
+              <span
+                className="toggle-password"
+                onClick={() => setShowPassword((prev) => !prev)}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  cursor: "pointer",
+                  fontSize: "20px",
+                }}
+              >
+                <ion-icon
+                  name={showPassword ? "eye-off" : "eye"}
+                ></ion-icon>
+              </span>
+
               <label>Password</label>
             </div>
 
@@ -132,13 +165,18 @@ const Login = () => {
             <div className="line" />
           </div>
 
-      <div className="google-btn">
-        <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => alert("Google login error")} />
-      </div>
+          <div className="google-btn">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => alert("Google login error")}
+            />
+          </div>
 
-      {/* NEW: Popup */}
-      {streakData && <StreakPopup streak={streakData} onClose={handleClosePopup} />}
-      </div>
+          {/* Popup streak */}
+          {streakData && (
+            <StreakPopup streak={streakData} onClose={handleClosePopup} />
+          )}
+        </div>
       </div>
     </div>
   );

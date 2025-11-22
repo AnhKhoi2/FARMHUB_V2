@@ -1,131 +1,179 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
-import "../../css/expert/ManagerGuides.css";
+import {
+  Card,
+  Button,
+  Tag,
+  Flex,
+  Typography,
+  Spin,
+  Divider,
+  Row,
+  Col,
+} from "antd";
+import {
+  ArrowLeftOutlined,
+  EditOutlined,
+  UnorderedListOutlined,
+} from "@ant-design/icons";
 import placeholderImg from "../../assets/placeholder.svg";
+
+const { Title, Text } = Typography;
 
 export default function GuideDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    let mounted = true;
-    const fetchGuide = async () => {
-      try {
-        const res = await axiosClient.get(`/guides/${id}`);
-        if (!mounted) return;
-        setGuide(res.data.data || res.data || null);
-      } catch (err) {
-        console.warn(err);
-        setError("Không thể tải chi tiết hướng dẫn.");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    fetchGuide();
-    return () => (mounted = false);
+    axiosClient
+      .get(`/guides/${id}`)
+      .then((res) => setGuide(res.data.data || res.data))
+      .catch(() => setGuide(null))
+      .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="mg-loading">Đang tải...</div>;
-  if (error) return <div className="mg-error">{error}</div>;
-  if (!guide) return <div className="mg-empty">Không tìm thấy hướng dẫn.</div>;
+  if (loading)
+    return (
+      <Flex justify="center" align="center" style={{ marginTop: 50 }}>
+        <Spin size="large" />
+      </Flex>
+    );
+
+  if (!guide)
+    return (
+      <Flex justify="center" align="center" style={{ marginTop: 40 }}>
+        <Text type="danger" strong>
+          Không tìm thấy hướng dẫn.
+        </Text>
+      </Flex>
+    );
 
   return (
-    <div className="manager-guides-page">
-      <div className="guide-detail-wrapper">
-        <button
+    <Flex vertical gap={20} style={{ padding: 24 }}>
+
+      {/* HEADER */}
+      <Flex justify="space-between" align="center">
+        <Button
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate(-1)}
-          className="mg-btn back-btn small"
-          style={{ marginBottom: 12 }}
         >
           Quay lại
-        </button>
+        </Button>
 
-        <div className="guide-card-detail">
-          <div className="guide-body">
-            <div className="guide-head">
-              <div>
-                <h1 className="guide-title">{guide.title}</h1>
-                <div className="guide-meta">
-                  Tác giả:{" "}
-                  <strong>{guide.expert_id?.username || "Không rõ"}</strong> •{" "}
-                  {new Date(guide.createdAt).toLocaleString()}
-                </div>
-              </div>
-              <div className="guide-actions">
-                <button
-                  className="mg-btn"
-                  onClick={() => navigate(`/managerguides/edit/${guide._id}`)}
-                >
-                  Chỉnh sửa
-                </button>
-                <button
-                  className="mg-btn"
-                  style={{ marginLeft: 8 }}
-                  onClick={() => navigate("/managerguides")}
-                >
-                  Danh sách
-                </button>
-              </div>
-            </div>
+        <Flex gap={10}>
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => navigate(`/managerguides/edit/${guide._id}`)}
+          >
+            Chỉnh sửa
+          </Button>
 
-            {guide.plantTags && guide.plantTags.length > 0 && (
-              <div className="plant-tags">
-                {guide.plantTags.map((t) => (
-                  <span key={t} className="plant-chip">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
+          <Button
+            icon={<UnorderedListOutlined />}
+            onClick={() => navigate("/managerguides")}
+          >
+            Danh sách
+          </Button>
+        </Flex>
+      </Flex>
 
-            <div className="guide-summary">
-              {guide.content || guide.summary ? (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: guide.content || guide.summary,
-                  }}
-                />
-              ) : (
-                <p className="muted">
-                  Không có nội dung chính — xem các bước bên dưới.
-                </p>
-              )}
-            </div>
+      {/* MAIN CARD */}
+      <Card bordered>
 
-            {guide.steps && guide.steps.length > 0 && (
-              <div className="guide-steps">
-                <h3>Các bước thực hiện</h3>
-                <div className="steps-grid">
-                  {guide.steps.map((s, idx) => (
-                    <article key={idx} className="step-card">
-                      <div className="step-index">{idx + 1}</div>
-                      <div
-                        className="step-thumb"
-                        style={{
-                          backgroundImage: `url(${s.image || placeholderImg})`,
-                        }}
-                      />
-                      <div className="step-content">
-                        <div className="step-title">
-                          {s.title || `Bước ${idx + 1}`}
-                        </div>
-                        <div
-                          className="step-text"
-                          dangerouslySetInnerHTML={{ __html: s.text || "" }}
+        <Flex vertical gap={10}>
+          <Title level={2}>{guide.title}</Title>
+
+          <Flex gap={8} wrap>
+            <Text>
+              Tác giả:{" "}
+              <b>{guide.expert_id?.username || "Không rõ"}</b>
+            </Text>
+            <Text type="secondary">•</Text>
+            <Text type="secondary">
+              {new Date(guide.createdAt).toLocaleString()}
+            </Text>
+          </Flex>
+
+          {/* TAGS */}
+          {guide.plantTags?.length > 0 && (
+            <Flex gap={6} wrap>
+              {guide.plantTags.map((t) => (
+                <Tag color="green" key={t}>
+                  {t}
+                </Tag>
+              ))}
+            </Flex>
+          )}
+
+          <Divider />
+
+          {/* MAIN CONTENT */}
+          {guide.image && (
+            <img
+              src={guide.image}
+              alt="guide"
+              style={{
+                width: "100%",
+                borderRadius: 10,
+                marginBottom: 20,
+              }}
+            />
+          )}
+
+          <div
+            dangerouslySetInnerHTML={{
+              __html: guide.content || guide.summary || "",
+            }}
+          />
+
+          <Divider />
+
+          {/* STEPS */}
+          {guide.steps?.length > 0 && (
+            <Flex vertical gap={16}>
+              <Title level={3}>Các bước thực hiện</Title>
+
+              <Row gutter={[16, 16]}>
+                {guide.steps.map((s, idx) => (
+                  <Col xs={24} sm={12} md={8} key={idx}>
+                    <Card hoverable>
+
+                      <Flex vertical gap={12}>
+                        <Title level={5}>Bước {idx + 1}</Title>
+
+                        <img
+                          src={s.image || placeholderImg}
+                          style={{
+                            width: "100%",
+                            height: 160,
+                            objectFit: "cover",
+                            borderRadius: 8,
+                          }}
                         />
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+
+                        <Text strong>
+                          {s.title || `Bước ${idx + 1}`}
+                        </Text>
+
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: s.text || "",
+                          }}
+                        />
+                      </Flex>
+
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            </Flex>
+          )}
+        </Flex>
+      </Card>
+    </Flex>
   );
 }

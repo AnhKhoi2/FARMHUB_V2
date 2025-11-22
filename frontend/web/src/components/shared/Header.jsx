@@ -3,13 +3,16 @@ import { Link, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../redux/authSlice";
 import { FaUser, FaBars, FaTimes } from "react-icons/fa"; // ❌ bỏ FaShoppingCart
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import authApi from "../../api/shared/authApi";
 import NotificationBell from "../NotificationBell";
 import "./Header.css";
 import { RadarChartOutlined } from "@ant-design/icons";
 import { Tooltip } from "antd";
-
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
+
   const dispatch = useDispatch();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -33,10 +36,23 @@ const Header = () => {
     };
   }, [menuOpen]);
 
-  const handleLogout = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      // attempt server-side logout to clear refresh cookie
+      await authApi.logout();
+    } catch (e) {
+      // ignore network error but continue clearing client state
+      console.warn("Logout API failed:", e?.response?.data || e?.message || e);
+    }
+
+    // clear client-side state
     dispatch(logout());
     setDropdownOpen(false);
     setMenuOpen(false);
+    toast.info("Bạn đã đăng xuất.");
+    navigate("/login");
   };
 
   const toggleSubmenu = () => {
@@ -82,8 +98,17 @@ const Header = () => {
                 <Link to="/">Trang Chủ</Link>
               </li>
 
-              <li className={currentPath.startsWith("/weather") ? "active" : ""}>
+              <li
+                className={currentPath.startsWith("/weather") ? "active" : ""}
+              >
                 <Link to="/weather">Thời Tiết</Link>
+              </li>
+              <li
+                className={
+                  currentPath.startsWith("/plant-diagnosis") ? "active" : ""
+                }
+              >
+                <Link to="/plant-diagnosis">Chẩn đoán bằng hình ảnh</Link>
               </li>
 
               {/* NHẬT KÝ LÀM VƯỜN – SUBMENU */}
@@ -114,6 +139,9 @@ const Header = () => {
                     <Link to="/farmer/notebooks">Nhật ký cơ bản</Link>
                   </li>
                   <li>
+                    <Link to="/farmer/notebooks/stats">Thống kê nhật ký</Link>
+                  </li>
+                  <li>
                     <Link to="/farmer/collections">Bộ sưu tập</Link>
                   </li>
                 </ul>
@@ -127,29 +155,51 @@ const Header = () => {
                 <Link to="/market">Chợ</Link>
               </li>
 
-              <li className={currentPath.startsWith("/experts") ? "active" : ""}>
+              <li
+                className={currentPath.startsWith("/experts") ? "active" : ""}
+              >
                 <Link to="/experts">Chuyên gia</Link>
+              </li>
+              <li
+                className={currentPath.startsWith("/pricing") ? "active" : ""}
+              >
+                <Link to="/pricing">Gói Dịch Vụ</Link>
               </li>
 
               {user && (
-                <li className="notification-item">
-                  <NotificationBell />
-                </li>
-              )}
+                <>
+                  <li className="notification-item">
+                    <NotificationBell />
+                  </li>
 
+                  {/* streak */}
+                  <li
+                    className={
+                      currentPath.startsWith("/farmer/streak") ? "active" : ""
+                    }
+                  >
+                    <Link to="/farmer/streak">
+                      <Tooltip title="Xếp hạng Streak">
+                        <RadarChartOutlined style={{ fontSize: "18px" }} />
+                      </Tooltip>
+                    </Link>
+                  </li>
+                </>
+              )}
               {/* USER MENU */}
               <li className="user-menu">
                 {user ? (
                   <div className="user-dropdown">
-                    <div className="user-info" onClick={handleToggleUserDropdown}>
+                    <div
+                      className="user-info"
+                      onClick={handleToggleUserDropdown}
+                      title={user?.username || user?.email}
+                    >
                       <img
-                        src={user.avatar || "https://via.placeholder.com/40"}
+                        src={user?.profile?.avatar}
                         alt="Avatar"
                         className="avatar"
                       />
-                      <span className="username">
-                        {user.username || user.email} ▾
-                      </span>
                     </div>
 
                     <ul
@@ -157,6 +207,35 @@ const Header = () => {
                         dropdownOpen ? "show" : ""
                       }`}
                     >
+                      <li
+                        className="user-menu-header"
+                        style={{
+                          padding: "0.75rem 1rem",
+                          borderBottom: "1px solid #eee",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
+                        >
+                          <img
+                            src={user?.profile?.avatar }
+                            alt="avatar"
+                            style={{ width: 36, height: 36, borderRadius: 18 }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 700 }}>
+                              {user?.username || user?.email}
+                            </div>
+                            <div style={{ fontSize: 12, color: "#666" }}>
+                              {user?.email}
+                            </div>
+                          </div>
+                        </div>
+                      </li>
                       <li>
                         <Link
                           to="/profile"

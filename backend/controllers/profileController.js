@@ -28,7 +28,7 @@ export const profileController = {
 
     // ✅ lấy thêm provider + password để tính hasPassword (không trả password ra ngoài)
     const userRaw = await User.findById(userId)
-      .select("email username provider password")
+      .select("email username provider password role")
       .lean();
 
     const hasPassword = Boolean(userRaw?.password);

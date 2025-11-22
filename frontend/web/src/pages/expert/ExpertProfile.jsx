@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import axiosClient from "../../api/shared/axiosClient";
+import { logoutThunk } from "../../redux/authThunks";
 import { Mail, User, Shield, ArrowLeft, LogOut, Leaf } from "lucide-react";
 import "../../css/expert/expertProfile.css";
 
@@ -120,8 +122,12 @@ export default function ExpertProfile() {
           </button>
           <button
             className="xp-btn danger ghost"
-            onClick={() => {
-              localStorage.removeItem("accessToken");
+            onClick={async () => {
+              try {
+                await dispatch(logoutThunk());
+              } catch (e) {
+                // ignore
+              }
               navigate("/login");
             }}
           >

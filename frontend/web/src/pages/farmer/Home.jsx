@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../../redux/authSlice";
+import { logoutThunk } from "../../redux/authThunks";
 import {
   FaClock,
   FaLeaf,
@@ -417,7 +417,7 @@ const Home = () => {
                 </h5>
                 <p className="text-muted">Chào mừng bạn trở lại với FarmHub</p>
                 <button
-                  onClick={() => dispatch(logout())}
+                  onClick={() => dispatch(logoutThunk())}
                   className="btn btn-outline-danger"
                 >
                   Đăng xuất
@@ -428,7 +428,7 @@ const Home = () => {
         )}
 
         {/* Falling Leaves Animation */}
-        <div className="falling-leaves">
+        {/* <div className="falling-leaves">
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
@@ -438,7 +438,7 @@ const Home = () => {
               🍃
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
       <Footer />
     </>

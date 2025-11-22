@@ -3,22 +3,30 @@ import { loginStart, loginSuccess, loginFailure, logout } from "./authSlice";
 import authApi from "../api/shared/authApi.js";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
+// =========================
+// LOGIN – chỉ dùng username
+// =========================
 export const loginThunk = (credentials) => async (dispatch) => {
   try {
     dispatch(loginStart());
+
     const res = await authApi.loginApi(credentials);
 
-    // BE có thể trả { success, data: { user, accessToken } }
-    // hoặc { user, accessToken } trực tiếp
-    const payload = res?.data?.data || res?.data || {};
-    const { user, accessToken } = payload;
+    // BE: ok(res, { user: userSafe, accessToken, refreshToken })
+    const base = res?.data;
+    const data = base?.data || base || {};
+
+    const user = data.user;
+    const accessToken = data.accessToken;
 
     if (!user || !accessToken) {
       throw new Error("Phản hồi đăng nhập không hợp lệ từ server");
     }
 
+    // Cập nhật Redux
     dispatch(loginSuccess({ user, accessToken }));
 
+    // Lưu LocalStorage
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("accessToken", accessToken);
 
@@ -27,52 +35,47 @@ export const loginThunk = (credentials) => async (dispatch) => {
     console.error("Login error:", err?.response?.data || err);
 
     const data = err?.response?.data;
-
-    // ƯU TIÊN lấy message từ BE
     const backendMessage =
-      data?.message ||              // { message: "..." }
-      data?.error?.message ||       // { error: { message: "..." } }
-      data?.errorMessage ||         // một số API dùng key này
-      data?.errors?.[0]?.msg ||     // trường hợp validation kiểu array
-      err.message;
-
-    const backendCode =
-      data?.code ||                 // { code: "INVALID_CREDENTIALS" }
-      data?.error?.code;
-
-    // text hiển thị cho user
-    let uiMessage =
-      backendMessage ||
+      data?.message ||
+      data?.error?.message ||
+      data?.errorMessage ||
+      data?.errors?.[0]?.msg ||
+      err.message ||
       "Đăng nhập thất bại. Vui lòng thử lại.";
 
-    // Nếu muốn, có thể show code để debug
-    // ví dụ: [INVALID_CREDENTIALS] Tên đăng nhập hoặc mật khẩu không đúng.
-    if (backendCode) {
-      uiMessage = ` ${uiMessage}`;
-    }
-
-    dispatch(loginFailure(uiMessage));
+    dispatch(loginFailure(backendMessage));
     return { success: false };
   }
 };
 
-// các thunk khác giữ nguyên...
-export const logoutThunk = () => (dispatch) => {
+// =========================
+// LOGOUT
+// =========================
+export const logoutThunk = () => async (dispatch) => {
+  try {
+    await authApi.logout();
+  } catch (err) {
+    console.warn(
+      "logout API failed:",
+      err?.response?.data || err?.message || err
+    );
+  }
+
   dispatch(logout());
   localStorage.removeItem("user");
   localStorage.removeItem("accessToken");
 };
 
-// src/redux/authThunks.js
-
+// =========================
+// REGISTER – dùng lại logic cũ của bạn
+// =========================
 export const registerThunk = (formData) => async () => {
   try {
     const res = await authApi.registerApi(formData);
 
-    // Ưu tiên lấy message từ BE
     const data = res?.data;
     const message =
-      data?.message || 
+      data?.message ||
       data?.msg ||
       "Đăng ký thành công! Vui lòng kiểm tra email xác nhận.";
 
@@ -81,8 +84,6 @@ export const registerThunk = (formData) => async () => {
     console.error("Register error:", err?.response?.data || err);
 
     const data = err?.response?.data;
-
-    // CHỈ LẤY MESSAGE, KHÔNG DÙNG CODE
     const uiMessage =
       data?.message ||
       data?.error?.message ||
@@ -94,20 +95,33 @@ export const registerThunk = (formData) => async () => {
   }
 };
 
-
+// =========================
+/* GOOGLE LOGIN */
+// =========================
 export const loginWithGoogleThunk = createAsyncThunk(
   "auth/loginWithGoogle",
   async (idToken, { rejectWithValue }) => {
     try {
       const res = await authApi.loginWithGoogle(idToken);
-      const { data } = res || {};
-      const { data: inner } = data || {};
-      if (!inner?.user || !inner?.accessToken) {
+
+      const base = res?.data;
+      const inner = base?.data || base || {};
+
+      const user = inner?.user;
+      const accessToken = inner?.accessToken;
+
+      if (!user || !accessToken) {
         throw new Error("Phản hồi Google login không hợp lệ");
       }
-      return { user: inner.user, accessToken: inner.accessToken };
+
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("accessToken", accessToken);
+
+      return { user, accessToken };
     } catch (err) {
-      return rejectWithValue(err?.response?.data || { message: "Google login failed" });
+      return rejectWithValue(
+        err?.response?.data || { message: "Google login failed" }
+      );
     }
   }
 );

@@ -1,0 +1,198 @@
+/* Màu sắc chủ đạo: Xanh lá (Green: #3A8C3A) và Nền trắng ngà (#FAFAFA) */
+
+.forecast-cards {
+  row-gap: 16px;
+}
+
+/* Thêm màu nền tổng thể dịu mắt hơn */
+body {
+    background-color: #FAFAFA; /* Off-white background to reduce strain */
+}
+
+/* Hiệu ứng chuyển động cơ bản cho các card khi tải */
+@keyframes fade-in-slide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Áp dụng styling chung cho tất cả các card */
+.card {
+  animation: fade-in-slide 0.5s ease-out;
+  border: 1px solid #E0E0E0; /* Border mềm mại hơn */
+  background-color: #FFFFFF; /* Nền trắng sạch */
+  border-radius: 8px;
+}
+
+/* Tiêu đề chung cho các card */
+.card-title {
+  color: #3A8C3A; /* Xanh lá chủ đạo */
+  font-weight: 700;
+  border-bottom: 2px solid #E8F5E9; /* Đường kẻ dưới nhạt */
+  padding-bottom: 8px;
+  margin-bottom: 16px !important;
+}
+
+/* Thẻ dự báo: màu nền và border nhẹ nhàng hơn */
+.forecast-card {
+  background: #F7F7F7; 
+  border: 1px solid #E0E0E0;
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: fade-in-slide 0.3s ease-out;
+  /* Thêm khoảng cách giữa các thẻ con */
+  margin: 4px;
+}
+
+.forecast-card:hover {
+  transform: translateY(-2px); /* Hiệu ứng nhấc lên nhẹ */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+  border-color: #3A8C3A; /* Nổi bật hơn khi hover */
+  z-index: 10;
+}
+
+@media (max-width: 576px) {
+  .forecast-card {
+    min-width: 100px;
+  }
+}
+
+/* Các chỉ số chính (nhiệt độ, độ ẩm, gió) */
+.main-weather-info .temp-val {
+  font-size: 4rem; /* Nhiệt độ lớn hơn */
+  font-weight: 700;
+  color: #3A8C3A; 
+  text-shadow: 1px 1px 2px rgba(58, 140, 58, 0.2); /* Thêm shadow nhẹ */
+  transition: color 0.3s;
+}
+
+.main-weather-info:hover .temp-val {
+  color: #4CAF50; 
+}
+
+
+.main-weather-info .detail-val {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333333; 
+}
+
+/* --- AQI Badges & Legends --- */
+.aqi-badge {
+  border-radius: 999px;
+  padding: 8px 16px; 
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.aqi-badge:hover {
+  transform: scale(1.05); /* Hiệu ứng "nhảy" nhẹ */
+}
+
+.aqi-badge-main {
+  font-size: 16px; 
+}
+
+/* Legend chip nhỏ */
+.aqi-legend-chip {
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+/* Màu AQI */
+.aqi-good {
+  background-color: #4CAF50; 
+}
+
+.aqi-fair {
+  background-color: #8BC34A; 
+}
+
+.aqi-moderate {
+  background-color: #FFC107; 
+  color: #333333;
+}
+
+.aqi-poor {
+  background-color: #FF9800; 
+}
+
+.aqi-very-poor {
+  background-color: #F44336; 
+}
+
+.aqi-unknown {
+  background-color: #9E9E9E; 
+}
+
+/* --- Bảng lịch sử --- */
+.history-table-wrapper {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #E0E0E0;
+  border-radius: 0.3rem;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.03); 
+}
+/* Header của bảng - Luôn dính ở trên */
+.history-table-wrapper table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #E8F5E9; /* Nền xanh lá nhạt mềm mại */
+  z-index: 10;
+  font-weight: 600;
+  color: #3A8C3A;
+}
+
+/* Hiệu ứng Zebra stripes và Hover */
+.history-table-wrapper table tbody tr:nth-child(even) {
+  background-color: #F7F7F7; /* Màu nền cho hàng chẵn */
+}
+.history-table-wrapper table tbody tr:hover {
+  background-color: #EBEBFF; /* Màu nền xanh/tím nhạt khi hover để tạo sự khác biệt */
+  cursor: pointer;
+}
+
+/* Gợi ý chăm sóc cây (Phần quan trọng nhất) */
+.plant-advice-card-wow {
+  border: 2px solid #3A8C3A; 
+  background-color: #F8FFF8; /* Nền rất nhạt */
+  box-shadow: 0 6px 15px rgba(58, 140, 58, 0.2); /* Shadow nổi bật */
+  transition: transform 0.3s;
+}
+
+.plant-advice-card-wow:hover {
+  transform: translateY(-5px); /* Hiệu ứng nhấc lên rõ ràng */
+}
+
+/* Progress bar cho trực quan hóa */
+.visual-progress {
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #E0E0E0;
+}
+
+/* Màu thanh Progress bar */
+.visual-progress-bar {
+  height: 100%;
+  transition: width 0.5s ease-out; 
+}
+
+/* Tùy chỉnh màu Bootstrap */
+.bg-info {
+    background-color: #46B6CC !important; /* Xanh nước biển dịu hơn cho độ ẩm */
+}
+.bg-success {
+    background-color: #3A8C3A !important; /* Xanh lá chủ đạo cho gió */
+}

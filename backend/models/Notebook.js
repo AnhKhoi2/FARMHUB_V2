@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getDaysDifferenceVN } from "../utils/timezone.js";
 
 // Schema cho daily checklist item
 const DailyChecklistItemSchema = new mongoose.Schema(
@@ -17,6 +18,12 @@ const DailyChecklistItemSchema = new mongoose.Schema(
       enum: ["daily", "every_2_days", "every_3_days", "weekly"],
       default: "daily",
     },
+    status: {
+      type: String,
+      enum: ["pending", "completed", "overdue", "skipped"],
+      default: "pending",
+    },
+    overdue_at: { type: Date },
   },
   { _id: false }
 );
@@ -65,6 +72,28 @@ const StageTrackingSchema = new mongoose.Schema(
         daily_progress: { type: Number, default: 0, min: 0, max: 100 }, // % hoàn thành ngày đó
       },
     ],
+    // Track overdue tasks for this stage (persisted so frontend can fetch details)
+    overdue_tasks: [
+      {
+        task_name: { type: String },
+        description: { type: String },
+        original_date: { type: Date },
+        status: {
+          type: String,
+          enum: ["pending", "completed", "overdue", "skipped"],
+          default: "overdue",
+        },
+        overdue_at: { type: Date },
+        skipped_at: { type: Date },
+      },
+    ],
+    // Track overdue tasks summary
+    overdue_summary: {
+      date: { type: Date }, // Ngày có tasks overdue
+      overdue_count: { type: Number, default: 0 },
+      ready_to_notify: { type: Boolean, default: false },
+      notified_at: { type: Date },
+    },
   },
   { _id: false }
 );
@@ -147,12 +176,15 @@ const notebookSchema = new mongoose.Schema(
   }
 );
 
-// Virtual field: Tính số ngày từ khi trồng
+// Virtual field: Tính số ngày từ khi trồng (theo giờ Việt Nam UTC+7)
 notebookSchema.virtual("current_day").get(function () {
   if (!this.planted_date) return 0;
-  const diffTime = Math.abs(new Date() - this.planted_date);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
+  // getDaysDifferenceVN returns 0 when planted_date is today.
+  // Make the first planted day = 1 so observations tied to day_end
+  // appear on the intended final day of the stage.
+  const diffDays = getDaysDifferenceVN(this.planted_date, new Date());
+  // Convert to 1-based day count; clamp to 0 for future planted_date
+  return Math.max(0, diffDays + 1);
 });
 
 // Method: Cập nhật progress dựa trên các stage đã hoàn thành + stage hiện tại
@@ -165,13 +197,22 @@ notebookSchema.methods.updateProgress = async function (templateStages) {
   }
 
   let totalProgress = 0;
-  const defaultWeight = Math.round(100 / templateStages.length);
 
-  console.log("📊 Calculating plant progress...");
+  // Distribute 100% equally across stages to avoid rounding issues.
+  // Example: n=3 -> base=33, remainder=1 -> weights = [34,33,33]
+  const nStages = templateStages.length;
+  const base = Math.floor(100 / nStages);
+  const remainder = 100 - base * nStages;
+  const defaultWeights = templateStages.map(
+    (_, i) => base + (i < remainder ? 1 : 0)
+  );
+
+  console.log("📊 Calculating plant progress (equal stage weights)...");
   // Duyệt qua từng stage trong template
   for (let i = 0; i < templateStages.length; i++) {
     const templateStage = templateStages[i];
-    const stageWeight = templateStage.weight || defaultWeight;
+    // Use equal-distributed weight for each stage to ensure total sums to 100%.
+    const stageWeight = defaultWeights[i];
     const trackingStage = this.stages_tracking.find(
       (s) => s.stage_number === templateStage.stage_number
     );
@@ -247,6 +288,11 @@ notebookSchema.methods.getCurrentStageCompletion = async function () {
   if (!currentStageTracking) {
     console.log(`⚠️ No stage_tracking found for stage ${this.current_stage}`);
     return 0;
+  }
+
+  // Nếu stage đã completed thì trả về 100%
+  if (currentStageTracking.status === "completed") {
+    return 100;
   }
 
   if (

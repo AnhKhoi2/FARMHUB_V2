@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import AdminLayout from "../../components/AdminLayout";
 import axiosClient from "../../api/shared/axiosClient";
+import { Button } from "antd";
 
 export default function AdminExpertApplications() {
   const [items, setItems] = useState([]);
@@ -131,9 +132,10 @@ export default function AdminExpertApplications() {
 
   const renderStatusBadge = (st) => {
     let cls = "bg-secondary";
-    if (st === "pending") cls = "bg-warning text-dark";
-    else if (st === "approved") cls = "bg-success";
-    else if (st === "rejected") cls = "bg-danger";
+    let label = st;
+    if (st === "pending") { cls = "bg-warning text-dark"; label = "Đang chờ"; }
+    else if (st === "approved") { cls = "bg-success"; label = "Đã duyệt"; }
+    else if (st === "rejected") { cls = "bg-danger"; label = "Đã từ chối"; }
 
     const label =
       st === "pending"
@@ -191,9 +193,9 @@ export default function AdminExpertApplications() {
           />
         </div>
         <div className="col-auto">
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            type="button"
+          <Button
+            size="small"
+            style={{ borderColor: '#E0E0E0', background: '#fff', color: '#2E7D32', textTransform: 'uppercase', padding: '4px 10px' }}
             onClick={resetFilter}
           >
             Đặt lại

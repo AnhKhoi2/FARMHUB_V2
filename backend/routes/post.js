@@ -6,6 +6,8 @@ const router = Router();
 
 // Public listing (no auth)
 router.get("/public", postController.listPublic);
+// Public single post detail
+router.get("/public/:id", postController.detailPublic);
 
 // Management endpoints: allow moderators OR admins for most actions
 router.get("/", verifyToken, requireModeratorOrAdmin, postController.list);
