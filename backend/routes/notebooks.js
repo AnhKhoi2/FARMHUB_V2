@@ -57,6 +57,10 @@ router.post(
   "/:id/daily/overdue/complete",
   notebookController.completeOverdueTask
 );
+router.post(
+  "/:id/daily/overdue/complete-bulk",
+  notebookController.completeOverdueTasksBulk
+);
 router.get("/:id/daily/overdue/detail", notebookController.getOverdueDetail);
 
 export default router;

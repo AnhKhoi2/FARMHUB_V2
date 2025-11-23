@@ -99,8 +99,8 @@ const DailyChecklist = ({ notebookId, onTaskComplete }) => {
       <div className="checklist-empty">
         <p>📋 Không có công việc hôm nay</p>
         <small>
-          Nếu bạn vừa chuyển sang giai đoạn mới, công việc mới sẽ xuất hiện vào
-          ngày mai (từ 0 giờ).
+          Nếu bạn vừa chuyển sang giai đoạn mới, công việc của giai đoạn mới sẽ
+          xuất hiện ngay trong ngày đầu tiên của giai đoạn.
         </small>
       </div>
     );

@@ -86,31 +86,47 @@ const NotebookTimeline = ({ notebookId }) => {
                 </span>
               </div>
 
-              {stage.started_at && (
-                <div className="stage-dates">
-                  <p>
-                    <strong>📅 Bắt đầu:</strong>{" "}
-                    {new Date(stage.started_at).toLocaleDateString("vi-VN", {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                    })}
-                  </p>
-                  {stage.completed_at && (
-                    <p>
-                      <strong>✅ Hoàn thành:</strong>{" "}
-                      {new Date(stage.completed_at).toLocaleDateString(
+              <div className="stage-dates">
+                <p>
+                  <strong>📅 Bắt đầu:</strong>{" "}
+                  {stage.stage_start_date
+                    ? // backend provides YYYY-MM-DD string already normalized to VN timezone
+                      new Date(stage.stage_start_date).toLocaleDateString(
                         "vi-VN",
                         {
                           year: "numeric",
                           month: "2-digit",
                           day: "2-digit",
                         }
-                      )}
-                    </p>
-                  )}
-                </div>
-              )}
+                      )
+                    : stage.started_at
+                    ? new Date(stage.started_at).toLocaleDateString("vi-VN", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                      })
+                    : "-"}
+                </p>
+                <p>
+                  <strong>✅ Hoàn thành:</strong>{" "}
+                  {stage.stage_end_date
+                    ? new Date(stage.stage_end_date).toLocaleDateString(
+                        "vi-VN",
+                        {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                        }
+                      )
+                    : stage.completed_at
+                    ? new Date(stage.completed_at).toLocaleDateString("vi-VN", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                      })
+                    : "-"}
+                </p>
+              </div>
 
               {/* Ẩn phần hiển thị stage-observations ở timeline tiến trình */}
             </div>

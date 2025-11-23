@@ -76,10 +76,13 @@ const notebookApi = {
 
   skipOverdueTasks: (notebookId) =>
     api.post(`/notebooks/${notebookId}/daily/overdue/skip`),
-
   completeOverdueTask: (notebookId, taskName) =>
     api.post(`/notebooks/${notebookId}/daily/overdue/complete`, {
       task_name: taskName,
+    }),
+  completeOverdueTasksBulk: (notebookId, taskNames) =>
+    api.post(`/notebooks/${notebookId}/daily/overdue/complete-bulk`, {
+      task_names: taskNames,
     }),
 };
 
