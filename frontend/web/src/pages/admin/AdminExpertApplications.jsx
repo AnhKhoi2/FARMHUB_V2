@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import AdminLayout from "../../components/AdminLayout";
 import axiosClient from "../../api/shared/axiosClient";
-import { Button } from "antd";
 
 export default function AdminExpertApplications() {
   const [items, setItems] = useState([]);
@@ -91,8 +90,7 @@ export default function AdminExpertApplications() {
   };
 
   const reject = async (id) => {
-    const reason =
-      window.prompt("Nhập lý do từ chối (có thể để trống):") ?? "";
+    const reason = window.prompt("Nhập lý do từ chối (có thể để trống):") ?? "";
 
     try {
       const res = await axiosClient.patch(
@@ -132,10 +130,9 @@ export default function AdminExpertApplications() {
 
   const renderStatusBadge = (st) => {
     let cls = "bg-secondary";
-    let label = st;
-    if (st === "pending") { cls = "bg-warning text-dark"; label = "Đang chờ"; }
-    else if (st === "approved") { cls = "bg-success"; label = "Đã duyệt"; }
-    else if (st === "rejected") { cls = "bg-danger"; label = "Đã từ chối"; }
+    if (st === "pending") cls = "bg-warning text-dark";
+    else if (st === "approved") cls = "bg-success";
+    else if (st === "rejected") cls = "bg-danger";
 
     const label =
       st === "pending"
@@ -149,16 +146,15 @@ export default function AdminExpertApplications() {
     return <span className={`badge ${cls}`}>{label}</span>;
   };
 
-  const currentStatusLabel =
-    !status
-      ? "tất cả"
-      : status === "pending"
-      ? "chờ duyệt"
-      : status === "approved"
-      ? "đã duyệt"
-      : status === "rejected"
-      ? "đã từ chối"
-      : status;
+  const currentStatusLabel = !status
+    ? "tất cả"
+    : status === "pending"
+    ? "chờ duyệt"
+    : status === "approved"
+    ? "đã duyệt"
+    : status === "rejected"
+    ? "đã từ chối"
+    : status;
 
   return (
     <AdminLayout>
@@ -193,9 +189,9 @@ export default function AdminExpertApplications() {
           />
         </div>
         <div className="col-auto">
-          <Button
-            size="small"
-            style={{ borderColor: '#E0E0E0', background: '#fff', color: '#2E7D32', textTransform: 'uppercase', padding: '4px 10px' }}
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            type="button"
             onClick={resetFilter}
           >
             Đặt lại
@@ -203,9 +199,7 @@ export default function AdminExpertApplications() {
         </div>
       </div>
 
-      {error && (
-        <div className="alert alert-danger py-1 small">{error}</div>
-      )}
+      {error && <div className="alert alert-danger py-1 small">{error}</div>}
 
       {/* Bảng */}
       <div className="card">
@@ -241,9 +235,7 @@ export default function AdminExpertApplications() {
                     <tr key={it._id}>
                       <td>{it.full_name}</td>
                       <td className="small">{it.email}</td>
-                      <td className="small">
-                        {it.phone_number || "—"}
-                      </td>
+                      <td className="small">{it.phone_number || "—"}</td>
                       <td>{it.expertise_area}</td>
                       <td>{it.experience_years ?? 0} năm</td>
                       <td>{renderStatusBadge(it.status)}</td>

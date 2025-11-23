@@ -5,6 +5,13 @@
 import moment from "moment-timezone";
 const VIETNAM_TZ = "Asia/Ho_Chi_Minh";
 
+// Number of minutes past midnight to consider as the "start of day" in Vietnam timezone.
+// Default to 5 minutes (00:05) per new requirement. Can be overridden by env var `VN_DAY_START_MINUTES`.
+const DAY_START_OFFSET_MINUTES = parseInt(
+  process.env.VN_DAY_START_MINUTES || "5",
+  10
+);
+
 /**
  * Get current date/time in Vietnam timezone
  * @returns {Date} Date object adjusted to Vietnam time
@@ -14,36 +21,49 @@ export const getVietnamTime = () => {
 };
 
 /**
- * Convert any date to Vietnam timezone midnight (00:00:00)
+ * Convert any date to Vietnam timezone day-start (00:00 + offset minutes)
+ * This replaces the previous "midnight" concept so that a new day may start
+ * at a small offset past midnight (e.g., 00:05).
  * @param {Date} date - Date to convert
- * @returns {Date} Date at midnight Vietnam time (as UTC representation)
+ * @returns {Date} Date at Vietnam day-start (as UTC representation)
  */
 export const toVietnamMidnight = (date) => {
-  return moment.tz(date, VIETNAM_TZ).startOf("day").toDate();
+  return moment
+    .tz(date, VIETNAM_TZ)
+    .startOf("day")
+    .add(DAY_START_OFFSET_MINUTES, "minutes")
+    .toDate();
 };
 
 /**
- * Get today at midnight in Vietnam timezone
- * @returns {Date} Today at 00:00:00 Vietnam time
+ * Get today at Vietnam day-start (00:00 + offset minutes)
+ * @returns {Date} Today at configured Vietnam day-start
  */
 export const getVietnamToday = () => {
   return toVietnamMidnight(new Date());
 };
 
 /**
- * Calculate difference in days between two dates (Vietnam timezone)
+ * Calculate difference in days between two dates using Vietnam day-start
+ * (i.e., both dates are normalized to startOf('day') + offset minutes).
  * @param {Date} startDate - Start date
  * @param {Date} endDate - End date
  * @returns {number} Number of days difference
  */
 export const getDaysDifferenceVN = (startDate, endDate) => {
-  const start = moment.tz(startDate, VIETNAM_TZ).startOf("day");
-  const end = moment.tz(endDate, VIETNAM_TZ).startOf("day");
+  const start = moment
+    .tz(startDate, VIETNAM_TZ)
+    .startOf("day")
+    .add(DAY_START_OFFSET_MINUTES, "minutes");
+  const end = moment
+    .tz(endDate, VIETNAM_TZ)
+    .startOf("day")
+    .add(DAY_START_OFFSET_MINUTES, "minutes");
   return end.diff(start, "days");
 };
 
 /**
- * Format date to Vietnam timezone string
+ * Format date to Vietnam timezone string (YYYY-MM-DD)
  * @param {Date} date - Date to format
  * @returns {string} Formatted date string (YYYY-MM-DD)
  */
