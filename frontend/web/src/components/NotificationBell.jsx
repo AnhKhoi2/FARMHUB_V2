@@ -311,10 +311,10 @@ const NotificationBell = () => {
                         className="notification-time"
                         style={{ fontSize: "11px", color: "#60a5fa" }}
                       >
-                        {formatTimeAgo(notif.created_at)}
+                        {formatTimeAgo(notif.createdAt || notif.created_at)}
                       </span>
                     </div>
-                    {!notif.is_read && !link && (
+                    {!notif.is_read && (
                       <div className="unread-dot" style={{ right: 10 }}></div>
                     )}
                   </div>
