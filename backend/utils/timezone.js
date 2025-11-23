@@ -70,3 +70,37 @@ export const getDaysDifferenceVN = (startDate, endDate) => {
 export const formatVietnamDate = (date) => {
   return moment.tz(date, VIETNAM_TZ).format("YYYY-MM-DD");
 };
+
+/**
+ * Parse an input (string or Date) into a Vietnam-day-start Date.
+ * - If input is a date-only string like 'YYYY-MM-DD', parse it as a
+ *   Vietnam local date (not UTC) so clients sending date-only values
+ *   are interpreted correctly in VN timezone.
+ * - Otherwise, fall back to normal toVietnamMidnight(new Date(input)).
+ */
+export const parseVietnamDate = (input) => {
+  if (!input) return null;
+
+  // If it's already a Date, normalize it
+  if (input instanceof Date) {
+    return toVietnamMidnight(input);
+  }
+
+  // If it's a numeric timestamp string or number, coerce to Date
+  if (typeof input === "number" || /^\d+$/.test(String(input))) {
+    return toVietnamMidnight(new Date(Number(input)));
+  }
+
+  // If the input looks like a date-only string YYYY-MM-DD, parse in VN tz
+  const dateOnlyMatch = /^\d{4}-\d{2}-\d{2}$/.test(String(input).trim());
+  if (dateOnlyMatch) {
+    return moment
+      .tz(String(input).trim(), "YYYY-MM-DD", VIETNAM_TZ)
+      .startOf("day")
+      .add(DAY_START_OFFSET_MINUTES, "minutes")
+      .toDate();
+  }
+
+  // Fallback: create a Date and normalize to VN day-start
+  return toVietnamMidnight(new Date(input));
+};
