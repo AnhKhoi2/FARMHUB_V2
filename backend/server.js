@@ -113,6 +113,8 @@ app.use("/admin/models", modelsRoutes);
 app.use("/layouts", layoutsRoutes);
 // new primary path
 app.use("/admin/managerpost", postRoutes);
+app.use("/api/posts", postRoutes);
+
 // (legacy alias removed) '/admin/managerpost' is the canonical path for post management
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/vnpay", vnpayRoutes);

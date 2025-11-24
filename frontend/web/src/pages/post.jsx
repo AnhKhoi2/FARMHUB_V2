@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import axiosClient from "../api/shared/axiosClient";
 import { toast } from "react-toastify";
+import Footer from "../components/shared/Footer";
+
 import {
   Button,
   Card,
@@ -332,6 +334,7 @@ export default function Post() {
           Đăng bài
         </Button>
       </Drawer>
+      <Footer /> 
     </>
   );
 }

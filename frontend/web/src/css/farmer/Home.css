@@ -57,6 +57,154 @@
 .carousel-caption .btn {
     animation: fadeInUp 1.4s ease-in-out;
 }
+/* ==========================================
+   WEATHER ULTRA PREMIUM (FarmHub 2025)
+   ========================================== */
+
+.weather-card {
+    position: relative;
+    border-radius: 26px;
+    padding: 38px 45px;
+    background: linear-gradient(
+        135deg,
+        #ecfdf5 0%,
+        #d1fae5 35%,
+        #f8fffa 100%
+    );
+    border: 2px solid #2d8659 !important;  /* viền xanh đậm */
+    box-shadow:
+        0 12px 28px rgba(0,0,0,0.08),
+        inset 0 0 22px rgba(45,134,89,0.10);  /* glow xanh nhạt */
+    transition: all .28s ease;
+}
+
+/* Hover effect */
+.weather-card:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 22px 40px rgba(0, 0, 0, 0.18),
+        inset 0 0 40px rgba(255, 255, 255, 0.5);
+}
+
+/* Decorative subtle pattern */
+.weather-card::before {
+    content: "";
+    position: absolute;
+    right: -30px;
+    top: -30px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(
+        circle,
+        rgba(46, 125, 50, 0.14) 0%,
+        rgba(46, 125, 50, 0.02) 65%,
+        transparent 100%
+    );
+    filter: blur(12px);
+    z-index: 0;
+}
+
+/* Icon holder */
+.weather-icon-wrapper {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.12),
+        inset 0 0 10px rgba(255, 255, 255, 0.8);
+    z-index: 2;
+}
+
+/* Main icon */
+.weather-main-icon {
+    font-size: 40px;
+    color: #1b5e20;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+}
+
+/* Text block */
+.weather-title {
+    font-size: 1.55rem;
+    font-weight: 900;
+    color: #1b4332;
+}
+
+.weather-location {
+    font-size: 1.05rem;
+    color: #2e7d32;
+    font-weight: 700;
+}
+
+.weather-condition {
+    font-size: 1rem;
+    color: #4a4a4a;
+    margin-top: -2px;
+}
+
+/* Temperature block */
+.weather-main {
+    min-width: 240px;
+    text-align: right;
+}
+
+.weather-temp {
+    font-size: 3.4rem;
+    font-weight: 900;
+    color: #14532d;
+    margin-bottom: 5px;
+    text-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.weather-feels,
+.weather-other {
+    font-size: 0.95rem;
+    color: #444;
+}
+
+/* Button */
+.weather-btn {
+    padding: 7px 20px;
+    border-radius: 12px;
+    border: 1px solid #1b5e20;
+    font-weight: 700;
+    transition: all .2s ease;
+}
+
+.weather-btn:hover {
+    background: #1b5e20;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+}
+
+
+
+.skeleton-line {
+    height: 16px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #e0e0e0 0%, #f5f5f5 50%, #e0e0e0 100%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.2s infinite;
+}
+
+.skeleton-line.small {
+    width: 70%;
+    height: 10px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
 
 /* Recently Visited Section */
 .recently-visited {
@@ -93,7 +241,7 @@
     transform: scale(1.1);
 }
 
-/* Products Section */
+/* Products Section - (đã bỏ UI sản phẩm, nhưng giữ style cũ nếu sau này dùng lại)
 .our-products {
     padding: 3rem 0;
 }
@@ -125,6 +273,7 @@
     font-size: 0.9rem;
     padding: 0.5rem 0.8rem;
 }
+*/
 
 /* Services Section */
 .services-section {
@@ -281,6 +430,14 @@
         margin-left: 0;
         width: 100%;
     }
+
+    .weather-card {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .weather-temp {
+        font-size: 2rem;
+    }
 }
 
 @media (max-width: 576px) {
@@ -307,3 +464,172 @@
         padding: 0.4rem 1rem;
     }
 }
+/* =========================================================
+   HOME – MARKET PREVIEW (POST PUBLIC)
+   ========================================================= */
+
+/* Container section */
+.market-section {
+    margin-top: 40px;
+  }
+  
+  /* Card */
+  .market-card {
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+  }
+  
+  .market-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* Image */
+  .market-image-wrapper {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+  }
+  
+  .market-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Price */
+  .market-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2d8659;
+    margin-bottom: 12px;
+  }
+  
+  /* Empty state */
+  .market-empty {
+    padding: 20px;
+    text-align: center;
+    background: #fafafa;
+    border-radius: 12px;
+    border: 1px solid #eee;
+  }
+  
+  /* Skeleton loading */
+  .skeleton-card {
+    border-radius: 14px;
+    padding: 10px;
+    background: white;
+  }
+  
+  .skeleton-img {
+    width: 100%;
+    height: 150px;
+    background: #eaeaea;
+    border-radius: 12px;
+  }
+  
+  .skeleton-line {
+    width: 100%;
+    height: 14px;
+    background: #eaeaea;
+    border-radius: 6px;
+  }
+  
+  .skeleton-line.small {
+    height: 10px;
+  }
+  
+  .skeleton-line.w-50 {
+    width: 50%;
+  }
+  
+  /* Responsive tweaks */
+  @media (max-width: 768px) {
+    .market-image-wrapper {
+      height: 160px;
+    }
+  
+    .market-price {
+      font-size: 16px;
+    }
+  }
+  /* ==========================================
+   GUIDES (Bootstrap Card Fix)
+   ========================================== */
+
+.guide-card {
+    border-radius: 14px !important;
+    overflow: hidden;
+    border: none !important;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  
+  .guide-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  }
+  
+  .guide-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: #f2f2f2;
+  }
+  
+  .guide-body {
+    padding: 18px;
+  }
+  
+  .guide-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #222;
+  }
+  
+  .guide-desc {
+    font-size: 15px;
+    color: #555;
+    margin-bottom: 15px;
+    line-height: 1.45;
+  }
+  
+  .guide-btn {
+    width: 100%;
+    background: #2d8659;
+    border: none;
+    font-weight: 600;
+  }
+  
+  .guide-btn:hover {
+    background: #256c4a;
+  }
+/* ==========================================
+   button xem chi tiết
+   ========================================== */
+   /* Weather Button Premium */
+.weather-detail-btn {
+    padding: 8px 20px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1b5e20;
+    border: 2px solid #1b5e20;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(4px);
+    transition: all 0.22s ease;
+}
+
+.weather-detail-btn:hover {
+    background: #1b5e20;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+}
+/* ==========================================
+   button xem chi tiết
+   ========================================== */
+
+    

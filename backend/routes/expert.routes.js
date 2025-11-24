@@ -1,15 +1,20 @@
 import { Router } from "express";
-import * as ctrl from "../controllers/expertController.js";
+import * as expertCtrl from "../controllers/expertController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
-// ✅ Lấy thông tin cơ bản của chuyên gia hiện tại (ExpertHome sử dụng)
-router.get("/me/basic", verifyToken, ctrl.getMyBasic);
+// =========================
+// API CHO EXPERT TỰ CHỈNH HỒ SƠ
+// =========================
+router.get("/me/basic", verifyToken, expertCtrl.getMyBasic);
+router.put("/me/basic", verifyToken, expertCtrl.updateMyBasic);
 
-// Các API hiện có
-router.get("/", ctrl.list);
-router.get("/:id", ctrl.getById);
-router.delete("/:id", ctrl.remove);
+// =========================
+// API LIST / GET DETAIL / DELETE
+// =========================
+router.get("/", expertCtrl.list);
+router.get("/:id", expertCtrl.getById);
+router.delete("/:id", expertCtrl.remove);
 
 export default router;

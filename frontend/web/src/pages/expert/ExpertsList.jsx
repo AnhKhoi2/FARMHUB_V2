@@ -4,17 +4,14 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { MessageCircle, Star, BadgeCheck, Search } from "lucide-react";
 import axiosClient from "../../api/shared/axiosClient";
 import "../../css/ExpertsList.css";
-
+import Footer from "../../components/shared/Footer";
 // ⬇️ Chat widget
 import ChatWidget from "./ChatWidget";
 import Header from "../../components/shared/Header";
 
 const API_LIST = "/api/experts?is_public=true&review_status=approved";
 
-const placeholderAvatar = (seed) =>
-  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-    seed || "expert"
-  )}`;
+const placeholderAvatar = () => "";
 
 // ---------- Star UI ----------
 function StarRow({ value = 0, onSelect, canRate }) {
@@ -58,14 +55,8 @@ function StarRow({ value = 0, onSelect, canRate }) {
 
 function ExpertCard({ expert, myScore, onRate, onChat }) {
   const avatar =
-    (expert?.user?.avatar && String(expert.user.avatar).trim()) ||
-    placeholderAvatar(
-      expert?.user?.email ||
-        expert?.user?._id ||
-        expert?.expert_id ||
-        expert?._id ||
-        expert?.full_name
-    );
+  (expert?.user?.avatar && String(expert.user.avatar).trim()) || "";
+
 
   const canRate = !myScore;
 
@@ -296,14 +287,7 @@ export default function ExpertsList() {
     }
 
     const avatar =
-      (expert?.user?.avatar && String(expert.user.avatar).trim()) ||
-      placeholderAvatar(
-        expert?.user?.email ||
-          expert?.user?._id ||
-          expert?.expert_id ||
-          expert?._id ||
-          expert?.full_name
-      );
+    (expert?.user?.avatar && String(expert.user.avatar).trim()) || "";
 
     const payload = {
       expertId,
@@ -321,7 +305,7 @@ export default function ExpertsList() {
       <Header />
       <div className="ex-page user-expert-page">
         <div className="ex-hero">
-          <h1>Chuyên gia</h1>
+          <h1>Chuyên Gia</h1>
           <p>
             Tìm kiếm và kết nối với các chuyên gia nông nghiệp đáng tin cậy để được tư vấn.
           </p>
@@ -366,6 +350,7 @@ export default function ExpertsList() {
           initialOpenPayload={chatPeer}
         />
       </div>
+      <Footer /> 
     </>
   );
 }

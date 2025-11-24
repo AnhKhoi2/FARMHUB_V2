@@ -108,7 +108,7 @@ const Header = () => {
                   currentPath.startsWith("/plant-diagnosis") ? "active" : ""
                 }
               >
-                <Link to="/plant-diagnosis">Chẩn đoán bằng hình ảnh</Link>
+                <Link to="/plant-diagnosis">Chẩn Đoán</Link>
               </li>
 
               {/* NHẬT KÝ LÀM VƯỜN – SUBMENU */}
@@ -127,7 +127,7 @@ const Header = () => {
                   className="dropdown-toggle"
                   onClick={() => window.innerWidth < 992 && toggleSubmenu()}
                 >
-                  Nhật Ký Làm Vườn
+                  Nhật Ký
                 </span>
 
                 <ul
@@ -152,18 +152,18 @@ const Header = () => {
               </li>
 
               <li className={currentPath.startsWith("/market") ? "active" : ""}>
-                <Link to="/market">Chợ</Link>
+                <Link to="/market">Giao Lưu</Link>
               </li>
 
               <li
                 className={currentPath.startsWith("/experts") ? "active" : ""}
               >
-                <Link to="/experts">Chuyên gia</Link>
+                <Link to="/experts">Chuyên Gia</Link>
               </li>
               <li
                 className={currentPath.startsWith("/pricing") ? "active" : ""}
               >
-                <Link to="/pricing">Gói Dịch Vụ</Link>
+                <Link to="/pricing">Nâng Cấp</Link>
               </li>
 
               {user && (
@@ -180,7 +180,7 @@ const Header = () => {
                   >
                     <Link to="/farmer/streak">
                       <Tooltip title="Xếp hạng Streak">
-                        <RadarChartOutlined style={{ fontSize: "18px" }} />
+                        <RadarChartOutlined style={{ fontSize: "30px" }} />
                       </Tooltip>
                     </Link>
                   </li>

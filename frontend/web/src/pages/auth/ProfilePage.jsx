@@ -966,7 +966,7 @@ export default function ProfilePage() {
 
               {!hasApproved && hasPending && (
                 <p className="text-sm text-agri-gray mt-3 p-3 bg-agri-green-light rounded-lg">
-                  Đơn của bạn đang chờ duyệt. Khi được chấp thuận, vai trò sẽ chuyển sang <b>expert</b>.
+                  Đơn của bạn đang chờ duyệt. Khi được chấp thuận, vai trò sẽ chuyển sang <b>expert</b>. Vui lòng đăng xuất và đăng nhập lại với quyền Chuyên Gia.
                 </p>
               )}
             </div>
