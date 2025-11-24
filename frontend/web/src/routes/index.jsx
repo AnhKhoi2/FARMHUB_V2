@@ -43,6 +43,7 @@ import AdminLayout from "../components/AdminLayout.jsx";
 import ModeratorHome from "../pages/moderator/ModeratorHome";
 import ManagerPost from "../pages/moderator/ManagerPost";
 import ManagerReport from "../pages/moderator/ManagerReport";
+import ModeratorProfile from "../pages/moderator/ModeratorProfile";
 
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
@@ -253,6 +254,14 @@ export default function AppRoutes() {
           element={
             <ModeratorRoute>
               <ManagerReport />
+            </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/profile"
+          element={
+            <ModeratorRoute>
+              <ModeratorProfile />
             </ModeratorRoute>
           }
         />

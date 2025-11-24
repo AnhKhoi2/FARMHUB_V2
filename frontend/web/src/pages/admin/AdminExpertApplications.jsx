@@ -132,10 +132,9 @@ export default function AdminExpertApplications() {
 
   const renderStatusBadge = (st) => {
     let cls = "bg-secondary";
-    let label = st;
-    if (st === "pending") { cls = "bg-warning text-dark"; label = "Đang chờ"; }
-    else if (st === "approved") { cls = "bg-success"; label = "Đã duyệt"; }
-    else if (st === "rejected") { cls = "bg-danger"; label = "Đã từ chối"; }
+    if (st === "pending") cls = "bg-warning text-dark";
+    else if (st === "approved") cls = "bg-success";
+    else if (st === "rejected") cls = "bg-danger";
 
     const label =
       st === "pending"
@@ -199,7 +198,7 @@ export default function AdminExpertApplications() {
             onClick={resetFilter}
           >
             Đặt lại
-          </button>
+          </Button>
         </div>
       </div>
 

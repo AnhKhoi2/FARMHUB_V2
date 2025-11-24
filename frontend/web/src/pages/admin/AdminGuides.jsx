@@ -15,6 +15,7 @@ import {
 import AdminLayout from "../../components/AdminLayout";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
+import usersApi from "../../api/usersApi";
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -70,6 +71,46 @@ export default function AdminGuides() {
         const tot = data.total || meta.total || (meta.pages ? meta.pages * limit : docs.length);
         
         setGuides(docs);
+        // If some guides reference users only by id (e.g. expert_id is a string), try to fetch those users
+        (async () => {
+          try {
+            const idSet = new Set();
+            docs.forEach((d) => {
+              const v = d.expert_id || d.author || d.user || d.createdBy || d.created_by || d.owner;
+              if (v && typeof v === "string") idSet.add(v);
+              // sometimes array or object with id
+              if (v && typeof v === "object" && (v._id || v.id)) {
+                const id = v._id || v.id;
+                if (id && typeof id === "string") idSet.add(id);
+              }
+            });
+
+            if (idSet.size === 0) return;
+
+            const idArr = Array.from(idSet);
+            // fetch each user detail (no bulk endpoint available)
+            const users = await Promise.all(
+              idArr.map((id) => usersApi.detail(id).catch(() => null))
+            );
+            const map = {};
+            users.forEach((u) => {
+              if (u && (u._id || u.id)) map[u._id || u.id] = u;
+            });
+
+            const updated = docs.map((d) => {
+              const v = d.expert_id || d.author || d.user || d.createdBy || d.created_by || d.owner;
+              let id = null;
+              if (v && typeof v === "string") id = v;
+              if (v && typeof v === "object") id = v._id || v.id || null;
+              const u = id ? map[id] : null;
+              return { ...d, _resolvedAuthor: u || null };
+            });
+
+            setGuides(updated);
+          } catch (e) {
+            console.warn("Failed to resolve guide authors", e);
+          }
+        })();
         setTotalPages(Math.max(1, Math.ceil(tot / limit)));
         setPage(p);
       } catch (e) {
@@ -79,6 +120,24 @@ export default function AdminGuides() {
         setLoading(false);
       }
     },
+      {
+        title: "Người chỉnh sửa",
+        dataIndex: "updatedBy",
+        width: 180,
+        render: (_, record) => {
+          const editor = getEditorName(record);
+          const t = record.updatedAt || record.modifiedAt || record.updated_at || record.modified_at || record.lastModified;
+          return editor ? (
+            <div>
+              <div style={{ fontWeight: 600 }}>{editor}</div>
+              {t ? <div style={{ fontSize: 12, color: NATURE_COLORS.textMuted }}>{new Date(t).toLocaleDateString('vi-VN')}</div> : null}
+            </div>
+          ) : (
+            <span style={{ color: NATURE_COLORS.textMuted }}>—</span>
+          );
+        },
+        onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
+      },
     [limit, searchTerm]
   );
 
@@ -160,12 +219,14 @@ export default function AdminGuides() {
       title: "Tác giả",
       dataIndex: "expert_id",
       width: 150,
-      render: (_, record) =>
-        record.expert_id?.username || record.expert_id?.name || (
-            <Tag color="default">
-                Admin/Guest
-            </Tag>
-        ),
+      render: (_, record) => {
+        const name = getAuthorName(record);
+        return name ? (
+          <div style={{ fontWeight: 600 }}>{name}</div>
+        ) : (
+          <Tag color="default">Admin/Guest</Tag>
+        );
+      },
       onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
     {
@@ -214,6 +275,81 @@ export default function AdminGuides() {
       onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
   ];
+
+    // Helper to extract a readable author name from a guide record
+    const getAuthorName = (record) => {
+      if (!record) return null;
+      // prefer pre-resolved author
+      if (record._resolvedAuthor) {
+        const ra = record._resolvedAuthor;
+        return (ra.username || ra.fullName || ra.name || ra.email || null) || null;
+      }
+      const tryPaths = [
+        () => record.expert_id?.username,
+        () => record.expert_id?.name,
+        () => record.author?.username,
+        () => record.author?.name,
+        () => record.user?.username,
+        () => record.user?.fullName,
+        () => record.createdBy?.username,
+        () => record.createdBy?.name,
+        () => record.created_by?.username,
+        () => record.created_by?.name,
+        () => record.owner?.username,
+        () => record.owner?.name,
+        () => record.authorName,
+        () => record.creatorName,
+        () => record.postedBy,
+        () => record.author,
+      ];
+
+      for (const fn of tryPaths) {
+        try {
+          const v = fn();
+          if (v && typeof v === "string" && v.trim()) return v.trim();
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      return null;
+    };
+
+    // Helper to extract the last editor's name from a guide record
+    const getEditorName = (record) => {
+      if (!record) return null;
+      const tryPaths = [
+        () => record.updatedBy?.username,
+        () => record.updatedBy?.name,
+        () => record.updated_by?.username,
+        () => record.updated_by?.name,
+        () => record.modifiedBy?.username,
+        () => record.modifiedBy?.name,
+        () => record.modified_by?.username,
+        () => record.modified_by?.name,
+        () => record.editor?.username,
+        () => record.editor?.name,
+        () => record.editedBy,
+        () => record.lastEditedBy,
+        () => record.lastModifiedBy,
+        () => record.updaterName,
+        () => record.editorName,
+      ];
+
+      for (const fn of tryPaths) {
+        try {
+          const v = fn();
+          if (v && typeof v === "string" && v.trim()) return v.trim();
+          if (v && typeof v === "object") {
+            // object with username/name
+            const candidate = v.username || v.name || v.fullName;
+            if (candidate && String(candidate).trim()) return String(candidate).trim();
+          }
+        } catch (e) {}
+      }
+
+      return null;
+    };
 
   return (
     <AdminLayout>

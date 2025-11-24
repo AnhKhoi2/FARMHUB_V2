@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/expert/ExpertHome.css";
-import Header from "../../components/shared/Header";
+// Shared header removed: expert page uses its own header markup
 import ChatWidget from "./ChatWidget";
 import axiosClient from "../../api/shared/axiosClient";
 
@@ -205,7 +205,6 @@ export default function ExpertHome({
 
   return (
     <>
-      <Header />
       <div className="expert-home">
         <header className="expert-header">
           <div className="header-container">
