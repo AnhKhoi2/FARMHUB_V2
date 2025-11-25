@@ -9,6 +9,8 @@ import {
 import plantAdviceApi from "../api/plantAdviceApi.js";
 import PlantAdviceCard from "../components/PlantAdviceCard.jsx";
 import Header from "../components/shared/Header";
+import Footer from "../components/shared/Footer";
+
 
 const DEFAULT_QUERY = "";
 
@@ -671,6 +673,7 @@ const WeatherPage = () => {
         </>
       )}
       </div>
+      <Footer /> 
     </>
   );
 };

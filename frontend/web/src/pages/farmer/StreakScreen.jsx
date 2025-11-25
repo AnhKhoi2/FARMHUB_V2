@@ -15,6 +15,7 @@ import Header from "../../components/shared/Header";
 import { useSelector } from "react-redux";
 import { FireFilled, TrophyFilled } from "@ant-design/icons"; // Thêm icon
 
+
 const { Title, Text } = Typography;
 
 // Giữ nguyên level streak
@@ -289,6 +290,7 @@ export default function StreakScreen() {
           </Row>
         </Card>
       </div>
+      
     </>
   );
 }

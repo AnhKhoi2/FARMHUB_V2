@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import plantApi from "../api/plantApi"; // chỉnh lại path nếu khác
 import Header from "../components/shared/Header";
-
+import Footer from "../components/shared/Footer";
 // Mapping “vấn đề sức khỏe” -> tiếng Việt + hướng dẫn
 const mapIssueToVi = (name) => {
   if (!name) {
@@ -478,6 +478,7 @@ const PlantDiagnosisPage = () => {
           </div>
         </div>
       </div>
+      <Footer /> 
     </>
   );
 };

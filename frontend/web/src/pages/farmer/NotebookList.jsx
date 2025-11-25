@@ -3,7 +3,7 @@ import Header from "../../components/shared/Header";
 import { useNavigate } from "react-router-dom";
 import notebookApi from "../../api/farmer/notebookApi";
 import "../../css/farmer/NotebookList.css";
-
+import Footer from "../../components/shared/Footer";
 const NotebookList = () => {
   const navigate = useNavigate();
   const [notebooks, setNotebooks] = useState([]);
@@ -422,8 +422,11 @@ const NotebookList = () => {
           })}
         </div>
       )}
+      <Footer /> 
     </div>
+    
   );
+  
 };
 
 export default NotebookList;

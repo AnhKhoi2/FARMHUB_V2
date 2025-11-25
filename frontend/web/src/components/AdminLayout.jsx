@@ -118,7 +118,7 @@ export default function AdminLayout({ children }) {
     { to: "/admin/users", label: "Người dùng", icon: <FaUsers /> },
     { to: "/admin/diseases", label: "Bệnh", icon: <FaBug /> },
     { to: "/admin/categories", label: "Danh mục", icon: <FaFolderOpen /> },
-    { to: "/admin/weather", label: "Thời tiết", icon: <FaCloudSun /> },
+    // { to: "/admin/weather", label: "Thời tiết", icon: <FaCloudSun /> },
     { to: "/admin/models", label: "Mô hình trồng", icon: <FaSeedling /> },
     { to: "/admin/managerguides", label: "Hướng dẫn", icon: <FaBook /> },
     { to: "/admin/leaderboard", label: "Bảng xếp hạng", icon: <FaTrophy /> },
