@@ -3,6 +3,7 @@ import guidesApi from "../../api/shared/guidesApi";
 import { Card, Row, Col, Typography, Spin, message, Input, Pagination } from "antd";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/Header";
+import Footer from "../../components/shared/Footer";
 
 const { Title } = Typography;
 
@@ -141,6 +142,7 @@ export default function Guides() {
           </Row>
         )}
       </div>
+      <Footer /> 
     </>
   );
 }

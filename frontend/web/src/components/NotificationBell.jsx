@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../css/NotificationBell.css";
 
@@ -31,7 +32,8 @@ const NotificationBell = () => {
         }/api/notifications/unread-count`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUnreadCount(response.data.data?.count || 0);
+      // backend returns { success: true, data: { unread_count: N } }
+      setUnreadCount(response.data?.data?.unread_count || 0);
     } catch (error) {
       if (error?.response?.status === 401) {
         // Token invalid -> clear counts and stop spamming console
@@ -115,6 +117,23 @@ const NotificationBell = () => {
       if (error?.response?.status !== 401) {
         console.error("Error marking all as read:", error);
       }
+    }
+  };
+
+  const navigate = useNavigate();
+
+  const handleNotificationClick = async (notif, link) => {
+    // mark read first, then navigate using react-router
+    if (!notif.is_read) {
+      try {
+        await markAsRead(notif._id);
+      } catch (e) {
+        console.warn("Failed to mark notification read before navigation", e);
+      }
+    }
+
+    if (link) {
+      navigate(link);
     }
   };
 
@@ -203,32 +222,33 @@ const NotificationBell = () => {
               notifications.map((notif) => {
                 // Determine link for notification
                 let link = null;
-                if (notif.type === "stage_skipped" && notif.notebook_id) {
-                  link = `/farmer/notebooks/${
-                    notif.notebook_id._id || notif.notebook_id
-                  }`;
-                } else if (
-                  notif.type === "stage_overdue" &&
-                  notif.notebook_id
-                ) {
-                  link = `/farmer/notebooks/${
-                    notif.notebook_id._id || notif.notebook_id
-                  }/overdue`;
+                const nid =
+                  notif.notebook_id &&
+                  (notif.notebook_id._id || notif.notebook_id);
+                if (nid) {
+                  if (notif.type === "stage_overdue") {
+                    link = `/farmer/notebooks/${nid}/overdue`;
+                  } else {
+                    // For warnings, skipped, completed, daily reminders -> open notebook detail
+                    link = `/farmer/notebooks/${nid}`;
+                  }
                 }
                 return (
-                  <a
+                  <div
                     key={notif._id}
-                    href={link || undefined}
                     className={`notification-item-card ${
                       notif.is_read ? "read" : "unread"
                     }`}
                     onClick={(e) => {
-                      if (link) {
+                      e.preventDefault();
+                      handleNotificationClick(notif, link);
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        markAsRead(notif._id);
-                        window.location.href = link;
-                      } else if (!notif.is_read) {
-                        markAsRead(notif._id);
+                        handleNotificationClick(notif, link);
                       }
                     }}
                     style={{
@@ -291,13 +311,13 @@ const NotificationBell = () => {
                         className="notification-time"
                         style={{ fontSize: "11px", color: "#60a5fa" }}
                       >
-                        {formatTimeAgo(notif.created_at)}
+                        {formatTimeAgo(notif.createdAt || notif.created_at)}
                       </span>
                     </div>
-                    {!notif.is_read && !link && (
+                    {!notif.is_read && (
                       <div className="unread-dot" style={{ right: 10 }}></div>
                     )}
-                  </a>
+                  </div>
                 );
               })
             )}

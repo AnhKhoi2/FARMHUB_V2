@@ -119,7 +119,7 @@ export async function getById(req, res) {
       return res.status(400).json({ error: "Invalid application id" });
     }
 
-    const app = await ExpertApplication.findById(id).lean();
+    const app = await ExpertApplication.findById(id);
     if (!app) {
       return res.status(404).json({ error: "Application not found" });
     }
@@ -284,7 +284,8 @@ export async function approve(req, res) {
     }
 
     // Lấy đơn (chỉ cần dữ liệu → dùng lean cho nhẹ)
-    const app = await ExpertApplication.findById(id).lean();
+    const app = await ExpertApplication.findById(id);
+
     if (!app) {
       return res.status(404).json({ error: "Application not found" });
     }
@@ -327,7 +328,11 @@ export async function approve(req, res) {
     ]);
 
     // Xoá đơn sau khi duyệt
-    await ExpertApplication.findByIdAndDelete(id);
+// Cập nhật trạng thái đơn sang "approved" thay vì xoá
+app.status = "approved";
+app.review_notes = review_notes || "";
+await app.save();
+
 
     // ✅ Trả response CHO FE NGAY → UI không bị khựng vì chờ gửi mail
     res.status(200).json({

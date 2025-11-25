@@ -99,17 +99,19 @@ body {
   gap: 0.75rem;
   flex-shrink: 0;
   min-width: fit-content;
+  cursor: pointer; /* cho giống header expert */
 }
 
+/* bỏ ô vuông, chỉ giữ container đơn giản cho logo nếu còn dùng */
 .brand-logo {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
 }
 
 .leaf-icon {
@@ -123,7 +125,6 @@ body {
   font-weight: 700;
   letter-spacing: 0.5px;
   white-space: nowrap;
-  cursor: pointer;
 }
 
 /* Navigation */
@@ -177,7 +178,7 @@ body {
 }
 
 /* Profile Section */
-.profile-section {
+.profile-section is {
   position: relative;
 }
 
@@ -546,8 +547,8 @@ body {
   }
 
   .brand-logo {
-    width: 36px;
-    height: 36px;
+    width: auto;
+    height: auto;
   }
 
   .leaf-icon {
@@ -629,6 +630,28 @@ body {
   display: block;
   pointer-events: none;
 }
+
 .floating-chat-btn.hide {
   display: none !important;
+}
+
+/* ===== FARMHUB LOGO TEXT – giống header expert ===== */
+
+.farmhub-logo-text {
+  font-weight: 800;
+  font-size: 1.9rem; /* chữ bự hơn */
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.farmhub-logo-farm {
+  /* màu xanh giống logo global */
+  color: #0f7a3b;
+}
+
+.farmhub-logo-hub {
+  color: #ffffff;
+  margin-left: 3px;
 }

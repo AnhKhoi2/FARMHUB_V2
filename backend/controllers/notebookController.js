@@ -10,10 +10,13 @@ import {
   sendStageSkippedNotification,
   sendStageOverdueNotification,
 } from "./notificationController.js";
+import { sendDailyReminderNotification } from "./notificationController.js";
 import {
   getDaysDifferenceVN,
   toVietnamMidnight,
   getVietnamToday,
+  formatVietnamDate,
+  parseVietnamDate,
 } from "../utils/timezone.js";
 
 // ==========================================
@@ -33,6 +36,15 @@ const getStageEndDate = (plantedDate, stageEndDay) => {
   const endDate = new Date(plantedDate);
   endDate.setDate(endDate.getDate() + stageEndDay - 1);
   return toVietnamMidnight(endDate);
+};
+
+/**
+ * Tính ngày bắt đầu của stage dựa trên planted_date và stage.day_start
+ */
+const getStageStartDate = (plantedDate, stageStartDay) => {
+  const startDate = new Date(plantedDate);
+  startDate.setDate(startDate.getDate() + stageStartDay - 1);
+  return toVietnamMidnight(startDate);
 };
 
 /**
@@ -89,7 +101,10 @@ const assignTemplateToNotebook = async (notebookId, templateId) => {
   notebook.stages_tracking = template.stages.map((stage, index) => ({
     stage_number: stage.stage_number,
     stage_name: stage.name,
-    started_at: index === 0 ? notebook.planted_date : null,
+    started_at:
+      index === 0
+        ? getStageStartDate(notebook.planted_date, stage.day_start)
+        : null,
     is_current: index === 0,
   }));
 
@@ -118,113 +133,197 @@ export const generateDailyChecklist = async (notebookId) => {
   }
 
   const template = notebook.template_id;
+  const today = getVietnamToday();
+
+  const currentStageTracking = notebook.stages_tracking?.find(
+    (s) => s.stage_number === notebook.current_stage
+  );
+
   const currentStage = template.stages.find(
     (s) => s.stage_number === notebook.current_stage
   );
 
   if (!currentStage) {
+    console.log(
+      `⚠️ generateDailyChecklist: template stage not found for notebook ${notebookId} stage ${notebook.current_stage}`
+    );
     return null;
   }
 
-  const today = getVietnamToday();
-
-  // Kiểm tra xem đã đến ngày bắt đầu của stage chưa
-  const currentDay = notebook.current_day || 1;
-  if (currentDay < currentStage.day_start) {
-    console.log(
-      `⏳ Stage ${notebook.current_stage} chưa bắt đầu (current_day: ${currentDay}, day_start: ${currentStage.day_start})`
-    );
-    // Trả về checklist rỗng vì chưa đến ngày bắt đầu stage
-    notebook.daily_checklist = [];
-    notebook.last_checklist_generated = today;
-    await notebook.save();
-    return [];
+  // daysInStage: if tracking started_at exists use it, otherwise fallback to template-based calculation
+  let daysInStage;
+  if (currentStageTracking && currentStageTracking.started_at) {
+    daysInStage = getDaysDifference(currentStageTracking.started_at, today) + 1;
+  } else {
+    daysInStage = Math.floor(notebook.current_day) - currentStage.day_start + 1;
   }
 
-  // Kiểm tra nếu đã tạo checklist hôm nay rồi
+  // Nếu đã có checklist được sinh vào ngày trước đó -> sang ngày mới, xử lý
+  // các task chưa hoàn thành của ngày trước thành overdue, ghi vào stages_tracking
   const lastGenerated = notebook.last_checklist_generated
-    ? toVietnamMidnight(notebook.last_checklist_generated)
+    ? toVietnamMidnight(new Date(notebook.last_checklist_generated))
     : null;
 
-  if (lastGenerated && lastGenerated.getTime() === today.getTime()) {
-    return notebook.daily_checklist;
-  }
-
-  // ✅ SANG NGÀY MỚI → Xử lý overdue cho tasks ngày hôm qua
   if (lastGenerated && lastGenerated.getTime() < today.getTime()) {
-    const currentStageTracking = notebook.stages_tracking.find(
-      (s) => s.stage_number === notebook.current_stage
-    );
-
     if (currentStageTracking) {
-      // Đếm số task chưa hoàn thành của ngày hôm qua
-      const incompleteTasks = notebook.daily_checklist.filter(
-        (task) => !task.is_completed && task.status === "pending"
+      const incompleteTasks = (notebook.daily_checklist || []).filter(
+        (t) => !t.is_completed && t.status === "pending"
       );
 
       if (incompleteTasks.length > 0) {
-        console.log(
-          `⚠️ Found ${incompleteTasks.length} incomplete tasks on ${
-            lastGenerated.toISOString().split("T")[0]
-          } — moving to overdue_tasks`
-        );
-
-        // Initialize overdue_tasks array if missing
-        if (!currentStageTracking.overdue_tasks) {
+        // Ensure overdue_tasks array exists
+        if (!currentStageTracking.overdue_tasks)
           currentStageTracking.overdue_tasks = [];
-        }
 
-        // Move each incomplete task into stageTracking.overdue_tasks
         incompleteTasks.forEach((task) => {
+          // mark the checklist item as overdue
+          task.status = "overdue";
+          task.overdue_at = today;
+
+          // persist an overdue task entry for history and UI
           currentStageTracking.overdue_tasks.push({
             task_name: task.task_name,
-            description: task.description,
-            priority: task.priority || "medium",
-            frequency: task.frequency || "daily",
-            is_completed: task.is_completed || false,
+            description: task.description || "",
             original_date: lastGenerated,
             status: "overdue",
             overdue_at: today,
           });
         });
 
-        // Log moved task names for debugging
-        console.log(
-          `➡️ Moved tasks to overdue: ${incompleteTasks
-            .map((t) => t.task_name)
-            .join(", ")}`
-        );
-
-        // Lưu overdue_summary (use total persisted overdue_tasks length to avoid overwriting previous counts)
-        const totalOverdueCount = currentStageTracking.overdue_tasks.length;
         currentStageTracking.overdue_summary = {
           date: lastGenerated,
-          overdue_count: totalOverdueCount,
+          overdue_count: incompleteTasks.length,
           ready_to_notify: true,
         };
 
-        console.log(
-          `📊 Overdue summary saved: ${totalOverdueCount} total overdue tasks (added ${incompleteTasks.length})`
-        );
+        // Try to send immediate daily reminder notification
+        try {
+          await sendDailyReminderNotification({
+            userId: notebook.user_id,
+            notebookId: notebook._id,
+            notebookName: notebook.notebook_name,
+            incompleteTasks: incompleteTasks.length,
+          });
+        } catch (e) {
+          console.warn("Failed to send daily reminder notification:", e);
+        }
       }
     }
   }
 
-  const daysInStage =
-    Math.floor(notebook.current_day) - currentStage.day_start + 1;
+  let newChecklist = [];
+  const allTasks =
+    currentStage.autogenerated_tasks || currentStage.daily_tasks || [];
+  if (daysInStage === 1) {
+    // Ngày đầu stage: hiển thị toàn bộ task
+    newChecklist = allTasks.map((task) => {
+      let completedEntry = null;
+      if (currentStageTracking?.completed_tasks) {
+        completedEntry = currentStageTracking.completed_tasks.find((t) => {
+          if (t.task_name !== task.task_name) return false;
+          if (!t.completed_at) return false;
+          try {
+            const completedAt = toVietnamMidnight(new Date(t.completed_at));
+            return completedAt.getTime() === today.getTime();
+          } catch (e) {
+            return false;
+          }
+        });
+      }
+      const isCompleted = !!completedEntry;
+      return {
+        task_name: task.task_name,
+        description: task.description,
+        priority: task.priority,
+        frequency: task.frequency,
+        is_completed: isCompleted,
+        status: isCompleted ? "completed" : "pending",
+        completed_at: isCompleted ? completedEntry.completed_at : null,
+        created_at: today,
+      };
+    });
+  } else {
+    // Những ngày tiếp theo: chỉ hiển thị task theo tần suất
+    newChecklist = allTasks
+      .filter((task) => {
+        // Always show daily tasks
+        if (task.frequency === "daily") return true;
 
-  const currentStageTracking = notebook.stages_tracking
-    ? notebook.stages_tracking.find(
-        (s) => s.stage_number === notebook.current_stage
-      )
-    : null;
+        // Interval-based tasks: prefer last completion date if available
+        const intervalMap = {
+          every_2_days: 2,
+          every_3_days: 3,
+          weekly: 7,
+        };
 
-  const newChecklist = (
+        const interval = intervalMap[task.frequency];
+        if (!interval) return false;
+
+        // Find last completed entry for this task in current stage
+        const lastCompleted = currentStageTracking?.completed_tasks
+          ? currentStageTracking.completed_tasks
+              .filter((t) => t.task_name === task.task_name)
+              .reduce((latest, t) => {
+                if (!latest) return t;
+                return new Date(t.completed_at) > new Date(latest.completed_at)
+                  ? t
+                  : latest;
+              }, null)
+          : null;
+
+        if (lastCompleted && lastCompleted.completed_at) {
+          const daysSinceLast = getDaysDifference(
+            lastCompleted.completed_at,
+            today
+          );
+          // Show when days since last completion is >= interval and matches the interval cadence
+          return daysSinceLast >= interval && daysSinceLast % interval === 0;
+        }
+
+        // Fallback to original stage-based cadence if never completed in this stage
+        // We treat the first day of the stage as day 1 (anchor). For an
+        // "every_N_days" cadence we want to show on day 1, then day 1+N,
+        // 1+2N, ... so use (daysInStage - 1) % interval === 0.
+        return (daysInStage - 1) % interval === 0;
+      })
+      .map((task) => {
+        let completedEntry = null;
+        if (currentStageTracking?.completed_tasks) {
+          completedEntry = currentStageTracking.completed_tasks.find((t) => {
+            if (t.task_name !== task.task_name) return false;
+            if (!t.completed_at) return false;
+            try {
+              const completedAt = toVietnamMidnight(new Date(t.completed_at));
+              return completedAt.getTime() === today.getTime();
+            } catch (e) {
+              return false;
+            }
+          });
+        }
+        const isCompleted = !!completedEntry;
+        return {
+          task_name: task.task_name,
+          description: task.description,
+          priority: task.priority,
+          frequency: task.frequency,
+          is_completed: isCompleted,
+          status: isCompleted ? "completed" : "pending",
+          completed_at: isCompleted ? completedEntry.completed_at : null,
+          created_at: today,
+        };
+      });
+  }
+  newChecklist = (
     currentStage.autogenerated_tasks ||
     currentStage.daily_tasks ||
     []
   )
     .filter((task) => {
+      // If this is the first day in the stage, include every task (we'll mark
+      // completed ones as completed). For subsequent days, apply the
+      // frequency-based filters below.
+      if (daysInStage === 1) return true;
+
       // Always show daily tasks
       if (task.frequency === "daily") return true;
 
@@ -268,16 +367,39 @@ export const generateDailyChecklist = async (notebookId) => {
       }
 
       // Fallback to original stage-based cadence if never completed in this stage
-      return daysInStage % interval === 0;
+      // Anchor at stage day 1, so only show when (daysInStage - 1) is a multiple
+      // of the interval (day 1, 1+interval, ...).
+      return (daysInStage - 1) % interval === 0;
     })
-    .map((task) => ({
-      task_name: task.task_name,
-      description: task.description,
-      priority: task.priority,
-      frequency: task.frequency,
-      is_completed: false,
-      status: "pending", // ✅ Set default status
-    }));
+    .map((task) => {
+      // Consider a task completed ONLY if there is a completed_tasks entry
+      // whose completed_at is TODAY (not just any day in the stage)
+      let completedEntry = null;
+      if (currentStageTracking?.completed_tasks) {
+        completedEntry = currentStageTracking.completed_tasks.find((t) => {
+          if (t.task_name !== task.task_name) return false;
+          if (!t.completed_at) return false;
+          try {
+            const completedAt = toVietnamMidnight(new Date(t.completed_at));
+            // ✅ CHỈ mark completed nếu completed_at là HÔM NAY
+            return completedAt.getTime() === today.getTime();
+          } catch (e) {
+            return false;
+          }
+        });
+      }
+      const isCompleted = !!completedEntry;
+      return {
+        task_name: task.task_name,
+        description: task.description,
+        priority: task.priority,
+        frequency: task.frequency,
+        is_completed: isCompleted,
+        status: isCompleted ? "completed" : "pending",
+        completed_at: isCompleted ? completedEntry.completed_at : null,
+        created_at: today,
+      };
+    });
 
   notebook.daily_checklist = newChecklist;
   notebook.last_checklist_generated = today;
@@ -307,7 +429,19 @@ const updateCurrentStage = async (notebookId, newStageNumber) => {
   );
   if (oldStageIndex !== -1) {
     notebook.stages_tracking[oldStageIndex].is_current = false;
-    notebook.stages_tracking[oldStageIndex].completed_at = new Date();
+    // Set completed_at to the template-based stage end date (normalized to VN day-start)
+    const oldStageNumber = notebook.current_stage;
+    const oldTemplateStage = template.stages.find(
+      (s) => s.stage_number === oldStageNumber
+    );
+    if (oldTemplateStage) {
+      notebook.stages_tracking[oldStageIndex].completed_at = getStageEndDate(
+        notebook.planted_date,
+        oldTemplateStage.day_end
+      );
+    } else {
+      notebook.stages_tracking[oldStageIndex].completed_at = new Date();
+    }
   }
 
   const newStageIndex = notebook.stages_tracking.findIndex(
@@ -315,7 +449,20 @@ const updateCurrentStage = async (notebookId, newStageNumber) => {
   );
   if (newStageIndex !== -1) {
     notebook.stages_tracking[newStageIndex].is_current = true;
-    notebook.stages_tracking[newStageIndex].started_at = new Date();
+    // When activating a new stage, set its started_at to the template-planned start date
+    // (planted_date + stage.day_start - 1) normalized to VN day-start. This keeps
+    // persisted started_at consistent with the template schedule for future notebooks.
+    const newTemplateStage = template.stages.find(
+      (s) => s.stage_number === newStageNumber
+    );
+    if (newTemplateStage) {
+      notebook.stages_tracking[newStageIndex].started_at = getStageStartDate(
+        notebook.planted_date,
+        newTemplateStage.day_start
+      );
+    } else {
+      notebook.stages_tracking[newStageIndex].started_at = getVietnamToday();
+    }
   }
 
   notebook.current_stage = newStageNumber;
@@ -324,6 +471,7 @@ const updateCurrentStage = async (notebookId, newStageNumber) => {
 
   await notebook.save();
 
+  // Generate today's checklist immediately for the newly-activated stage
   await generateDailyChecklist(notebookId);
 
   return notebook;
@@ -455,7 +603,11 @@ export const checkNotebookStageStatus = async (notebook) => {
       ) {
         if (autoSkip) {
           currentStageTracking.status = "skipped";
-          currentStageTracking.completed_at = new Date();
+          // Mark completed_at using template-based stage end date
+          currentStageTracking.completed_at = getStageEndDate(
+            notebook.planted_date,
+            templateStage.day_end
+          );
           currentStageTracking.is_current = false;
 
           await sendStageSkippedNotification({
@@ -475,7 +627,19 @@ export const checkNotebookStageStatus = async (notebook) => {
             );
             if (nextStageTracking) {
               nextStageTracking.is_current = true;
-              nextStageTracking.started_at = new Date();
+              // Activate stage using template-planned start date to keep persisted
+              // timeline consistent with template schedule for future notebooks.
+              const nextTemplateStage = template.stages.find(
+                (s) => s.stage_number === nextStageNumber
+              );
+              if (nextTemplateStage) {
+                nextStageTracking.started_at = getStageStartDate(
+                  notebook.planted_date,
+                  nextTemplateStage.day_start
+                );
+              } else {
+                nextStageTracking.started_at = getVietnamToday();
+              }
               nextStageTracking.status = "active";
             }
             notebook.current_stage = nextStageNumber;
@@ -497,6 +661,8 @@ export const checkNotebookStageStatus = async (notebook) => {
           });
 
           await notebook.save();
+          // Generate checklist for the new stage immediately
+          await generateDailyChecklist(notebook._id);
         } else {
           currentStageTracking.status = "overdue";
 
@@ -642,7 +808,13 @@ const completeChecklistTask = async (notebookId, taskName) => {
     console.log(`🎯 Current stage completion: ${stageCompletion}%`);
 
     if (stageCompletion >= 100 && !currentStageTracking.completed_at) {
-      currentStageTracking.completed_at = new Date();
+      // Use template-based end date for consistency
+      const currentTemplateStage = notebook.template_id.stages.find(
+        (s) => s.stage_number === notebook.current_stage
+      );
+      currentStageTracking.completed_at = currentTemplateStage
+        ? getStageEndDate(notebook.planted_date, currentTemplateStage.day_end)
+        : new Date();
       console.log(`✅ Stage ${notebook.current_stage} marked as COMPLETED`);
 
       await notebook.updateProgress(notebook.template_id.stages);
@@ -773,8 +945,13 @@ export const updateStageObservation = async (
           `✅ All observations completed for stage ${notebook.current_stage}`
         );
 
-        // Đánh dấu stage hiện tại hoàn thành
-        stageTracking.completed_at = new Date();
+        // Đánh dấu stage hiện tại hoàn thành (sử dụng template-based end date)
+        const currentTemplateStage = notebook.template_id.stages.find(
+          (s) => s.stage_number === notebook.current_stage
+        );
+        stageTracking.completed_at = currentTemplateStage
+          ? getStageEndDate(notebook.planted_date, currentTemplateStage.day_end)
+          : new Date();
         stageTracking.status = "completed";
 
         // Cập nhật progress
@@ -795,7 +972,17 @@ export const updateStageObservation = async (
 
           if (nextStageTracking) {
             nextStageTracking.is_current = true;
-            nextStageTracking.started_at = new Date();
+            const nextTemplateStage = notebook.template_id.stages.find(
+              (s) => s.stage_number === nextStageNumber
+            );
+            if (nextTemplateStage) {
+              nextStageTracking.started_at = getStageStartDate(
+                notebook.planted_date,
+                nextTemplateStage.day_start
+              );
+            } else {
+              nextStageTracking.started_at = getVietnamToday();
+            }
             nextStageTracking.status = "active";
           }
 
@@ -803,8 +990,10 @@ export const updateStageObservation = async (
           notebook.current_stage = nextStageNumber;
 
           // Không tạo checklist ngay, chỉ tạo khi sang ngày mới
+          // Activate next stage starting today and generate checklist immediately
           notebook.daily_checklist = [];
           await notebook.save();
+          await generateDailyChecklist(notebook._id);
 
           console.log(
             `✅ Stage switched to ${nextStageNumber} successfully (checklist will be generated on next day)`
@@ -945,6 +1134,13 @@ export const createNotebook = asyncHandler(async (req, res) => {
   }
 
   // Tạo notebook với plant_group
+  // Normalize planted_date to Vietnam day-start to avoid timezone shifts.
+  // Use parseVietnamDate so date-only strings (e.g. '2025-11-24') are
+  // interpreted as Vietnam local dates instead of UTC-midnight.
+  const normalizedPlantedDate = planted_date
+    ? parseVietnamDate(planted_date)
+    : getVietnamToday();
+
   const newNotebook = await Notebook.create({
     user_id: req.user.id,
     notebook_name,
@@ -953,7 +1149,7 @@ export const createNotebook = asyncHandler(async (req, res) => {
     plant_group: plant_group || "other",
     description,
     cover_image,
-    planted_date: planted_date || new Date(),
+    planted_date: normalizedPlantedDate,
   });
 
   // ✅ TỰ ĐỘNG GÁN TEMPLATE nếu tìm được
@@ -1323,12 +1519,36 @@ export const getNotebookTimeline = asyncHandler(async (req, res) => {
     };
   });
 
+  // Thêm ngày hiển thị (dựa trên planted_date + template day_start/day_end)
+  const timelineWithDates = timeline.map((t) => {
+    const templateStage = template.stages.find(
+      (s) => s.stage_number === t.stage_number
+    );
+
+    if (!templateStage) return t;
+
+    const stageStart = getStageStartDate(
+      notebook.planted_date,
+      templateStage.day_start
+    );
+    const stageEnd = getStageEndDate(
+      notebook.planted_date,
+      templateStage.day_end
+    );
+
+    return {
+      ...t,
+      stage_start_date: formatVietnamDate(stageStart),
+      stage_end_date: formatVietnamDate(stageEnd),
+    };
+  });
+
   const timelineData = {
     planted_date: notebook.planted_date,
     current_day: notebook.current_day,
     progress: notebook.progress,
     total_days: template.total_days,
-    timeline,
+    timeline: timelineWithDates,
   };
 
   return ok(res, timelineData, null, "Timeline fetched successfully");
@@ -1776,7 +1996,9 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
   }
 
   const task = currentStageTracking.overdue_tasks.find(
-    (t) => t.task_name === task_name && t.status === "overdue"
+    (t) =>
+      (t.task_name || "").trim() === (task_name || "").trim() &&
+      t.status === "overdue"
   );
 
   if (!task) {
@@ -1787,7 +2009,11 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
 
   // Mark as completed
   task.is_completed = true;
-  task.completed_at = new Date();
+  // If this is a makeup for an original date, attribute the completion to the
+  // original date so it counts toward that day's daily_log.
+  task.completed_at = task.original_date
+    ? new Date(task.original_date)
+    : new Date();
   task.status = "completed";
 
   // Add to completed_tasks for tracking (if not already)
@@ -1798,11 +2024,18 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
     (t) => t.task_name === task_name
   );
   if (!alreadyCompleted) {
+    const completedAtForRecord = task.original_date
+      ? new Date(task.original_date)
+      : new Date();
     currentStageTracking.completed_tasks.push({
       task_name,
-      completed_at: new Date(),
+      completed_at: completedAtForRecord,
     });
   }
+
+  // Persist the change to overdue_tasks (marking the task completed) before
+  // regenerating the daily checklist so DB reflects the updated status.
+  await notebook.save();
 
   // Update today's daily_log progress to include this makeup completion
   // Ensure we have today's checklist generated so progress math is correct
@@ -1838,11 +2071,15 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
   const totalTodayTasks = todayTasks.length || 0;
 
   if (totalTodayTasks > 0) {
-    const newProgress = Math.min(
-      100,
-      Math.round(((completedTodayTasks + 1) / totalTodayTasks) * 100)
+    // Use the actual completed tasks count for today's progress. The previous
+    // implementation added `+1` to account for the makeup completion, but
+    // generateDailyChecklist already marks makeup tasks as completed for
+    // today when `completed_at` is set to today. Adding +1 caused
+    // overcounting or incorrect daily_logs when the task was present in
+    // today's checklist. Use the straightforward ratio instead.
+    dailyLog.daily_progress = Math.round(
+      (completedTodayTasks / totalTodayTasks) * 100
     );
-    dailyLog.daily_progress = newProgress;
   } else {
     // If no daily tasks today, conservatively set a small progress increment (e.g., 10%)
     dailyLog.daily_progress = Math.min(
@@ -1879,6 +2116,56 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
     refreshedStageTracking.overdue_summary.notified_at = new Date();
   }
 
+  // Also update daily_log for the original date of the overdue task we just completed.
+  try {
+    const completedOverdue = refreshedStageTracking.overdue_tasks.find(
+      (t) => t.task_name === task_name && t.status === "completed"
+    );
+    if (completedOverdue && completedOverdue.original_date) {
+      const origKey = toVietnamMidnight(
+        new Date(completedOverdue.original_date)
+      )
+        .toISOString()
+        .split("T")[0];
+
+      if (!refreshedStageTracking.daily_logs)
+        refreshedStageTracking.daily_logs = [];
+
+      let origLog = refreshedStageTracking.daily_logs.find(
+        (log) =>
+          toVietnamMidnight(new Date(log.date)).toISOString().split("T")[0] ===
+          origKey
+      );
+
+      if (!origLog) {
+        origLog = {
+          date: toVietnamMidnight(new Date(completedOverdue.original_date)),
+          daily_progress: 0,
+        };
+        refreshedStageTracking.daily_logs.push(origLog);
+      }
+
+      // Count overdue items that belong to this original date
+      const related = refreshedStageTracking.overdue_tasks.filter(
+        (ot) =>
+          toVietnamMidnight(new Date(ot.original_date))
+            .toISOString()
+            .split("T")[0] === origKey
+      );
+      const completedCount = related.filter(
+        (r) => r.status === "completed"
+      ).length;
+      const totalCount = related.length || 1;
+
+      origLog.daily_progress = Math.round((completedCount / totalCount) * 100);
+    }
+  } catch (e) {
+    console.warn(
+      "Failed to update original-date daily_log for overdue completion:",
+      e
+    );
+  }
+
   await refreshedNotebook.save();
 
   return ok(
@@ -1890,6 +2177,150 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
     },
     null,
     "Overdue task completed successfully"
+  );
+});
+
+// ✅ Hoàn thành nhiều overdue tasks cùng lúc
+export const completeOverdueTasksBulk = asyncHandler(async (req, res) => {
+  const { id } = req.params; // notebook_id
+  const { task_names } = req.body;
+
+  if (!task_names || !Array.isArray(task_names) || task_names.length === 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "task_names (array) is required" });
+  }
+
+  const notebook = await Notebook.findOne({
+    _id: id,
+    user_id: req.user.id,
+    status: { $ne: "deleted" },
+  }).populate("template_id");
+
+  if (!notebook) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Notebook not found" });
+  }
+
+  const currentStageTracking = notebook.stages_tracking.find(
+    (s) => s.stage_number === notebook.current_stage
+  );
+
+  if (!currentStageTracking || !currentStageTracking.overdue_tasks) {
+    return res
+      .status(404)
+      .json({ success: false, message: "No overdue tasks found" });
+  }
+
+  const toComplete = task_names.map((name) => name.trim());
+  const completedNow = [];
+
+  toComplete.forEach((taskName) => {
+    const task = currentStageTracking.overdue_tasks.find(
+      (t) =>
+        (t.task_name || "").trim() === (taskName || "").trim() &&
+        t.status === "overdue"
+    );
+    if (task) {
+      task.is_completed = true;
+      task.completed_at = task.original_date
+        ? new Date(task.original_date)
+        : new Date();
+      task.status = "completed";
+
+      if (!currentStageTracking.completed_tasks)
+        currentStageTracking.completed_tasks = [];
+      const already = currentStageTracking.completed_tasks.some(
+        (t) => t.task_name === taskName
+      );
+      if (!already) {
+        const completedAtForRecord = task.original_date
+          ? new Date(task.original_date)
+          : new Date();
+        currentStageTracking.completed_tasks.push({
+          task_name: taskName,
+          completed_at: completedAtForRecord,
+        });
+      }
+
+      completedNow.push(taskName);
+    }
+  });
+  // Persist changes to the notebook (marking overdue tasks completed)
+  await notebook.save();
+
+  // Regenerate checklist once
+  await generateDailyChecklist(notebook._id);
+
+  // Reload notebook
+  const refreshedNotebook = await Notebook.findById(notebook._id).populate(
+    "template_id"
+  );
+
+  const todayDate = getVietnamToday();
+  const today = todayDate.toISOString().split("T")[0];
+
+  const refreshedStageTracking = refreshedNotebook.stages_tracking.find(
+    (s) => s.stage_number === refreshedNotebook.current_stage
+  );
+
+  if (!refreshedStageTracking.daily_logs)
+    refreshedStageTracking.daily_logs = [];
+
+  let dailyLog = refreshedStageTracking.daily_logs.find(
+    (log) => log.date?.toISOString().split("T")[0] === today
+  );
+  if (!dailyLog) {
+    dailyLog = { date: todayDate, daily_progress: 0 };
+    refreshedStageTracking.daily_logs.push(dailyLog);
+  }
+
+  const todayTasks = refreshedNotebook.daily_checklist || [];
+  const completedTodayTasks = todayTasks.filter((t) => t.is_completed).length;
+  const totalTodayTasks = todayTasks.length || 0;
+
+  if (totalTodayTasks > 0) {
+    dailyLog.daily_progress = Math.round(
+      (completedTodayTasks / totalTodayTasks) * 100
+    );
+  }
+
+  // Recalculate progress
+  if (refreshedNotebook.template_id && refreshedNotebook.template_id.stages) {
+    await refreshedNotebook.updateProgress(
+      refreshedNotebook.template_id.stages
+    );
+  }
+
+  // Recompute overdue_summary
+  const remainingOverdue = currentStageTracking.overdue_tasks.filter(
+    (t) => t.status === "overdue"
+  ).length;
+  if (!refreshedStageTracking.overdue_summary)
+    refreshedStageTracking.overdue_summary = {
+      date: null,
+      overdue_count: 0,
+      ready_to_notify: false,
+    };
+  refreshedStageTracking.overdue_summary.overdue_count = remainingOverdue;
+  if (remainingOverdue === 0) {
+    refreshedStageTracking.overdue_summary.ready_to_notify = false;
+    refreshedStageTracking.overdue_summary.notified_at = new Date();
+  }
+
+  await refreshedNotebook.save();
+
+  return ok(
+    res,
+    {
+      notebook_id: refreshedNotebook._id,
+      completed: completedNow,
+      stage_completion: await refreshedNotebook.getCurrentStageCompletion(),
+      progress: refreshedNotebook.progress,
+    },
+    null,
+    "Bulk overdue tasks completed successfully"
   );
 });
 
@@ -1918,18 +2349,23 @@ export const getOverdueDetail = asyncHandler(async (req, res) => {
     (s) => s.stage_number === notebook.current_stage
   );
 
-  const overdueTasks = currentStageTracking?.overdue_tasks || [];
+  const allOverdueTasks = currentStageTracking?.overdue_tasks || [];
+  // Return only tasks that are still in 'overdue' status. Completed/skipped
+  // entries remain in the array for history but should not be counted as active overdue.
+  const activeOverdueTasks = allOverdueTasks.filter(
+    (t) => t.status === "overdue"
+  );
 
   console.log(
-    `🔍 Overdue tasks for notebook=${id} stage=${notebook.current_stage}: persisted=${overdueTasks.length}`
+    `🔍 Overdue tasks for notebook=${id} stage=${notebook.current_stage}: persisted=${allOverdueTasks.length} active=${activeOverdueTasks.length}`
   );
 
   return ok(
     res,
     {
       overdue_date: currentStageTracking?.overdue_summary?.date || null,
-      overdue_count: overdueTasks.length,
-      overdue_tasks: overdueTasks,
+      overdue_count: activeOverdueTasks.length,
+      overdue_tasks: activeOverdueTasks,
     },
     null,
     "Overdue tasks detail fetched successfully"

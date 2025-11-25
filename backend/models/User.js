@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
         return this.provider === "local";
       },
     },
-
+    avatar: { type: String, default: "" },
     provider: { type: String, enum: ["local", "google"], default: "local" },
     googleId: { type: String, default: null },
     role: {

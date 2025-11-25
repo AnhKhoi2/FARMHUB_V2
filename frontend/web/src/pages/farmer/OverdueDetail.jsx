@@ -7,6 +7,7 @@ const OverdueDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [overdueData, setOverdueData] = useState(null);
+  const [processingTask, setProcessingTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,9 +22,11 @@ const OverdueDetail = () => {
       const data = response.data?.data || response.data;
       setOverdueData(data);
       setError(null);
+      return data;
     } catch (err) {
       console.error("Error fetching overdue detail:", err);
       setError("Không thể tải danh sách công việc quá hạn");
+      return null;
     } finally {
       setLoading(false);
     }
@@ -67,9 +70,17 @@ const OverdueDetail = () => {
 
   const handleCompleteTask = async (taskName) => {
     try {
+      setProcessingTask(taskName);
       await notebookApi.completeOverdueTask(id, taskName);
-      // After completing overdue task, navigate back to notebook detail (progress tab)
-      navigate(`/farmer/notebooks/${id}`);
+
+      // Refresh overdue detail to get the accurate remaining count
+      const refreshed = await fetchOverdueDetail();
+      setProcessingTask(null);
+
+      // If no more overdue tasks remain, navigate back to notebook detail
+      if (!refreshed || refreshed.overdue_count === 0) {
+        navigate(`/farmer/notebooks/${id}`);
+      }
     } catch (err) {
       console.error("Error completing task:", err);
       alert("Không thể hoàn thành công việc");
@@ -201,12 +212,19 @@ const OverdueDetail = () => {
                 <button
                   onClick={() => handleCompleteTask(task.task_name)}
                   className="btn-complete-task"
-                  disabled={task.is_completed}
+                  disabled={
+                    task.is_completed || processingTask === task.task_name
+                  }
                 >
                   {task.is_completed ? (
                     <>
                       <span className="btn-icon">✓</span>
                       Đã hoàn thành
+                    </>
+                  ) : processingTask === task.task_name ? (
+                    <>
+                      <span className="btn-icon">⏳</span>
+                      Đang xử lý...
                     </>
                   ) : (
                     <>
