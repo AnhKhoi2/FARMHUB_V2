@@ -90,7 +90,6 @@ export default function AdminExpertApplications() {
 
   const reject = async (id) => {
     const reason = window.prompt("Nhập lý do từ chối (có thể để trống):") ?? "";
-    // Nếu bấm Cancel -> null, nhưng đã xử lý trên; vẫn cho gửi với reason rỗng
 
     try {
       const res = await axiosClient.patch(
@@ -130,9 +129,18 @@ export default function AdminExpertApplications() {
 
   const renderStatusBadge = (st) => {
     let cls = "bg-secondary";
-    if (st === "pending") cls = "bg-warning text-dark";
-    else if (st === "approved") cls = "bg-success";
-    else if (st === "rejected") cls = "bg-danger";
+    let label = "Không xác định";
+
+    if (st === "pending") {
+      cls = "bg-warning text-dark";
+      label = "Đang chờ";
+    } else if (st === "approved") {
+      cls = "bg-success";
+      label = "Đã duyệt";
+    } else if (st === "rejected") {
+      cls = "bg-danger";
+      label = "Đã từ chối";
+    }
 
     return <span className={`badge ${cls}`}>{label}</span>;
   };
@@ -175,6 +183,15 @@ export default function AdminExpertApplications() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
+        </div>
+        <div className="col-auto">
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm"
+            onClick={resetFilter}
+          >
+            Reset
+          </button>
         </div>
       </div>
 
