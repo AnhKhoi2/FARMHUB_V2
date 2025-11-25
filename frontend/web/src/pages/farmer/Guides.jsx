@@ -11,35 +11,34 @@ export default function Guides() {
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
+  const [pageSize, setPageSize] = useState(18);
   const [total, setTotal] = useState(0);
 
   const fetchGuides = async (search = "", pageParam = 1, limitParam = pageSize) => {
     setLoading(true);
     try {
-      const res = await guidesApi.getAllGuides({ q: search, page: pageParam, limit: limitParam });
-      const payload = res?.data?.data || res?.data || {};
+      // Use `search` param (backend expects this) and prefer server meta for total count
+      const res = await guidesApi.getAllGuides({ search: search, page: pageParam, limit: limitParam });
+      const body = res?.data || {};
+      const payload = body.data || body;
+      const meta = body.meta || {};
 
       let items = [];
-      let totalCount = 0;
-
       if (Array.isArray(payload)) {
         items = payload;
-        totalCount = payload.length;
       } else if (payload.docs) {
         items = payload.docs;
-        totalCount = payload.totalDocs || payload.total || items.length;
       } else if (payload.items) {
         items = payload.items;
-        totalCount = payload.total || items.length;
-      } else if (payload.items === undefined && payload.docs === undefined) {
+      } else {
         const maybeItems = payload.items || payload.data || [];
         items = Array.isArray(maybeItems) ? maybeItems : [];
-        totalCount = payload.total || items.length;
       }
 
+      const totalCount = Number(meta.total || payload.totalDocs || payload.total || items.length) || 0;
+
       setGuides(items);
-      setTotal(Number(totalCount) || 0);
+      setTotal(totalCount);
       setPage(Number(pageParam));
     } catch (err) {
       console.error("Failed to load guides", err);
@@ -65,36 +64,36 @@ export default function Guides() {
     fetchGuides(q, p, pSize);
   };
 
-  return (
-    <>
-      <Header />
-      <div className="container-fluid" style={{ padding: 24 }}>
-        {/* Header & Search */}
-        <div
-          style={{
-            marginBottom: 24,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <Title level={3} style={{ margin: 0 }}>
-              Hướng dẫn trồng trọt
-            </Title>
+    return (
+      <>
+        <Header />
+        <div className="container-fluid" style={{ padding: 24 }}>
+          {/* Header & Search */}
+          <div
+            style={{
+              marginBottom: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <Title level={3} style={{ margin: 0 }}>
+                Hướng dẫn trồng trọt
+              </Title>
+            </div>
+            <div style={{ flexGrow: 1, maxWidth: 360, marginTop: 8 }}>
+              <Input.Search
+                placeholder="Tìm rau/cây trồng..."
+                allowClear
+                enterButton
+                onSearch={onSearch}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
           </div>
-          <div style={{ flexGrow: 1, maxWidth: 360, marginTop: 8 }}>
-            <Input.Search
-              placeholder="Tìm rau/cây trồng..."
-              allowClear
-              enterButton
-              onSearch={onSearch}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </div>
-        </div>
 
         {/* Content */}
         {loading ? (
@@ -134,7 +133,6 @@ export default function Guides() {
                   current={page}
                   pageSize={pageSize}
                   total={total}
-                  showQuickJumper
                   onChange={onPageChange}
                   style={{ display: 'inline-block' }}
                 />
