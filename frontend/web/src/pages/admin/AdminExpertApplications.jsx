@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+﻿import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import AdminLayout from "../../components/AdminLayout";
 import axiosClient from "../../api/shared/axiosClient";
@@ -138,7 +138,6 @@ export default function AdminExpertApplications() {
   const renderStatusBadge = (st) => {
     let cls = "bg-secondary";
     let label = "Không xác định";
-
     if (st === "pending") {
       cls = "bg-warning text-dark";
       label = "Đang chờ";
@@ -192,7 +191,7 @@ export default function AdminExpertApplications() {
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <div className="col-auto">
+        <div class="col-auto">
           <button
             type="button"
             className="btn btn-outline-secondary btn-sm"

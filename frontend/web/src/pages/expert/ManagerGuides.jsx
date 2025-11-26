@@ -28,7 +28,6 @@ import {
   PlusOutlined,
   SearchOutlined,
   ReloadOutlined,
-  DeleteFilled,
 } from "@ant-design/icons";
 
 import HeaderExpert from "../../components/shared/HeaderExpert";
@@ -263,6 +262,7 @@ export default function ManagerGuides() {
               <Col>
                 <Space>
                   <Button
+                    shape="round"
                     icon={<ReloadOutlined />}
                     onClick={() => {
                       setPlantSearch("");
@@ -273,13 +273,15 @@ export default function ManagerGuides() {
                     Làm mới
                   </Button>
                   <Button
-                    icon={<DeleteFilled />}
+                    shape="round"
+                    icon={<DeleteOutlined />}
                     onClick={() => navigate("/managerguides/trash")}
                   >
                     Thùng rác
                   </Button>
                   <Button
                     type="primary"
+                    shape="round"
                     icon={<PlusOutlined />}
                     onClick={onCreate}
                   >
@@ -333,8 +335,7 @@ export default function ManagerGuides() {
                 current: page,
                 pageSize: limit,
                 total,
-                showSizeChanger: true,
-                pageSizeOptions: [10, 15, 20, 50],
+                showSizeChanger: false,
                 showTotal: (total) => `Tổng ${total} mục`,
               }}
               locale={{ emptyText: "Không có hướng dẫn" }}

@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { profileApi } from "../../api/shared/profileApi.js";
 import axiosClient from "../../api/shared/axiosClient.js";
 import { toast } from "react-toastify";
 import authApi from "../../api/shared/authApi.js";
 import expertApplicationApi from "../../api/shared/expertApplicationApi.js";
+import { updateUserProfile, setUser } from "../../redux/authSlice";
+import { useSelector } from "react-redux";
 
 import "../../css/auth/Profile.css";
 import Header from "../../components/shared/Header.jsx";
@@ -289,6 +292,8 @@ function ExpertApplicationModal({
    3. COMPONENT CHÍNH
 ============================ */
 export default function ProfilePage() {
+  const dispatch = useDispatch();
+  const reduxUser = useSelector((s) => s.auth.user);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -511,6 +516,83 @@ export default function ProfilePage() {
       // update local serverUser if backend returned user info
       if (updated.user) setServerUser((prev) => ({ ...(prev || {}), ...updated.user }));
       setSnapshot(normalized);
+      // If backend returned full user object, set it into Redux so Header updates immediately.
+      try {
+        if (updated.user) {
+          // ensure avatar has cache-busting
+          const u = { ...updated.user };
+          if (u.profile?.avatar) u.profile.avatar = u.profile.avatar + "?v=" + Date.now();
+          console.log("[ProfilePage] dispatching setUser:", u);
+          dispatch(setUser(u));
+          console.log("[ProfilePage] localStorage.user after setUser:", localStorage.getItem("user"));
+              // DOM-level fallback: force update header avatar(s) immediately
+              try {
+                const newAvatar = u.profile?.avatar || u.avatar || null;
+                if (newAvatar) {
+                  const els = document.querySelectorAll("img.avatar");
+                  els.forEach((el) => {
+                    try {
+                      el.src = newAvatar;
+                      el.dataset.retry = "1";
+                    } catch (e) {
+                      void e;
+                    }
+                  });
+                  const headerImg = document.querySelector(".user-menu-header img");
+                  if (headerImg) headerImg.src = newAvatar;
+                }
+              } catch (e) {
+                // ignore DOM failures
+                void e;
+              }
+        } else {
+          const profileUpdate = {};
+          if (normalized.avatar) profileUpdate.avatar = normalized.avatar + "?v=" + Date.now();
+          if (normalized.fullName) profileUpdate.name = normalized.fullName;
+
+          if (Object.keys(profileUpdate).length) {
+            console.log("[ProfilePage] dispatching updateUserProfile (fallback):", profileUpdate);
+            // Try to merge into existing redux user and set full user to ensure Header updates
+            try {
+              const current = reduxUser || JSON.parse(localStorage.getItem("user")) || {};
+              const merged = {
+                ...current,
+                profile: {
+                  ...(current.profile || {}),
+                  ...profileUpdate,
+                },
+              };
+              console.log("[ProfilePage] dispatching setUser(merged):", merged);
+              dispatch(setUser(merged));
+              console.log("[ProfilePage] localStorage.user after setUser(merged):", localStorage.getItem("user"));
+                // DOM-level fallback for merged user
+                try {
+                  const newAvatar = merged.profile?.avatar || merged.avatar || null;
+                  if (newAvatar) {
+                    const els = document.querySelectorAll("img.avatar");
+                    els.forEach((el) => {
+                      try {
+                        el.src = newAvatar;
+                        el.dataset.retry = "1";
+                      } catch (e) {
+                        void e;
+                      }
+                    });
+                    const headerImg = document.querySelector(".user-menu-header img");
+                    if (headerImg) headerImg.src = newAvatar;
+                  }
+                } catch (e) {
+                  void e;
+                }
+            } catch (e) {
+              // fallback to updateUserProfile reducer
+              dispatch(updateUserProfile(profileUpdate));
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
       setEditMode(false);
       toast.success("Đã lưu hồ sơ thành công");
     } catch (err) {

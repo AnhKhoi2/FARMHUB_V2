@@ -102,7 +102,7 @@ const Login = () => {
     <div className="login-page">
       <div className="wrapper">
         <div className="form-box login">
-          <h2>Login</h2>
+          <h2>Đăng nhập</h2>
           <form onSubmit={handleLogin}>
             {/* Thông báo phiên hết hạn */}
             {sessionExpired && (
@@ -124,7 +124,7 @@ const Login = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
-              <label>Username</label>
+              <label>Tên đăng nhập</label>
             </div>
 
             <div className="input-box" style={{ position: "relative" }}>
@@ -151,19 +151,19 @@ const Login = () => {
                 <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
               </span>
 
-              <label>Password</label>
+              <label>Mật khẩu</label>
             </div>
 
             <button type="submit" className="btn" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
 
             {/* Forgot password */}
             <div className="login-register">
               <p>
-                Forgot your password?{" "}
+                Quên mật khẩu?{" "}
                 <Link to="/forgot-password" className="register-link">
-                  Reset
+                  Đặt lại
                 </Link>
               </p>
             </div>
@@ -171,9 +171,9 @@ const Login = () => {
             {/* Register */}
             <div className="login-register">
               <p>
-                Don't have an account?{" "}
+                Chưa có tài khoản?{" "}
                 <Link to="/register" className="register-link">
-                  Register
+                  Đăng ký
                 </Link>
               </p>
             </div>
@@ -181,7 +181,7 @@ const Login = () => {
 
           <div className="divider">
             <div className="line" />
-            <span>or</span>
+            <span>hoặc</span>
             <div className="line" />
           </div>
 

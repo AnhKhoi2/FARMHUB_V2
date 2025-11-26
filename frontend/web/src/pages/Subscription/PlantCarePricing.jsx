@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import "./PlantCarePricing.css";
+import Header from "../../components/shared/Header";
+import Footer from "../../components/shared/Footer";
 import vnpayService from "../../api/vnpayService";
 
 const plans = [
@@ -106,7 +108,9 @@ const PlantCarePricing = () => {
   };
 
   return (
-    <div className="pricing-page p-4">
+    <>
+      <Header />
+      <div className="pricing-page p-4">
       <button
         type="button"
         className="back-button"
@@ -184,6 +188,8 @@ const PlantCarePricing = () => {
         </div>
       )}
     </div>
+      <Footer />
+    </>
   );
 };
 

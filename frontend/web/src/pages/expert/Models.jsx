@@ -12,11 +12,13 @@ import {
   message,
   Typography,
 } from "antd";
+import { useNavigate } from 'react-router-dom';
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   RollbackOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import axiosClient from "../../api/shared/axiosClient";
 // import Header from "../../components/shared/Header"; // không dùng nữa
@@ -37,6 +39,8 @@ export default function ExpertModels() {
   const [drawerType, setDrawerType] = useState("create"); // create / edit
   const [currentItem, setCurrentItem] = useState(null);
   const [form] = Form.useForm();
+
+  const navigate = useNavigate();
 
   // ====== STATE CHAT ======
   const [chatOpen, setChatOpen] = useState(false);
@@ -189,18 +193,41 @@ export default function ExpertModels() {
       <HeaderExpert onChatClick={handleChatClick} />
 
       <div style={{ padding: 24 }}>
-        <Space style={{ marginBottom: 16 }} align="center">
-          <Title level={4} style={{ margin: 0 }}>
-            Mô hình trồng
-          </Title>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => openDrawer("create")}
-          >
-            Tạo mô hình
-          </Button>
-        </Space>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div>
+            <Title level={4} style={{ margin: 0 }}>
+              Mô hình trồng
+            </Title>
+          </div>
+          <div>
+            <Space>
+              <Button
+                shape="round"
+                onClick={() => fetchItems()}
+                icon={<ReloadOutlined />}
+              >
+                Làm mới
+              </Button>
+
+              <Button
+                shape="round"
+                onClick={() => navigate('/experthome/models/trash')}
+                icon={<DeleteOutlined />}
+              >
+                Thùng rác
+              </Button>
+
+              <Button
+                type="primary"
+                shape="round"
+                icon={<PlusOutlined />}
+                onClick={() => openDrawer("create")}
+              >
+                Tạo mới
+              </Button>
+            </Space>
+          </div>
+        </div>
 
         {loading ? (
           <Spin
@@ -217,6 +244,8 @@ export default function ExpertModels() {
             scroll={{ x: "max-content" }}
           />
         )}
+
+            {/* Trash is now its own page at /experthome/models/trash */}
 
         <Drawer
           title={drawerType === "create" ? "Tạo mô hình" : "Sửa mô hình"}

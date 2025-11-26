@@ -43,6 +43,7 @@ import AdminLayout from "../components/AdminLayout.jsx";
 import ModeratorHome from "../pages/moderator/ModeratorHome";
 import ManagerPost from "../pages/moderator/ManagerPost";
 import ManagerReport from "../pages/moderator/ManagerReport";
+import ModeratorProfile from "../pages/moderator/ModeratorProfile";
 
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
@@ -54,6 +55,7 @@ import FarmerGuideDetail from "../pages/farmer/GuideDetail";
 import Guides from "../pages/farmer/Guides";
 import GuideEdit from "../pages/expert/GuideEdit";
 import TrashGuides from "../pages/expert/TrashGuides";
+import TrashModels from "../pages/expert/TrashModels";
 import PostDetail from "../pages/PostDetail";
 
 // Farmer Pages - Notebook
@@ -256,6 +258,14 @@ export default function AppRoutes() {
             </ModeratorRoute>
           }
         />
+        <Route
+          path="/moderator/profile"
+          element={
+            <ModeratorRoute>
+              <ModeratorProfile />
+            </ModeratorRoute>
+          }
+        />
         {/* ===== Expert area ===== */}
         <Route
           path="/expert/home"
@@ -368,6 +378,14 @@ export default function AppRoutes() {
         {/* Direct expert home route for quick access/testing */}
         <Route path="/experthome" element={<ExpertHome />} />
         <Route path="/experthome/models" element={<ExpertModels />} />
+        <Route
+          path="/experthome/models/trash"
+          element={
+            <PrivateRoute>
+              <TrashModels />
+            </PrivateRoute>
+          }
+        />
         <Route path="/experts" element={<ExpertsList />} />
         <Route path="/pricing" element={<PlantCarePricing />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />

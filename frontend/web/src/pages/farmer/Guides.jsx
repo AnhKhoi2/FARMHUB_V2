@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import guidesApi from "../../api/shared/guidesApi";
-import { Card, Row, Col, Typography, Spin, message, Input, Pagination } from "antd";
+import { Card, Row, Col, Typography, Spin, message, Input, Pagination, Select } from "antd";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
@@ -11,37 +11,52 @@ export default function Guides() {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
+  const [pageSize, setPageSize] = useState(18);
   const [total, setTotal] = useState(0);
 
-  const fetchGuides = async (search = "", pageParam = 1, limitParam = pageSize) => {
+  const fetchGuides = async (search = "", pageParam = 1, limitParam = pageSize, categoryParam = "") => {
     setLoading(true);
     try {
-      const res = await guidesApi.getAllGuides({ q: search, page: pageParam, limit: limitParam });
-      const payload = res?.data?.data || res?.data || {};
+      // Use `search` param (backend expects this) and prefer server meta for total count
+      const params = { search: search, page: pageParam, limit: limitParam };
+      if (categoryParam) params.category = categoryParam;
+      const res = await guidesApi.getAllGuides(params);
+      const body = res?.data || {};
+      const payload = body.data || body;
+      const meta = body.meta || {};
 
       let items = [];
-      let totalCount = 0;
-
       if (Array.isArray(payload)) {
         items = payload;
-        totalCount = payload.length;
       } else if (payload.docs) {
         items = payload.docs;
-        totalCount = payload.totalDocs || payload.total || items.length;
       } else if (payload.items) {
         items = payload.items;
-        totalCount = payload.total || items.length;
-      } else if (payload.items === undefined && payload.docs === undefined) {
+      } else {
         const maybeItems = payload.items || payload.data || [];
         items = Array.isArray(maybeItems) ? maybeItems : [];
-        totalCount = payload.total || items.length;
       }
 
+      const totalCount = Number(meta.total || payload.totalDocs || payload.total || items.length) || 0;
+
       setGuides(items);
-      setTotal(Number(totalCount) || 0);
+      setTotal(totalCount);
       setPage(Number(pageParam));
+
+      // derive available categories from returned items (unique non-empty categories)
+      try {
+        const cats = Array.from(new Set(items.map((it) => (it.category || "")).filter(Boolean)));
+        setCategories(cats);
+        // if selectedCategory is not in cats anymore, reset to empty
+        if (selectedCategory && !cats.includes(selectedCategory)) {
+          setSelectedCategory("");
+        }
+      } catch (e) {
+        // ignore
+      }
     } catch (err) {
       console.error("Failed to load guides", err);
       message.error("Không thể tải hướng dẫn");
@@ -51,51 +66,66 @@ export default function Guides() {
   };
 
   useEffect(() => {
-    fetchGuides(q, 1, pageSize);
+    fetchGuides(q, 1, pageSize, selectedCategory);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onSearch = (val) => {
     setQ(val);
-    fetchGuides(val, 1, pageSize);
+    fetchGuides(val, 1, pageSize, selectedCategory);
   };
 
   const onPageChange = (p, pSize) => {
     setPage(p);
     setPageSize(pSize);
-    fetchGuides(q, p, pSize);
+    fetchGuides(q, p, pSize, selectedCategory);
   };
 
-  return (
-    <>
-      <Header />
-      <div className="container-fluid" style={{ padding: 24 }}>
-        {/* Header & Search */}
-        <div
-          style={{
-            marginBottom: 24,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <Title level={3} style={{ margin: 0 }}>
-              Hướng dẫn trồng trọt
-            </Title>
+  const onCategoryChange = (val) => {
+    setSelectedCategory(val);
+    // when category changes, fetch page 1
+    fetchGuides(q, 1, pageSize, val);
+  };
+
+    return (
+      <>
+        <Header />
+        <div className="container-fluid" style={{ padding: 24 }}>
+          {/* Header & Search */}
+          <div
+            style={{
+              marginBottom: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <Title level={3} style={{ margin: 0 }}>
+                Hướng dẫn trồng trọt
+              </Title>
+            </div>
+            <div style={{ flexGrow: 1, maxWidth: 520, marginTop: 8, display: 'flex', gap: 8 }}>
+              <Select
+                value={selectedCategory}
+                onChange={onCategoryChange}
+                placeholder="Tất cả danh mục"
+                style={{ minWidth: 160 }}
+                options={[{ label: 'Tất cả', value: '' }, ...(categories || []).map((c) => ({ label: c, value: c }))]}
+                allowClear
+              />
+              <Input.Search
+                placeholder="Tìm rau/cây trồng..."
+                allowClear
+                enterButton
+                onSearch={onSearch}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                style={{ flex: 1 }}
+              />
+            </div>
           </div>
-          <div style={{ flexGrow: 1, maxWidth: 360, marginTop: 8 }}>
-            <Input.Search
-              placeholder="Tìm rau/cây trồng..."
-              allowClear
-              enterButton
-              onSearch={onSearch}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </div>
-        </div>
 
         {/* Content */}
         {loading ? (
@@ -135,7 +165,6 @@ export default function Guides() {
                   current={page}
                   pageSize={pageSize}
                   total={total}
-                  showQuickJumper
                   onChange={onPageChange}
                   style={{ display: 'inline-block' }}
                 />
