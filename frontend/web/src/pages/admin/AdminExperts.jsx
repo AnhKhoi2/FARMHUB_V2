@@ -427,9 +427,6 @@ export default function AdminExperts() {
                   </div>
                   <div className="mb-2 text-muted small">
                     <div>
-                      <strong>expert_id:</strong> {detail.expert_id}
-                    </div>
-                    <div>
                       <strong>Ngày tạo:</strong>{' '}
                       {detail.created_at
                         ? new Date(detail.created_at).toLocaleString('vi-VN')

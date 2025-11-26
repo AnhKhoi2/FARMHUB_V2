@@ -11,6 +11,8 @@ import {
   MessageCircle,
   Leaf,
   BarChart3,
+  TreeDeciduous,
+  Book,
   User,
   LogOut,
   Layers,
@@ -38,13 +40,13 @@ function getLocalUserFallback() {
         }
       }
     }
-  } catch (_) {}
+  } catch (_) { }
 
   return {
     name: "Expert",
     email: "",
     role: "Chuyên gia nông nghiệp",
-    avatar: "", 
+    avatar: "",
   };
 }
 
@@ -132,7 +134,7 @@ export default function ExpertHome({
 
         // Nếu có tin nhắn MỚI tăng thêm → phát âm thanh
         if (count > prevUnread) {
-          notifySound.play().catch(() => {});
+          notifySound.play().catch(() => { });
         }
 
         setPrevUnread(count);
@@ -157,37 +159,39 @@ export default function ExpertHome({
 
   // ---------------------- LẤY PROFILE CHUYÊN GIA ----------------------
 
-useEffect(() => {
-  (async () => {
-    try {
-      const res = await axiosClient.get("/api/experts/me/basic");
-      const data = res?.data?.data;
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axiosClient.get("/api/experts/me/basic");
+        const data = res?.data?.data;
 
-      if (data) {
-        const payload = {
-          name: data.name || "Expert",
-          email: data.email || "",
-          role: data.role || "Chuyên gia nông nghiệp",
-          avatar: data.avatar, // luôn là ảnh upload hoặc DiceBear từ BE
-        };
+        if (data) {
+          const payload = {
+            name: data.name || "Expert",
+            email: data.email || "",
+            role: data.role || "Chuyên gia nông nghiệp",
+            avatar: data.avatar, // luôn là ảnh upload hoặc DiceBear từ BE
+          };
+          setProfile(payload);
 
-        setProfile(payload);
+          // Lưu đồng bộ cho tất cả màn hình dùng chung
+          localStorage.setItem("authUser", JSON.stringify(payload));
+          localStorage.setItem("profile", JSON.stringify(payload));
 
-        // Cập nhật localStorage cho lần sau reload
-        localStorage.setItem("profile", JSON.stringify(payload));
-        setLoading(false);
-        return;
+          setLoading(false);
+
+          return;
+        }
+      } catch (err) {
+        console.error("Lỗi lấy profile từ API:", err);
       }
-    } catch (err) {
-      console.error("Lỗi lấy profile từ API:", err);
-    }
 
-    // Fallback chỉ khi API thật sự fail
-    const fallback = getLocalUserFallback();
-    setProfile(fallback);
-    setLoading(false);
-  })();
-}, []);
+      // Fallback chỉ khi API thật sự fail
+      const fallback = getLocalUserFallback();
+      setProfile(fallback);
+      setLoading(false);
+    })();
+  }, []);
 
 
   if (loading) {
@@ -211,17 +215,17 @@ useEffect(() => {
           <div className="header-container">
             {/* ====== BRAND: dùng logo FarmHub thay icon lá ====== */}
             <div
-  className="header-brand clickable"
-  onClick={() => {
-    navigate("/expert");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }}
->
-  <span className="farmhub-logo-text">
-    <span className="farmhub-logo-farm">Farm</span>
-    <span className="farmhub-logo-hub">Hub</span>
-  </span>
-</div>
+              className="header-brand clickable"
+              onClick={() => {
+                navigate("/expert");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              <span className="farmhub-logo-text">
+                <span className="farmhub-logo-farm">Farm</span>
+                <span className="farmhub-logo-hub">Hub</span>
+              </span>
+            </div>
 
 
             <nav className="header-nav">
@@ -241,6 +245,7 @@ useEffect(() => {
                   navigate("/managerguides");
                 }}
               >
+                <Book size={20} />
                 <span>Quản lý hướng dẫn</span>
               </button>
 
@@ -256,10 +261,11 @@ useEffect(() => {
                 className="nav-button nav-button-template"
                 onClick={() => navigate("/expert/plant-templates")}
               >
+                <TreeDeciduous />
                 <span>Bộ Mẫu Cây Trồng</span>
               </button>
 
-              
+
             </nav>
 
             <div className="header-right">
@@ -412,8 +418,8 @@ useEffect(() => {
                     <p className="item-meta">
                       {t.plant_group || "Nhóm cây chung"} ·{" "}
                       {t.total_days ||
-                      t.total_duration ||
-                      t.totalDays ? (
+                        t.total_duration ||
+                        t.totalDays ? (
                         <>
                           {t.total_days ||
                             t.total_duration ||
@@ -455,9 +461,8 @@ useEffect(() => {
 
       {/* Nút chat nổi */}
       <button
-        className={`floating-chat-btn chat-btn-with-badge ${
-          chatOpen ? "hide" : ""
-        }`}
+        className={`floating-chat-btn chat-btn-with-badge ${chatOpen ? "hide" : ""
+          }`}
         onClick={() => {
           setChatOpen(true);
           setUnreadCount(0);

@@ -43,13 +43,18 @@ export async function list(req, res) {
     }
 
     const items = await Expert.find(filter)
-      .select(PROJECTION) // include các field cần
-      .select("+user") // ép include user (phòng có select:false)
+      .select(PROJECTION)
+      .select("+user")
       .populate({
         path: "user",
         select: "email role avatar isVerified isDeleted"
       })
       .lean();
+
+    // 🟢 FIXED: Trả avatar ra root level để FE không bị undefined
+    items.forEach(e => {
+      e.avatar = e.user?.avatar || "";
+    });
 
     return res.status(200).json({ data: items });
   } catch (err) {
@@ -57,6 +62,7 @@ export async function list(req, res) {
     return res.status(500).json({ error: "Failed to get experts" });
   }
 }
+
 
 // ===============================
 // GET /api/experts/:id   (accepts expert_id or _id)
