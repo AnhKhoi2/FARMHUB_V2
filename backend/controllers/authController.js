@@ -16,6 +16,7 @@ import {
 
 import { OAuth2Client } from "google-auth-library";
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+import Profile from "../models/Profile.js";
 // =========================
 // Email helpers (inlined)
 // =========================
@@ -234,6 +235,19 @@ login: asyncHandler(async (req, res) => {
   // Ẩn password cho sạch dữ liệu trả về
   const userSafe = user.toObject ? user.toObject() : { ...user._doc };
   delete userSafe.password;
+
+  // Attach profile (avatar, fullName, etc.) so FE sees avatar immediately after login
+  try {
+    const profileDoc = await Profile.findOne({ userId: user._id }).lean();
+    if (profileDoc) {
+      userSafe.profile = profileDoc;
+    } else {
+      userSafe.profile = { avatar: "" };
+    }
+  } catch (e) {
+    // non-fatal: continue without profile
+    userSafe.profile = userSafe.profile || { avatar: "" };
+  }
 
   return ok(res, { user: userSafe, accessToken, refreshToken });
 }),
@@ -493,6 +507,15 @@ loginWithGoogle: asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: refreshToken } });
 
   const { password: _pw, ...userInfo } = user._doc;
+
+  // Attach profile for Google-login as well
+  try {
+    const profileDoc = await Profile.findOne({ userId: user._id }).lean();
+    if (profileDoc) userInfo.profile = profileDoc;
+    else userInfo.profile = { avatar: picture || "" };
+  } catch (e) {
+    userInfo.profile = userInfo.profile || { avatar: picture || "" };
+  }
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,

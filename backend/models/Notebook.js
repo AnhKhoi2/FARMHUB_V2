@@ -94,6 +94,9 @@ const StageTrackingSchema = new mongoose.Schema(
       ready_to_notify: { type: Boolean, default: false },
       notified_at: { type: Date },
     },
+    // Track pending transition (khi hoàn thành observations, chờ chuyển stage vào ngày mai)
+    pending_transition: { type: Boolean, default: false },
+    transition_date: { type: Date }, // Ngày hoàn thành observations
   },
   { _id: false }
 );

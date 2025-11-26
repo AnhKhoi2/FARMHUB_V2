@@ -7,13 +7,14 @@ const ProfileSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true },
   fullName: { type: String, trim: true, maxlength: 100 },
   avatar: {
-    type: String,
-    trim: true,
-    validate: {
-      validator: (v) => !v || /^https?:\/\//i.test(v),
-      message: "Avatar URL không hợp lệ",
-    },
+  type: String,
+  trim: true,
+  validate: {
+    validator: (v) => !v || /^(https?:\/\/|\/)/i.test(v),
+    message: "Avatar URL không hợp lệ",
   },
+},
+
   phone: {
     type: String,
     trim: true,

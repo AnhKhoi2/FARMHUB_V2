@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+﻿import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import AdminLayout from "../../components/AdminLayout";
 import axiosClient from "../../api/shared/axiosClient";
@@ -89,39 +89,46 @@ export default function AdminExpertApplications() {
   };
 
   const reject = async (id) => {
-    const reason = window.prompt("Nhập lý do từ chối (có thể để trống):") ?? "";
-    // Nếu bấm Cancel -> null, nhưng đã xử lý trên; vẫn cho gửi với reason rỗng
-
+    const reason = window.prompt(
+      "Nhập lý do từ chối (có thể để trống, bấm Cancel để hủy):"
+    );
+  
+    // ⬇️ Admin bấm Cancel -> prompt trả về null -> KHÔNG gọi API
+    if (reason === null) {
+      return; // hủy quá trình từ chối, không đổi trạng thái đơn
+    }
+  
     try {
       const res = await axiosClient.patch(
         `/api/expert-applications/${id}/reject`,
-        { reason }
+        { reason: reason ?? "" }   // vẫn cho phép để trống nếu admin bấm OK
       );
-
+  
       toast.success(res.data?.message || "Đã từ chối đơn.");
       load();
     } catch (err) {
       console.error("Reject error:", err);
       const res = err.response;
-
+  
       if (!res) {
         toast.error("Không thể kết nối server.");
         return;
       }
-
+  
       if (res.status === 400) {
         toast.error(res.data?.error || "Đơn không hợp lệ.");
         return;
       }
-
+  
       if (res.status === 404) {
         toast.error("Không tìm thấy đơn đăng ký.");
         return;
       }
-
+  
       toast.error("Lỗi server khi từ chối đơn.");
     }
   };
+  
 
   const resetFilter = () => {
     setStatus("pending");
@@ -130,7 +137,7 @@ export default function AdminExpertApplications() {
 
   const renderStatusBadge = (st) => {
     let cls = "bg-secondary";
-    let label = "Tất cả";
+    let label = "Không xác định";
     if (st === "pending") {
       cls = "bg-warning text-dark";
       label = "Đang chờ";
@@ -184,14 +191,13 @@ export default function AdminExpertApplications() {
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <div className="col-auto">
+        <div class="col-auto">
           <button
             type="button"
-            className="btn btn-sm"
-            style={{ borderColor: "#E0E0E0", background: "#fff", color: "#2E7D32", textTransform: "uppercase", padding: "4px 10px" }}
+            className="btn btn-outline-secondary btn-sm"
             onClick={resetFilter}
           >
-            Đặt lại
+            Reset
           </button>
         </div>
       </div>

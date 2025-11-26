@@ -5,8 +5,7 @@ import axios from "axios";
 // In production the frontend and backend are usually served from same origin.
 const isDev =
   process.env.NODE_ENV === "development" ||
-  (typeof window !== "undefined" &&
-    window.location.hostname === "localhost");
+  (typeof window !== "undefined" && window.location.hostname === "localhost");
 
 const defaultBase = isDev
   ? "http://localhost:5000"
@@ -66,7 +65,44 @@ axiosClient.interceptors.request.use((config) => {
 
 // ===== RESPONSE INTERCEPTOR =====
 axiosClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    try {
+      const url = response.config?.url || "";
+      const method = (response.config?.method || "").toLowerCase();
+
+      // Nếu là các API hoàn thành task của notebook -> phát event để các component khác refresh
+      if (
+        method === "post" &&
+        /\/notebooks\/\d+\/(checklist\/complete|daily\/overdue\/complete|daily\/overdue\/complete-bulk)/.test(
+          url
+        )
+      ) {
+        const m = url.match(/\/notebooks\/(\d+)/);
+        const notebookId = m && m[1];
+        if (typeof window !== "undefined") {
+          try {
+            window.dispatchEvent(
+              new CustomEvent("notebook:task-updated", {
+                detail: { notebookId },
+              })
+            );
+          } catch (e) {
+            // Fallback for older browsers
+            const ev = document.createEvent && document.createEvent("Event");
+            if (ev && ev.initEvent) {
+              ev.initEvent("notebook:task-updated", true, true);
+              ev.detail = { notebookId };
+              window.dispatchEvent(ev);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
+
+    return response;
+  },
   (error) => {
     const status = error.response?.status;
     const data = error.response?.data || {};
@@ -82,33 +118,30 @@ axiosClient.interceptors.response.use(
       url.startsWith("/auth/google");
 
     if (status === 401) {
-      // 1) Nếu là login / register / forgot / reset → KHÔNG redirect,
-      // để form tự hiển thị "Tên đăng nhập hoặc mật khẩu không đúng", v.v.
       if (isAuthPath) {
         return Promise.reject(error);
       }
 
-      // 2) Nếu BE nói rõ là TOKEN_EXPIRED → xoá token + đẩy về /login
       if (code === "TOKEN_EXPIRED" || code === "REFRESH_TOKEN_EXPIRED") {
         console.warn("Token hết hạn → chuyển về trang login");
 
         if (typeof window !== "undefined") {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("token");
-          window.location.href = "/login";
+          window.location.href = "/login?expired=1";
         }
 
-        // Không cần reject nữa vì đã điều hướng
         return;
       }
 
-      // 3) Các lỗi 401 khác (sai token, token không hợp lệ, thiếu token...)
-      // → CHỈ trả lỗi, không tự redirect
-      console.warn("401 với code khác:", code, "- chỉ hiển thị lỗi, không redirect");
+      console.warn(
+        "401 với code khác:",
+        code,
+        "- chỉ hiển thị lỗi, không redirect"
+      );
       return Promise.reject(error);
     }
 
-    // Các lỗi khác giữ nguyên
     return Promise.reject(error);
   }
 );

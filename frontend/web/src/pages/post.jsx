@@ -33,6 +33,8 @@ const UI_CATEGORIES = [
   "Phân bón",
   "Thiết bị",
   "Dịch vụ",
+  "Trao đổi",
+  "Cho tặng",
   "Khác",
 ];
 
@@ -80,6 +82,9 @@ export default function Post() {
     location: "",
     contactPhone: "",
   });
+
+  // listingType: 'sell' | 'exchange' | 'giveaway' — controls price visibility and semantics
+  const [listingType, setListingType] = useState("sell");
 
   const [uploadImages, setUploadImages] = useState([]);
 
@@ -260,6 +265,27 @@ export default function Post() {
         width={500}
         title="Đăng bài mới"
       >
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Loại bài</label>
+          <Select
+            value={listingType}
+            onChange={(v) => {
+              setListingType(v);
+              // set category according to the chosen type
+              if (v === "exchange") setFormData((p) => ({ ...p, category: "Trao đổi", price: "" }));
+              else if (v === "giveaway") setFormData((p) => ({ ...p, category: "Cho tặng", price: "" }));
+              else setFormData((p) => ({ ...p, category: p.category || "Nông sản" }));
+            }}
+            options={[
+              { label: "Bán", value: "sell" },
+              { label: "Trao đổi", value: "exchange" },
+              { label: "Cho tặng", value: "giveaway" },
+            ]}
+            dropdownMatchSelectWidth={false}
+            dropdownStyle={{ minWidth: 220 }}
+          />
+        </div>
+
         <Input
           style={{ marginBottom: 12 }}
           placeholder="Tiêu đề"
@@ -277,16 +303,25 @@ export default function Post() {
             label: c,
             value: c,
           }))}
+          dropdownMatchSelectWidth={false}
+          dropdownStyle={{ minWidth: 240 }}
         />
 
-        <Input
-          style={{ marginBottom: 12 }}
-          placeholder="Giá"
-          value={formData.price}
-          onChange={(e) =>
-            setFormData({ ...formData, price: e.target.value })
-          }
-        />
+        {/* Price only shown for selling items */}
+        {listingType === "sell" ? (
+          <Input
+            style={{ marginBottom: 12 }}
+            placeholder="Giá"
+            value={formData.price}
+            onChange={(e) =>
+              setFormData({ ...formData, price: e.target.value })
+            }
+          />
+        ) : (
+          <div style={{ marginBottom: 12, color: '#4b5563' }}>
+            <em>Không cần nhập giá cho mục Trao đổi hoặc Cho tặng.</em>
+          </div>
+        )}
 
         <TextArea
           rows={4}

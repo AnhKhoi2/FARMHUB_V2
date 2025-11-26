@@ -4,8 +4,10 @@ import {
   Leaf,
   MessageCircle,
   BarChart3,
+  Book,
   Bell,
   User,
+  TreeDeciduous,
   LogOut,
 } from "lucide-react";
 
@@ -157,8 +159,10 @@ export default function HeaderExpert({
               }
               navigate("/managerguides");
             }}
+            
             title="Quản lý hướng dẫn"
           >
+            <Book />
             <span>Quản lý hướng dẫn</span>
           </button>
 
@@ -178,6 +182,7 @@ export default function HeaderExpert({
             onClick={() => navigate("/expert/plant-templates")}
             title="Plant Templates"
           >
+            <TreeDeciduous />
             <span>Bộ Mẫu Cây Trồng</span>
           </button>
 

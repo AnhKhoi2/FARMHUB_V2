@@ -191,6 +191,82 @@ export const sendDailyReminderNotification = async ({
 };
 
 /**
+ * Gửi thông báo khi daily tasks đã được sinh cho hôm nay
+ */
+export const sendDailyTasksGeneratedNotification = async ({
+  userId,
+  notebookId,
+  notebookName,
+  tasksCount,
+}) => {
+  const title = `🔔 Công việc hôm nay đã sẵn sàng: ${notebookName}`;
+  const message = `Hệ thống đã tạo ${tasksCount} công việc cho hôm nay. Hãy mở nhật ký và hoàn thành nhé!`;
+
+  const notification = await Notification.create({
+    user_id: userId,
+    notebook_id: notebookId,
+    type: "daily_tasks_generated",
+    title,
+    message,
+    metadata: {
+      notebook_name: notebookName,
+      tasks_count: tasksCount,
+    },
+  });
+
+  console.log(
+    `📧 Sent daily_tasks_generated notification to user ${userId} for notebook ${notebookId}`
+  );
+
+  return notification;
+};
+
+/**
+ * Gửi thông báo khi một giai đoạn yêu cầu quan sát nhưng chưa đủ quan sát
+ */
+export const sendObservationRequiredNotification = async ({
+  userId,
+  notebookId,
+  notebookName,
+  stageNumber,
+  stageName,
+  requiredKeys = [],
+  recordedKeys = [],
+}) => {
+  const title = `👁️ Yêu cầu quan sát: ${notebookName}`;
+
+  const missing = requiredKeys.filter((k) => !recordedKeys.includes(k));
+  const reqList = requiredKeys.length ? requiredKeys.join(", ") : "(none)";
+  const recList = recordedKeys.length ? recordedKeys.join(", ") : "(none)";
+
+  const message = `Giai đoạn "${stageName}" yêu cầu quan sát: ${reqList}. Bạn đã ghi: ${recList}. Thiếu: ${
+    missing.length ? missing.join(", ") : "(không)"
+  }. Vui lòng vào nhật ký để kiểm tra và cập nhật.`;
+
+  const notification = await Notification.create({
+    user_id: userId,
+    notebook_id: notebookId,
+    type: "observation_required",
+    title,
+    message,
+    metadata: {
+      stage_number: stageNumber,
+      stage_name: stageName,
+      notebook_name: notebookName,
+      required_keys: requiredKeys,
+      recorded_keys: recordedKeys,
+      missing_keys: missing,
+    },
+  });
+
+  console.log(
+    `📧 Sent observation_required notification to user ${userId} for notebook ${notebookId}, stage ${stageNumber}`
+  );
+
+  return notification;
+};
+
+/**
  * Lấy danh sách thông báo của user
  */
 const getUserNotifications = async (userId, options = {}) => {

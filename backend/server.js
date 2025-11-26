@@ -34,14 +34,15 @@ import notificationRoutes from "./routes/notifications.js";
 import vnpayRoutes from "./routes/vnpay.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
+import { startDailyTasksNotificationJob } from "./jobs/dailyTasksNotificationJob.js";
 import pino from "pino-http";
 import ApiError, { NotFound } from "./utils/ApiError.js";
 import geocodeRoute from "./routes/geocode.js";
 import weatherRoute from "./routes/weather_v2.js";
 import airRoute from "./routes/air.js";
 
-import tilesRoute from './routes/tiles.js';
-import plantRoute from './routes/plant.js';
+import tilesRoute from "./routes/tiles.js";
+import plantRoute from "./routes/plant.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 const PORT = process.env.PORT || 5000;
 
@@ -78,12 +79,12 @@ app.use(cookieParser());
 // app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/api", plantAdviceRoutes);
-app.get('/api/health', (req, res) => res.json({ ok: true }));
-app.use('/api/geocode', geocodeRoute);
-app.use('/api/weather', weatherRoute);
-app.use('/api/air', airRoute);
-app.use('/api/plant', plantRoute);
-app.use('/api/ow/tiles', tilesRoute);
+app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.use("/api/geocode", geocodeRoute);
+app.use("/api/weather", weatherRoute);
+app.use("/api/air", airRoute);
+app.use("/api/plant", plantRoute);
+app.use("/api/ow/tiles", tilesRoute);
 app.use("/auth", authRoute);
 app.use("/profile", profileRoute);
 app.use("/admin/diseases", diseaseRoutes);
@@ -127,6 +128,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // 🔄 Khởi chạy cron jobs
 startStageMonitoringJob(); // Chạy hàng ngày lúc 8:00 sáng - kiểm tra stage status
 startTaskReminderJob(); // Chạy hàng ngày lúc 9:00 sáng - nhắc nhở tasks chưa hoàn thành
+startDailyTasksNotificationJob(); // Chạy hàng ngày lúc 7:00 sáng VN - thông báo tasks đã được sinh
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);

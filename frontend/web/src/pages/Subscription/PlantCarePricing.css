@@ -1,86 +1,167 @@
 .pricing-page {
-    min-height: 80vh;
+    min-height: 100vh;
+    /* fill the full viewport height */
+    box-sizing: border-box;
+    padding: 24px;
+    /* ensure padding accounted inside full-height */
+    /* Pale emerald / light green background, fixed so it covers entire viewport */
+    background: linear-gradient(180deg, #f6fbf7 0%, #e6f7ef 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    color: #0f172a;
+}
+
+.pricing-hero h1 {
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+}
+
+.pricing-hero .lead {
+    color: #475569;
+    margin-bottom: 0.75rem;
 }
 
 .plans-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
 .plan-card {
-    background: #111;
-    border: 1px solid #2c2c2c;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.06);
     padding: 1.25rem;
-    border-radius: 8px;
+    border-radius: 12px;
     position: relative;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.plan-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
 .plan-card.current {
-    box-shadow: 0 4px 18px rgba(0, 128, 0, 0.15);
-    border-color: #28a745;
+    border-color: #10b981;
+    box-shadow: 0 12px 30px rgba(16, 185, 129, 0.08);
+}
+
+.plan-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
 }
 
 .badge-popular {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background: #28a745;
-    color: #050505;
+    background: linear-gradient(90deg, #06b6d4, #10b981);
+    color: #042a2b;
     padding: 6px 10px;
     border-radius: 999px;
-    font-weight: 700
+    font-weight: 700;
+    font-size: 0.75rem;
 }
 
-.price {
-    font-size: 1.5rem;
-    font-weight: 700
+.plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.price-number {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.price-unit {
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.desc {
+    margin-top: 0.5rem;
 }
 
 .features {
-    margin-top: 0.75rem;
-    color: #ddd
+    margin-top: 1rem;
+    color: #334155;
+    list-style: none;
+    padding: 0;
+}
+
+.features li {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.features li::before {
+    content: '✓';
+    color: #10b981;
+    font-weight: 700;
+}
+
+.plan-actions {
+    margin-top: 1.25rem;
 }
 
 .btn-upgrade {
-    background: #28a745;
-    color: #fff;
+    background: linear-gradient(90deg, #06b6d4, #10b981);
+    color: #042a2b;
     border: none;
-    padding: 0.6rem 1rem;
-    border-radius: 999px
+    padding: 0.65rem 1rem;
+    border-radius: 999px;
+    font-weight: 700;
 }
 
 .btn-disabled {
-    background: #6c757d;
-    color: #fff;
+    background: #e6eef3;
+    color: #94a3b8;
     border: none;
-    padding: 0.6rem 1rem;
-    border-radius: 999px
+    padding: 0.65rem 1rem;
+    border-radius: 999px;
 }
 
 .checkout-panel {
     margin-top: 1.25rem;
-    background: #0b2b0b;
+    background: #ffffff;
     padding: 1rem;
     border-radius: 8px;
-    border: 1px solid #163a16
+    border: 1px solid rgba(15, 23, 42, 0.04);
 }
 
-.qr-placeholder {
-    width: 200px;
-    height: 200px;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    color: #222;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0.75rem auto
+/* Back button fixed top-left */
+.back-button {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 1200;
+    background: rgba(255, 255, 255, 0.9);
+    color: #064e3b;
+    border: 1px solid rgba(6, 78, 59, 0.12);
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 6px 14px rgba(6, 78, 59, 0.06);
+    font-weight: 700;
+    cursor: pointer;
 }
 
-.back {
-    background: transparent;
-    color: #fff;
-    border: 1px solid #ccc;
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px
+.back-button:hover {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 576px) {
+    .back-button {
+        top: 10px;
+        left: 10px;
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
 }

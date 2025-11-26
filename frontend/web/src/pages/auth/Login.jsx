@@ -1,7 +1,6 @@
-// Login.jsx
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { loginThunk, loginWithGoogleThunk } from "../../redux/authThunks.js";
 import { GoogleLogin } from "@react-oauth/google";
 import "../../css/auth/Login.css";
@@ -14,6 +13,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // ⭐ Chỉ dùng username
   const [username, setUsername] = useState("");
@@ -25,6 +25,10 @@ const Login = () => {
   // NEW: quản lý popup & đích điều hướng
   const [streakData, setStreakData] = useState(null);
   const [redirectTo, setRedirectTo] = useState("/");
+
+  // 👉 đọc query ?expired=1
+  const params = new URLSearchParams(location.search);
+  const sessionExpired = params.get("expired") === "1";
 
   const nextRouteByRole = (role) => {
     if (role === "admin") return "/admin";
@@ -56,27 +60,26 @@ const Login = () => {
     navigate(dest);
   };
 
-const handleLogin = async (e) => {
-  e.preventDefault();
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-  const cleanedUsername = username.trim();
-  if (!cleanedUsername || !password) return;
+    const cleanedUsername = username.trim();
+    if (!cleanedUsername || !password) return;
 
-  // loginThunk của bạn trả về { success, role }
-  const result = await dispatch(
-    loginThunk({
-      username: cleanedUsername,
-      password,
-    })
-  );
+    // loginThunk của bạn trả về { success, role }
+    const result = await dispatch(
+      loginThunk({
+        username: cleanedUsername,
+        password,
+      })
+    );
 
-  const { success, role } = result || {};
+    const { success, role } = result || {};
 
-  if (success) {
-    await afterLogin(role || "user");
-  }
-};
-
+    if (success) {
+      await afterLogin(role || "user");
+    }
+  };
 
   const handleGoogleSuccess = async (cred) => {
     const idToken = cred?.credential;
@@ -99,8 +102,16 @@ const handleLogin = async (e) => {
     <div className="login-page">
       <div className="wrapper">
         <div className="form-box login">
-          <h2>Login</h2>
+          <h2>Đăng nhập</h2>
           <form onSubmit={handleLogin}>
+            {/* Thông báo phiên hết hạn */}
+            {sessionExpired && (
+              <div className="error-message" style={{ marginBottom: "10px" }}>
+                Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.
+              </div>
+            )}
+
+            {/* Lỗi login từ Redux */}
             {error && <div className="error-message">{error}</div>}
 
             <div className="input-box">
@@ -113,7 +124,7 @@ const handleLogin = async (e) => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
-              <label>Username</label>
+              <label>Tên đăng nhập</label>
             </div>
 
             <div className="input-box" style={{ position: "relative" }}>
@@ -137,23 +148,32 @@ const handleLogin = async (e) => {
                   fontSize: "20px",
                 }}
               >
-                <ion-icon
-                  name={showPassword ? "eye-off" : "eye"}
-                ></ion-icon>
+                <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
               </span>
 
-              <label>Password</label>
+              <label>Mật khẩu</label>
             </div>
 
             <button type="submit" className="btn" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
 
+            {/* Forgot password */}
             <div className="login-register">
               <p>
-                Don't have an account?{" "}
+                Quên mật khẩu?{" "}
+                <Link to="/forgot-password" className="register-link">
+                  Đặt lại
+                </Link>
+              </p>
+            </div>
+
+            {/* Register */}
+            <div className="login-register">
+              <p>
+                Chưa có tài khoản?{" "}
                 <Link to="/register" className="register-link">
-                  Register
+                  Đăng ký
                 </Link>
               </p>
             </div>
@@ -161,7 +181,7 @@ const handleLogin = async (e) => {
 
           <div className="divider">
             <div className="line" />
-            <span>or</span>
+            <span>hoặc</span>
             <div className="line" />
           </div>
 

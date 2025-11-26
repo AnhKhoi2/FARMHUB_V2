@@ -22,6 +22,8 @@ const NotificationSchema = new mongoose.Schema(
         "stage_skipped", // Stage đã bị skip
         "stage_completed", // Stage hoàn thành
         "daily_reminder", // Nhắc nhở hàng ngày
+        "daily_tasks_generated", // Thông báo khi daily tasks đã được sinh
+        "observation_required", // Yêu cầu quan sát chưa hoàn thành
       ],
       required: true,
     },
