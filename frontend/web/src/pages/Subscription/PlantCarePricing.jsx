@@ -15,6 +15,7 @@ const plans = [
       "Truy cập hướng dẫn trồng cây cơ bản",
       "Sử dụng sổ tay ghi chép trồng cây",
       "Dự báo thời tiết cơ bản",
+      "Chat AI hỗ trợ chăm sóc cây",
     ],
     buttonText: "Dùng gói Cơ Bản",
     popular: false,
@@ -27,30 +28,11 @@ const plans = [
     description: "Tự động hóa việc chăm sóc với công nghệ AI",
     features: [
       "Tất cả tính năng gói Cơ Bản",
-      "Chẩn đoán bệnh cây bằng AI (3 lần/tháng)",
-      "Nhắc nhở tưới nước, bón phân tự động",
-      "Lịch trồng cây cá nhân hóa theo thời tiết",
-      "Ưu đãi 10% tại cửa hàng FarmHub",
+      "Tạo sổ tay chăm sóc không giới hạn",
+      "Chẩn đoán bệnh cây bằng AI không giới hạn",
     ],
     buttonText: "Nâng cấp lên Thông Minh",
     popular: true,
-  },
-  {
-    key: "pro",
-    name: "Chuyên Gia",
-    price: 199000,
-    unit: "VNĐ/tháng",
-    description: "Toàn quyền truy cập, hỗ trợ chuyên sâu và thương mại",
-    features: [
-      "Tất cả tính năng gói Thông Minh",
-      "Chẩn đoán bệnh cây AI không giới hạn",
-      "Hỏi đáp với chuyên gia trong 24h",
-      "Tư vấn cá nhân & phân tích tiến độ cây trồng",
-      "Ưu đãi 20% tại cửa hàng FarmHub",
-      "Hỗ trợ kỹ thuật 1-1",
-    ],
-    buttonText: "Nâng cấp lên Chuyên Gia",
-    popular: false,
   },
 ];
 
@@ -124,11 +106,23 @@ const PlantCarePricing = () => {
   };
 
   return (
-    <div className="pricing-page bg-dark text-white p-4">
-      <div className="text-center mb-4">
-        <h1 className="display-4 text-success">Nâng cấp gói của bạn</h1>
+    <div className="pricing-page p-4">
+      <button
+        type="button"
+        className="back-button"
+        onClick={() => window.history.back()}
+        aria-label="Quay lại"
+      >
+        ← Quay lại
+      </button>
+      <div className="pricing-hero text-center mb-4">
+        <h1 className="display-4">Nâng cấp gói của bạn</h1>
+        <p className="lead text-muted">
+          Chọn gói phù hợp — đơn giản, trực quan và tiết kiệm thời gian chăm sóc
+          vườn của bạn.
+        </p>
         {!user && (
-          <p className="text-warning">
+          <p className="text-danger">
             Vui lòng <Link to="/login">đăng nhập</Link> để nâng cấp gói
           </p>
         )}
@@ -144,31 +138,41 @@ const PlantCarePricing = () => {
               plan.key === currentPlan ? "current" : ""
             }`}
           >
-            {plan.popular && <div className="badge-popular">PHỔ BIẾN</div>}
-            <h3>{plan.name}</h3>
-            <p className="price">
-              {plan.price.toLocaleString("vi-VN")}{" "}
-              <span className="unit">{plan.unit}</span>
-            </p>
-            <p className="desc">{plan.description}</p>
-            <button
-              disabled={plan.key === currentPlan || loading || !user}
-              onClick={() => handleUpgrade(plan.key)}
-              className={`btn ${
-                plan.key === currentPlan ? "btn-disabled" : "btn-upgrade"
-              }`}
-            >
-              {loading
-                ? "Đang xử lý..."
-                : plan.key === currentPlan
-                ? "Gói hiện tại của bạn"
-                : plan.buttonText}
-            </button>
+            <div className="plan-header">
+              <h3 className="plan-name">{plan.name}</h3>
+              {plan.popular && <div className="badge-popular">PHỔ BIẾN</div>}
+            </div>
+
+            <div className="plan-price">
+              <span className="price-number">
+                {plan.price.toLocaleString("vi-VN")}
+              </span>
+              <span className="price-unit">{plan.unit}</span>
+            </div>
+
+            <p className="desc text-muted">{plan.description}</p>
+
             <ul className="features">
               {plan.features.map((f, i) => (
                 <li key={i}>✓ {f}</li>
               ))}
             </ul>
+
+            <div className="plan-actions">
+              <button
+                disabled={plan.key === currentPlan || loading || !user}
+                onClick={() => handleUpgrade(plan.key)}
+                className={`btn ${
+                  plan.key === currentPlan ? "btn-disabled" : "btn-upgrade"
+                }`}
+              >
+                {loading
+                  ? "Đang xử lý..."
+                  : plan.key === currentPlan
+                  ? "Gói hiện tại của bạn"
+                  : plan.buttonText}
+              </button>
+            </div>
           </div>
         ))}
       </div>

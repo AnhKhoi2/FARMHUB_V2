@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import Notebook from "../models/Notebook.js";
 import PlantTemplate from "../models/PlantTemplate.js";
+import { sendObservationRequiredNotification } from "../../controllers/notificationController.js";
 import { getVietnamToday, toVietnamMidnight } from "../utils/timezone.js";
 
 dotenv.config();
@@ -129,6 +130,23 @@ const main = async () => {
       console.log(
         "  => TODAY is last day of stage and observations are required but NOT all recorded."
       );
+
+      try {
+        const requiredKeys = requiredObs.map((o) => o.key);
+        const recordedKeys = recorded.map((r) => r.key);
+
+        await sendObservationRequiredNotification({
+          userId: nb.user_id,
+          notebookId: nb._id,
+          notebookName: nb.notebook_name || nb.notebookName || "(notebook)",
+          stageNumber: templateStage.stage_number,
+          stageName: templateStage.name,
+          requiredKeys,
+          recordedKeys,
+        });
+      } catch (err) {
+        console.error("Error sending observation_required notification:", err);
+      }
     } else if (isLastDayOfStage && requiredObs.length > 0 && allCompleted) {
       console.log(
         "  => TODAY is last day of stage and all observations ARE completed (auto-transition possible)."

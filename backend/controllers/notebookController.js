@@ -110,7 +110,9 @@ const assignTemplateToNotebook = async (notebookId, templateId) => {
 
   notebook.current_stage = 1;
 
-  await notebook.updateProgress(template.stages);
+  // ✅ Khởi tạo progress = 0 khi gán template lần đầu
+  // Progress sẽ chỉ tăng lên khi hoàn thành observations ở cuối mỗi stage
+  notebook.progress = 0;
 
   await notebook.save();
 
@@ -135,7 +137,60 @@ export const generateDailyChecklist = async (notebookId) => {
   const template = notebook.template_id;
   const today = getVietnamToday();
 
+  // 🔄 KIỂM TRA VÀ TỰ ĐỘNG CHUYỂN STAGE NẾU CÓ PENDING TRANSITION
   const currentStageTracking = notebook.stages_tracking?.find(
+    (s) => s.stage_number === notebook.current_stage
+  );
+
+  if (currentStageTracking?.pending_transition) {
+    const transitionDate = currentStageTracking.transition_date
+      ? toVietnamMidnight(new Date(currentStageTracking.transition_date))
+      : null;
+
+    // Nếu đã qua ngày hoàn thành observations → chuyển stage
+    if (transitionDate && today.getTime() > transitionDate.getTime()) {
+      console.log(
+        `🔄 Auto-transitioning from stage ${notebook.current_stage} (observations completed yesterday)`
+      );
+
+      const nextStageNumber = notebook.current_stage + 1;
+      if (nextStageNumber <= template.stages.length) {
+        // Tắt current flag của stage hiện tại
+        currentStageTracking.is_current = false;
+        currentStageTracking.pending_transition = false;
+
+        // Bật current flag cho stage tiếp theo
+        const nextStageTracking = notebook.stages_tracking.find(
+          (s) => s.stage_number === nextStageNumber
+        );
+
+        if (nextStageTracking) {
+          nextStageTracking.is_current = true;
+          const nextTemplateStage = template.stages.find(
+            (s) => s.stage_number === nextStageNumber
+          );
+          if (nextTemplateStage) {
+            nextStageTracking.started_at = getStageStartDate(
+              notebook.planted_date,
+              nextTemplateStage.day_start
+            );
+          } else {
+            nextStageTracking.started_at = today;
+          }
+          nextStageTracking.status = "active";
+        }
+
+        // Cập nhật current_stage
+        notebook.current_stage = nextStageNumber;
+        await notebook.save();
+
+        console.log(`✅ Stage switched to ${nextStageNumber}`);
+      }
+    }
+  }
+
+  // Reload lại sau khi có thể đã chuyển stage
+  const updatedStageTracking = notebook.stages_tracking?.find(
     (s) => s.stage_number === notebook.current_stage
   );
 
@@ -152,8 +207,8 @@ export const generateDailyChecklist = async (notebookId) => {
 
   // daysInStage: if tracking started_at exists use it, otherwise fallback to template-based calculation
   let daysInStage;
-  if (currentStageTracking && currentStageTracking.started_at) {
-    daysInStage = getDaysDifference(currentStageTracking.started_at, today) + 1;
+  if (updatedStageTracking && updatedStageTracking.started_at) {
+    daysInStage = getDaysDifference(updatedStageTracking.started_at, today) + 1;
   } else {
     daysInStage = Math.floor(notebook.current_day) - currentStage.day_start + 1;
   }
@@ -165,15 +220,15 @@ export const generateDailyChecklist = async (notebookId) => {
     : null;
 
   if (lastGenerated && lastGenerated.getTime() < today.getTime()) {
-    if (currentStageTracking) {
+    if (updatedStageTracking) {
       const incompleteTasks = (notebook.daily_checklist || []).filter(
         (t) => !t.is_completed && t.status === "pending"
       );
 
       if (incompleteTasks.length > 0) {
         // Ensure overdue_tasks array exists
-        if (!currentStageTracking.overdue_tasks)
-          currentStageTracking.overdue_tasks = [];
+        if (!updatedStageTracking.overdue_tasks)
+          updatedStageTracking.overdue_tasks = [];
 
         incompleteTasks.forEach((task) => {
           // mark the checklist item as overdue
@@ -181,7 +236,7 @@ export const generateDailyChecklist = async (notebookId) => {
           task.overdue_at = today;
 
           // persist an overdue task entry for history and UI
-          currentStageTracking.overdue_tasks.push({
+          updatedStageTracking.overdue_tasks.push({
             task_name: task.task_name,
             description: task.description || "",
             original_date: lastGenerated,
@@ -190,7 +245,7 @@ export const generateDailyChecklist = async (notebookId) => {
           });
         });
 
-        currentStageTracking.overdue_summary = {
+        updatedStageTracking.overdue_summary = {
           date: lastGenerated,
           overdue_count: incompleteTasks.length,
           ready_to_notify: true,
@@ -218,8 +273,8 @@ export const generateDailyChecklist = async (notebookId) => {
     // Ngày đầu stage: hiển thị toàn bộ task
     newChecklist = allTasks.map((task) => {
       let completedEntry = null;
-      if (currentStageTracking?.completed_tasks) {
-        completedEntry = currentStageTracking.completed_tasks.find((t) => {
+      if (updatedStageTracking?.completed_tasks) {
+        completedEntry = updatedStageTracking.completed_tasks.find((t) => {
           if (t.task_name !== task.task_name) return false;
           if (!t.completed_at) return false;
           try {
@@ -260,8 +315,8 @@ export const generateDailyChecklist = async (notebookId) => {
         if (!interval) return false;
 
         // Find last completed entry for this task in current stage
-        const lastCompleted = currentStageTracking?.completed_tasks
-          ? currentStageTracking.completed_tasks
+        const lastCompleted = updatedStageTracking?.completed_tasks
+          ? updatedStageTracking.completed_tasks
               .filter((t) => t.task_name === task.task_name)
               .reduce((latest, t) => {
                 if (!latest) return t;
@@ -288,8 +343,8 @@ export const generateDailyChecklist = async (notebookId) => {
       })
       .map((task) => {
         let completedEntry = null;
-        if (currentStageTracking?.completed_tasks) {
-          completedEntry = currentStageTracking.completed_tasks.find((t) => {
+        if (updatedStageTracking?.completed_tasks) {
+          completedEntry = updatedStageTracking.completed_tasks.find((t) => {
             if (t.task_name !== task.task_name) return false;
             if (!t.completed_at) return false;
             try {
@@ -329,7 +384,7 @@ export const generateDailyChecklist = async (notebookId) => {
 
       // One-time tasks: show only on first day of stage if not already completed
       if (task.frequency === "once") {
-        const alreadyCompleted = currentStageTracking?.completed_tasks?.some(
+        const alreadyCompleted = updatedStageTracking?.completed_tasks?.some(
           (t) => t.task_name === task.task_name
         );
         return !alreadyCompleted && daysInStage === 1;
@@ -346,8 +401,8 @@ export const generateDailyChecklist = async (notebookId) => {
       if (!interval) return false;
 
       // Find last completed entry for this task in current stage
-      const lastCompleted = currentStageTracking?.completed_tasks
-        ? currentStageTracking.completed_tasks
+      const lastCompleted = updatedStageTracking?.completed_tasks
+        ? updatedStageTracking.completed_tasks
             .filter((t) => t.task_name === task.task_name)
             .reduce((latest, t) => {
               if (!latest) return t;
@@ -375,8 +430,8 @@ export const generateDailyChecklist = async (notebookId) => {
       // Consider a task completed ONLY if there is a completed_tasks entry
       // whose completed_at is TODAY (not just any day in the stage)
       let completedEntry = null;
-      if (currentStageTracking?.completed_tasks) {
-        completedEntry = currentStageTracking.completed_tasks.find((t) => {
+      if (updatedStageTracking?.completed_tasks) {
+        completedEntry = updatedStageTracking.completed_tasks.find((t) => {
           if (t.task_name !== task.task_name) return false;
           if (!t.completed_at) return false;
           try {
@@ -467,7 +522,9 @@ const updateCurrentStage = async (notebookId, newStageNumber) => {
 
   notebook.current_stage = newStageNumber;
 
-  await notebook.updateProgress(template.stages);
+  // ⚠️ KH��NG cập nhật progress ở đây - chỉ cập nhật khi hoàn thành observations
+  // Nếu admin/user chuyển stage thủ công, progress sẽ được cập nhật khi họ hoàn thành observations
+  // await notebook.updateProgress(template.stages);
 
   await notebook.save();
 
@@ -540,6 +597,32 @@ export const checkNotebookStageStatus = async (notebook) => {
       } | Days After End: ${daysAfterEnd}`
     );
 
+    // 🔍 KIỂM TRA OBSERVATIONS QUÁ HẠN
+    // Nếu đang ở cuối giai đoạn và chưa hoàn thành observations
+    const currentDay = notebook.current_day || 1;
+    const isLastDayOfStage = currentDay === templateStage.day_end;
+
+    if (
+      isLastDayOfStage &&
+      templateStage.observation_required &&
+      templateStage.observation_required.length > 0
+    ) {
+      const completedObservations =
+        currentStageTracking.observations?.filter(
+          (obs) => obs.value === true
+        ) || [];
+
+      const allObservationsCompleted =
+        completedObservations.length >=
+        templateStage.observation_required.length;
+
+      if (!allObservationsCompleted) {
+        console.log(
+          `⚠️ Observations chưa hoàn thành (${completedObservations.length}/${templateStage.observation_required.length})`
+        );
+      }
+    }
+
     if (daysAfterEnd <= 0) {
       console.log(`✅ Stage ${notebook.current_stage} còn trong thời hạn`);
       return;
@@ -602,13 +685,47 @@ export const checkNotebookStageStatus = async (notebook) => {
         )
       ) {
         if (autoSkip) {
-          currentStageTracking.status = "skipped";
+          currentStageTracking.status = "completed"; // ✅ Đánh dấu completed thay vì skipped
           // Mark completed_at using template-based stage end date
           currentStageTracking.completed_at = getStageEndDate(
             notebook.planted_date,
             templateStage.day_end
           );
           currentStageTracking.is_current = false;
+
+          // ✅ TỰ ĐỘNG HOÀN THÀNH OBSERVATIONS NẾU CÓ
+          if (
+            templateStage.observation_required &&
+            templateStage.observation_required.length > 0
+          ) {
+            console.log(
+              `🤖 Auto-completing observations due to exceeded delay`
+            );
+
+            // Đánh dấu tất cả observations = true
+            templateStage.observation_required.forEach((obsReq) => {
+              const existing = currentStageTracking.observations?.find(
+                (o) => o.key === obsReq.key
+              );
+              if (existing) {
+                existing.value = true;
+                existing.observed_at = new Date();
+              } else {
+                if (!currentStageTracking.observations) {
+                  currentStageTracking.observations = [];
+                }
+                currentStageTracking.observations.push({
+                  key: obsReq.key,
+                  value: true,
+                  observed_at: new Date(),
+                });
+              }
+            });
+
+            // ✅ CẬP NHẬT PROGRESS vì đã hoàn thành stage
+            await notebook.updateProgress(template.stages);
+            console.log(`🌱 Plant progress updated: ${notebook.progress}%`);
+          }
 
           await sendStageSkippedNotification({
             userId: notebook.user_id,
@@ -645,7 +762,7 @@ export const checkNotebookStageStatus = async (notebook) => {
             notebook.current_stage = nextStageNumber;
 
             console.log(
-              `⏭️ Tự động skip stage ${templateStage.stage_number}, chuyển sang stage ${nextStageNumber}`
+              `⏭️ Tự động hoàn thành observations và chuyển sang stage ${nextStageNumber}`
             );
           } else {
             console.log(`🏁 Đã hết stage, không thể chuyển stage tiếp theo`);
@@ -750,9 +867,9 @@ const completeChecklistTask = async (notebookId, taskName) => {
     }
   }
 
+  // ⚠️ KHÔNG cập nhật progress ở đây - chỉ cập nhật khi hoàn thành observations
+  // Progress chỉ được cập nhật khi hoàn thành tất cả observations ở cuối giai đoạn
   if (notebook.template_id && notebook.template_id.stages) {
-    await notebook.updateProgress(notebook.template_id.stages);
-    console.log(`📊 Progress updated: ${notebook.progress}%`);
     console.log(
       `📋 Completed tasks in current stage: ${
         currentStageTracking?.completed_tasks?.length || 0
@@ -807,19 +924,11 @@ const completeChecklistTask = async (notebookId, taskName) => {
     const stageCompletion = await notebook.getCurrentStageCompletion();
     console.log(`🎯 Current stage completion: ${stageCompletion}%`);
 
-    if (stageCompletion >= 100 && !currentStageTracking.completed_at) {
-      // Use template-based end date for consistency
-      const currentTemplateStage = notebook.template_id.stages.find(
-        (s) => s.stage_number === notebook.current_stage
-      );
-      currentStageTracking.completed_at = currentTemplateStage
-        ? getStageEndDate(notebook.planted_date, currentTemplateStage.day_end)
-        : new Date();
-      console.log(`✅ Stage ${notebook.current_stage} marked as COMPLETED`);
-
-      await notebook.updateProgress(notebook.template_id.stages);
-      console.log(`🌱 Plant progress updated: ${notebook.progress}%`);
-    }
+    // ⚠️ Không tự động mark stage completed chỉ dựa vào tasks
+    // Stage chỉ được mark completed khi hoàn thành observations ở updateStageObservation
+    console.log(
+      `ℹ️ Stage completion: ${stageCompletion}% (waiting for observations to complete stage)`
+    );
   }
 
   await notebook.save();
@@ -906,6 +1015,32 @@ export const updateStageObservation = async (
     throw new AppError("Không tìm thấy stage tracking", 404);
   }
 
+  // ✅ KIỂM TRA: Tất cả tasks hôm nay và overdue tasks phải hoàn thành trước khi check observations
+  const todayTasks = notebook.daily_checklist || [];
+  const incompleteTodayTasks = todayTasks.filter((t) => !t.is_completed);
+
+  const overdueTasks = stageTracking.overdue_tasks || [];
+  const pendingOverdue = overdueTasks.filter(
+    (t) => t.status === "overdue" || t.status === "pending"
+  );
+
+  if (incompleteTodayTasks.length > 0 || pendingOverdue.length > 0) {
+    let parts = [];
+    if (pendingOverdue.length > 0) {
+      parts.push(`${pendingOverdue.length} công việc trễ cần hoàn thành`);
+    }
+    if (incompleteTodayTasks.length > 0) {
+      parts.push(
+        `${incompleteTodayTasks.length} công việc hôm nay chưa hoàn thành`
+      );
+    }
+
+    const message = `Vui lòng hoàn thành: ${parts.join(
+      " và "
+    )} trước khi kiểm tra điều kiện quan sát.`;
+    throw new AppError(message, 400, "TASKS_NOT_COMPLETED");
+  }
+
   const existingObs = stageTracking.observations.find(
     (o) => o.key === observationKey
   );
@@ -954,54 +1089,21 @@ export const updateStageObservation = async (
           : new Date();
         stageTracking.status = "completed";
 
-        // Cập nhật progress
+        // ✅ CẬP NHẬT PROGRESS - Chỉ cập nhật ở đây khi hoàn thành observations
+        // Đây là NƠI DUY NHẤT được phép cập nhật progress của toàn bộ notebook
         await notebook.updateProgress(notebook.template_id.stages);
+        console.log(`🌱 Plant progress updated: ${notebook.progress}%`);
 
-        // Chuyển sang stage tiếp theo nếu có
-        const nextStageNumber = notebook.current_stage + 1;
-        if (nextStageNumber <= notebook.template_id.stages.length) {
-          console.log(`🔄 Auto-switching to stage ${nextStageNumber}`);
+        // 📅 ĐÁNH DẤU CHO CHUYỂN STAGE VÀO NGÀY HÔM SAU
+        // Không chuyển stage ngay, chỉ đánh dấu pending_transition
+        stageTracking.pending_transition = true;
+        stageTracking.transition_date = getVietnamToday(); // Ngày hoàn thành observations
 
-          // Tắt current flag của stage hiện tại
-          stageTracking.is_current = false;
+        console.log(
+          `🕒 Stage ${notebook.current_stage} marked as pending transition. Will switch to next stage tomorrow.`
+        );
 
-          // Bật current flag cho stage tiếp theo
-          const nextStageTracking = notebook.stages_tracking.find(
-            (s) => s.stage_number === nextStageNumber
-          );
-
-          if (nextStageTracking) {
-            nextStageTracking.is_current = true;
-            const nextTemplateStage = notebook.template_id.stages.find(
-              (s) => s.stage_number === nextStageNumber
-            );
-            if (nextTemplateStage) {
-              nextStageTracking.started_at = getStageStartDate(
-                notebook.planted_date,
-                nextTemplateStage.day_start
-              );
-            } else {
-              nextStageTracking.started_at = getVietnamToday();
-            }
-            nextStageTracking.status = "active";
-          }
-
-          // Cập nhật current_stage
-          notebook.current_stage = nextStageNumber;
-
-          // Không tạo checklist ngay, chỉ tạo khi sang ngày mới
-          // Activate next stage starting today and generate checklist immediately
-          notebook.daily_checklist = [];
-          await notebook.save();
-          await generateDailyChecklist(notebook._id);
-
-          console.log(
-            `✅ Stage switched to ${nextStageNumber} successfully (checklist will be generated on next day)`
-          );
-        } else {
-          console.log(`🏁 All stages completed!`);
-          await notebook.save();
-        }
+        await notebook.save();
       } else {
         await notebook.save();
       }
@@ -1052,7 +1154,10 @@ export const getAllByUser = asyncHandler(async (req, res) => {
   return ok(
     res,
     notebooks,
-    { count: notebooks.length },
+    {
+      count: notebooks.length,
+      timezone: "Asia/Ho_Chi_Minh (UTC+7)",
+    },
     "Fetched all notebooks successfully"
   );
 });
@@ -1081,7 +1186,12 @@ export const getNotebookById = asyncHandler(async (req, res) => {
   const notebookData = notebook.toObject();
   notebookData.stage_completion = await notebook.getCurrentStageCompletion();
 
-  return ok(res, notebookData, null, "Fetched notebook detail successfully");
+  return ok(
+    res,
+    notebookData,
+    { timezone: "Asia/Ho_Chi_Minh (UTC+7)" },
+    "Fetched notebook detail successfully"
+  );
 });
 
 // 📝 Tạo mới notebook
@@ -1551,7 +1661,12 @@ export const getNotebookTimeline = asyncHandler(async (req, res) => {
     timeline: timelineWithDates,
   };
 
-  return ok(res, timelineData, null, "Timeline fetched successfully");
+  return ok(
+    res,
+    timelineData,
+    { timezone: "Asia/Ho_Chi_Minh (UTC+7)" },
+    "Timeline fetched successfully"
+  );
 });
 
 // ✅ Lấy daily checklist
@@ -1573,12 +1688,34 @@ export const getDailyChecklist = asyncHandler(async (req, res) => {
     return ok(
       res,
       [],
-      { hasTemplate: false },
+      {
+        hasTemplate: false,
+        timezone: "Asia/Ho_Chi_Minh (UTC+7)",
+      },
       "Notebook chưa có template. Vui lòng gán template để tạo checklist."
     );
   }
 
-  return ok(res, checklist, null, "Daily checklist fetched successfully");
+  // Kiểm tra xem stage có đang pending transition không
+  const notebook = await Notebook.findById(id);
+  const currentStageTracking = notebook?.stages_tracking?.find(
+    (s) => s.stage_number === notebook.current_stage
+  );
+
+  const isPendingTransition = currentStageTracking?.pending_transition === true;
+
+  return ok(
+    res,
+    checklist,
+    {
+      timezone: "Asia/Ho_Chi_Minh (UTC+7)",
+      pending_transition: isPendingTransition,
+      transition_message: isPendingTransition
+        ? "Công việc mới sẽ xuất hiện vào giai đoạn mới vào ngày mai"
+        : null,
+    },
+    "Daily checklist fetched successfully"
+  );
 });
 
 // ✔️ Đánh dấu hoàn thành task
@@ -1902,7 +2039,7 @@ export const getDailyStatus = asyncHandler(async (req, res) => {
       tasks_today: updatedNotebook.daily_checklist,
       overdue_summary: overdueSummary,
     },
-    null,
+    { timezone: "Asia/Ho_Chi_Minh (UTC+7)" },
     "Daily status fetched successfully"
   );
 });
@@ -2088,15 +2225,11 @@ export const completeOverdueTask = asyncHandler(async (req, res) => {
     );
   }
 
-  // Recalculate overall progress
-  if (refreshedNotebook.template_id && refreshedNotebook.template_id.stages) {
-    await refreshedNotebook.updateProgress(
-      refreshedNotebook.template_id.stages
-    );
-    console.log(
-      `📊 Progress updated after completing overdue task: ${refreshedNotebook.progress}%`
-    );
-  }
+  // ⚠️ KHÔNG cập nhật progress khi hoàn thành overdue task
+  // Progress chỉ được cập nhật khi hoàn thành tất cả observations ở cuối giai đoạn
+  console.log(
+    `ℹ️ Overdue task completed. Progress will update only when observations are completed.`
+  );
   // Recompute overdue_summary count and notify flag
   const remainingOverdue = currentStageTracking.overdue_tasks.filter(
     (t) => t.status === "overdue"
@@ -2286,12 +2419,11 @@ export const completeOverdueTasksBulk = asyncHandler(async (req, res) => {
     );
   }
 
-  // Recalculate progress
-  if (refreshedNotebook.template_id && refreshedNotebook.template_id.stages) {
-    await refreshedNotebook.updateProgress(
-      refreshedNotebook.template_id.stages
-    );
-  }
+  // ⚠️ KHÔNG cập nhật progress khi hoàn thành bulk overdue tasks
+  // Progress chỉ được cập nhật khi hoàn thành observations ở cuối giai đoạn
+  console.log(
+    `ℹ️ ${completedNow} overdue tasks completed. Progress will update only when observations are completed.`
+  );
 
   // Recompute overdue_summary
   const remainingOverdue = currentStageTracking.overdue_tasks.filter(
