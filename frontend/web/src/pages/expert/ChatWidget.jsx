@@ -439,17 +439,36 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
                       loadMessages(c._id);
                     }}
                   >
-                    <div className="cw-conv-avatar">
-                      {c.peer?.avatar ? (
-                        <img
-                          src={c.peer.avatar}
-                          alt={c.peer.name}
-                          style={{ width: "100%", borderRadius: "50%" }}
-                        />
-                      ) : (
-                        "👤"
-                      )}
-                    </div>
+<div
+  className="cw-conv-avatar"
+  style={{
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    overflow: "hidden",
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#eee",
+  }}
+>
+  {c.peer?.avatar ? (
+    <img
+      src={c.peer.avatar}
+      alt={c.peer.name}
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+      }}
+    />
+  ) : (
+    <span style={{ fontSize: "22px", opacity: 0.7 }}>👤</span>
+  )}
+</div>
+
+
                     <div className="cw-conv-main">
                       <div className="cw-conv-title">
                         {c.peer?.name || "Người dùng"}

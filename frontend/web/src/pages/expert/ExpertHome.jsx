@@ -11,6 +11,8 @@ import {
   MessageCircle,
   Leaf,
   BarChart3,
+  TreeDeciduous,
+  Book,
   User,
   LogOut,
   Layers,
@@ -32,22 +34,19 @@ function getLocalUserFallback() {
             name,
             email: u.email || "",
             role: "Chuyên gia nông nghiệp",
-            avatar:
-              u.avatar ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-                name
-              )}`,
+            avatar: u.avatar || "",
+
           };
         }
       }
     }
-  } catch (_) {}
+  } catch (_) { }
 
   return {
     name: "Expert",
     email: "",
     role: "Chuyên gia nông nghiệp",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=expert",
+    avatar: "",
   };
 }
 
@@ -124,33 +123,31 @@ export default function ExpertHome({
   // ---------------------- LẤY SỐ TIN NHẮN CHƯA ĐỌC ----------------------
   useEffect(() => {
     const notifySound = new Audio("/src/assets/sounds/notify.mp3");
-  
+
     const fetchUnread = async () => {
       try {
         const res = await axiosClient.get("/api/chat/unread");
-  
+
         const count =
           res?.data?.count ??
           (Array.isArray(res?.data?.data) ? res.data.data.length : 0);
-  
+
         // Nếu có tin nhắn MỚI tăng thêm → phát âm thanh
         if (count > prevUnread) {
-          notifySound.play().catch(() => {});
+          notifySound.play().catch(() => { });
         }
-  
+
         setPrevUnread(count);
         setUnreadCount(count || 0);
-  
       } catch (err) {
         console.error("Lỗi lấy số tin nhắn chưa đọc:", err);
       }
     };
-  
+
     fetchUnread();
     const intervalId = setInterval(fetchUnread, 8000);
     return () => clearInterval(intervalId);
   }, [prevUnread]);
-  
 
   const handleChatClick = () => {
     if (typeof onChatClick === "function") {
@@ -161,34 +158,41 @@ export default function ExpertHome({
   };
 
   // ---------------------- LẤY PROFILE CHUYÊN GIA ----------------------
+
   useEffect(() => {
     (async () => {
-      const candidates = ["/api/experts/me/basic", "/experts/me/basic"];
-      let ok = false;
-      for (const url of candidates) {
-        try {
-          const res = await axiosClient.get(url);
-          const data = res?.data?.data;
-          if (data && (data.name || data.email)) {
-            setProfile({
-              name: data.name || "Expert",
-              email: data.email || "",
-              role: data.role || "Chuyên gia nông nghiệp",
-              avatar:
-                data.avatar ||
-                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-                  data.name || "expert"
-                )}`,
-            });
-            ok = true;
-            break;
-          }
-        } catch {}
+      try {
+        const res = await axiosClient.get("/api/experts/me/basic");
+        const data = res?.data?.data;
+
+        if (data) {
+          const payload = {
+            name: data.name || "Expert",
+            email: data.email || "",
+            role: data.role || "Chuyên gia nông nghiệp",
+            avatar: data.avatar, // luôn là ảnh upload hoặc DiceBear từ BE
+          };
+          setProfile(payload);
+
+          // Lưu đồng bộ cho tất cả màn hình dùng chung
+          localStorage.setItem("authUser", JSON.stringify(payload));
+          localStorage.setItem("profile", JSON.stringify(payload));
+
+          setLoading(false);
+
+          return;
+        }
+      } catch (err) {
+        console.error("Lỗi lấy profile từ API:", err);
       }
-      if (!ok) setProfile(getLocalUserFallback());
+
+      // Fallback chỉ khi API thật sự fail
+      const fallback = getLocalUserFallback();
+      setProfile(fallback);
       setLoading(false);
     })();
   }, []);
+
 
   if (loading) {
     return (
@@ -198,31 +202,31 @@ export default function ExpertHome({
     );
   }
 
-  const avatar = profile?.avatar || "/placeholder.svg";
+  const avatar = profile?.avatar || "";
   const name = profile?.name || "Expert";
   const email = profile?.email || "";
   const role = profile?.role || "Chuyên gia nông nghiệp";
 
   return (
     <>
-      <Header />
+
       <div className="expert-home">
         <header className="expert-header">
           <div className="header-container">
-            <div className="header-brand">
-              <div className="brand-logo">
-                <Leaf className="leaf-icon" />
-              </div>
-              <h1
-                className="brand-name clickable"
-                onClick={() => {
-                  navigate("/expert");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              >
-                Trang chuyên gia
-              </h1>
+            {/* ====== BRAND: dùng logo FarmHub thay icon lá ====== */}
+            <div
+              className="header-brand clickable"
+              onClick={() => {
+                navigate("/expert");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              <span className="farmhub-logo-text">
+                <span className="farmhub-logo-farm">Farm</span>
+                <span className="farmhub-logo-hub">Hub</span>
+              </span>
             </div>
+
 
             <nav className="header-nav">
               <button
@@ -241,6 +245,7 @@ export default function ExpertHome({
                   navigate("/managerguides");
                 }}
               >
+                <Book size={20} />
                 <span>Quản lý hướng dẫn</span>
               </button>
 
@@ -256,20 +261,11 @@ export default function ExpertHome({
                 className="nav-button nav-button-template"
                 onClick={() => navigate("/expert/plant-templates")}
               >
+                <TreeDeciduous />
                 <span>Bộ Mẫu Cây Trồng</span>
               </button>
 
-              <button
-                className="nav-button nav-button-analytics"
-                onClick={() => {
-                  if (typeof onAnalyticsClick === "function") {
-                    onAnalyticsClick();
-                  }
-                }}
-              >
-                <BarChart3 size={20} />
-                <span>Phân tích</span>
-              </button>
+
             </nav>
 
             <div className="header-right">
@@ -357,9 +353,7 @@ export default function ExpertHome({
 
                     <button
                       className="item-btn"
-                      onClick={() =>
-                        navigate(`/experthome/models/${m._id}`)
-                      }
+                      onClick={() => navigate(`/experthome/models/${m._id}`)}
                     >
                       Xem chi tiết
                     </button>
@@ -467,7 +461,8 @@ export default function ExpertHome({
 
       {/* Nút chat nổi */}
       <button
-         className={`floating-chat-btn chat-btn-with-badge ${chatOpen ? "hide" : ""}`}
+        className={`floating-chat-btn chat-btn-with-badge ${chatOpen ? "hide" : ""
+          }`}
         onClick={() => {
           setChatOpen(true);
           setUnreadCount(0);

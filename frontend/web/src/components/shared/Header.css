@@ -1,95 +1,141 @@
 /* =======================================
-   HEADER BASE STYLE
-======================================= */
-.main-header {
-    background: linear-gradient(135deg, #2d5016 0%, #4a7c2d 100%);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+   FARMHUB HEADER – PREMIUM 2025
+   ======================================= */
+
+   .main-header {
     position: sticky;
     top: 0;
     z-index: 1000;
     width: 100%;
-}
-
-.header-container {
+    background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 40%, #3a7c4f 100%);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  }
+  
+  /* subtle border + glow */
+  .main-header::after {
+    content: none;   /* XOÁ HIỆU ỨNG CONG */
+  }
+  
+  
+  /* ===== CONTAINER ===== */
+  .header-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 1rem 2rem;
+    padding: 0.75rem 2.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 2rem;
-}
-
-.logo a {
+  }
+  
+  /* ===== LOGO ===== */
+  .logo a {
     display: flex;
     align-items: center;
-    color: white;
+    color: #ffffff;
     text-decoration: none;
-    transition: transform 0.2s ease;
-}
-
-.logo a:hover {
-    transform: scale(1.05);
-}
-
-.logo h2 {
+    gap: 0.45rem;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+  }
+  
+  .logo a:hover {
+    transform: translateY(-1px);
+    opacity: 0.95;
+  }
+  
+  .logo h2 {
     margin: 0;
-    font-size: 1.8rem;
-    font-weight: 700;
-}
-
-/* Mobile menu toggle */
-.mobile-menu-toggle {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+  }
+  
+  .logo h2 span {
+    color: #ffd166; /* Farm màu vàng nắng */
+  }
+  
+  /* ===== MOBILE TOGGLE ===== */
+  .mobile-menu-toggle {
     display: none;
     background: transparent;
     border: none;
-    color: white;
+    color: #ffffff;
     cursor: pointer;
-    padding: 0.5rem;
-    z-index: 1001;
-}
-
-/* =======================================
-   NAVIGATION
-======================================= */
-.main-nav ul {
+    padding: 0.35rem;
+  }
+  
+  /* =======================================
+     NAVIGATION (DESKTOP)
+     ======================================= */
+  
+  .main-nav ul {
     display: flex;
     list-style: none;
     margin: 0;
     padding: 0;
-    gap: 0.5rem;
+    gap: 0.25rem;
     align-items: center;
-}
-
-.main-nav li {
+  }
+  
+  .main-nav li {
     position: relative;
-}
-
-.main-nav li a,
-.main-nav li .dropdown-toggle {
-    color: white;
+  }
+  
+  /* base style cho nav item */
+  .main-nav li a,
+  .main-nav li .dropdown-toggle {
+    color: #f9fafb;
     text-decoration: none;
-    padding: 0.75rem 1rem;
-    display: block;
+    padding: 0.55rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 500;
-    transition: all 0.25s ease;
-    border-radius: 5px;
+    font-size: 0.96rem;
+    border-radius: 999px;
+    transition: all 0.22s ease;
     cursor: pointer;
-}
-
-.main-nav li a:hover,
-.main-nav li .dropdown-toggle:hover,
-.main-nav li.active > a,
-.main-nav li.active > .dropdown-toggle {
-    background: rgba(255, 255, 255, 0.15);
-    color: #ffd700;
-}
-
-/* =======================================
-   SUBMENU — PC (HOVER)
-======================================= */
-.submenu {
-    /* sổ xuống dạng cột */
+    white-space: nowrap;
+  }
+  
+  /* hover & active */
+  .main-nav li a:hover,
+  .main-nav li .dropdown-toggle:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+  
+  .main-nav li.active > a,
+  .main-nav li.active > .dropdown-toggle {
+    background: #ffffff;
+    color: #1b4332;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+  
+  /* gạch mini dưới item active (chỉ desktop) */
+  @media (min-width: 993px) {
+    .main-nav li.active > a::after,
+    .main-nav li.active > .dropdown-toggle::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -6px;
+      transform: translateX(-50%);
+      width: 26px;
+      height: 3px;
+      border-radius: 999px;
+      background: #ffd166;
+    }
+  }
+  
+  /* =======================================
+     SUBMENU – PC (HOVER)
+     ======================================= */
+  
+  .has-submenu {
+    position: relative;
+  }
+  
+  .submenu {
     display: flex;
     flex-direction: column;
     position: absolute;
@@ -98,381 +144,344 @@
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-
     transform: translateY(6px);
-    transition: all 0.25s ease;
-
-    min-width: 200px;
-    background: white;
-    border-radius: 8px;
-    padding: 0.5rem 0;
+    transition: all 0.22s ease;
+  
+    min-width: 190px;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 0.35rem 0;
     list-style: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     z-index: 999;
-}
-
-/* PC Hover mở submenu */
-.has-submenu:hover .submenu {
+  }
+  
+  /* PC Hover mở submenu */
+  .has-submenu:hover .submenu {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
     transform: translateY(0);
-}
-
-.submenu li {
+  }
+  
+  .submenu li {
     width: 100%;
-}
-
-.submenu li a {
-    color: #333;
-    padding: 0.75rem 1rem;
+  }
+  
+  .submenu li a {
+    color: #111827;
+    padding: 0.6rem 1rem;
     display: block;
-    transition: background 0.25s ease;
-}
-
-.submenu li a:hover {
-    background: #f0f0f0;
-    color: #2d5016;
-}
-
-/* =======================================
-   USER DROPDOWN
-======================================= */
-.user-dropdown {
+    font-size: 0.95rem;
+    border-radius: 0;
+  }
+  
+  .submenu li a:hover {
+    background: #f3f4f6;
+    color: #14532d;
+  }
+  
+  /* =======================================
+     USER DROPDOWN
+     ======================================= */
+  
+  .user-menu {
+    margin-left: 0.5rem;
+  }
+  
+  .user-dropdown {
     position: relative;
     cursor: pointer;
-}
-
-.user-info {
+  }
+  
+  .user-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
-    transition: background 0.25s ease;
-}
-
-.user-info:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.avatar {
-    width: 35px;
-    height: 35px;
+    gap: 0.45rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  
+  .user-info:hover {
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px);
+  }
+  
+  .avatar {
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid white;
-}
-
-.username {
-    color: white;
-    font-weight: 500;
-}
-
-/* hide username in top bar to preserve the pre-login header layout */
-.user-info .username {
+    border: 2px solid #ffffff;
+  }
+  
+  /* ẩn text username trên thanh top cho gọn */
+  .user-info .username {
     display: none;
-}
-
-/* truncate long usernames if they ever appear in other contexts */
-.username.truncate {
-    max-width: 140px;
-    display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
-}
-
-/* ĐỔI TÊN CLASS TRÁNH ĐỤNG BOOTSTRAP */
-.user-dropdown-menu {
-    /* sổ xuống dạng cột */
+  }
+  
+  /* Dropdown menu */
+  .user-dropdown-menu {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-
+  
     position: absolute;
     right: 0;
     top: 100%;
-    min-width: 200px;
-    background: white;
-
+    min-width: 190px;
+  
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 0.3rem 0.25rem 0.4rem;
+    margin-top: 0.35rem;
+  
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
     transform: translateY(8px);
-
-    padding: 0.5rem 0;
-    border-radius: 8px;
-
-    transition: all 0.25s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  
+    transition: all 0.22s ease;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
     z-index: 999;
-}
-
-.user-dropdown-menu.show {
+  }
+  
+  .user-dropdown-menu.show {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
     transform: translateY(0);
-}
-
-/* dropdown header block (shown when user opens menu) */
-.user-dropdown-menu .user-menu-header {
-    padding: 0.65rem 0.9rem;
-}
-
-/* ===== MÀU MENU USER – GIỐNG BẢN GỐC ===== */
-.user-dropdown-menu li {
+  }
+  
+  .user-dropdown-menu li {
     width: 100%;
-}
-
-.user-dropdown-menu li a,
-.user-dropdown-menu li button {
-    color: #333;
-    padding: 0.75rem 1rem;
+  }
+  
+  /* header trong dropdown */
+  .user-menu-header {
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  /* item link / button */
+  .user-dropdown-menu li a,
+  .user-dropdown-menu li button {
+    color: #111827;
+    padding: 0.55rem 0.9rem;
     display: flex;
     align-items: center;
+    gap: 0.45rem;
     background: transparent;
     border: none;
     width: 100%;
     text-align: left;
     cursor: pointer;
-}
-
-/* icon trong menu user */
-.user-dropdown-menu li a svg,
-.user-dropdown-menu li button svg {
-    color: #333;
-    width: 18px;
-    height: 18px;
-    margin-right: 0.5rem;
-}
-
-/* hover */
-.user-dropdown-menu li:hover a,
-.user-dropdown-menu li:hover button {
-    background: #f0f0f0;
-    color: #2d5016;
-}
-
-.user-dropdown-menu li:hover a svg,
-.user-dropdown-menu li:hover button svg {
-    color: #2d5016;
-}
-
-/* Logout */
-.logout-btn {
-    color: #d33;
-    font-weight: 500;
-}
-
-.logout-btn:hover {
-    background: #ffe7e7 !important;
-}
-
-/* =======================================
-   MOBILE RESPONSIVE
-======================================= */
-@media (max-width: 992px) {
-    .mobile-menu-toggle {
-        display: block;
-    }
-
-    .main-nav {
-        position: fixed;
-        top: 0;
-        right: -100%;
-        width: 280px;
-        height: 100vh;
-        background: #2d5016;
-        transition: right 0.3s ease;
-        padding: 5rem 1rem 2rem;
-
-        z-index: 1000;
-        overflow-y: auto;
-    }
-
-    .main-nav.mobile-menu-open {
-        right: 0;
-    }
-
-    .main-nav ul {
-        flex-direction: column;
-        gap: 0;
-    }
-
-    .main-nav li {
-        width: 100%;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .main-nav li a,
-    .main-nav li .dropdown-toggle {
-        padding: 1rem;
-        border-radius: 0;
-    }
-
-    /* SUBMENU MOBILE (CLICK) */
-    .submenu {
-        position: static;
-        background: rgba(255, 255, 255, 0.1);
-        box-shadow: none;
-        border-radius: 0;
-
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-        transform: none;
-    }
-
-    /* Khi mở mobile submenu (class được thêm bằng React) */
-    .mobile-submenu-open {
-        opacity: 1 !important;
-        visibility: visible !important;
-        pointer-events: auto !important;
-    }
-
-    .submenu li a {
-        color: white;
-        padding-left: 2rem;
-    }
-
-    .submenu li a:hover {
+    font-size: 0.9rem;
+    border-radius: 6px;
+  }
+  
+  .user-dropdown-menu li a svg,
+  .user-dropdown-menu li button svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* hover item */
+  .user-dropdown-menu li:hover a,
+  .user-dropdown-menu li:hover button {
+    background: #f3f4f6;
+    color: #14532d;
+  }
+  
+  /* Logout nổi bật */
+  .logout-btn {
+    color: #dc2626 !important;
+    font-weight: 600 !important;
+    justify-content: center;
+  }
+  
+  .logout-btn:hover {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+  }
+  
+  /* =======================================
+     NOTIFICATION & STREAK
+     ======================================= */
+  
+     .notification-item {
+        padding: 0.4rem 0.55rem;
+        border-radius: 50%;
+        transition: background 0.15s ease, transform 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .notification-item svg {
+        width: 18px;
+        height: 18px;
+        color: #fff;
+        transition: color 0.15s ease, transform 0.15s ease;
+      }
+      
+      .notification-item:hover {
         background: rgba(255, 255, 255, 0.15);
-        color: #ffd700;
-    }
-
-    /* User dropdown mobile */
-    .user-dropdown-menu {
-        position: static;
-        background: rgba(255, 255, 255, 0.1);
-        box-shadow: none;
-        border-radius: 0;
-        opacity: 0;
-        visibility: hidden;
-    }
-
-    .user-dropdown-menu.show {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-    }
-
-    .user-dropdown-menu li a,
-    .user-dropdown-menu li button {
-        color: white;
-        padding-left: 2rem;
-    }
-
-    .logout-btn:hover {
-        background: rgba(255, 0, 0, 0.2) !important;
-        color: #ff6b6b !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .header-container {
-        padding: 1rem;
-    }
-
-    .logo h2 {
-        font-size: 1.5rem;
-    }
-}
-
-.notification-item {
-    padding: 0.75rem 1rem;
-    border-radius: 5px;
-    transition: background 0.25s ease;
-}
-
-.notification-item:hover {
-    background: rgba(255, 255, 255, 0.15); /* giống những mục menu khác */
-}
-
-.notification-item svg {
-    color: white;
-    width: 20px;
-    height: 20px;
-}
-
-/* Khi menu user mở → tắt toàn bộ submenu hover tránh giật */
-.user-dropdown .dropdown-menu.show ~ .submenu,
-.user-dropdown.show .submenu,
-.has-submenu:hover .submenu {
-    transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.user-dropdown-open .has-submenu .submenu {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-
-/* Overlay của user dropdown – để bắt click ngoài, tránh chớp */
-.dropdown-overlay {
+        transform: translateY(-1px);
+      }
+      
+      .notification-item:hover svg {
+        color: #ffd166;   /* vàng nắng FarmHub */
+        transform: scale(1.05);
+      }
+      
+  /* =======================================
+     OVERLAYS
+     ======================================= */
+  
+  .dropdown-overlay,
+  .mobile-menu-overlay {
     position: fixed;
     inset: 0;
-    background: transparent;
-    z-index: 998; /* dưới header (1000), trên content */
-}
-/* ===== Tinh chỉnh dropdown cho gọn lại ===== */
-.user-dropdown-menu {
-    min-width: 170px !important; /* gọn hơn */
-    padding: 0.25rem 0 !important;
-}
-
+    background: rgba(15, 23, 42, 0.25);
+    z-index: 998;
+  }
+  
+  /* =======================================
+     MOBILE RESPONSIVE
+     ======================================= */
+  
+  @media (max-width: 992px) {
+    .header-container {
+      padding: 0.75rem 1.1rem;
+    }
+  
+    .mobile-menu-toggle {
+      display: block;
+    }
+  
+    .main-nav {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 290px;
+      height: 100vh;
+      background: #123524;
+      transition: right 0.3s ease;
+      padding: 4.5rem 1.25rem 2rem;
+      z-index: 999;
+      overflow-y: auto;
+    }
+  
+    .main-nav.mobile-menu-open {
+      right: 0;
+    }
+  
+    .main-nav ul {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+    }
+  
+    .main-nav li {
+      width: 100%;
+    }
+  
+    .main-nav li a,
+    .main-nav li .dropdown-toggle {
+      width: 100%;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+    }
+  
+    .main-nav li + li {
+      margin-top: 0.15rem;
+    }
+  
+    /* submenu trong mobile */
+    .submenu {
+      position: static;
+      box-shadow: none;
+      border-radius: 0;
+      margin-top: 0;
+      padding-left: 0.5rem;
+      background: rgba(255, 255, 255, 0.04);
+  
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: none;
+    }
+  
+    .mobile-submenu-open {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+    }
+  
+    .submenu li a {
+      color: #e5e7eb;
+      padding: 0.6rem 1rem 0.6rem 1.5rem;
+      font-size: 0.92rem;
+    }
+  
+    .submenu li a:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #facc15;
+    }
+  
+    /* user dropdown trong mobile: gộp luôn vào menu */
+    .user-dropdown-menu {
+      position: static;
+      background: transparent;
+      box-shadow: none;
+      margin-top: 0.35rem;
+      padding: 0;
+      opacity: 0;
+      visibility: hidden;
+    }
+  
+    .user-dropdown-menu.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+  
+    .user-dropdown-menu li a,
+    .user-dropdown-menu li button {
+      color: #e5e7eb;
+      padding-left: 1.5rem;
+    }
+  
+    .logout-btn:hover {
+      background: rgba(220, 38, 38, 0.2) !important;
+      color: #fee2e2 !important;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .logo h2 {
+      font-size: 1.55rem;
+    }
+  }
+/* Căn đều nội dung 2 mục Hồ Sơ & Đăng Xuất */
 .user-dropdown-menu li a,
-.user-dropdown-menu li button {
-    padding: 0.55rem 0.9rem !important; /* giảm padding */
-    gap: 0.5rem !important;             /* icon gần chữ hơn */
-    font-size: 14.5px !important;       /* chữ nhỏ lại chút */
+.user-dropdown-menu li button.logout-btn {
+  text-align: center !important;     /* căn giữa chữ */
+  justify-content: center !important; /* căn giữa cả icon + chữ */
+  gap: 8px !important;
+  padding: 0.8rem 1rem !important;
 }
 
-.user-dropdown-menu li a svg,
-.user-dropdown-menu li button svg {
-    width: 16px !important;
-    height: 16px !important;
+/* Icon cũng căn giữa */
+.user-dropdown-menu li a svg {
+  display: block;
+  margin-right: 0 !important;
 }
-
-.user-dropdown-menu li:hover a,
-.user-dropdown-menu li:hover button {
-    background: #f2f2f2 !important;
-}
-/* ==== Tinh chỉnh submenu Nhật Ký Làm Vườn cho gọn lại ==== */
-.submenu {
-    min-width: 170px !important;       /* nhỏ giống dropdown user */
-    padding: 0.25rem 0 !important;     /* gọn hơn */
-}
-
-.submenu li {
-    width: 100%;
-}
-
-.submenu li a {
-    padding: 0.55rem 0.9rem !important; /* giống dropdown user */
-    font-size: 16px !important;
-    gap: 0.5rem !important;
-}
-/* ==== Căn chỉnh dropdown avatar sát vào avatar cho đều ==== */
-.user-dropdown-menu {
-    right: -17px !important;  /* bạn có thể chỉnh -8px hoặc -12px tùy ý */
-}
-/* ==== Canh giữa và làm nổi bật nút Đăng Xuất ==== */
-.user-dropdown-menu .logout-btn {
-    color: #d33 !important;
-    font-weight: 600 !important;
-    text-align: center !important;
-    width: 100%;
-    padding: 0.65rem 1rem;
-    display: block;
-    border-radius: 6px;
-    margin-top: 4px;
-}
-
-.user-dropdown-menu .logout-btn:hover {
-    background: #ffe7e7 !important;
-    color: #b30000 !important;
-}
+.user-dropdown-menu li a {
+    font-size: 15px !important;   /* sửa tại đây */
+  }
+  

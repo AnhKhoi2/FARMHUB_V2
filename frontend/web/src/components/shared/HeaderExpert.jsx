@@ -1,167 +1,258 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
-	Leaf,
-	MessageCircle,
-	BarChart3,
-	Bell,
-	User,
-	Settings,
-	LogOut,
+  Leaf,
+  MessageCircle,
+  BarChart3,
+  Book,
+  Bell,
+  User,
+  TreeDeciduous,
+  LogOut,
 } from "lucide-react";
 
+import axiosClient from "../../api/shared/axiosClient";
+
+// Hàm fallback giống ExpertHome
+function getLocalUserFallback() {
+  try {
+    const keys = ["authUser", "user", "profile"];
+    for (const k of keys) {
+      const raw = localStorage.getItem(k);
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u && (u.username || u.fullName || u.email)) {
+          const name =
+            u.fullName ||
+            u.username ||
+            (u.email ? u.email.split("@")[0] : "Expert");
+          return {
+            name,
+            email: u.email || "",
+            role: "Chuyên gia nông nghiệp",
+            avatar:
+              u.avatar ||
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                name
+              )}`,
+            notifications: 0,
+          };
+        }
+      }
+    }
+  } catch (_) {}
+
+  return {
+    name: "Expert",
+    email: "",
+    role: "Chuyên gia nông nghiệp",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=expert",
+    notifications: 0,
+  };
+}
+
 export default function HeaderExpert({
-	onChatClick,
-	onAddGuideClick,
-	onAnalyticsClick,
-	profile = null,
+  onChatClick,
+  onAddGuideClick,
+  onAnalyticsClick,
+  profile = null,
 }) {
-	const navigate = useNavigate();
-	const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-	const mockProfile =
-		profile ||
-		({
-			name: "Chuyên gia",
-			email: "expert@example.com",
-			role: "expert",
-			avatar: null,
-			notifications: 0,
-		});
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [internalProfile, setInternalProfile] = useState(null);
 
-	return (
-		<header className="expert-header">
-			<div className="header-container">
-				{/* Logo & Brand */}
-				<div className="header-brand">
-					<div className="brand-logo">
-						<Leaf className="leaf-icon" />
-					</div>
-					<h1 className="brand-name">Trang chuyên gia</h1>
-				</div>
+  // 🟢 LẤY PROFILE CHUYÊN GIA (giống ExpertHome)
+  useEffect(() => {
+    if (profile) {
+      setInternalProfile(profile);
+      return;
+    }
 
-				{/* 4 Component Buttons */}
-				<nav className="header-nav">
-					{/* Component 1: Chat */}
-					<button
-						className="nav-button nav-button-chat"
-						onClick={onChatClick}
-						title="Trao đổi với người dùng"
-					>
-						<MessageCircle size={20} />
-						<span>Trò chuyện</span>
-					</button>
+    (async () => {
+      const candidates = ["/api/experts/me/basic", "/experts/me/basic"];
+      let ok = false;
 
-					{/* Component 2: Manage Guides */}
-					<button
-						className="nav-button nav-button-add"
-						onClick={() => {
-							try {
-								if (onAddGuideClick) onAddGuideClick();
-							} catch (e) {
-								void e;
-							}
-							navigate("/managerguides");
-						}}
-						title="Quản lý hướng dẫn"
-					>
-						<span>Quản lý hướng dẫn</span>
-					</button>
+      for (const url of candidates) {
+        try {
+          const res = await axiosClient.get(url);
+          const data = res?.data?.data;
+          if (data && (data.name || data.email)) {
+            setInternalProfile({
+              name: data.name || "Expert",
+              email: data.email || "",
+              role: data.role || "Chuyên gia nông nghiệp",
+              avatar:
+                data.avatar ||
+                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                  data.name || "expert"
+                )}`,
+              notifications: data.notifications || 0,
+            });
+            ok = true;
+            break;
+          }
+        } catch (_) {
+          // thử endpoint tiếp theo
+        }
+      }
 
-					{/* Component 3: Dashboard */}
-					<button
-						className="nav-button nav-button-dashboard"
-						onClick={() => navigate("/experthome/models")}
-						title="Mô hình trồng"
-					>
-						<Leaf size={20} />
-						<span>Mô hình trồng</span>
-					</button>
+      if (!ok) {
+        setInternalProfile(getLocalUserFallback());
+      }
+    })();
+  }, [profile]);
 
-					{/* Component 4: Plant Templates */}
-					<button
-						className="nav-button nav-button-template"
-						onClick={() => navigate("/expert/plant-templates")}
-						title="Plant Templates"
-					>
-						<span>Bộ Mẫu Cây Trồng</span>
-					</button>
+  const mockProfile = internalProfile || getLocalUserFallback();
 
-					{/* Component 5: Analytics */}
-					<button
-						className="nav-button nav-button-analytics"
-						onClick={onAnalyticsClick}
-						title="Phân tích"
-					>
-						<BarChart3 size={20} />
-						<span>Phân tích</span>
-					</button>
-				</nav>
+  // 👉 Click vào FarmHub
+  const handleBrandClick = () => {
+    if (location.pathname === "/expert") {
+      // đang ở home expert rồi → chỉ cuộn mượt lên đầu
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // trang khác → chỉ navigate, không scroll để đỡ giật
+      navigate("/expert");
+    }
+  };
 
-				{/* Right Section: Notifications & Avatar */}
-				<div className="header-right">
-					{/* Notifications */}
-					<button className="notification-btn" aria-label="Thông báo">
-						<Bell size={20} />
-						{mockProfile.notifications > 0 && (
-							<span className="notification-badge">{mockProfile.notifications}</span>
-						)}
-					</button>
+  return (
+    <header className="expert-header">
+      <div className="header-container">
+        {/* Logo & Brand (không ô vuông, style trực tiếp) */}
+        <div className="header-brand clickable" onClick={handleBrandClick}>
+          <span
+            style={{
+              fontSize: "1.9rem",
+              fontWeight: 800,
+              display: "flex",
+              lineHeight: 1,
+              letterSpacing: "0.5px",
+            }}
+          >
+            <span style={{ color: "#0f7a3b" }}>Farm</span>
+            <span style={{ color: "#ffffff", marginLeft: 3 }}>Hub</span>
+          </span>
+        </div>
 
-					{/* Avatar & Profile Menu */}
-					<div className="profile-section">
-						<button
-							className="avatar-btn"
-							onClick={() => setShowProfileMenu(!showProfileMenu)}
-							aria-haspopup="true"
-							aria-expanded={showProfileMenu}
-						>
-							<img
-								src={mockProfile.avatar || "/placeholder.svg"}
-								alt={mockProfile.name}
-								className="avatar-image"
-							/>
-						</button>
+        {/* 4 Component Buttons */}
+        <nav className="header-nav">
+          {/* Component 1: Chat */}
+          <button
+            className="nav-button nav-button-chat"
+            onClick={onChatClick}
+            title="Trao đổi với người dùng"
+          >
+            <MessageCircle size={20} />
+            <span>Trò chuyện</span>
+          </button>
 
-						{/* Profile Dropdown Menu */}
-						{showProfileMenu && (
-							<div className="profile-dropdown">
-								<div className="profile-header">
-									<img
-										src={mockProfile.avatar || "/placeholder.svg"}
-										alt={mockProfile.name}
-										className="profile-avatar"
-									/>
-									<div className="profile-info">
-										<p className="profile-name">{mockProfile.name}</p>
-										<p className="profile-email">{mockProfile.email}</p>
-										<p className="profile-role">{mockProfile.role}</p>
-									</div>
-								</div>
+          {/* Component 2: Manage Guides */}
+          <button
+            className="nav-button nav-button-add"
+            onClick={() => {
+              try {
+                if (onAddGuideClick) onAddGuideClick();
+              } catch (e) {
+                void e;
+              }
+              navigate("/managerguides");
+            }}
+            
+            title="Quản lý hướng dẫn"
+          >
+            <Book />
+            <span>Quản lý hướng dẫn</span>
+          </button>
 
-								<div className="profile-divider"></div>
+          {/* Component 3: Dashboard */}
+          <button
+            className="nav-button nav-button-dashboard"
+            onClick={() => navigate("/experthome/models")}
+            title="Mô hình trồng"
+          >
+            <Leaf size={20} />
+            <span>Mô hình trồng</span>
+          </button>
 
-								<button className="profile-menu-item" onClick={() => navigate('/profile')}>
-									<User size={18} />
-									<span>Hồ sơ</span>
-								</button>
+          {/* Component 4: Plant Templates */}
+          <button
+            className="nav-button nav-button-template"
+            onClick={() => navigate("/expert/plant-templates")}
+            title="Plant Templates"
+          >
+            <TreeDeciduous />
+            <span>Bộ Mẫu Cây Trồng</span>
+          </button>
 
-								<button className="profile-menu-item" onClick={() => navigate('/settings')}>
-									<Settings size={18} />
-									<span>Cài đặt</span>
-								</button>
+          {/* Component 5: Analytics */}
+          
+        </nav>
 
-								<div className="profile-divider"></div>
+        {/* Right Section: Notifications & Avatar */}
+        <div className="header-right">
+          
 
-								<button className="profile-menu-item logout" onClick={() => {/* TODO: add logout */}}>
-									<LogOut size={18} />
-									<span>Đăng xuất</span>
-								</button>
-							</div>
-						)}
-					</div>
-				</div>
-			</div>
-		</header>
-	);
+          {/* Avatar & Profile Menu */}
+          <div className="profile-section">
+            <button
+              className="avatar-btn"
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              aria-haspopup="true"
+              aria-expanded={showProfileMenu}
+            >
+              <img
+                src={mockProfile.avatar || "/placeholder.svg"}
+                alt={mockProfile.name}
+                className="avatar-image"
+              />
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {showProfileMenu && (
+              <div className="profile-dropdown">
+                <div className="profile-header">
+                  <img
+                    src={mockProfile.avatar || "/placeholder.svg"}
+                    alt={mockProfile.name}
+                    className="profile-avatar"
+                  />
+                  <div className="profile-info">
+                    <p className="profile-name">{mockProfile.name}</p>
+                    <p className="profile-email">{mockProfile.email}</p>
+                    <p className="profile-role">{mockProfile.role}</p>
+                  </div>
+                </div>
+
+                <div className="profile-divider"></div>
+
+                <button
+                  className="profile-menu-item"
+                  onClick={() => navigate("/expert/profile")}
+                >
+                  <User size={18} />
+                  <span>Hồ sơ</span>
+                </button>
+
+                <div className="profile-divider"></div>
+
+                <button
+                  className="profile-menu-item logout"
+                  onClick={() => {
+                    localStorage.removeItem("accessToken");
+                    setShowProfileMenu(false);
+                    navigate("/login");
+                  }}
+                >
+                  <LogOut size={18} />
+                  <span>Đăng xuất</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
 }

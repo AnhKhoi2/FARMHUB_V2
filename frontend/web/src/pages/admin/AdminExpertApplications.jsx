@@ -29,11 +29,11 @@ export default function AdminExpertApplications() {
 
       setItems(Array.isArray(itemsData) ? itemsData : []);
     } catch (err) {
-      console.error("Lỗi tải danh sách đơn:", err);
+      console.error("Load applications error:", err);
       const res = err.response;
 
       if (!res) {
-        const msg = "Không thể kết nối đến máy chủ.";
+        const msg = "Không thể kết nối server.";
         setError(msg);
         toast.error(msg);
         return;
@@ -53,21 +53,20 @@ export default function AdminExpertApplications() {
   }, [load]);
 
   const approve = async (id) => {
-    const confirm = window.confirm("Bạn có chắc muốn *duyệt* đơn này?");
+    const confirm = window.confirm("Bạn có chắc muốn duyệt đơn này?");
     if (!confirm) return;
 
     try {
       const res = await axiosClient.patch(
         `/api/expert-applications/${id}/approve`
       );
-
       toast.success(
         res.data?.message ||
-          "Duyệt đơn thành công. Người dùng đã được chuyển sang vai trò Chuyên gia."
+          "Duyệt đơn thành công, user đã được chuyển sang role expert."
       );
       load();
     } catch (err) {
-      console.error("Lỗi duyệt đơn:", err);
+      console.error("Approve error:", err);
       const res = err.response;
 
       if (!res) {
@@ -85,43 +84,51 @@ export default function AdminExpertApplications() {
         return;
       }
 
-      toast.error("Lỗi máy chủ khi duyệt đơn.");
+      toast.error("Lỗi server khi duyệt đơn.");
     }
   };
 
   const reject = async (id) => {
-    const reason = window.prompt("Nhập lý do từ chối (có thể để trống):") ?? "";
-
+    const reason = window.prompt(
+      "Nhập lý do từ chối (có thể để trống, bấm Cancel để hủy):"
+    );
+  
+    // ⬇️ Admin bấm Cancel -> prompt trả về null -> KHÔNG gọi API
+    if (reason === null) {
+      return; // hủy quá trình từ chối, không đổi trạng thái đơn
+    }
+  
     try {
       const res = await axiosClient.patch(
         `/api/expert-applications/${id}/reject`,
-        { reason }
+        { reason: reason ?? "" }   // vẫn cho phép để trống nếu admin bấm OK
       );
-
+  
       toast.success(res.data?.message || "Đã từ chối đơn.");
       load();
     } catch (err) {
-      console.error("Lỗi từ chối:", err);
+      console.error("Reject error:", err);
       const res = err.response;
-
+  
       if (!res) {
         toast.error("Không thể kết nối server.");
         return;
       }
-
+  
       if (res.status === 400) {
         toast.error(res.data?.error || "Đơn không hợp lệ.");
         return;
       }
-
+  
       if (res.status === 404) {
         toast.error("Không tìm thấy đơn đăng ký.");
         return;
       }
-
+  
       toast.error("Lỗi server khi từ chối đơn.");
     }
   };
+  
 
   const resetFilter = () => {
     setStatus("pending");
@@ -130,42 +137,39 @@ export default function AdminExpertApplications() {
 
   const renderStatusBadge = (st) => {
     let cls = "bg-secondary";
-    if (st === "pending") cls = "bg-warning text-dark";
-    else if (st === "approved") cls = "bg-success";
-    else if (st === "rejected") cls = "bg-danger";
+    let label = "Không xác định";
 
-    const label =
-      st === "pending"
-        ? "Chờ duyệt"
-        : st === "approved"
-        ? "Đã duyệt"
-        : st === "rejected"
-        ? "Đã từ chối"
-        : st;
+    if (st === "pending") {
+      cls = "bg-warning text-dark";
+      label = "Đang chờ";
+    } else if (st === "approved") {
+      cls = "bg-success";
+      label = "Đã duyệt";
+    } else if (st === "rejected") {
+      cls = "bg-danger";
+      label = "Đã từ chối";
+    }
 
     return <span className={`badge ${cls}`}>{label}</span>;
   };
 
-  const currentStatusLabel = !status
-    ? "tất cả"
-    : status === "pending"
-    ? "chờ duyệt"
-    : status === "approved"
-    ? "đã duyệt"
-    : status === "rejected"
-    ? "đã từ chối"
-    : status;
-
   return (
     <AdminLayout>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="h5 mb-0">Danh sách đơn đăng ký Chuyên gia</h3>
+        <h3 className="h5 mb-0">Đơn ứng tuyển chuyên gia</h3>
         <div className="text-muted small">
-          Đang hiển thị: {currentStatusLabel}
+          Hiển thị:{" "}
+          {status === "pending"
+            ? "Đang chờ"
+            : status === "approved"
+            ? "Đã duyệt"
+            : status === "rejected"
+            ? "Đã từ chối"
+            : "Tất cả"}
         </div>
       </div>
 
-      {/* Bộ lọc */}
+      {/* Filters */}
       <div className="row g-2 mb-3">
         <div className="col-auto">
           <select
@@ -174,7 +178,7 @@ export default function AdminExpertApplications() {
             onChange={(e) => setStatus(e.target.value)}
           >
             <option value="">Tất cả</option>
-            <option value="pending">Chờ duyệt</option>
+            <option value="pending">Đang chờ</option>
             <option value="approved">Đã duyệt</option>
             <option value="rejected">Đã từ chối</option>
           </select>
@@ -183,38 +187,38 @@ export default function AdminExpertApplications() {
           <input
             type="text"
             className="form-control form-control-sm"
-            placeholder="Tìm theo họ tên / email / lĩnh vực chuyên môn..."
+            placeholder="Tìm theo tên / email / chuyên môn..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
         <div className="col-auto">
           <button
-            className="btn btn-sm btn-outline-secondary"
             type="button"
+            className="btn btn-outline-secondary btn-sm"
             onClick={resetFilter}
           >
-            Đặt lại
+            Reset
           </button>
         </div>
       </div>
 
       {error && <div className="alert alert-danger py-1 small">{error}</div>}
 
-      {/* Bảng */}
+      {/* Table */}
       <div className="card">
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-sm table-hover mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Họ và tên</th>
+                  <th>Full name</th>
                   <th>Email</th>
-                  <th>Số điện thoại</th>
-                  <th>Lĩnh vực</th>
-                  <th>Kinh nghiệm</th>
-                  <th>Trạng thái</th>
-                  <th>Hành động</th>
+                  <th>Phone</th>
+                  <th>Expertise</th>
+                  <th>Experience</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>

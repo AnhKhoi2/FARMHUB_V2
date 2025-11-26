@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../api/shared/axiosClient";
 import Header from "../components/shared/Header";
+import Footer from "../components/shared/Footer";
+
 import {
   Card,
   Typography,
@@ -406,6 +408,7 @@ export default function PostDetail() {
           }}
         />
       </Modal>
+      <Footer /> 
     </>
   );
 }

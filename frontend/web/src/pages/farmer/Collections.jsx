@@ -4,7 +4,7 @@ import collectionsApi from "../../api/farmer/collectionsApi";
 import CreateCollectionModal from "../../components/farmer/CreateCollectionModal";
 import "../../css/farmer/Collections.css";
 import Header from "../../components/shared/Header";
-
+import Footer from "../../components/shared/Footer";
 const Collections = () => {
   const navigate = useNavigate();
   const [collections, setCollections] = useState([]);
@@ -224,6 +224,7 @@ const Collections = () => {
           onSubmit={handleCreateCollection}
         />
       </div>{" "}
+      <Footer /> 
     </>
   );
 };
