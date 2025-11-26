@@ -128,7 +128,7 @@ axiosClient.interceptors.response.use(
         if (typeof window !== "undefined") {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("token");
-          window.location.href = "/login";
+          window.location.href = "/login?expired=1";
         }
 
         return;

@@ -5,7 +5,7 @@ import axiosClient from "../../api/shared/axiosClient.js";
 import { toast } from "react-toastify";
 import authApi from "../../api/shared/authApi.js";
 import expertApplicationApi from "../../api/shared/expertApplicationApi.js";
-import "../../css/auth/ProfilePage.css";
+
 import "../../css/auth/Profile.css";
 import Header from "../../components/shared/Header.jsx";
 
@@ -373,14 +373,14 @@ export default function ProfilePage() {
   };
 
   const isDirty = useMemo(() => {
-    try {
-      // consider a pending avatar file as a change as well
-      if (pendingAvatarFile) return true;
-      return JSON.stringify(form || {}) !== JSON.stringify(snapshot || {});
-    } catch {
-      return true;
-    }
-  }, [form, snapshot]);
+  try {
+    if (pendingAvatarFile) return true;      // chọn avatar => coi là dirty
+    return JSON.stringify(form || {}) !== JSON.stringify(snapshot || {});
+  } catch {
+    return true;
+  }
+}, [form, snapshot, pendingAvatarFile]);      // ⚠️ thêm pendingAvatarFile vào đây
+
 
   const BADGE_META = {
     "hat-giong": { label: "Hạt Giống", emoji: "🌱" },
@@ -428,6 +428,7 @@ export default function ProfilePage() {
           phone_number: profileData.phone,
         }));
       } catch (err) {
+        console.log(err)
         toast.error("Không tải được hồ sơ.");
       } finally {
         setLoading(false);
@@ -437,7 +438,9 @@ export default function ProfilePage() {
         setAppsLoading(true);
         const res = await expertApplicationApi.getMine();
         setMyApps(res?.data?.data || []);
-      } catch (_) {}
+      } catch (err) {
+        console.log(err)
+      }
       finally {
         setAppsLoading(false);
       }
