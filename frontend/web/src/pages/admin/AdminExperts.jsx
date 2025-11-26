@@ -8,8 +8,13 @@ import { Button } from 'antd';
 export default function AdminExperts() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ✅ GIỮ NGUYÊN SEARCH
   const [q, setQ] = useState('');
-  const [reviewStatus, setReviewStatus] = useState('');
+
+  // ✅ THÊM FILTER THEO KHOẢNG NĂM KINH NGHIỆM
+  const [expRange, setExpRange] = useState('');
+
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -28,7 +33,7 @@ export default function AdminExperts() {
       const res = await axiosClient.get('/api/experts', {
         params: {
           q: q || undefined,
-          review_status: reviewStatus || undefined,
+          // ❌ bỏ review_status, chỉ search theo q
           page,
           limit,
         },
@@ -52,11 +57,24 @@ export default function AdminExperts() {
     } finally {
       setLoading(false);
     }
-  }, [q, reviewStatus, page, limit]);
+  }, [q, page, limit]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // ✅ Lọc theo khoảng kinh nghiệm trên FE
+  const filteredItems = items.filter((it) => {
+    const exp = Number(it.experience_years ?? 0);
+    if (!expRange) return true;
+
+    if (expRange === '1-3') return exp >= 1 && exp <= 3;
+    if (expRange === '4-6') return exp >= 4 && exp <= 6;
+    if (expRange === '7-10') return exp >= 7 && exp <= 10;
+    if (expRange === '>10') return exp > 10;
+
+    return true;
+  });
 
   // ----------------- Actions -----------------
 
@@ -106,47 +124,38 @@ export default function AdminExperts() {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="h5 mb-0">Danh sách Chuyên gia</h3>
-        <div className="text-muted small">Tổng: {items.length}</div>
+        {/* tổng theo items đang hiển thị sau khi filter */}
+        <div className="text-muted small">Tổng: {filteredItems.length}</div>
       </div>
 
       {/* Bộ lọc */}
       <div className="row g-2 mb-3">
-        {/* Search */}
+        {/* Search (GIỮ NGUYÊN) */}
         <div className="col-auto">
           <input
             className="form-control form-control-sm"
-            placeholder="Tìm kiếm tên / lĩnh vực..."
+            placeholder="Tìm kiếm tên "
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
 
-        {/* Review status */}
+        {/* Filter theo năm kinh nghiệm (MỚI) */}
         <div className="col-auto">
           <select
             className="form-select form-select-sm"
-            value={reviewStatus}
-            onChange={(e) => setReviewStatus(e.target.value)}
+            value={expRange}
+            onChange={(e) => setExpRange(e.target.value)}
           >
-            <option value="">Tất cả</option>
-            <option value="pending">Chờ duyệt</option>
-            <option value="approved">Đã duyệt</option>
-            <option value="rejected">Đã từ chối</option>
+            <option value="">Tất cả số năm KN</option>
+            <option value="1-3">1 - 3 năm</option>
+            <option value="4-6">4 - 6 năm</option>
+            <option value="7-10">7 - 10 năm</option>
+            <option value=">10">Trên 10 năm</option>
           </select>
         </div>
 
-        <div className="col-auto">
-          <Button
-            size="small"
-            style={{ borderColor: '#E0E0E0', background: '#fff', color: '#2E7D32', textTransform: 'uppercase', padding: '4px 10px' }}
-            onClick={() => {
-              setQ('');
-              setReviewStatus('');
-            }}
-          >
-            ĐẶT LẠI
-          </Button>
-        </div>
+
       </div>
 
       {/* Error */}
@@ -180,14 +189,14 @@ export default function AdminExperts() {
                       Đang tải...
                     </td>
                   </tr>
-                ) : items.length === 0 ? (
+                ) : filteredItems.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="text-center py-3">
                       Không có dữ liệu
                     </td>
                   </tr>
                 ) : (
-                  items.map((it, idx) => (
+                  filteredItems.map((it, idx) => (
                     <tr key={it._id}>
                       <td className="small text-muted">
                         {(page - 1) * limit + idx + 1}
@@ -417,9 +426,6 @@ export default function AdminExperts() {
                     </p>
                   </div>
                   <div className="mb-2 text-muted small">
-                    <div>
-                      <strong>expert_id:</strong> {detail.expert_id}
-                    </div>
                     <div>
                       <strong>Ngày tạo:</strong>{' '}
                       {detail.created_at
