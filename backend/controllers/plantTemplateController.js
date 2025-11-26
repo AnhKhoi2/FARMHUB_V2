@@ -333,6 +333,7 @@ export const plantTemplateController = {
     return created(res, {
       message: "Tạo plant template thành công",
       template: newTemplate,
+      timezone: "Asia/Ho_Chi_Minh (UTC+7)",
     });
   }),
 
@@ -355,6 +356,7 @@ export const plantTemplateController = {
       message: "Lấy danh sách template thành công",
       templates,
       count: templates.length,
+      timezone: "Asia/Ho_Chi_Minh (UTC+7)",
     });
   }),
 
@@ -370,6 +372,7 @@ export const plantTemplateController = {
     return ok(res, {
       message: "Lấy template thành công",
       template,
+      timezone: "Asia/Ho_Chi_Minh (UTC+7)",
     });
   }),
 
@@ -386,6 +389,7 @@ export const plantTemplateController = {
       message: "Lấy templates theo nhóm cây thành công",
       templates,
       count: templates.length,
+      timezone: "Asia/Ho_Chi_Minh (UTC+7)",
     });
   }),
 
@@ -403,6 +407,7 @@ export const plantTemplateController = {
     return ok(res, {
       message: "Cập nhật template thành công",
       template: updatedTemplate,
+      timezone: "Asia/Ho_Chi_Minh (UTC+7)",
     });
   }),
 
@@ -432,6 +437,7 @@ export const plantTemplateController = {
     return ok(res, {
       message: "Kích hoạt template thành công",
       template,
+      timezone: "Asia/Ho_Chi_Minh (UTC+7)",
     });
   }),
 
@@ -448,6 +454,7 @@ export const plantTemplateController = {
     return ok(res, {
       message: "Lấy stage thành công",
       stage,
+      timezone: "Asia/Ho_Chi_Minh (UTC+7)",
     });
   }),
 };

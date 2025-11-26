@@ -1,0 +1,134 @@
+[
+  {
+    "_id": "6925248cf72ccf2791209efc",
+    "notebook_name": "Húng quế 12",
+    "user": {
+      "_id": "68ff39dd583042edf2774a76",
+      "username": "admin1",
+      "email": "admin1@gmail.com"
+    },
+    "plant_type": "Húng quế",
+    "plant_group": "herb",
+    "template": {
+      "_id": "6913d5d6763663fdc88ace6f",
+      "template_name": "Rau Gia Vị"
+    },
+    "planted_date": "2025-11-24T17:05:00.000Z",
+    "current_stage": 1,
+    "progress": 0,
+    "daily_checklist_count": 2,
+    "status": "active",
+    "createdAt": "2025-11-25T03:37:48.129Z",
+    "updatedAt": "2025-11-25T03:37:48.855Z"
+  },
+  {
+    "_id": "692352b5c38434f61610268e",
+    "notebook_name": "Húng quế 5",
+    "user": {
+      "_id": "68ff39dd583042edf2774a76",
+      "username": "admin1",
+      "email": "admin1@gmail.com"
+    },
+    "plant_type": "Húng quế",
+    "plant_group": "herb",
+    "template": {
+      "_id": "6913d5d6763663fdc88ace6f",
+      "template_name": "Rau Gia Vị"
+    },
+    "planted_date": "2025-11-23T17:05:00.000Z",
+    "current_stage": 1,
+    "progress": 34,
+    "daily_checklist_count": 1,
+    "status": "active",
+    "createdAt": "2025-11-23T18:30:13.746Z",
+    "updatedAt": "2025-11-25T02:54:06.751Z"
+  },
+  {
+    "_id": "692351ed7d78dfc334a47ab9",
+    "notebook_name": "Húng quế 4",
+    "user": {
+      "_id": "68ff39dd583042edf2774a76",
+      "username": "admin1",
+      "email": "admin1@gmail.com"
+    },
+    "plant_type": "Húng quế",
+    "plant_group": "herb",
+    "template": {
+      "_id": "6913d5d6763663fdc88ace6f",
+      "template_name": "Rau Gia Vị"
+    },
+    "planted_date": "2025-11-23T17:05:00.000Z",
+    "current_stage": 2,
+    "progress": 34,
+    "daily_checklist_count": 1,
+    "status": "active",
+    "createdAt": "2025-11-23T18:26:53.957Z",
+    "updatedAt": "2025-11-25T02:53:39.169Z"
+  },
+  {
+    "_id": "69235178ed205d654192e293",
+    "notebook_name": "Húng quế 2",
+    "user": {
+      "_id": "68ff39dd583042edf2774a76",
+      "username": "admin1",
+      "email": "admin1@gmail.com"
+    },
+    "plant_type": "Húng quế",
+    "plant_group": "herb",
+    "template": {
+      "_id": "6913d5d6763663fdc88ace6f",
+      "template_name": "Rau Gia Vị"
+    },
+    "planted_date": "2025-11-23T17:05:00.000Z",
+    "current_stage": 2,
+    "progress": 34,
+    "daily_checklist_count": 1,
+    "status": "active",
+    "createdAt": "2025-11-23T18:24:56.596Z",
+    "updatedAt": "2025-11-25T02:52:54.287Z"
+  },
+  {
+    "_id": "6922cd825b4abdc3f2997e73",
+    "notebook_name": "Húng quế 3",
+    "user": {
+      "_id": "68ff39dd583042edf2774a76",
+      "username": "admin1",
+      "email": "admin1@gmail.com"
+    },
+    "plant_type": "Húng quế",
+    "plant_group": "herb",
+    "template": {
+      "_id": "6913d5d6763663fdc88ace6f",
+      "template_name": "Rau Gia Vị"
+    },
+    "planted_date": "2025-11-23T00:00:00.000Z",
+    "current_stage": 1,
+    "progress": 34,
+    "daily_checklist_count": 1,
+    "status": "active",
+    "createdAt": "2025-11-23T09:01:54.510Z",
+    "updatedAt": "2025-11-25T02:38:47.665Z"
+  },
+  {
+    "_id": "6920078b43a35a1bf6346d30",
+    "notebook_name": "Húng quế 1",
+    "user": {
+      "_id": "68ff39dd583042edf2774a76",
+      "username": "admin1",
+      "email": "admin1@gmail.com"
+    },
+    "plant_type": "Húng quế",
+    "plant_group": "herb",
+    "template": {
+      "_id": "6913d5d6763663fdc88ace6f",
+      "template_name": "Rau Gia Vị"
+    },
+    "planted_date": "2025-11-21T00:00:00.000Z",
+    "current_stage": 3,
+    "progress": 67,
+    "daily_checklist_count": 1,
+    "status": "deleted",
+    "createdAt": "2025-11-21T06:32:43.389Z",
+    "updatedAt": "2025-11-25T02:37:24.448Z"
+  }
+]

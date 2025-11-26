@@ -1,11 +1,24 @@
 import express from "express";
-import { ok } from "../utils/ApiResponse.js";
+import { ok, created, noContent } from "../utils/ApiResponse.js";
+import { triggerDailyTasksNotification } from "../jobs/dailyTasksNotificationJob.js";
 
 const router = express.Router();
 
 // Simple healthcheck/test route used by server during development
 router.get("/ping", (req, res) => {
   ok(res, { msg: "pong" });
+});
+
+// Manual endpoint to trigger daily tasks notification job (for testing)
+// POST /test/trigger-daily-tasks-notification
+router.post("/trigger-daily-tasks-notification", async (req, res) => {
+  const result = await triggerDailyTasksNotification();
+  if (result && result.success) {
+    return ok(res, null, null, "Manual daily tasks notification triggered");
+  }
+  return res
+    .status(500)
+    .json({ success: false, message: result.error || "Failed" });
 });
 
 export default router;

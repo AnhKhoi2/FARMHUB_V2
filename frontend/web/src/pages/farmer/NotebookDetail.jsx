@@ -28,6 +28,28 @@ const NotebookDetail = () => {
     }
   }, [id]);
 
+  // Listen for global notebook task updates (dispatched by axios interceptor)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onTaskUpdated = (e) => {
+      try {
+        const updatedId =
+          e?.detail?.notebookId || (e && e.detail && e.detail.notebookId);
+        // If event has no id or matches current notebook, refresh
+        if (!updatedId || String(updatedId) === String(id)) {
+          fetchNotebookData();
+        }
+      } catch (err) {
+        fetchNotebookData();
+      }
+    };
+
+    window.addEventListener("notebook:task-updated", onTaskUpdated);
+    return () =>
+      window.removeEventListener("notebook:task-updated", onTaskUpdated);
+  }, [id]);
+
   const fetchNotebookData = async () => {
     if (!id || id === "undefined") {
       console.log("⚠️ Invalid notebook ID:", id);
