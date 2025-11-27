@@ -44,6 +44,7 @@ import airRoute from "./routes/air.js";
 import tilesRoute from "./routes/tiles.js";
 import plantRoute from "./routes/plant.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
+import adminTransactionsRoute from "./routes/adminTransactions.js";
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -117,6 +118,7 @@ app.use("/layouts", layoutsRoutes);
 // new primary path
 app.use("/admin/managerpost", postRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/admin/transactions", adminTransactionsRoute);
 
 // (legacy alias removed) '/admin/managerpost' is the canonical path for post management
 app.use("/api/notifications", notificationRoutes);
