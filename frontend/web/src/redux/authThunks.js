@@ -64,6 +64,9 @@ export const logoutThunk = () => async (dispatch) => {
   dispatch(logout());
   localStorage.removeItem("user");
   localStorage.removeItem("accessToken");
+  try {
+    sessionStorage.removeItem("modelSuggestionShownAtLogin");
+  } catch (e) {}
 };
 // =========================
 // REGISTER – bản nâng cấp HOÀN CHỈNH

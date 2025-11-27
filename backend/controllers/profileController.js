@@ -1,6 +1,7 @@
 import Profile from "../models/Profile.js";
 import User from "../models/User.js";
 import UserStreak from "../models/UserStreak.js";
+import Model from "../models/Model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ok } from "../utils/ApiResponse.js";
 
@@ -90,5 +91,71 @@ export const profileController = {
       profile: updatedProfile,
       user,
     });
+  }),
+
+  // GET /api/profile/model-suggestion
+  getModelSuggestion: asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+
+    // fetch existing profile (if any)
+    const profileDoc = await Profile.findOne({ userId }).lean();
+
+    // build available option lists from Model collection
+    const [soils, climates, irrigations, sunIntensities, winds, floorMaterials] = await Promise.all([
+      Model.distinct('soil', { isDeleted: false }),
+      Model.distinct('climate', { isDeleted: false }),
+      Model.distinct('irrigation', { isDeleted: false }),
+      Model.distinct('sunIntensity', { isDeleted: false }),
+      Model.distinct('wind', { isDeleted: false }),
+      Model.distinct('floorMaterial', { isDeleted: false }),
+    ]);
+
+    const options = {
+      soil: soils.filter(Boolean),
+      climate: climates.filter(Boolean),
+      irrigation: irrigations.filter(Boolean),
+      sunIntensity: sunIntensities.filter(Boolean),
+      wind: winds.filter(Boolean),
+      floorMaterial: floorMaterials.filter(Boolean),
+      hasRoof: [true, false],
+    };
+
+    const modelSuggestion = (profileDoc && profileDoc.modelSuggestion) || {
+      selectedOptions: {},
+      skipCount: 0,
+      lastSkippedAt: null,
+    };
+
+    return ok(res, { options, modelSuggestion });
+  }),
+
+  // POST /api/profile/model-suggestion/select
+  selectModelSuggestion: asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    const data = req.body || {};
+
+    // expected payload: { selectedOptions: { soil: '...', climate: '...', ... } }
+    const selectedOptions = data.selectedOptions || {};
+
+    const updated = await Profile.findOneAndUpdate(
+      { userId },
+      { $set: { 'modelSuggestion.selectedOptions': selectedOptions, 'modelSuggestion.skipCount': 0, 'modelSuggestion.lastSkippedAt': null } },
+      { new: true, upsert: true }
+    ).lean();
+
+    return ok(res, { modelSuggestion: updated.modelSuggestion });
+  }),
+
+  // POST /api/profile/model-suggestion/skip
+  skipModelSuggestion: asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+
+    const updated = await Profile.findOneAndUpdate(
+      { userId },
+      { $inc: { 'modelSuggestion.skipCount': 1 }, $set: { 'modelSuggestion.lastSkippedAt': new Date() } },
+      { new: true, upsert: true }
+    ).lean();
+
+    return ok(res, { modelSuggestion: updated.modelSuggestion });
   }),
 };
