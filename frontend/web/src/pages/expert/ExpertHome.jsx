@@ -350,12 +350,12 @@ export default function ExpertHome({
                       {m.description?.slice(0, 80)}...
                     </p>
 
-                    <button
+                    {/* <button
                       className="item-btn"
                       onClick={() => navigate(`/experthome/models/${m._id}`)}
                     >
                       Xem chi tiết
-                    </button>
+                    </button> */}
                   </div>
                 ))}
               </div>
