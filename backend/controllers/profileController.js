@@ -28,7 +28,7 @@ export const profileController = {
 
     // ✅ lấy thêm provider + password để tính hasPassword (không trả password ra ngoài)
     const userRaw = await User.findById(userId)
-      .select("email username provider password role")
+      .select("email username provider password role profile")
       .lean();
 
     const hasPassword = Boolean(userRaw?.password);
@@ -65,12 +65,30 @@ export const profileController = {
       if (!Number.isNaN(dt.getTime())) data.dob = dt.toISOString();
     }
 
-    const updated = await Profile.findOneAndUpdate(
+    // Cập nhật (hoặc tạo mới) hồ sơ Profile
+    const updatedProfile = await Profile.findOneAndUpdate(
       { userId },
       { $set: { ...data, userId } },
       { new: true, upsert: true } // upsert để tạo mới nếu chưa tồn tại
     ).lean();
 
-    return ok(res, updated);
+    // Nếu có avatar mới -> đồng bộ avatar vào User.profile.avatar
+    if (data.avatar) {
+      await User.findByIdAndUpdate(userId, {
+        $set: { "profile.avatar": data.avatar },
+      });
+    }
+
+    // Lấy lại thông tin user (không trả password)
+    const userRaw = await User.findById(userId)
+      .select("email username provider role profile")
+      .lean();
+
+    const user = userRaw || {};
+
+    return ok(res, {
+      profile: updatedProfile,
+      user,
+    });
   }),
 };

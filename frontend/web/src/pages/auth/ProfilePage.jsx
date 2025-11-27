@@ -105,13 +105,18 @@ function ChangePasswordModal({
             disabled={pwSaving}
             className="agri-btn-primary disabled:opacity-60"
           >
-            {pwSaving ? "Đang xử lý…" : needsSetPassword ? "✨ Tạo mật khẩu" : "🔄 Đổi mật khẩu"}
+            {pwSaving
+              ? "Đang xử lý…"
+              : needsSetPassword
+              ? "✨ Tạo mật khẩu"
+              : "🔄 Đổi mật khẩu"}
           </button>
         </div>
       </div>
     </div>
   );
 }
+
 /* ============================
    2. MODAL ĐĂNG KÝ EXPERT
 ============================ */
@@ -140,13 +145,17 @@ function ExpertApplicationModal({
           className="agri-card w-full max-w-2xl p-6"
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 className="text-xl font-semibold mb-4 text-agri-primary">Thông báo</h2>
+          <h2 className="text-xl font-semibold mb-4 text-agri-primary">
+            Thông báo
+          </h2>
           <p className="text-agri-gray">
             {hasApproved
               ? "Bạn đã là Expert. Không cần nộp đơn."
               : "Bạn đã có đơn đang chờ duyệt."}
           </p>
-          <button onClick={onClose} className="mt-4 agri-btn-primary">Đóng</button>
+          <button onClick={onClose} className="mt-4 agri-btn-primary">
+            Đóng
+          </button>
         </div>
       </div>
     );
@@ -165,7 +174,9 @@ function ExpertApplicationModal({
           <h2 className="text-xl font-semibold text-agri-primary">
             🧑‍🌾 Đăng ký trở thành Expert
           </h2>
-          <button className="text-2xl text-agri-gray hover:text-agri-primary">&times;</button>
+          <button className="text-2xl text-agri-gray hover:text-agri-primary">
+            &times;
+          </button>
         </div>
 
         <form onSubmit={submitApplication} className="profile-form space-y-4">
@@ -196,7 +207,9 @@ function ExpertApplicationModal({
             <input
               type="text"
               value={applyForm.expertise_area}
-              onChange={(e) => onApplyChange("expertise_area", e.target.value)}
+              onChange={(e) =>
+                onApplyChange("expertise_area", e.target.value)
+              }
               className="agri-input"
             />
           </div>
@@ -224,7 +237,9 @@ function ExpertApplicationModal({
             <textarea
               rows={4}
               value={applyForm.description}
-              onChange={(e) => onApplyChange("description", e.target.value)}
+              onChange={(e) =>
+                onApplyChange("description", e.target.value)
+              }
               className="agri-input"
             />
           </div>
@@ -233,14 +248,14 @@ function ExpertApplicationModal({
             <label className="agri-label">Chứng chỉ / Portfolio (URL)</label>
             <div className="space-y-2">
               {applyForm.certificates.map((url, i) => {
-                // local helper for modal-only errors (applyFieldErrors is passed from parent)
                 const getErr = (p) => {
                   if (!applyFieldErrors) return undefined;
                   if (applyFieldErrors[p]) return applyFieldErrors[p];
-                  const dotKey = p.replace(/\[(\d+)\]/g, '.$1');
+                  const dotKey = p.replace(/\[(\d+)\]/g, ".$1");
                   if (applyFieldErrors[dotKey]) return applyFieldErrors[dotKey];
-                  const bracketKey = p.replace(/\.(\d+)/g, '[$1]');
-                  if (applyFieldErrors[bracketKey]) return applyFieldErrors[bracketKey];
+                  const bracketKey = p.replace(/\.(\d+)/g, "[$1]");
+                  if (applyFieldErrors[bracketKey])
+                    return applyFieldErrors[bracketKey];
                   return undefined;
                 };
 
@@ -261,8 +276,12 @@ function ExpertApplicationModal({
                         +
                       </button>
                     )}
-                    {getErr(`certificates.${i}`) || getErr(`certificates[${i}]`) ? (
-                      <p className="text-sm text-red-600 w-full mt-1">{getErr(`certificates.${i}`) || getErr(`certificates[${i}]`)}</p>
+                    {getErr(`certificates.${i}`) ||
+                    getErr(`certificates[${i}]`) ? (
+                      <p className="text-sm text-red-600 w-full mt-1">
+                        {getErr(`certificates.${i}`) ||
+                          getErr(`certificates[${i}]`)}
+                      </p>
                     ) : null}
                   </div>
                 );
@@ -271,7 +290,11 @@ function ExpertApplicationModal({
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="agri-btn-secondary">
+            <button
+              type="button"
+              onClick={onClose}
+              className="agri-btn-secondary"
+            >
               Hủy
             </button>
 
@@ -288,6 +311,7 @@ function ExpertApplicationModal({
     </div>
   );
 }
+
 /* ============================
    3. COMPONENT CHÍNH
 ============================ */
@@ -335,16 +359,17 @@ export default function ProfilePage() {
   const getApplyError = (path) => {
     if (!applyFieldErrors) return undefined;
     if (applyFieldErrors[path]) return applyFieldErrors[path];
-    const dotKey = path.replace(/\[(\d+)\]/g, '.$1');
+    const dotKey = path.replace(/\[(\d+)\]/g, ".$1");
     if (applyFieldErrors[dotKey]) return applyFieldErrors[dotKey];
-    const bracketKey = path.replace(/\.(\d+)/g, '[$1]');
+    const bracketKey = path.replace(/\.(\d+)/g, "[$1]");
     if (applyFieldErrors[bracketKey]) return applyFieldErrors[bracketKey];
     return undefined;
   };
 
   const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const avatarPreview = previewUrl || (form.avatar ? String(form.avatar).trim() : null);
+  const avatarPreview =
+    previewUrl || (form.avatar ? String(form.avatar).trim() : null);
   const needsSetPassword = hasPassword === false;
 
   const fileInputRef = useRef(null);
@@ -374,18 +399,23 @@ export default function ProfilePage() {
   const clearAvatar = () => {
     setPendingAvatarFile(null);
     setForm((prev) => ({ ...prev, avatar: "" }));
-    try { if (fileInputRef.current) fileInputRef.current.value = ""; } catch(e){ void e; }
+    try {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (e) {
+      void e;
+    }
   };
 
   const isDirty = useMemo(() => {
-  try {
-    if (pendingAvatarFile) return true;      // chọn avatar => coi là dirty
-    return JSON.stringify(form || {}) !== JSON.stringify(snapshot || {});
-  } catch {
-    return true;
-  }
-}, [form, snapshot, pendingAvatarFile]);      // ⚠️ thêm pendingAvatarFile vào đây
-
+    try {
+      if (pendingAvatarFile) return true; // chọn avatar => coi là dirty
+      return (
+        JSON.stringify(form || {}) !== JSON.stringify(snapshot || {})
+      );
+    } catch {
+      return true;
+    }
+  }, [form, snapshot, pendingAvatarFile]); // ⚠️ thêm pendingAvatarFile vào đây
 
   const BADGE_META = {
     "hat-giong": { label: "Hạt Giống", emoji: "🌱" },
@@ -396,8 +426,11 @@ export default function ProfilePage() {
 
   const badgeLabel = (slug) => {
     if (!slug) return "";
-    if (BADGE_META[slug]) return `${BADGE_META[slug].emoji} ${BADGE_META[slug].label}`;
-    return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    if (BADGE_META[slug])
+      return `${BADGE_META[slug].emoji} ${BADGE_META[slug].label}`;
+    return slug
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
   /* =====================================================
@@ -433,7 +466,7 @@ export default function ProfilePage() {
           phone_number: profileData.phone,
         }));
       } catch (err) {
-        console.log(err)
+        console.log(err);
         toast.error("Không tải được hồ sơ.");
       } finally {
         setLoading(false);
@@ -444,9 +477,8 @@ export default function ProfilePage() {
         const res = await expertApplicationApi.getMine();
         setMyApps(res?.data?.data || []);
       } catch (err) {
-        console.log(err)
-      }
-      finally {
+        console.log(err);
+      } finally {
         setAppsLoading(false);
       }
     })();
@@ -494,7 +526,10 @@ export default function ProfilePage() {
         // make absolute if needed
         let full = url;
         try {
-          if (typeof axiosClient.defaults?.baseURL === "string" && url.startsWith("/")) {
+          if (
+            typeof axiosClient.defaults?.baseURL === "string" &&
+            url.startsWith("/")
+          ) {
             full = new URL(url, axiosClient.defaults.baseURL).toString();
           }
         } catch {
@@ -504,30 +539,94 @@ export default function ProfilePage() {
       }
 
       const { data } = await profileApi.updateProfile(payload);
-      const updated = data?.data || {};
+      const raw = data?.data || {};
+      const updatedProfile = raw.profile || raw;
 
       const normalized = {
         ...form,
-        ...updated,
-        dob: updated.dob || form.dob,
+        ...updatedProfile,
+        dob: updatedProfile.dob || form.dob,
       };
 
       setForm(normalized);
       // update local serverUser if backend returned user info
-      if (updated.user) setServerUser((prev) => ({ ...(prev || {}), ...updated.user }));
+      if (raw.user)
+        setServerUser((prev) => ({ ...(prev || {}), ...raw.user }));
       setSnapshot(normalized);
       // If backend returned full user object, set it into Redux so Header updates immediately.
       try {
-        if (updated.user) {
+        if (raw.user) {
           // ensure avatar has cache-busting
-          const u = { ...updated.user };
-          if (u.profile?.avatar) u.profile.avatar = u.profile.avatar + "?v=" + Date.now();
+          const u = { ...raw.user };
+          if (u.profile?.avatar)
+            u.profile.avatar = u.profile.avatar + "?v=" + Date.now();
           console.log("[ProfilePage] dispatching setUser:", u);
           dispatch(setUser(u));
-          console.log("[ProfilePage] localStorage.user after setUser:", localStorage.getItem("user"));
-              // DOM-level fallback: force update header avatar(s) immediately
+          console.log(
+            "[ProfilePage] localStorage.user after setUser:",
+            localStorage.getItem("user")
+          );
+          // DOM-level fallback: force update header avatar(s) immediately
+          try {
+            const newAvatar = u.profile?.avatar || u.avatar || null;
+            if (newAvatar) {
+              const els = document.querySelectorAll("img.avatar");
+              els.forEach((el) => {
+                try {
+                  el.src = newAvatar;
+                  el.dataset.retry = "1";
+                } catch (e) {
+                  void e;
+                }
+              });
+              const headerImg = document.querySelector(
+                ".user-menu-header img"
+              );
+              if (headerImg) headerImg.src = newAvatar;
+            }
+          } catch (e) {
+            // ignore DOM failures
+            void e;
+          }
+        } else {
+          const profileUpdate = {};
+          if (normalized.avatar)
+            profileUpdate.avatar =
+              normalized.avatar + "?v=" + Date.now();
+          if (normalized.fullName)
+            profileUpdate.name = normalized.fullName;
+
+          if (Object.keys(profileUpdate).length) {
+            console.log(
+              "[ProfilePage] dispatching updateUserProfile (fallback):",
+              profileUpdate
+            );
+            // Try to merge into existing redux user and set full user to ensure Header updates
+            try {
+              const current =
+                reduxUser ||
+                JSON.parse(localStorage.getItem("user")) ||
+                {};
+              const merged = {
+                ...current,
+                profile: {
+                  ...(current.profile || {}),
+                  ...profileUpdate,
+                },
+              };
+              console.log(
+                "[ProfilePage] dispatching setUser(merged):",
+                merged
+              );
+              dispatch(setUser(merged));
+              console.log(
+                "[ProfilePage] localStorage.user after setUser(merged):",
+                localStorage.getItem("user")
+              );
+              // DOM-level fallback for merged user
               try {
-                const newAvatar = u.profile?.avatar || u.avatar || null;
+                const newAvatar =
+                  merged.profile?.avatar || merged.avatar || null;
                 if (newAvatar) {
                   const els = document.querySelectorAll("img.avatar");
                   els.forEach((el) => {
@@ -538,60 +637,24 @@ export default function ProfilePage() {
                       void e;
                     }
                   });
-                  const headerImg = document.querySelector(".user-menu-header img");
+                  const headerImg = document.querySelector(
+                    ".user-menu-header img"
+                  );
                   if (headerImg) headerImg.src = newAvatar;
                 }
               } catch (e) {
-                // ignore DOM failures
                 void e;
               }
-        } else {
-          const profileUpdate = {};
-          if (normalized.avatar) profileUpdate.avatar = normalized.avatar + "?v=" + Date.now();
-          if (normalized.fullName) profileUpdate.name = normalized.fullName;
-
-          if (Object.keys(profileUpdate).length) {
-            console.log("[ProfilePage] dispatching updateUserProfile (fallback):", profileUpdate);
-            // Try to merge into existing redux user and set full user to ensure Header updates
-            try {
-              const current = reduxUser || JSON.parse(localStorage.getItem("user")) || {};
-              const merged = {
-                ...current,
-                profile: {
-                  ...(current.profile || {}),
-                  ...profileUpdate,
-                },
-              };
-              console.log("[ProfilePage] dispatching setUser(merged):", merged);
-              dispatch(setUser(merged));
-              console.log("[ProfilePage] localStorage.user after setUser(merged):", localStorage.getItem("user"));
-                // DOM-level fallback for merged user
-                try {
-                  const newAvatar = merged.profile?.avatar || merged.avatar || null;
-                  if (newAvatar) {
-                    const els = document.querySelectorAll("img.avatar");
-                    els.forEach((el) => {
-                      try {
-                        el.src = newAvatar;
-                        el.dataset.retry = "1";
-                      } catch (e) {
-                        void e;
-                      }
-                    });
-                    const headerImg = document.querySelector(".user-menu-header img");
-                    if (headerImg) headerImg.src = newAvatar;
-                  }
-                } catch (e) {
-                  void e;
-                }
             } catch (e) {
               // fallback to updateUserProfile reducer
+              console.log(e);
               dispatch(updateUserProfile(profileUpdate));
             }
           }
         }
       } catch (e) {
         // ignore
+        console.log(e);
       }
       setEditMode(false);
       toast.success("Đã lưu hồ sơ thành công");
@@ -623,8 +686,14 @@ export default function ProfilePage() {
     if (pwForm.newPassword !== pwForm.confirmPassword)
       return toast.error("Mật khẩu xác nhận không khớp.");
 
-    if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/.test(pwForm.newPassword))
-      return toast.error("Mật khẩu ≥8 ký tự và có chữ + số + ký tự đặc biệt.");
+    if (
+      !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/.test(
+        pwForm.newPassword
+      )
+    )
+      return toast.error(
+        "Mật khẩu ≥8 ký tự và có chữ + số + ký tự đặc biệt."
+      );
 
     try {
       setPwSaving(true);
@@ -638,7 +707,9 @@ export default function ProfilePage() {
       setPwForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
       setPwOpen(false);
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Không thể đổi mật khẩu");
+      toast.error(
+        err?.response?.data?.message || "Không thể đổi mật khẩu"
+      );
     } finally {
       setPwSaving(false);
     }
@@ -673,7 +744,10 @@ export default function ProfilePage() {
     if (hasApproved) return toast.info("Bạn đã là Expert.");
     if (hasPending) return toast.info("Bạn đã có đơn đang chờ duyệt.");
 
-    if (!applyForm.full_name?.trim() || !applyForm.expertise_area?.trim()) {
+    if (
+      !applyForm.full_name?.trim() ||
+      !applyForm.expertise_area?.trim()
+    ) {
       return toast.error("Họ tên + lĩnh vực là bắt buộc.");
     }
 
@@ -696,7 +770,6 @@ export default function ProfilePage() {
       const status = err?.response?.status;
       const body = err?.response?.data;
       if (status === 422 || status === 400) {
-        // Try to parse validation errors from backend (Joi or custom)
         const errors = {};
         if (body?.errors && typeof body.errors === "object") {
           Object.assign(errors, body.errors);
@@ -705,7 +778,11 @@ export default function ProfilePage() {
             const path = Array.isArray(d.path) ? d.path.join(".") : d.path;
             errors[path] = d.message;
           });
-        } else if (body?.message && body?._original && Array.isArray(body.details)) {
+        } else if (
+          body?.message &&
+          body?._original &&
+          Array.isArray(body.details)
+        ) {
           body.details.forEach((d) => {
             const path = Array.isArray(d.path) ? d.path.join(".") : d.path;
             errors[path] = d.message;
@@ -736,355 +813,411 @@ export default function ProfilePage() {
 
   return (
     <>
-      <Header/>
-  
-    <div className="profile-page">
-      <div className="agri-theme-container">
-        <h1 className="text-3xl font-bold mb-4 agri-theme-heading">
-          🌿 Hồ sơ cá nhân
-        </h1>
-                {getApplyError('full_name') && (
-                  <p className="text-sm text-red-600 mt-1">{getApplyError('full_name')}</p>
-                )}
+      <Header />
 
-        {serverUser && (
-          <p className="text-sm text-agri-gray mb-6">
-            Tài khoản:{" "}
-            <span className="font-medium text-agri-primary">
-              {serverUser.username}
-            </span>{" "}
-            · Email:{" "}
-            <span className="font-mono">{serverUser.email}</span>{" "}
-            · Vai trò:{" "}
-            <span className="font-bold text-agri-primary">
-              {serverUser.role?.toUpperCase()}
-            </span>
-          </p>
-        )}
+      <div className="profile-page">
+        <div className="agri-theme-container">
+          <h1 className="text-3xl font-bold mb-4 agri-theme-heading">
+            🌿 Hồ sơ cá nhân
+          </h1>
+          {getApplyError("full_name") && (
+            <p className="text-sm text-red-600 mt-1">
+              {getApplyError("full_name")}
+            </p>
+          )}
 
-        {/* ==============================
+          {serverUser && (
+            <p className="text-sm text-agri-gray mb-6">
+              Tài khoản:{" "}
+              <span className="font-medium text-agri-primary">
+                {serverUser.username}
+              </span>{" "}
+              · Email:{" "}
+              <span className="font-mono">{serverUser.email}</span> · Vai
+              trò:{" "}
+              <span className="font-bold text-agri-primary">
+                {serverUser.role?.toUpperCase()}
+              </span>
+            </p>
+          )}
+
+          {/* ==============================
             GRID 3 CỘT
         =============================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {getApplyError('expertise_area') && (
-                  <p className="text-sm text-red-600 mt-1">{getApplyError('expertise_area')}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {getApplyError("expertise_area") && (
+              <p className="text-sm text-red-600 mt-1">
+                {getApplyError("expertise_area")}
+              </p>
+            )}
+            {/* ========== CỘT 1: AVATAR =========== */}
+            <div className="agri-card avatar-section">
+              <div className="avatar-wrapper">
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="grid place-items-center w-full h-full text-gray-400 bg-gray-50">
+                    🌱 Chưa có ảnh
+                  </div>
                 )}
-          {/* ========== CỘT 1: AVATAR =========== */}
-          <div className="agri-card avatar-section">
-            <div className="avatar-wrapper">
-              {avatarPreview ? (
-                <img
-                  src={avatarPreview}
-                  alt="avatar"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="grid place-items-center w-full h-full text-gray-400 bg-gray-50">
-                  🌱 Chưa có ảnh
-                </div>
-              )}
+              </div>
+
+              <p className="text-center text-lg mt-3 font-semibold text-agri-primary">
+                {form.fullName || "Người dùng"}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setPwOpen(true)}
+                className="w-full agri-btn-secondary mt-4 flex items-center justify-center gap-2"
+              >
+                🔑 Đổi mật khẩu
+              </button>
             </div>
 
-            <p className="text-center text-lg mt-3 font-semibold text-agri-primary">
-              {form.fullName || "Người dùng"}
-            </p>
-
-            <button
-              type="button"
-              onClick={() => setPwOpen(true)}
-              className="w-full agri-btn-secondary mt-4 flex items-center justify-center gap-2"
-            >
-              🔑 Đổi mật khẩu
-            </button>
-          </div>
-
-          {/* ========== CỘT 2 + 3: THÔNG TIN CƠ BẢN =========== */}
-          <div className="agri-card lg:col-span-2 space-y-4">
-            <h2 className="text-xl font-semibold text-agri-primary">
-              Thông tin cơ bản
-            </h2>
-
-            {!editMode ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
-                  <div><span className="agri-label">Số điện thoại:</span> {form.phone || "-"}</div>
-                  <div><span className="agri-label">Ngày sinh:</span> {toDateDisplay(form.dob)}</div>
-                  <div>
-                    <span className="agri-label">Giới tính:</span>{" "}
-                    {form.gender === "male"
-                      ? "Nam 👨"
-                      : form.gender === "female"
-                      ? "Nữ 👩"
-                      : "Khác ❓"}
-                  </div>
-                  <div><span className="agri-label">Địa chỉ:</span> {form.address || "-"}</div>
-                </div>
-
-                <div>
-                  <span className="agri-label">Giới thiệu:</span>
-                  <p className="whitespace-pre-wrap text-agri-gray mt-1">
-                    {form.bio || "(Chưa có nội dung)"}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleStartEdit}
-                  className="agri-btn-primary mt-4"
-                >
-                  📝 Chỉnh sửa hồ sơ
-                </button>
-              </>
-            ) : (
-              <>
-                {fieldErrors.__server && (
-                  <p className="text-sm text-red-600">{fieldErrors.__server}</p>
-                )}
-
-                <div>
-                  <label className="agri-label">Ảnh đại diện</label>
-                  <div className="flex items-center gap-3">
-                    <div className="w-20 h-20 rounded overflow-hidden border bg-gray-50">
-                      {avatarPreview ? (
-                        <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full grid place-items-center text-sm text-agri-gray">Chưa có</div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarSelect} className="hidden" />
-                      <div className="flex gap-2">
-                        <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} className="agri-btn-secondary">Tải ảnh lên</button>
-                        <button type="button" onClick={clearAvatar} className="agri-btn-secondary">Xóa</button>
-                      </div>
-                      {fieldErrors.avatar && <p className="text-sm text-red-600">{fieldErrors.avatar}</p>}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="agri-label">Họ và tên</label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={form.fullName || ""}
-                    onChange={handleChange}
-                    className="agri-input"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="agri-label">Số điện thoại</label>
-                    <input
-                      type="text"
-                      name="phone"
-                      value={form.phone || ""}
-                      onChange={handleChange}
-                      className="agri-input"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="agri-label">Ngày sinh</label>
-                    <input
-                      type="date"
-                      name="dob"
-                      value={form.dob?.split("T")[0] || ""}
-                      onChange={handleChange}
-                      className="agri-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="agri-label">Giới tính</label>
-                    <select
-                      name="gender"
-                      value={form.gender}
-                      onChange={handleChange}
-                      className="agri-input"
-                    >
-                      <option value="male">Nam</option>
-                      <option value="female">Nữ</option>
-                      <option value="other">Khác</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="agri-label">Địa chỉ</label>
-                    <input
-                      type="text"
-                      name="address"
-                      value={form.address || ""}
-                      onChange={handleChange}
-                      className="agri-input"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="agri-label">Giới thiệu</label>
-                  <textarea
-                    name="bio"
-                    rows={4}
-                    value={form.bio || ""}
-                    onChange={handleChange}
-                    className="agri-input"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={saving || !isDirty}
-                    className="agri-btn-primary disabled:opacity-60"
-                  >
-                    {saving ? "Đang lưu…" : "💾 Lưu thay đổi"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="agri-btn-secondary"
-                    disabled={saving}
-                  >
-                    Hủy
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* ========== ĐĂNG KÝ EXPERT (FULL WIDTH) =========== */}
-          <div className="agri-card lg:col-span-3 space-y-4">
-            <div className="flex items-center justify-between">
+            {/* ========== CỘT 2 + 3: THÔNG TIN CƠ BẢN =========== */}
+            <div className="agri-card lg:col-span-2 space-y-4">
               <h2 className="text-xl font-semibold text-agri-primary">
-                🧑‍🌾 Đăng ký trở thành Expert
+                Thông tin cơ bản
               </h2>
 
-              <div className="flex items-center gap-3">
-                {hasApproved && (
-                  <span className="status-tag status-approved">
-                    Đã là Expert ✅
-                  </span>
-                )}
+              {!editMode ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
+                    <div>
+                      <span className="agri-label">Số điện thoại:</span>{" "}
+                      {form.phone || "-"}
+                    </div>
+                    <div>
+                      <span className="agri-label">Ngày sinh:</span>{" "}
+                      {toDateDisplay(form.dob)}
+                    </div>
+                    <div>
+                      <span className="agri-label">Giới tính:</span>{" "}
+                      {form.gender === "male"
+                        ? "Nam 👨"
+                        : form.gender === "female"
+                        ? "Nữ 👩"
+                        : "Khác ❓"}
+                    </div>
+                    <div>
+                      <span className="agri-label">Địa chỉ:</span>{" "}
+                      {form.address || "-"}
+                    </div>
+                  </div>
 
-                {!hasApproved && hasPending && (
-                  <span className="status-tag status-pending">
-                    Đơn đang chờ duyệt…
-                  </span>
-                )}
+                  <div>
+                    <span className="agri-label">Giới thiệu:</span>
+                    <p className="whitespace-pre-wrap text-agri-gray mt-1">
+                      {form.bio || "(Chưa có nội dung)"}
+                    </p>
+                  </div>
 
-                {!hasApproved && !hasPending && (
                   <button
                     type="button"
-                    onClick={() => navigate('/expert/apply')}
-                    className="agri-btn-primary"
+                    onClick={handleStartEdit}
+                    className="agri-btn-primary mt-4"
                   >
-                    ✉️ Nộp đơn Expert
+                    📝 Chỉnh sửa hồ sơ
                   </button>
-                )}
-              </div>
+                </>
+              ) : (
+                <>
+                  {fieldErrors.__server && (
+                    <p className="text-sm text-red-600">
+                      {fieldErrors.__server}
+                    </p>
+                  )}
+
+                  <div>
+                    <label className="agri-label">Ảnh đại diện</label>
+                    <div className="flex items-center gap-3">
+                      <div className="w-20 h-20 rounded overflow-hidden border bg-gray-50">
+                        {avatarPreview ? (
+                          <img
+                            src={avatarPreview}
+                            alt="avatar"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full grid place-items-center text-sm text-agri-gray">
+                            Chưa có
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarSelect}
+                          className="hidden"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              fileInputRef.current &&
+                              fileInputRef.current.click()
+                            }
+                            className="agri-btn-secondary"
+                          >
+                            Tải ảnh lên
+                          </button>
+                          <button
+                            type="button"
+                            onClick={clearAvatar}
+                            className="agri-btn-secondary"
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                        {fieldErrors.avatar && (
+                          <p className="text-sm text-red-600">
+                            {fieldErrors.avatar}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="agri-label">Họ và tên</label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={form.fullName || ""}
+                      onChange={handleChange}
+                      className="agri-input"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="agri-label">Số điện thoại</label>
+                      <input
+                        type="text"
+                        name="phone"
+                        value={form.phone || ""}
+                        onChange={handleChange}
+                        className="agri-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="agri-label">Ngày sinh</label>
+                      <input
+                        type="date"
+                        name="dob"
+                        value={form.dob?.split("T")[0] || ""}
+                        onChange={handleChange}
+                        className="agri-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="agri-label">Giới tính</label>
+                      <select
+                        name="gender"
+                        value={form.gender}
+                        onChange={handleChange}
+                        className="agri-input"
+                      >
+                        <option value="male">Nam</option>
+                        <option value="female">Nữ</option>
+                        <option value="other">Khác</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="agri-label">Địa chỉ</label>
+                      <input
+                        type="text"
+                        name="address"
+                        value={form.address || ""}
+                        onChange={handleChange}
+                        className="agri-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="agri-label">Giới thiệu</label>
+                    <textarea
+                      name="bio"
+                      rows={4}
+                      value={form.bio || ""}
+                      onChange={handleChange}
+                      className="agri-input"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={saving || !isDirty}
+                      className="agri-btn-primary disabled:opacity-60"
+                    >
+                      {saving ? "Đang lưu…" : "💾 Lưu thay đổi"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="agri-btn-secondary"
+                      disabled={saving}
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Lịch sử đơn */}
-            <div className="pt-4 border-t">
-              <h3 className="font-semibold mb-2 text-agri-primary">Lịch sử Đơn đã nộp</h3>
+            {/* ========== ĐĂNG KÝ EXPERT (FULL WIDTH) =========== */}
+            <div className="agri-card lg:col-span-3 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-agri-primary">
+                  🧑‍🌾 Đăng ký trở thành Expert
+                </h2>
 
-              <div className="overflow-x-auto rounded-xl border">
-                <table className="min-w-full text-sm agri-table">
-                  <thead>
-                    <tr>
-                      <th>Họ tên</th>
-                      <th>Email</th>
-                      <th>Lĩnh vực</th>
-                      <th>Kinh nghiệm</th>
-                      <th>Trạng thái</th>
-                    </tr>
-                  </thead>
+                <div className="flex items-center gap-3">
+                  {hasApproved && (
+                    <span className="status-tag status-approved">
+                      Đã là Expert ✅
+                    </span>
+                  )}
 
-                  <tbody>
-                    {appsLoading ? (
-                      <tr>
-                        <td colSpan="5" className="p-3 text-center text-agri-gray">
-                          Đang tải…
-                        </td>
-                      </tr>
-                    ) : myApps.length ? (
-                      myApps.map((it) => (
-                        <tr key={it._id}>
-                          <td>{it.full_name}</td>
-                          <td>{it.email}</td>
-                          <td>{it.expertise_area}</td>
-                          <td>{it.experience_years} năm</td>
-                          <td>
-                            <span
-                              className={
-                                "status-tag " +
-                                (it.status === "pending"
-                                  ? "status-pending"
-                                  : it.status === "approved"
-                                  ? "status-approved"
-                                  : "status-rejected")
-                              }
-                            >
-                              {it.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="p-3 text-center text-agri-gray">
-                          Chưa có đơn nào
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                  {!hasApproved && hasPending && (
+                    <span className="status-tag status-pending">
+                      Đơn đang chờ duyệt…
+                    </span>
+                  )}
+
+                  {!hasApproved && !hasPending && (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/expert/apply")}
+                      className="agri-btn-primary"
+                    >
+                      ✉️ Nộp đơn Expert
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {!hasApproved && hasPending && (
-                <p className="text-sm text-agri-gray mt-3 p-3 bg-agri-green-light rounded-lg">
-                  Đơn của bạn đang chờ duyệt. Khi được chấp thuận, vai trò sẽ chuyển sang <b>expert</b>. Vui lòng đăng xuất và đăng nhập lại với quyền Chuyên Gia.
-                </p>
-              )}
+              {/* Lịch sử đơn */}
+              <div className="pt-4 border-t">
+                {/* <h3 className="font-semibold mb-2 text-agri-primary">
+                  Lịch sử Đơn đã nộp
+                </h3> */}
+
+                {/* <div className="overflow-x-auto rounded-xl border">
+                  <table className="min-w-full text-sm agri-table">
+                    <thead>
+                      <tr>
+                        <th>Họ tên</th>
+                        <th>Email</th>
+                        <th>Lĩnh vực</th>
+                        <th>Kinh nghiệm</th>
+                        <th>Trạng thái</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {appsLoading ? (
+                        <tr>
+                          <td
+                            colSpan="5"
+                            className="p-3 text-center text-agri-gray"
+                          >
+                            Đang tải…
+                          </td>
+                        </tr>
+                      ) : myApps.length ? (
+                        myApps.map((it) => (
+                          <tr key={it._id}>
+                            <td>{it.full_name}</td>
+                            <td>{it.email}</td>
+                            <td>{it.expertise_area}</td>
+                            <td>{it.experience_years} năm</td>
+                            <td>
+                              <span
+                                className={
+                                  "status-tag " +
+                                  (it.status === "pending"
+                                    ? "status-pending"
+                                    : it.status === "approved"
+                                    ? "status-approved"
+                                    : "status-rejected")
+                                }
+                              >
+                                {it.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan="5"
+                            className="p-3 text-center text-agri-gray"
+                          >
+                            Chưa có đơn nào
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div> */}
+
+                {!hasApproved && hasPending && (
+                  <p className="text-sm text-agri-gray mt-3 p-3 bg-agri-green-light rounded-lg">
+                    Đơn của bạn đang chờ duyệt. Khi được chấp thuận, vai trò
+                    sẽ chuyển sang <b>expert</b>. Vui lòng đăng xuất và đăng
+                    nhập lại với quyền Chuyên Gia.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ==============================
+        {/* ==============================
           MODALS
       =============================== */}
-      <ChangePasswordModal
-        isOpen={pwOpen}
-        onClose={() => setPwOpen(false)}
-        needsSetPassword={needsSetPassword}
-        pwForm={pwForm}
-        setPwForm={setPwForm}
-        pwSaving={pwSaving}
-        handleChangePassword={handleChangePassword}
-      />
+        <ChangePasswordModal
+          isOpen={pwOpen}
+          onClose={() => setPwOpen(false)}
+          needsSetPassword={needsSetPassword}
+          pwForm={pwForm}
+          setPwForm={setPwForm}
+          pwSaving={pwSaving}
+          handleChangePassword={handleChangePassword}
+        />
 
-      <ExpertApplicationModal
-        isOpen={appModalOpen}
-        onClose={() => setAppModalOpen(false)}
-        applyForm={applyForm}
-        onApplyChange={onApplyChange}
-        addCertField={addCertField}
-        setCertAt={setCertAt}
-        submitApplication={submitApplication}
-        applySaving={applySaving}
-        hasApproved={hasApproved}
-        hasPending={hasPending}
-        applyFieldErrors={applyFieldErrors}
-      />
-    </div>  </>
+        <ExpertApplicationModal
+          isOpen={appModalOpen}
+          onClose={() => setAppModalOpen(false)}
+          applyForm={applyForm}
+          onApplyChange={onApplyChange}
+          addCertField={addCertField}
+          setCertAt={setCertAt}
+          submitApplication={submitApplication}
+          applySaving={applySaving}
+          hasApproved={hasApproved}
+          hasPending={hasPending}
+          applyFieldErrors={applyFieldErrors}
+        />
+      </div>
+    </>
   );
 }

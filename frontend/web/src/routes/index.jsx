@@ -47,7 +47,7 @@ import ModeratorProfile from "../pages/moderator/ModeratorProfile";
 
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
-import ApplyExpert from "../pages/expert/ApplyExpert";
+import ApplyExpert from "../pages/auth/ExpertApplyForm";
 import ExpertModels from "../pages/expert/Models";
 import ManagerGuides from "../pages/expert/ManagerGuides";
 import GuideDetail from "../pages/expert/GuideDetail";
