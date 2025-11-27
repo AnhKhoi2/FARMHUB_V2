@@ -29,7 +29,10 @@ const NotebookCreate = () => {
 
   const fetchGuides = async () => {
     try {
-      const response = await axiosClient.get("/guides");
+      // Request with a large limit so frontend gets all published guides
+      const response = await axiosClient.get("/guides", {
+        params: { limit: 1000, page: 1 },
+      });
       const guidesData = response.data?.data || response.data || [];
       setGuides(
         Array.isArray(guidesData)
@@ -53,6 +56,16 @@ const NotebookCreate = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    // Enforce planted_date must be today's date when creating a notebook
+    if (name === "planted_date") {
+      const todayStr = new Date().toISOString().split("T")[0];
+      if (value !== todayStr) {
+        alert("Ngày trồng chỉ được chọn là ngày hiện tại.");
+        setFormData((prev) => ({ ...prev, planted_date: todayStr }));
+        return;
+      }
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -189,6 +202,8 @@ const NotebookCreate = () => {
               name="planted_date"
               value={formData.planted_date}
               onChange={handleInputChange}
+              min={new Date().toISOString().split("T")[0]}
+              max={new Date().toISOString().split("T")[0]}
               required
             />
           </div>

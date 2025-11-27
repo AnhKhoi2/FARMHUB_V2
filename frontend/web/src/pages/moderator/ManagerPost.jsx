@@ -131,6 +131,47 @@ export default function ManagerPost() {
             render: (text) => <Text strong>{text}</Text>,
         },
         {
+            title: "Ảnh",
+            dataIndex: "images",
+            width: 110,
+            render: (imgs, record) => {
+                // imgs expected as array of strings; fallback to record.images or first image-like field
+                const arr = Array.isArray(imgs) && imgs.length ? imgs : (record.images || []);
+                const first = Array.isArray(arr) ? arr[0] : arr;
+                let src = first || record.image || record.images?.[0] || null;
+                if (!src) return <Text type="secondary">—</Text>;
+
+                // normalize to absolute URL if needed
+                try {
+                    // If src is already an absolute http(s) URL, a protocol-relative URL (//),
+                    // or a data/blob URI, leave it as-is. Only prefix backend base for
+                    // plain filenames/relative upload paths.
+                    if (!/^(https?:\/\/|\/\/|data:|blob:)/i.test(src)) {
+                        const base = axiosClient.defaults?.baseURL || (typeof window !== 'undefined' && window.location.origin) || '';
+                        const baseNoSlash = (base && base.replace(/\/$/, '')) || '';
+                        if (src.startsWith('/')) {
+                            src = baseNoSlash + src;
+                        } else if (src.startsWith('uploads/') || src.startsWith('upload/')) {
+                            src = baseNoSlash + '/' + src.replace(/^\//, '');
+                        } else {
+                            src = baseNoSlash + '/uploads/' + src.replace(/^\//, '');
+                        }
+                    }
+                } catch (e) {
+                    // ignore
+                }
+
+                return (
+                    <img
+                        src={src}
+                        alt={record.title}
+                        style={{ width: 90, height: 60, objectFit: 'cover', borderRadius: 6, border: '1px solid #eee' }}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.svg'; }}
+                    />
+                );
+            }
+        },
+        {
             title: "Người đăng",
             dataIndex: "userId",
             render: (user) => (
@@ -145,7 +186,20 @@ export default function ManagerPost() {
         {
             title: "Địa điểm",
             dataIndex: "location",
-            render: (loc) => <Text>{loc?.address || "—"}</Text>,
+            render: (loc) => {
+                if (!loc) return <Text>—</Text>;
+                // If backend stored a plain string
+                if (typeof loc === 'string' && loc.trim()) return <Text>{loc}</Text>;
+                // Common object shapes
+                if (loc.address) return <Text>{loc.address}</Text>;
+                if (loc.formattedAddress) return <Text>{loc.formattedAddress}</Text>;
+                if (loc.place_name) return <Text>{loc.place_name}</Text>;
+                if (loc.name) return <Text>{loc.name}</Text>;
+                // Coordinates
+                if (loc.lat && loc.lng) return <Text>{loc.lat}, {loc.lng}</Text>;
+                if (Array.isArray(loc.coordinates) && loc.coordinates.length) return <Text>{loc.coordinates.join(', ')}</Text>;
+                return <Text type="secondary">—</Text>;
+            },
         },
         {
             title: "Ngày đăng",
@@ -504,6 +558,28 @@ function DetailModal({ open, item, onClose }) {
     const user = item.userId;
     const username = user?.username || user?.email;
 
+    const normalizeImg = (src) => {
+        if (!src) return null;
+        try {
+            if (/^(https?:\/\/|\/\/|data:|blob:)/i.test(src)) return src;
+            const base = axiosClient.defaults?.baseURL || (typeof window !== 'undefined' && window.location.origin) || '';
+            const baseNoSlash = (base && base.replace(/\/$/, '')) || '';
+            if (src.startsWith('/')) return baseNoSlash + src;
+            if (src.startsWith('uploads/') || src.startsWith('upload/')) return baseNoSlash + '/' + src.replace(/^\//, '');
+            return baseNoSlash + '/uploads/' + src.replace(/^\//, '');
+        } catch (e) {
+            return src;
+        }
+    };
+
+    const images = (() => {
+        if (Array.isArray(item.images) && item.images.length) return item.images.map(normalizeImg);
+        if (item.image) return [normalizeImg(item.image)];
+        // sometimes stored as a single 'images' string
+        if (typeof item.images === 'string' && item.images.trim()) return [normalizeImg(item.images)];
+        return [];
+    })();
+
     return (
         <Modal
             open={open}
@@ -518,6 +594,25 @@ function DetailModal({ open, item, onClose }) {
                 <strong>Người đăng:</strong> {username}
             </Paragraph>
 
+            {/* Images */}
+            {images.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                    <img
+                        src={images[0]}
+                        alt={item.title}
+                        style={{ width: '100%', maxHeight: 360, objectFit: 'cover', borderRadius: 8, border: '1px solid #eee' }}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.svg'; }}
+                    />
+                    {images.length > 1 && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8, overflowX: 'auto' }}>
+                            {images.map((s, i) => (
+                                <img key={i} src={s} alt={item.title + ' ' + i} style={{ width: 80, height: 56, objectFit: 'cover', borderRadius: 6, border: '1px solid #eee' }} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.svg'; }} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {item.phone && (
                 <Paragraph>
                     <strong>Điện thoại:</strong> {item.phone}
@@ -528,6 +623,21 @@ function DetailModal({ open, item, onClose }) {
                 <>
                     <strong>Mô tả:</strong>
                     <Paragraph>{item.description}</Paragraph>
+                </>
+            )}
+
+            {/* Full content if available (may be HTML) */}
+            {item.content && (
+                <>
+                    <strong>Nội dung:</strong>
+                    <div style={{ marginTop: 8 }}>
+                        {/* If content contains HTML, render it; otherwise render as text */}
+                        {/<[a-z][\s\S]*>/i.test(item.content) ? (
+                            <div dangerouslySetInnerHTML={{ __html: item.content }} />
+                        ) : (
+                            <Paragraph>{item.content}</Paragraph>
+                        )}
+                    </div>
                 </>
             )}
 

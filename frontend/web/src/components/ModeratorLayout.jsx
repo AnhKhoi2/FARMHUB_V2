@@ -1,14 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { logout } from "../redux/authSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutThunk } from "../redux/authThunks";
 import { FaHome, FaClipboardList, FaFlag, FaSignOutAlt } from "react-icons/fa";
 
 const STORAGE_KEY = "moderatorSidebarCollapsed";
 
 export default function ModeratorLayout({ children }) {
 	const dispatch = useDispatch();
+	const user = useSelector((state) => state.auth.user);
 	const navigate = useNavigate();
+
+	// Resolve avatar src from multiple possible places: Redux user.profile.avatar, user.avatar,
+	// or previously-saved localStorage keys (`profile_avatar` or `user` object).
+	const resolveAvatar = () => {
+		try {
+			const fromReduxProfile = user?.profile?.avatar || user?.avatar;
+			if (fromReduxProfile) return fromReduxProfile;
+
+			if (typeof window !== 'undefined') {
+				const saved = localStorage.getItem('profile_avatar');
+				if (saved) return saved;
+				const raw = localStorage.getItem('user');
+				if (raw) {
+					const parsed = JSON.parse(raw);
+					return parsed?.profile?.avatar || parsed?.avatar || null;
+				}
+			}
+		} catch (e) {
+			console.warn('ModeratorLayout: failed to resolve avatar', e);
+		}
+		return null;
+	};
+
+	const avatarSrc = resolveAvatar();
 	const [collapsed, setCollapsed] = useState(false);
 
 	useEffect(() => {
@@ -33,7 +58,7 @@ export default function ModeratorLayout({ children }) {
 	};
 
 	const doLogout = () => {
-		dispatch(logout());
+		dispatch(logoutThunk());
 		navigate("/login");
 	};
 
@@ -62,16 +87,15 @@ export default function ModeratorLayout({ children }) {
 
 			<aside
 				className="moderator-sidebar d-flex flex-column text-white"
-				style={{ width, background: "#2b3a42", color: "#e6eef2" }}
+				style={{ width, background: "#23622B", color: "#ecf0f1" }}
 			>
 				<div className="d-flex align-items-center justify-content-between px-3 py-3 border-bottom" style={{ minHeight: 60 }}>
-					<div className="moderator-logo d-flex align-items-center gap-2" style={{ opacity: collapsed ? 0 : 1, transition: "opacity .12s" }}>
-						<img src="/logo192.png" alt="logo" style={{ width: 28, height: 28, borderRadius: 6 }} />
+					<NavLink to="/moderator/profile" className="moderator-logo d-flex align-items-center gap-2" style={{ opacity: collapsed ? 0 : 1, transition: "opacity .12s", textDecoration: 'none' }}>
 						<div style={{ lineHeight: 1 }}>
 							<div style={{ fontWeight: 700, color: '#fff' }}>FarmHub</div>
 							<small style={{ color: '#d1d7db' }}>Moderator</small>
 						</div>
-					</div>
+					</NavLink>
 					<button className="moderator-hamburger text-white" onClick={toggle} title={collapsed ? "Mở rộng" : "Thu nhỏ"}>
 						{collapsed ? "☰" : "✕"}
 					</button>
@@ -94,7 +118,7 @@ export default function ModeratorLayout({ children }) {
 					))}
 				</nav>
 
-				<div className="p-3 mt-auto border-top" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+					<div className="p-3 mt-auto border-top" style={{ borderColor: 'rgba(0,255,76,0.12)' }}>
 					<div className="d-grid gap-2">
 						<button className="btn btn-sm btn-light" onClick={() => navigate('/')}>
 							{collapsed ? '🏠' : 'Xem trang'}
@@ -103,7 +127,7 @@ export default function ModeratorLayout({ children }) {
 							<FaSignOutAlt /> {!collapsed && <span>Đăng xuất</span>}
 						</button>
 					</div>
-					{!collapsed && <div className="mt-3 text-white-50 small text-center">© {new Date().getFullYear()} FarmHub</div>}
+					{!collapsed && <div className="mt-3" style={{ color: '#dff7e6', fontSize: '0.8rem', textAlign: 'center' }}>© {new Date().getFullYear()} FarmHub</div>}
 				</div>
 			</aside>
 
@@ -118,7 +142,20 @@ export default function ModeratorLayout({ children }) {
 					</div>
 					<div className="d-flex align-items-center gap-2">
 						<div className="small text-muted">Moderator</div>
-						<div style={{ width:36, height:36, borderRadius:18, background:'#fff', display:'inline-flex', alignItems:'center', justifyContent:'center', color:'#444' }}>M</div>
+						<NavLink to="/moderator/profile" title="Chỉnh sửa hồ sơ" style={{ textDecoration: 'none' }}>
+							{avatarSrc ? (
+								<img
+									src={avatarSrc}
+									alt="avatar"
+									style={{ width:36, height:36, borderRadius:18, objectFit: 'cover', border: '2px solid #fff' }}
+									onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }}
+								/>
+							) : (
+								<div style={{ width:36, height:36, borderRadius:18, background:'#fff', display:'inline-flex', alignItems:'center', justifyContent:'center', color:'#444' }}>
+									{(user?.username || user?.email || 'M')[0]?.toUpperCase()}
+								</div>
+							)}
+						</NavLink>
 					</div>
 				</header>
 

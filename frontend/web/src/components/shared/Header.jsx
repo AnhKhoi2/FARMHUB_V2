@@ -10,8 +10,10 @@ import NotificationBell from "../NotificationBell";
 import "./Header.css";
 import { RadarChartOutlined } from "@ant-design/icons";
 import { Tooltip } from "antd";
+import axiosClient from "../../api/shared/axiosClient";
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
+
   const dispatch = useDispatch();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -107,7 +109,7 @@ const Header = () => {
                   currentPath.startsWith("/plant-diagnosis") ? "active" : ""
                 }
               >
-                <Link to="/plant-diagnosis">Chẩn đoán bằng hình ảnh</Link>
+                <Link to="/plant-diagnosis">Chẩn Đoán</Link>
               </li>
 
               {/* NHẬT KÝ LÀM VƯỜN – SUBMENU */}
@@ -126,7 +128,7 @@ const Header = () => {
                   className="dropdown-toggle"
                   onClick={() => window.innerWidth < 992 && toggleSubmenu()}
                 >
-                  Nhật Ký Làm Vườn
+                  Nhật Ký
                 </span>
 
                 <ul
@@ -136,6 +138,9 @@ const Header = () => {
                 >
                   <li>
                     <Link to="/farmer/notebooks">Nhật ký cơ bản</Link>
+                  </li>
+                  <li>
+                    <Link to="/farmer/notebooks/stats">Thống kê nhật ký</Link>
                   </li>
                   <li>
                     <Link to="/farmer/collections">Bộ sưu tập</Link>
@@ -148,56 +153,132 @@ const Header = () => {
               </li>
 
               <li className={currentPath.startsWith("/market") ? "active" : ""}>
-                <Link to="/market">Chợ</Link>
+                <Link to="/market">Giao Lưu</Link>
               </li>
 
               <li
                 className={currentPath.startsWith("/experts") ? "active" : ""}
               >
-                <Link to="/experts">Chuyên gia</Link>
+                <Link to="/experts">Chuyên Gia</Link>
+              </li>
+              <li
+                className={currentPath.startsWith("/pricing") ? "active" : ""}
+              >
+                <Link to="/pricing">Nâng Cấp</Link>
               </li>
 
               {user && (
-                <li className="notification-item">
-                  <NotificationBell />
-                </li>
-              )}
-              {/* streak */}
-              <li
-                className={
-                  currentPath.startsWith("/farmer/streak") ? "active" : ""
-                }
-              >
-                <Link to="/farmer/streak">
-                  <Tooltip title="Xếp hạng Streak">
-                    <RadarChartOutlined style={{ fontSize: "18px" }} />
-                  </Tooltip>
-                </Link>
-              </li>
+                <>
+                  <li className="notification-item">
+                    <NotificationBell />
+                  </li>
 
+                  {/* streak */}
+                  <li
+                    className={
+                      currentPath.startsWith("/farmer/streak") ? "active" : ""
+                    }
+                  >
+                    <Link to="/farmer/streak">
+                      <Tooltip title="Xếp hạng Streak">
+                        <RadarChartOutlined style={{ fontSize: "30px" }} />
+                      </Tooltip>
+                    </Link>
+                  </li>
+                </>
+              )}
               {/* USER MENU */}
               <li className="user-menu">
                 {user ? (
                   <div className="user-dropdown">
-                    <div
-                      className="user-info"
-                      onClick={handleToggleUserDropdown}
-                    >
-                      <img
-                        src={user.avatar || "https://via.placeholder.com/40"}
-                        alt="Avatar"
-                        className="avatar"
-                      />
-                      <span className="username">
-                        {user.username || user.email} ▾
-                      </span>
-                    </div>
+                        <div
+                          className="user-info"
+                          onClick={handleToggleUserDropdown}
+                          title={user?.username || user?.email}
+                        >
+                          {(() => {
+                            // Compute a safe avatar src from several possible fields
+                            const raw =
+                              (user && user.profile && user.profile.avatar) ||
+                              user?.avatar ||
+                              null;
+
+                            let avatarSrc = raw;
+                            try {
+                              if (avatarSrc && avatarSrc.startsWith("/")) {
+                                const base =
+                                  (axiosClient && axiosClient.defaults && axiosClient.defaults.baseURL) ||
+                                  window.location.origin ||
+                                  "";
+                                avatarSrc = base.replace(/\/$/, "") + avatarSrc;
+                              }
+                              if (avatarSrc && avatarSrc.startsWith("//")) {
+                                avatarSrc = window.location.protocol + avatarSrc;
+                              }
+                            } catch (e) {
+                              avatarSrc = raw;
+                            }
+
+                            const DEFAULT_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="%23f8faf5"/><circle cx="40" cy="30" r="20" fill="%23e6f4ea"/><circle cx="40" cy="30" r="14" fill="%23ffffff"/><rect x="12" y="54" width="56" height="8" rx="4" fill="%23ffffff"/></svg>';
+
+                            return (
+                              <img
+                                src={avatarSrc || DEFAULT_AVATAR}
+                                alt="Avatar"
+                                className="avatar"
+                                onError={(e) => {
+                                  try {
+                                    const el = e.currentTarget;
+                                    if (!el.dataset.retry) {
+                                      el.dataset.retry = "1";
+                                      const src = el.src || "";
+                                      el.src = src.split("?")[0] + "?v=" + Date.now();
+                                    } else {
+                                      el.src = DEFAULT_AVATAR;
+                                    }
+                                  } catch (err) {
+                                    e.currentTarget.src = DEFAULT_AVATAR;
+                                  }
+                                }}
+                              />
+                            );
+                          })()}
+                        </div>
 
                     <ul
                       className={`user-dropdown-menu ${
                         dropdownOpen ? "show" : ""
                       }`}
                     >
+                      <li
+                        className="user-menu-header"
+                        style={{
+                          padding: "0.75rem 1rem",
+                          borderBottom: "1px solid #eee",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
+                        >
+                          <img
+                            src={user?.profile?.avatar }
+                            alt="avatar"
+                            style={{ width: 36, height: 36, borderRadius: 18 }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 700 }}>
+                              {user?.username || user?.email}
+                            </div>
+                            <div style={{ fontSize: 12, color: "#666" }}>
+                              {user?.email}
+                            </div>
+                          </div>
+                        </div>
+                      </li>
                       <li>
                         <Link
                           to="/profile"

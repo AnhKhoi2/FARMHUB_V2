@@ -1,0 +1,410 @@
+/* CollectionDetail.modern.css - modern green theme overrides */
+.collection-detail-container {
+    /* Make the collection detail page span the full browser width */
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    /* remove top padding so banner sits flush under site header (modern theme) */
+    padding: 0 2rem 2rem;
+    box-sizing: border-box;
+}
+
+/* Full page background when viewing collection detail */
+.collection-detail-bg {
+    background-color: #eaf8ef !important;
+    /* pale emerald */
+    min-height: 100vh;
+}
+
+/* Back button */
+.btn-back {
+    background: rgba(255, 255, 255, 0.95);
+    color: #2e7d32;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+    transition: transform .12s, box-shadow .12s;
+}
+
+.btn-back:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(46, 125, 50, 0.12);
+}
+
+/* Header hero */
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    background: linear-gradient(135deg, #eaf8ee 0%, #ffffff 60%);
+    padding: 1.75rem;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(46, 125, 50, 0.06);
+}
+
+/* Banner style for modern theme */
+.collection-banner {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    height: 380px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 10px 30px rgba(46, 125, 50, 0.06);
+}
+
+.collection-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.banner-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 3rem 2rem 2rem;
+    background: linear-gradient(to top, rgba(6, 27, 12, 0.6), transparent);
+    color: #fff;
+}
+
+.banner-overlay h1 {
+    margin: 0 0 .5rem 0;
+    font-size: 2.4rem;
+}
+
+/* Back button when used inside banner */
+.collection-banner .banner-back {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    z-index: 30;
+    background: rgba(255, 255, 255, 0.96);
+    color: #163c2a;
+    border-radius: 12px;
+    padding: 8px 12px;
+    border: none;
+    box-shadow: 0 8px 24px rgba(46, 125, 50, 0.08);
+}
+
+@media (max-width:1024px) {
+    .collection-banner {
+        height: 300px;
+    }
+
+    .collection-banner .banner-back {
+        top: 12px;
+        left: 12px;
+        padding: 6px 10px;
+    }
+}
+
+.banner-overlay .collection-description {
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 0.5rem;
+}
+
+.header-actions-outside {
+    display: flex;
+    gap: .75rem;
+    margin-top: .75rem;
+    justify-content: flex-end;
+}
+
+.header-left {
+    display: flex;
+    gap: 1.25rem;
+    flex: 1;
+    align-items: center;
+}
+
+.collection-cover-large,
+.cover-placeholder-large {
+    width: 200px;
+    height: 200px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(46, 125, 50, 0.06);
+}
+
+.cover-placeholder-large {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #fff;
+    background: linear-gradient(135deg, #81c784 0%, #388e3c 100%);
+}
+
+.header-info h1 {
+    margin: 0 0 .5rem 0;
+    color: #163c2a;
+    font-size: 2.1rem;
+}
+
+.header-info {
+    width: 100%;
+    background: transparent;
+    padding: 0.5rem 0;
+}
+
+.header-info.card {
+    background: #ffffff;
+    padding: 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(46, 125, 50, 0.06);
+}
+
+.collection-description {
+    color: #4b5d4a;
+    margin-bottom: .75rem;
+    line-height: 1.5;
+}
+
+.collection-stats {
+    display: flex;
+    gap: .8rem;
+    align-items: center;
+}
+
+.collection-stats span {
+    background: rgba(46, 125, 50, 0.04);
+    padding: 6px 10px;
+    border-radius: 999px;
+    color: #5a6e58;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: .75rem;
+}
+
+.btn-edit {
+    background: rgba(0, 0, 0, 0.06);
+    color: #2e7d32;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: none;
+    font-weight: 700;
+}
+
+.btn-add-notebook {
+    background: linear-gradient(135deg, #66bb6a 0%, #2e7d32 100%);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: none;
+    font-weight: 700;
+}
+
+.btn-add-notebook:hover,
+.btn-add-notebook:focus {
+    box-shadow: 0 10px 28px rgba(46, 125, 50, 0.12);
+    transform: translateY(-2px);
+}
+
+/* Sort/control */
+.sort-controls {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    padding: .6rem .75rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(46, 125, 50, 0.03);
+}
+
+.sort-controls label {
+    color: #2e7d32;
+    font-weight: 700;
+}
+
+.sort-controls select {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #eaefe8;
+    background: #ffffff;
+    color: #000000;
+}
+
+/* Ensure any search/select/input on this detail page use white background and black text */
+.search-bar input,
+.search-bar select,
+.sort-controls select {
+    background: #ffffff;
+    color: #000000;
+}
+
+/* Grid */
+.notebooks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 1rem;
+}
+
+.notebook-card {
+    background: linear-gradient(180deg, #fff 0%, #f7fcf7 100%);
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(46, 125, 50, 0.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.notebook-cover {
+    height: 170px;
+    background: linear-gradient(135deg, #a8e6a3 0%, #66bb6a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.progress-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #2e7d32;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.notebook-info {
+    padding: 14px 14px 18px 14px;
+    flex: 1;
+}
+
+.notebook-info h3 {
+    margin: 0 0 .4rem 0;
+    color: #163c2a;
+}
+
+.plant-type {
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #f0f6f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #66bb6a 0%, #2e7d32 100%);
+}
+
+.notebook-actions {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+}
+
+.btn-remove {
+    background: rgba(231, 76, 60, 0.95);
+    color: #fff;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+/* Button for empty state - theme color */
+.btn-add-first {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #66bb6a 0%, #2e7d32 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s;
+}
+
+.btn-add-first:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(46, 125, 50, 0.12);
+}
+
+/* Modal overrides to ensure inputs white/black */
+.modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.form-group input,
+.form-group textarea {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #e8efe8;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 8px 24px rgba(76, 175, 80, 0.06);
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, #66bb6a 0%, #2e7d32 100%);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+}
+
+/* Empty and helper */
+.empty-state {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 3rem;
+    color: #6b7f6b;
+}
+
+/* Responsive */
+@media (max-width:1024px) {
+    .header-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .collection-cover-large,
+    .cover-placeholder-large {
+        width: 100%;
+        height: 240px;
+    }
+
+    .header-actions {
+        justify-content: flex-end;
+        margin-top: 12px;
+    }
+}
+
+@media (max-width:720px) {
+    .notebooks-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .header-content {
+        padding: 1rem;
+    }
+}

@@ -10,29 +10,40 @@ import {
   Pagination,
   Spin,
   Tag,
+  Card,
 } from "antd";
 import AdminLayout from "../../components/AdminLayout";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
+import usersApi from "../../api/usersApi";
 import {
   PlusOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
   InboxOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import placeholderImg from "../../assets/placeholder.svg";
+import { FaBook } from "react-icons/fa";
 
-// ---------- Theme Colors ----------
-const colors = {
-  primary: "#4CAF50",
-  accent: "#81C784",
-  darkGreen: "#2E7D32",
-  background: "#F9FBE7",
-  neutral: "#E0E0E0",
-  highlight: "#8BC34A",
-  yellow: "#FFEB3B",
+// ---------- Theme Colors: Green & Nature Palette ----------
+const NATURE_COLORS = {
+  // Primary Palette
+  primary: "#4CAF50",      // Fresh Green (Nút chính)
+  accent: "#81C784",       // Light Leaf (Secondary button, Hover)
+  darkText: "#2E7D32",     // Forest Deep (Text nổi bật, Tiêu đề)
+  background: "#F9FBE7",   // Nature Ivory (Nền content)
+  neutralBorder: "#E0E0E0",// Soft Stone (Border, Khung)
+  highlight: "#8BC34A",    // Lime Touch (Tag, Highlight)
+  
+  // Secondary/Utility Palette
+  warning: "#FFEB3B",      // Sunlight (Warning/Good status)
+  danger: "#FF4D4F",       // Ant Red (Xóa)
+  cardBg: "#FFFFFF",       // Nền Card
+  textMuted: "#6c757d",    // Text phụ
 };
+
 
 export default function AdminGuides() {
   const navigate = useNavigate();
@@ -44,24 +55,64 @@ export default function AdminGuides() {
   const [error, setError] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [editingGuide, setEditingGuide] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchGuides = useCallback(
-    async (p = page) => {
+    async (p = page, term = searchTerm) => {
       setLoading(true);
       setError(null);
       try {
         const res = await axiosClient.get("/guides", {
-          params: { page: p, limit },
+          params: { page: p, limit, search: term },
         });
         const data = res.data || {};
         const docs = data.data || data.docs || [];
         const meta = data.meta || {};
-        const tot =
-          data.total ||
-          meta.total ||
-          (meta.pages ? meta.pages * limit : docs.length);
+        const tot = data.total || meta.total || (meta.pages ? meta.pages * limit : docs.length);
+        
         setGuides(docs);
+        // If some guides reference users only by id (e.g. expert_id is a string), try to fetch those users
+        (async () => {
+          try {
+            const idSet = new Set();
+            docs.forEach((d) => {
+              const v = d.expert_id || d.author || d.user || d.createdBy || d.created_by || d.owner;
+              if (v && typeof v === "string") idSet.add(v);
+              // sometimes array or object with id
+              if (v && typeof v === "object" && (v._id || v.id)) {
+                const id = v._id || v.id;
+                if (id && typeof id === "string") idSet.add(id);
+              }
+            });
+
+            if (idSet.size === 0) return;
+
+            const idArr = Array.from(idSet);
+            // fetch each user detail (no bulk endpoint available)
+            const users = await Promise.all(
+              idArr.map((id) => usersApi.detail(id).catch(() => null))
+            );
+            const map = {};
+            users.forEach((u) => {
+              if (u && (u._id || u.id)) map[u._id || u.id] = u;
+            });
+
+            const updated = docs.map((d) => {
+              const v = d.expert_id || d.author || d.user || d.createdBy || d.created_by || d.owner;
+              let id = null;
+              if (v && typeof v === "string") id = v;
+              if (v && typeof v === "object") id = v._id || v.id || null;
+              const u = id ? map[id] : null;
+              return { ...d, _resolvedAuthor: u || null };
+            });
+
+            setGuides(updated);
+          } catch (e) {
+            console.warn("Failed to resolve guide authors", e);
+          }
+        })();
         setTotalPages(Math.max(1, Math.ceil(tot / limit)));
+        setPage(p);
       } catch (e) {
         console.error(e);
         setError("Không thể tải guides");
@@ -69,12 +120,30 @@ export default function AdminGuides() {
         setLoading(false);
       }
     },
-    [page, limit]
+      {
+        title: "Người chỉnh sửa",
+        dataIndex: "updatedBy",
+        width: 180,
+        render: (_, record) => {
+          const editor = getEditorName(record);
+          const t = record.updatedAt || record.modifiedAt || record.updated_at || record.modified_at || record.lastModified;
+          return editor ? (
+            <div>
+              <div style={{ fontWeight: 600 }}>{editor}</div>
+              {t ? <div style={{ fontSize: 12, color: NATURE_COLORS.textMuted }}>{new Date(t).toLocaleDateString('vi-VN')}</div> : null}
+            </div>
+          ) : (
+            <span style={{ color: NATURE_COLORS.textMuted }}>—</span>
+          );
+        },
+        onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
+      },
+    [limit, searchTerm]
   );
 
   useEffect(() => {
-    fetchGuides(page);
-  }, [page, fetchGuides]);
+    fetchGuides(1); 
+  }, [searchTerm, fetchGuides]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa hướng dẫn này?")) return;
@@ -82,13 +151,14 @@ export default function AdminGuides() {
     try {
       await axiosClient.delete(`/guides/${id}`);
       message.success("Xóa thành công");
+      
       const remaining = guides.length - 1;
-      if (remaining <= 0 && page > 1) {
-        setPage(page - 1);
-        fetchGuides(page - 1);
-      } else {
-        fetchGuides(page);
+      let targetPage = page;
+      if (remaining === 0 && page > 1) {
+        targetPage = page - 1;
       }
+      fetchGuides(targetPage);
+
     } catch (e) {
       console.error(e);
       message.error("Xóa không thành công");
@@ -103,83 +173,90 @@ export default function AdminGuides() {
       width: 60,
       render: (_, __, idx) => (page - 1) * limit + idx + 1,
       align: "center",
-      titleStyle: { color: colors.darkGreen },
+      // Tiêu đề cột dùng màu Dark Text
+      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
     {
       title: "Ảnh",
       dataIndex: "image",
       width: 90,
-      render: (img) =>
-        img ? (
-          <img
-            src={img}
-            alt="thumb"
-            style={{
-              width: 60,
-              height: 60,
-              objectFit: "cover",
-              borderRadius: 6,
-              border: `1px solid ${colors.neutral}`,
-            }}
-          />
-        ) : (
-          "—"
-        ),
+      render: (img) => (
+        <img
+          src={img || placeholderImg}
+          alt="thumb"
+          style={{
+            width: 60,
+            height: 60,
+            objectFit: "cover",
+            borderRadius: 4,
+            border: `1px solid ${NATURE_COLORS.neutralBorder}`,
+          }}
+        />
+      ),
+      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
     {
       title: "Tiêu đề",
       dataIndex: "title",
       sorter: (a, b) => (a.title || "").localeCompare(b.title || ""),
-      render: (t) => t || "(Không có tiêu đề)",
-      titleStyle: { color: colors.darkGreen },
+      render: (t) => t || (
+        <Tag color="error">
+            KHÔNG TIÊU ĐỀ
+        </Tag>
+      ),
+      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
     {
       title: "Mô tả",
       dataIndex: "description",
-      render: (_, record) => record.description || record.summary || "—",
-      titleStyle: { color: colors.darkGreen },
+      render: (_, record) => {
+        const text = record.description || record.summary || "—";
+        return <span style={{ color: NATURE_COLORS.textMuted }}>{text.length > 50 ? text.substring(0, 50) + "..." : text}</span>;
+      },
+      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
     {
       title: "Tác giả",
       dataIndex: "expert_id",
-      filters: Array.from(
-        new Set(
-          guides.map((g) => g.expert_id?.username || g.expert_id?.name)
-        )
-      )
-        .filter(Boolean)
-        .map((name) => ({ text: name, value: name })),
-      onFilter: (value, record) => {
-        const name = record.expert_id?.username || record.expert_id?.name;
-        return name === value;
+      width: 150,
+      render: (_, record) => {
+        const name = getAuthorName(record);
+        return name ? (
+          <div style={{ fontWeight: 600 }}>{name}</div>
+        ) : (
+          <Tag color="default">Admin/Guest</Tag>
+        );
       },
-      render: (_, record) =>
-        record.expert_id?.username || record.expert_id?.name || "—",
-      titleStyle: { color: colors.darkGreen },
+      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
       sorter: (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
       render: (_, record) =>
-        record.createdAt ? new Date(record.createdAt).toLocaleString() : "—",
-      titleStyle: { color: colors.darkGreen },
+        record.createdAt ? new Date(record.createdAt).toLocaleDateString("vi-VN") : "—",
+      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
     {
       title: "Hành động",
-      width: 220,
+      width: 150,
+      align: 'center',
       render: (_, record) => (
-        <Space>
+        <Space size="small">
           <Button
             size="small"
             icon={<EyeOutlined />}
-            style={{ color: colors.primary, borderColor: colors.primary }}
-            onClick={() => navigate(`/guides/${record._id || record.id}`)}
+            type="text"
+            style={{ color: NATURE_COLORS.darkText }} // Icon xem dùng Dark Text để nổi bật
+            title="Xem chi tiết"
+            onClick={() => navigate(`/admin/guides/${record._id || record.id}`)}
           />
           <Button
             icon={<EditOutlined />}
             size="small"
-            style={{ color: colors.accent, borderColor: colors.accent }}
+            type="text"
+            style={{ color: NATURE_COLORS.highlight }} // Icon sửa dùng Highlight
+            title="Chỉnh sửa"
             onClick={() => {
               setEditingGuide(record);
               setDrawerVisible(true);
@@ -189,55 +266,144 @@ export default function AdminGuides() {
             icon={<DeleteOutlined />}
             size="small"
             danger
+            type="text"
+            title="Xóa"
             onClick={() => handleDelete(record._id || record.id)}
           />
         </Space>
       ),
+      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
   ];
 
+    // Helper to extract a readable author name from a guide record
+    const getAuthorName = (record) => {
+      if (!record) return null;
+      // prefer pre-resolved author
+      if (record._resolvedAuthor) {
+        const ra = record._resolvedAuthor;
+        return (ra.username || ra.fullName || ra.name || ra.email || null) || null;
+      }
+      const tryPaths = [
+        () => record.expert_id?.username,
+        () => record.expert_id?.name,
+        () => record.author?.username,
+        () => record.author?.name,
+        () => record.user?.username,
+        () => record.user?.fullName,
+        () => record.createdBy?.username,
+        () => record.createdBy?.name,
+        () => record.created_by?.username,
+        () => record.created_by?.name,
+        () => record.owner?.username,
+        () => record.owner?.name,
+        () => record.authorName,
+        () => record.creatorName,
+        () => record.postedBy,
+        () => record.author,
+      ];
+
+      for (const fn of tryPaths) {
+        try {
+          const v = fn();
+          if (v && typeof v === "string" && v.trim()) return v.trim();
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      return null;
+    };
+
+    // Helper to extract the last editor's name from a guide record
+    const getEditorName = (record) => {
+      if (!record) return null;
+      const tryPaths = [
+        () => record.updatedBy?.username,
+        () => record.updatedBy?.name,
+        () => record.updated_by?.username,
+        () => record.updated_by?.name,
+        () => record.modifiedBy?.username,
+        () => record.modifiedBy?.name,
+        () => record.modified_by?.username,
+        () => record.modified_by?.name,
+        () => record.editor?.username,
+        () => record.editor?.name,
+        () => record.editedBy,
+        () => record.lastEditedBy,
+        () => record.lastModifiedBy,
+        () => record.updaterName,
+        () => record.editorName,
+      ];
+
+      for (const fn of tryPaths) {
+        try {
+          const v = fn();
+          if (v && typeof v === "string" && v.trim()) return v.trim();
+          if (v && typeof v === "object") {
+            // object with username/name
+            const candidate = v.username || v.name || v.fullName;
+            if (candidate && String(candidate).trim()) return String(candidate).trim();
+          }
+        } catch (e) {}
+      }
+
+      return null;
+    };
+
   return (
     <AdminLayout>
-      <div
-        className="container-fluid"
-        style={{ backgroundColor: colors.background, padding: 16 }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 16,
-          }}
-        >
-          <h3 style={{ margin: 0, color: colors.darkGreen }}>Hướng dẫn</h3>
+      <Card
+        title={
+          <h4 style={{ margin: 0, color: NATURE_COLORS.darkText, fontWeight: 600 }}>
+             HƯỚNG DẪN TRỒNG
+          </h4>
+        }
+        extra={
           <Space>
             <Button
               type="primary"
-              size="small"
               icon={<PlusOutlined />}
-              style={{ backgroundColor: colors.primary, borderColor: colors.primary }}
+              // Primary Green
+              style={{ backgroundColor: NATURE_COLORS.primary, borderColor: NATURE_COLORS.primary, fontWeight: 500 }}
               onClick={() => {
                 setEditingGuide(null);
                 setDrawerVisible(true);
               }}
-            />
+            >
+              Thêm mới
+            </Button>
             <Button
-              size="small"
               icon={<InboxOutlined />}
-              style={{ backgroundColor: colors.accent, borderColor: colors.accent }}
+              // Accent Green
+              style={{ color: NATURE_COLORS.darkText, borderColor: NATURE_COLORS.neutralBorder }}
               onClick={() => navigate("/managerguides/trash")}
-            />
+            >
+              Thùng rác
+            </Button>
           </Space>
-        </div>
+        }
+        // Thiết lập Card style
+        style={{ margin: 0, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", backgroundColor: NATURE_COLORS.cardBg }}
+      >
+        {/* Thanh tìm kiếm */}
+        <Input
+          placeholder="Tìm kiếm theo tiêu đề..."
+          prefix={<SearchOutlined style={{ color: NATURE_COLORS.darkText }} />}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onPressEnter={(e) => setSearchTerm(e.target.value)}
+          style={{ marginBottom: 16, width: 300, borderRadius: 4 }}
+          allowClear
+        />
 
         {error && (
-          <div style={{ color: "red", marginBottom: 12 }}>{error}</div>
+          <div style={{ color: NATURE_COLORS.danger, marginBottom: 12, fontWeight: 500 }}>{error}</div>
         )}
 
         {loading ? (
           <div style={{ textAlign: "center", padding: 40 }}>
-            <Spin />
+            <Spin size="large" style={{ color: NATURE_COLORS.primary }} />
           </div>
         ) : (
           <Table
@@ -245,67 +411,65 @@ export default function AdminGuides() {
             dataSource={guides}
             columns={columns}
             pagination={false}
-            bordered
-            style={{ backgroundColor: colors.background }}
+            bordered={false}
+            size="middle"
           />
         )}
 
         <div
-          style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}
+          style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}
         >
           <Pagination
             current={page}
             total={totalPages * limit}
             pageSize={limit}
-            onChange={setPage}
-            size="small"
-            style={{ color: colors.darkGreen }}
+            onChange={(p) => fetchGuides(p)}
+            size="default"
+            showTotal={(total) => `Tổng ${total} hướng dẫn`}
           />
         </div>
+      </Card>
 
-        <GuideDrawer
-          visible={drawerVisible}
-          guide={editingGuide}
-          onClose={() => setDrawerVisible(false)}
-          onSubmit={async (formValues) => {
-            try {
-              const fd = new FormData();
-              Object.entries(formValues).forEach(([k, v]) => {
-                if (k === "plantTags") {
-                  fd.append(k, JSON.stringify(v));
-                } else if (k === "image") {
-                  if (v instanceof File) fd.append("image", v);
-                } else if (Array.isArray(v)) {
-                  fd.append(k, JSON.stringify(v));
-                } else if (v !== undefined && v !== null) {
-                  fd.append(k, v);
-                }
-              });
-
-              if (editingGuide) {
-                await axiosClient.put(
-                  `/guides/${editingGuide._id || editingGuide.id}`,
-                  fd,
-                  { headers: { "Content-Type": "multipart/form-data" } }
-                );
-                message.success("Cập nhật thành công");
-              } else {
-                await axiosClient.post("/guides", fd, {
-                  headers: { "Content-Type": "multipart/form-data" },
-                });
-                message.success("Tạo mới thành công");
+      <GuideDrawer
+        visible={drawerVisible}
+        guide={editingGuide}
+        onClose={() => setDrawerVisible(false)}
+        onSubmit={async (formValues) => {
+          try {
+            const fd = new FormData();
+            Object.entries(formValues).forEach(([k, v]) => {
+              if (k === "plantTags" || Array.isArray(v)) {
+                fd.append(k, JSON.stringify(v));
+              } else if (k === "image") {
+                if (v instanceof File) fd.append("image", v);
+              } else if (v !== undefined && v !== null) {
+                fd.append(k, v);
               }
+            });
 
-              setDrawerVisible(false);
-              setEditingGuide(null);
-              fetchGuides(page);
-            } catch (e) {
-              console.error(e);
-              message.error("Thao tác không thành công");
+            if (editingGuide) {
+              await axiosClient.put(
+                `/guides/${editingGuide._id || editingGuide.id}`, fd,
+                { headers: { "Content-Type": "multipart/form-data" } }
+              );
+              message.success("Cập nhật thành công");
+            } else {
+              await axiosClient.post("/guides", fd, {
+                headers: { "Content-Type": "multipart/form-data" },
+              });
+              message.success("Tạo mới thành công");
             }
-          }}
-        />
-      </div>
+
+            setDrawerVisible(false);
+            setEditingGuide(null);
+            fetchGuides(page);
+
+          } catch (e) {
+            console.error(e);
+            message.error("Thao tác không thành công");
+          }
+        }}
+      />
     </AdminLayout>
   );
 }
@@ -317,6 +481,15 @@ function GuideDrawer({ visible, guide, onClose, onSubmit }) {
   const [previewUrl, setPreviewUrl] = useState(null);
   const prevObjectUrlRef = useRef(null);
 
+  useEffect(() => {
+    return () => {
+      if (prevObjectUrlRef.current) {
+        URL.revokeObjectURL(prevObjectUrlRef.current);
+        prevObjectUrlRef.current = null;
+      }
+    };
+  }, []);
+  
   useEffect(() => {
     form.setFieldsValue({
       title: safeGuide.title || "",
@@ -330,13 +503,8 @@ function GuideDrawer({ visible, guide, onClose, onSubmit }) {
 
     setPreviewUrl(safeGuide.image || null);
 
-    return () => {
-      if (prevObjectUrlRef.current) {
-        URL.revokeObjectURL(prevObjectUrlRef.current);
-        prevObjectUrlRef.current = null;
-      }
-    };
   }, [safeGuide, form, visible]);
+
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0] || null;
@@ -369,41 +537,37 @@ function GuideDrawer({ visible, guide, onClose, onSubmit }) {
     onSubmit(payload);
   };
 
+  const handleClose = () => {
+    form.resetFields();
+    setPreviewUrl(null);
+    onClose();
+  };
+
   return (
     <Drawer
-      title={safeGuide._id ? "Sửa hướng dẫn" : "Tạo hướng dẫn"}
-      width={420}
-      onClose={() => {
-        form.resetFields();
-        setPreviewUrl(null);
-        onClose();
-      }}
+      title={<span style={{ color: NATURE_COLORS.darkText, fontWeight: 600 }}>{safeGuide._id ? "Sửa Hướng Dẫn" : "Tạo Hướng Dẫn Mới"}</span>}
+      width={window.innerWidth > 768 ? 480 : "100%"}
+      onClose={handleClose}
       open={visible}
       destroyOnClose={false}
-      bodyStyle={{ backgroundColor: colors.background }}
+      bodyStyle={{ paddingBottom: 80, backgroundColor: NATURE_COLORS.background }} // Nền Drawer dùng Nature Ivory
+      footerStyle={{ borderTop: `1px solid ${NATURE_COLORS.neutralBorder}` }}
       footer={
         <div style={{ textAlign: "right" }}>
           <Button
-            onClick={() => {
-              form.resetFields();
-              setPreviewUrl(null);
-              onClose();
-            }}
-            style={{
-              marginRight: 8,
-              backgroundColor: colors.accent,
-              borderColor: colors.accent,
-              color: "#fff",
-            }}
+            onClick={handleClose}
+            style={{ marginRight: 8, color: NATURE_COLORS.darkText, borderColor: NATURE_COLORS.neutralBorder }}
           >
             Hủy
           </Button>
           <Button
             type="primary"
             onClick={() => form.submit()}
+            // Primary Green
             style={{
-              backgroundColor: colors.primary,
-              borderColor: colors.primary,
+              backgroundColor: NATURE_COLORS.primary,
+              borderColor: NATURE_COLORS.primary,
+              fontWeight: 500
             }}
           >
             Lưu
@@ -413,63 +577,54 @@ function GuideDrawer({ visible, guide, onClose, onSubmit }) {
     >
       <Form layout="vertical" form={form} onFinish={handleFinish}>
         <Form.Item
-          label="Tiêu đề"
+          label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Tiêu đề</span>}
           name="title"
           rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}
         >
-          <Input />
+          <Input placeholder="Ví dụ: Kỹ thuật trồng Cà Chua" />
         </Form.Item>
 
-        <Form.Item label="Mô tả" name="description">
-          <Input.TextArea rows={2} />
+        <Form.Item label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Mô tả ngắn</span>} name="description">
+          <Input.TextArea rows={2} placeholder="Tóm tắt ngắn gọn về hướng dẫn" />
         </Form.Item>
 
-        <Form.Item label="Nội dung" name="content">
-          <Input.TextArea rows={4} />
+        <Form.Item label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Nội dung chi tiết</span>} name="content">
+          <Input.TextArea rows={6} placeholder="Nhập toàn bộ nội dung hướng dẫn tại đây" />
         </Form.Item>
 
-        <Form.Item label="Thẻ cây trồng (phân bởi dấu phẩy)" name="plantTags">
-          <Input />
+        <Form.Item 
+            label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Thẻ cây trồng (Tags)</span>} 
+            name="plantTags"
+            tooltip="Phân cách bằng dấu phẩy (ví dụ: cà chua, rau xanh, thủy canh)"
+        >
+          <Input placeholder="cà chua, rau xanh, thủy canh" />
         </Form.Item>
 
-        <Form.Item label="Ảnh chính" name="image">
+        <Form.Item label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Ảnh đại diện</span>} name="image">
           <>
-            {previewUrl ? (
-              <div style={{ marginBottom: 8 }}>
+            <div style={{ marginBottom: 8 }}>
                 <img
-                  src={previewUrl}
-                  alt="preview"
+                  src={previewUrl || placeholderImg}
+                  alt="preview/placeholder"
                   style={{
                     width: "100%",
-                    maxHeight: 180,
+                    maxHeight: 200,
                     objectFit: "cover",
                     borderRadius: 6,
-                    border: `1px solid ${colors.neutral}`,
+                    border: `1px solid ${NATURE_COLORS.neutralBorder}`,
+                    marginBottom: 8
                   }}
                 />
-              </div>
-            ) : (
-              <div style={{ marginBottom: 8, color: "#888" }}>
-                <img
-                  src={placeholderImg}
-                  alt="placeholder"
-                  style={{
-                    width: "100%",
-                    maxHeight: 180,
-                    objectFit: "contain",
-                    borderRadius: 6,
-                    border: `1px dashed ${colors.neutral}`,
-                  }}
-                />
-              </div>
-            )}
+            </div>
 
             <input
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              style={{ width: "100%" }}
+              // Tinh chỉnh style input file
+              style={{ width: "100%", padding: 6, border: `1px solid ${NATURE_COLORS.neutralBorder}`, borderRadius: 4 }}
             />
+            {previewUrl && <small style={{ color: NATURE_COLORS.textMuted }}>* Ảnh mới sẽ thay thế ảnh cũ.</small>}
           </>
         </Form.Item>
       </Form>

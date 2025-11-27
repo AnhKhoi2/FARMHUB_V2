@@ -1,0 +1,46 @@
+[
+  {
+    "_id": "6922cd825b4abdc3f2997e73",
+    "notebook_name": "Húng quế 3",
+    "user": {
+      "_id": "68ff39dd583042edf2774a76",
+      "username": "admin1",
+      "email": "admin1@gmail.com"
+    },
+    "plant_type": "Húng quế",
+    "plant_group": "herb",
+    "template": {
+      "_id": "6913d5d6763663fdc88ace6f",
+      "template_name": "Rau Gia Vị"
+    },
+    "planted_date": "2025-11-23T00:00:00.000Z",
+    "current_stage": 1,
+    "progress": 0,
+    "daily_checklist_count": 2,
+    "status": "active",
+    "createdAt": "2025-11-23T09:01:54.510Z",
+    "updatedAt": "2025-11-23T17:13:01.443Z"
+  },
+  {
+    "_id": "6920078b43a35a1bf6346d30",
+    "notebook_name": "Húng quế 1",
+    "user": {
+      "_id": "68ff39dd583042edf2774a76",
+      "username": "admin1",
+      "email": "admin1@gmail.com"
+    },
+    "plant_type": "Húng quế",
+    "plant_group": "herb",
+    "template": {
+      "_id": "6913d5d6763663fdc88ace6f",
+      "template_name": "Rau Gia Vị"
+    },
+    "planted_date": "2025-11-21T00:00:00.000Z",
+    "current_stage": 2,
+    "progress": 45,
+    "daily_checklist_count": 1,
+    "status": "active",
+    "createdAt": "2025-11-21T06:32:43.389Z",
+    "updatedAt": "2025-11-23T17:12:29.292Z"
+  }
+]

@@ -205,12 +205,24 @@ export async function messages(req, res) {
     const { id } = req.params;
     const { before, after, limit = 20 } = req.query;
 
-    const conv = await Conversation.findById(id).lean();
+    const conv = await Conversation.findById(id);
     if (
       !conv ||
       !conv.participants.map(String).includes(String(me))
     ) {
       return res.status(403).json({ error: "Not in this conversation" });
+    }
+
+    // ✅ MARK READ: xoá mình khỏi unread_for khi load messages
+    const meStr = String(me);
+    const hasUnreadForMe = (conv.unread_for || []).some(
+      (u) => String(u) === meStr
+    );
+    if (hasUnreadForMe) {
+      conv.unread_for = (conv.unread_for || []).filter(
+        (u) => String(u) !== meStr
+      );
+      await conv.save();
     }
 
     const filter = { conversation: toObjectId(id) };
@@ -241,6 +253,7 @@ export async function messages(req, res) {
   }
 }
 
+
 // ===============================
 //  SEND MESSAGE
 // ===============================
@@ -254,18 +267,39 @@ export async function send(req, res) {
     if (!conv) return res.status(404).json({ error: "Conversation not found" });
 
     const isMember = conv.participants.map(String).includes(String(me));
-    if (!isMember) return res.status(403).json({ error: "Not in this conversation" });
+    if (!isMember) {
+      return res.status(403).json({ error: "Not in this conversation" });
+    }
 
     const safe = String(text || "").trim();
-    if (!safe) return res.status(400).json({ error: "Empty message" });
+    if (!safe) {
+      return res.status(400).json({ error: "Empty message" });
+    }
 
+    // Tạo message
     const msg = await Message.create({
       conversation: toObjectId(id),
       sender: toObjectId(me),
       text: safe,
     });
 
-    conv.last_message = { text: safe, at: msg.createdAt, sender: toObjectId(me) };
+    // Cập nhật last_message + đánh dấu unread cho người còn lại
+    const meObjId = toObjectId(me);
+
+    // những participant KHÔNG phải mình -> họ là người nhận
+    const receivers = conv.participants.filter(
+      (p) => String(p) !== String(meObjId)
+    );
+
+    conv.last_message = {
+      text: safe,
+      at: msg.createdAt,
+      sender: meObjId,
+    };
+
+    // unread_for = những người nhận (loại cả mình ra)
+    conv.unread_for = receivers;
+
     await conv.save();
 
     const populatedMsg = await Message.findById(msg._id)
@@ -276,5 +310,96 @@ export async function send(req, res) {
   } catch (e) {
     console.error("chat.send error:", e);
     return res.status(500).json({ error: "Failed to send message" });
+  }
+}
+
+/// ===============================
+//  CHECK: user đã từng chat với expert chưa
+//  GET /api/chat/has-talked/:expertId
+//  - expertId có thể là: Expert._id | Expert.expert_id (UUID) | Expert.user (userId của expert)
+// ===============================
+export async function hasTalked(req, res) {
+  try {
+    const me = req.user?.id || req.user?._id; // user đang đăng nhập
+    const { expertId } = req.params;
+
+    if (!me) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    if (!expertId) {
+      return res.status(400).json({ error: "Missing expertId" });
+    }
+
+    // Tìm expert (hỗ trợ nhiều kiểu id)
+    const ex = await resolveExpert(expertId);
+    const expertUserId = ex?.user?._id;
+
+    // Nếu không có expert -> coi như chưa từng chat, KHÔNG ném lỗi
+    if (!ex || !expertUserId) {
+      return res.status(200).json({ hasTalked: false });
+    }
+
+    // Tìm conversation có cả user hiện tại + user của expert
+    const hasChat = await Conversation.exists({
+      participants: { $all: [toObjectId(me), toObjectId(expertUserId)] },
+    });
+
+    return res.status(200).json({
+      hasTalked: !!hasChat,
+    });
+  } catch (e) {
+    console.error("chat.hasTalked error:", e);
+    // Trong trường hợp lỗi server, vẫn trả hasTalked=false để FE xử lý mềm
+    return res
+      .status(500)
+      .json({ error: "Failed to check conversation", hasTalked: false });
+  }
+}
+// ===============================
+//  LIST CONVERSATIONS WITH UNREAD
+//  GET /api/chat/unread
+// ===============================
+export async function listUnread(req, res) {
+  try {
+    // Lấy id user hiện tại theo nhiều kiểu, giống hasTalked
+    let me = req.user?.id || req.user?._id;
+
+    // Nếu middleware của bạn set req.user là Expert doc thì nó có field user
+    if (!me && req.user?.user) {
+      me = req.user.user; // userId gốc của chuyên gia
+    }
+
+    if (!me) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const meObjId = toObjectId(me);
+
+    const items = await Conversation.find({
+      unread_for: meObjId,
+    })
+      .sort({ updatedAt: -1 })
+      .populate({
+        path: "user",
+        model: "User",
+        select: "_id username full_name email avatar",
+      })
+      .populate({
+        path: "expert",
+        model: "Expert",
+        select: "_id full_name expertise_area user avatar",
+        populate: { path: "user", select: "username full_name email avatar" },
+      })
+      .lean();
+
+    return res.status(200).json({
+      data: items,
+      count: items.length,
+    });
+  } catch (e) {
+    console.error("chat.listUnread error:", e);
+    return res
+      .status(500)
+      .json({ error: "Failed to list unread conversations" });
   }
 }

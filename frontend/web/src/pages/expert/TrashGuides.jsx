@@ -95,13 +95,15 @@ export default function TrashGuides() {
           Thùng rác – Hướng dẫn đã xóa
         </Title>
 
-        <Button
-          icon={<ArrowLeftOutlined />}
-          type="default"
-          onClick={() => navigate(-1)}
-        >
-          Quay lại danh sách
-        </Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            type="default"
+            onClick={() => navigate(-1)}
+          >
+            Quay lại danh sách
+          </Button>
+        </div>
       </Row>
 
       {/* --- Loading Spinner --- */}

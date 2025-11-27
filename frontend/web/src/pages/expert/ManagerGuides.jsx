@@ -28,9 +28,13 @@ import {
   PlusOutlined,
   SearchOutlined,
   ReloadOutlined,
-  DeleteFilled,
 } from "@ant-design/icons";
+
 import HeaderExpert from "../../components/shared/HeaderExpert";
+
+// ⬇️ Thêm import cho chat
+import ChatWidget from "./ChatWidget";
+import { MessageCircle } from "lucide-react";
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -39,6 +43,8 @@ const { Option } = Select;
 
 export default function ManagerGuides() {
   const navigate = useNavigate();
+
+  // ====== STATE DANH SÁCH HƯỚNG DẪN ======
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -46,6 +52,10 @@ export default function ManagerGuides() {
   const [total, setTotal] = useState(0);
   const [plantSearch, setPlantSearch] = useState("");
   const [category, setCategory] = useState("");
+
+  // ====== STATE CHAT ======
+  const [chatOpen, setChatOpen] = useState(false);
+  const handleChatClick = () => setChatOpen(true);
 
   const availablePlantTags = [
     "Rau củ dễ chăm",
@@ -87,11 +97,10 @@ export default function ManagerGuides() {
     fetchGuides(1, limit);
   }, [fetchGuides, limit]);
 
-  const onTableChange = (pagination, filters, sorter) => {
+  const onTableChange = (pagination, _filters, _sorter) => {
     const { current = 1, pageSize = limit } = pagination || {};
     setPage(current);
     setLimit(pageSize);
-    // có thể xử lý sort/filter ở server nếu cần
     fetchGuides(current, pageSize);
   };
 
@@ -111,38 +120,50 @@ export default function ManagerGuides() {
   };
 
   // custom text search filter
-  const getColumnSearchProps = (dataIndex, placeholder = "Tìm kiếm...") => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-      <div style={{ padding: 8 }}>
-        <Input
-          placeholder={placeholder}
-          value={selectedKeys[0]}
-          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={() => confirm()}
-          style={{ width: 188, marginBottom: 8, display: "block" }}
-        />
-        <Space>
-          <Button
-            type="primary"
-            onClick={() => confirm()}
-            icon={<SearchOutlined />}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Tìm
-          </Button>
-          <Button onClick={clearFilters} size="small" style={{ width: 90 }}>
-            Xóa
-          </Button>
-        </Space>
-      </div>
-    ),
-    filterIcon: (filtered) => (
-      <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
-    ),
-    onFilter: (value, record) =>
-      record[dataIndex]?.toString().toLowerCase().includes(value.toLowerCase()),
-  });
+  const getColumnSearchProps =
+    (dataIndex, placeholder = "Tìm kiếm...") =>
+    ({
+      setSelectedKeys,
+      selectedKeys,
+      confirm,
+      clearFilters,
+    }) => ({
+      filterDropdown: () => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder={placeholder}
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              icon={<SearchOutlined />}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Tìm
+            </Button>
+            <Button onClick={clearFilters} size="small" style={{ width: 90 }}>
+              Xóa
+            </Button>
+          </Space>
+        </div>
+      ),
+      filterIcon: (filtered) => (
+        <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
+      ),
+      onFilter: (value, record) =>
+        record[dataIndex]
+          ?.toString()
+          .toLowerCase()
+          .includes(value.toLowerCase()),
+    });
 
   const columns = [
     {
@@ -189,7 +210,8 @@ export default function ManagerGuides() {
       dataIndex: "createdAt",
       key: "createdAt",
       sorter: (a, b) =>
-        new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime(),
+        new Date(a.createdAt || 0).getTime() -
+        new Date(b.createdAt || 0).getTime(),
       render: (val) =>
         val ? new Date(val).toLocaleDateString("vi-VN") : "—",
     },
@@ -225,7 +247,8 @@ export default function ManagerGuides() {
 
   return (
     <>
-      <HeaderExpert />
+      {/* Header expert có nút Trò chuyện */}
+      <HeaderExpert onChatClick={handleChatClick} />
 
       <Layout style={{ background: "#fff", padding: 24, borderRadius: 12 }}>
         <Content>
@@ -239,6 +262,7 @@ export default function ManagerGuides() {
               <Col>
                 <Space>
                   <Button
+                    shape="round"
                     icon={<ReloadOutlined />}
                     onClick={() => {
                       setPlantSearch("");
@@ -249,13 +273,15 @@ export default function ManagerGuides() {
                     Làm mới
                   </Button>
                   <Button
-                    icon={<DeleteFilled />}
+                    shape="round"
+                    icon={<DeleteOutlined />}
                     onClick={() => navigate("/managerguides/trash")}
                   >
                     Thùng rác
                   </Button>
                   <Button
                     type="primary"
+                    shape="round"
                     icon={<PlusOutlined />}
                     onClick={onCreate}
                   >
@@ -267,7 +293,10 @@ export default function ManagerGuides() {
 
             <Divider />
 
-            <Space style={{ marginBottom: 16, flexWrap: "wrap" }} size="middle">
+            <Space
+              style={{ marginBottom: 16, flexWrap: "wrap" }}
+              size="middle"
+            >
               <Search
                 placeholder="Tìm theo tên cây hoặc tiêu đề"
                 onSearch={(v) => {
@@ -306,8 +335,7 @@ export default function ManagerGuides() {
                 current: page,
                 pageSize: limit,
                 total,
-                showSizeChanger: true,
-                pageSizeOptions: [10, 15, 20, 50],
+                showSizeChanger: false,
                 showTotal: (total) => `Tổng ${total} mục`,
               }}
               locale={{ emptyText: "Không có hướng dẫn" }}
@@ -318,6 +346,20 @@ export default function ManagerGuides() {
             />
           </Card>
         </Content>
-      </Layout></>
+      </Layout>
+
+      {/* Nút chat nổi */}
+      {!chatOpen && (
+        <button
+          className="floating-chat-btn"
+          onClick={() => setChatOpen(true)}
+        >
+          <MessageCircle size={26} />
+        </button>
+      )}
+
+      {/* Chat widget */}
+      <ChatWidget open={chatOpen} onClose={() => setChatOpen(false)} />
+    </>
   );
 }

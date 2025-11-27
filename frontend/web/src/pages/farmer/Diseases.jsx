@@ -296,26 +296,7 @@ const Diseases = () => {
             )}
           </section>
 
-          {/* Info Banner */}
-          <section className="info-banner mt-5">
-            <div className="card bg-success text-white shadow">
-              <div className="card-body p-4">
-                <div className="row align-items-center">
-                  <div className="col-md-8">
-                    <h4 className="fw-bold mb-2">Cần hỗ trợ chẩn đoán bệnh?</h4>
-                    <p className="mb-0">
-                      Sử dụng tính năng chat AI để nhận biết bệnh cây trồng nhanh chóng và chính xác
-                    </p>
-                  </div>
-                  <div className="col-md-4 text-md-end mt-3 mt-md-0">
-                    <button className="btn btn-light btn-lg" onClick={() => setShowChat(true)}>
-                      Trao đổi với AI
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+          {/* Info Banner removed as requested */}
 
           {/* Chat modal (simple inline) */}
           {showChat && (

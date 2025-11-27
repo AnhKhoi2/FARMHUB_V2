@@ -18,6 +18,8 @@ import {
   Col,
   Drawer
 } from "antd";
+import { FiEdit, FiTrash2, FiRotateCcw } from 'react-icons/fi';
+import { PlusOutlined, InboxOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -109,20 +111,21 @@ export default function AdminModels() {
     {
       title: 'Hành động',
       render: (_, record) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50' }}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <button
+            className="btn btn-sm btn-link"
+            title="Chỉnh sửa"
             onClick={() => { setCurrent(record); setShowEdit(true); }}
+            aria-label={`edit-${record._id}`}
+            style={{ color: '#4CAF50', padding: 4, margin: 0, lineHeight: 1 }}
           >
-            Sửa
-          </Button>
+            <FiEdit size={16} />
+          </button>
+
           {!record.isDeleted ? (
-            <Button
-              size="small"
-              danger
-              style={{ backgroundColor: '#FFEB3B', borderColor: '#FFEB3B', color: '#2E7D32' }}
+            <button
+              className="btn btn-sm btn-link"
+              title="Xóa"
               onClick={async () => {
                 try {
                   await axiosClient.patch(`/admin/models/${record._id}/hide`);
@@ -131,13 +134,15 @@ export default function AdminModels() {
                   console.error(err);
                 }
               }}
+              aria-label={`delete-${record._id}`}
+              style={{ color: '#FF4D4F', padding: 4, margin: 0, lineHeight: 1 }}
             >
-              Xóa
-            </Button>
+              <FiTrash2 size={16} />
+            </button>
           ) : (
-            <Button
-              size="small"
-              style={{ backgroundColor: '#8BC34A', borderColor: '#8BC34A', color: '#fff' }}
+            <button
+              className="btn btn-sm btn-link"
+              title="Hoàn tác"
               onClick={async () => {
                 try {
                   await axiosClient.patch(`/admin/models/${record._id}/restore`);
@@ -146,11 +151,13 @@ export default function AdminModels() {
                   console.error(err);
                 }
               }}
+              aria-label={`restore-${record._id}`}
+              style={{ color: '#1890ff', padding: 4, margin: 0, lineHeight: 1 }}
             >
-              Hoàn tác
-            </Button>
+              <FiRotateCcw size={16} />
+            </button>
           )}
-        </Space>
+        </div>
       )
     }
   ];
@@ -161,18 +168,21 @@ export default function AdminModels() {
         <h3 style={{ color: '#2E7D32' }}>Mô hình trồng</h3>
         <Space>
           <Button
-            style={{ backgroundColor: '#81C784', borderColor: '#81C784', color: '#fff' }}
+            type="primary"
+            icon={<PlusOutlined />}
+            style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50', fontWeight: 500 }}
+            onClick={() => setShowCreate(true)}
+          >
+            Thêm mới
+          </Button>
+          <Button
+            icon={<InboxOutlined />}
+            style={{ color: '#2E7D32', borderColor: '#E0E0E0', background: '#fff' }}
             onClick={() => setShowTrash(true)}
           >
             Thùng rác
           </Button>
-          <Button
-            type="primary"
-            style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50' }}
-            onClick={() => setShowCreate(true)}
-          >
-            Tạo mô hình
-          </Button>
+          
         </Space>
       </Row>
 

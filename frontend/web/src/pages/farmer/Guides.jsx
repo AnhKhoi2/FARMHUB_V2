@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import guidesApi from "../../api/shared/guidesApi";
-import { Card, Row, Col, Typography, Spin, message, Input } from "antd";
+import { Card, Row, Col, Typography, Spin, message, Input, Pagination, Select } from "antd";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/Header";
+import Footer from "../../components/shared/Footer";
 
 const { Title } = Typography;
 
@@ -10,14 +11,52 @@ export default function Guides() {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(18);
+  const [total, setTotal] = useState(0);
 
-  const fetchGuides = async (search = "") => {
+  const fetchGuides = async (search = "", pageParam = 1, limitParam = pageSize, categoryParam = "") => {
     setLoading(true);
     try {
-      const res = await guidesApi.getAllGuides({ q: search, limit: 50 });
-      const data = res?.data?.data || res?.data || [];
-      const list = Array.isArray(data) ? data : data.items || data.docs || [];
-      setGuides(list);
+      // Use `search` param (backend expects this) and prefer server meta for total count
+      const params = { search: search, page: pageParam, limit: limitParam };
+      if (categoryParam) params.category = categoryParam;
+      const res = await guidesApi.getAllGuides(params);
+      const body = res?.data || {};
+      const payload = body.data || body;
+      const meta = body.meta || {};
+
+      let items = [];
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (payload.docs) {
+        items = payload.docs;
+      } else if (payload.items) {
+        items = payload.items;
+      } else {
+        const maybeItems = payload.items || payload.data || [];
+        items = Array.isArray(maybeItems) ? maybeItems : [];
+      }
+
+      const totalCount = Number(meta.total || payload.totalDocs || payload.total || items.length) || 0;
+
+      setGuides(items);
+      setTotal(totalCount);
+      setPage(Number(pageParam));
+
+      // derive available categories from returned items (unique non-empty categories)
+      try {
+        const cats = Array.from(new Set(items.map((it) => (it.category || "")).filter(Boolean)));
+        setCategories(cats);
+        // if selectedCategory is not in cats anymore, reset to empty
+        if (selectedCategory && !cats.includes(selectedCategory)) {
+          setSelectedCategory("");
+        }
+      } catch (e) {
+        // ignore
+      }
     } catch (err) {
       console.error("Failed to load guides", err);
       message.error("Không thể tải hướng dẫn");
@@ -27,44 +66,66 @@ export default function Guides() {
   };
 
   useEffect(() => {
-    fetchGuides();
+    fetchGuides(q, 1, pageSize, selectedCategory);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onSearch = (val) => {
     setQ(val);
-    fetchGuides(val);
+    fetchGuides(val, 1, pageSize, selectedCategory);
   };
 
-  return (
-    <>
-      <Header />
-      <div className="container-fluid" style={{ padding: 24 }}>
-        {/* Header & Search */}
-        <div
-          style={{
-            marginBottom: 24,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <Title level={3} style={{ margin: 0 }}>
-              Hướng dẫn trồng trọt
-            </Title>
+  const onPageChange = (p, pSize) => {
+    setPage(p);
+    setPageSize(pSize);
+    fetchGuides(q, p, pSize, selectedCategory);
+  };
+
+  const onCategoryChange = (val) => {
+    setSelectedCategory(val);
+    // when category changes, fetch page 1
+    fetchGuides(q, 1, pageSize, val);
+  };
+
+    return (
+      <>
+        <Header />
+        <div className="container-fluid" style={{ padding: 24 }}>
+          {/* Header & Search */}
+          <div
+            style={{
+              marginBottom: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <Title level={3} style={{ margin: 0 }}>
+                Hướng dẫn trồng trọt
+              </Title>
+            </div>
+            <div style={{ flexGrow: 1, maxWidth: 520, marginTop: 8, display: 'flex', gap: 8 }}>
+              <Select
+                value={selectedCategory}
+                onChange={onCategoryChange}
+                placeholder="Tất cả danh mục"
+                style={{ minWidth: 160 }}
+                options={[{ label: 'Tất cả', value: '' }, ...(categories || []).map((c) => ({ label: c, value: c }))]}
+                allowClear
+              />
+              <Input.Search
+                placeholder="Tìm rau/cây trồng..."
+                allowClear
+                enterButton
+                onSearch={onSearch}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                style={{ flex: 1 }}
+              />
+            </div>
           </div>
-          <div style={{ flexGrow: 1, maxWidth: 360, marginTop: 8 }}>
-            <Input.Search
-              placeholder="Tìm rau/cây trồng..."
-              allowClear
-              enterButton
-              onSearch={onSearch}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </div>
-        </div>
 
         {/* Content */}
         {loading ? (
@@ -97,9 +158,22 @@ export default function Guides() {
                 </Link>
               </Col>
             ))}
+
+            {total > 0 && (
+              <Col span={24} style={{ textAlign: 'center', marginTop: 12 }}>
+                <Pagination
+                  current={page}
+                  pageSize={pageSize}
+                  total={total}
+                  onChange={onPageChange}
+                  style={{ display: 'inline-block' }}
+                />
+              </Col>
+            )}
           </Row>
         )}
       </div>
+      <Footer /> 
     </>
   );
 }

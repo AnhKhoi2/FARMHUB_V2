@@ -7,7 +7,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: white;
+    background: rgba(0, 0, 0, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -15,15 +15,17 @@
     padding: 20px;
 }
 
-/* Modal Content - White box */
+/* Modal Content - match pricing page pale emerald background */
 .modal-content {
-    background: rgb(216, 214, 214) !important;
+    background: linear-gradient(180deg, #f6fbf7 0%, #e6f7ef 100%) !important;
+    color: #000000;
+    /* Modal text should be black */
     border-radius: 12px;
     padding: 2rem;
     position: relative;
     max-height: 90vh;
     overflow-y: auto;
-    /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); */
+    box-shadow: 0 8px 30px rgba(6, 78, 59, 0.06);
 }
 
 .create-collection-modal {
@@ -37,20 +39,20 @@
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #ecf0f1;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .modal-header h2 {
     margin: 0;
-    color: #2c3e50;
+    color: #000000;
     font-size: 1.5rem;
 }
 
 .btn-close-icon {
-    background: none;
+    background: transparent;
     border: none;
     font-size: 2rem;
-    color: #95a5a6;
+    color: rgba(0, 0, 0, 0.65);
     cursor: pointer;
     width: 40px;
     height: 40px;
@@ -58,14 +60,14 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    transition: all 0.3s;
+    transition: background 0.2s, color 0.2s;
     padding: 0;
     line-height: 1;
 }
 
 .btn-close-icon:hover {
-    background: #ecf0f1;
-    color: #2c3e50;
+    background: rgba(0, 0, 0, 0.06);
+    color: #000;
 }
 
 .form-group {
@@ -75,7 +77,7 @@
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    color: #2c3e50;
+    color: rgba(0, 0, 0, 0.85);
     font-weight: 600;
     font-size: 0.95rem;
 }
@@ -88,18 +90,21 @@
 .form-group textarea {
     width: 100%;
     padding: 12px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid rgba(0, 0, 0, 0.12);
+    background: #ffffff;
+    color: #000000;
     border-radius: 8px;
     font-size: 1rem;
     font-family: inherit;
-    transition: border-color 0.3s;
+    transition: border-color 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #34d399;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
 }
 
 .form-group textarea {
@@ -110,15 +115,21 @@
 .form-hint {
     display: block;
     margin-top: 0.5rem;
-    color: #95a5a6;
+    color: rgba(0, 0, 0, 0.7);
     font-size: 0.85rem;
 }
+
+/* image-preview and tags removed per request */
 
 .image-preview {
     margin-top: 1rem;
     border-radius: 8px;
     overflow: hidden;
-    max-height: 200px;
+    max-height: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
 }
 
 .image-preview img {
@@ -126,78 +137,28 @@
     height: auto;
     object-fit: cover;
     display: block;
+    border-radius: 6px;
 }
 
-/* Tags */
-.tag-input-group {
+/* Place the preview action under the image and left-aligned for better layout */
+.preview-actions {
     display: flex;
-    gap: 8px;
+    justify-content: flex-start;
+    padding: 0.25rem 0;
 }
 
-.tag-input-group input {
-    flex: 1;
-}
-
-.btn-add-tag {
-    padding: 12px 20px;
-    background: #3498db;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
+.btn-remove-image {
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    color: #000;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.3s;
-    white-space: nowrap;
+    font-size: 0.95rem;
 }
 
-.btn-add-tag:hover:not(:disabled) {
-    background: #2980b9;
-}
-
-.btn-add-tag:disabled {
-    background: #bdc3c7;
-    cursor: not-allowed;
-}
-
-.tags-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 1rem;
-}
-
-.tags-container .tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.btn-remove-tag {
-    background: rgba(255, 255, 255, 0.3);
-    border: none;
-    color: white;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    line-height: 1;
-    padding: 0;
-    transition: background 0.3s;
-}
-
-.btn-remove-tag:hover {
-    background: rgba(255, 255, 255, 0.5);
+.btn-remove-image:hover {
+    background: rgba(0, 0, 0, 0.04);
 }
 
 .modal-actions {
@@ -206,40 +167,40 @@
     justify-content: flex-end;
     margin-top: 2rem;
     padding-top: 1.5rem;
-    border-top: 2px solid #ecf0f1;
+    border-top: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .btn-cancel {
     padding: 12px 24px;
-    background: #ecf0f1;
-    color: #7f8c8d;
-    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000000;
+    border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
     font-weight: 600;
-    transition: background 0.3s;
+    transition: background 0.2s;
 }
 
 .btn-cancel:hover {
-    background: #d5dbdb;
+    background: rgba(0, 0, 0, 0.04);
 }
 
 .btn-submit {
     padding: 12px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(90deg, #06b6d4, #10b981);
+    color: #042a2b;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
-    font-weight: 600;
-    transition: transform 0.2s, box-shadow 0.2s;
+    font-weight: 700;
+    transition: transform 0.18s, box-shadow 0.18s;
 }
 
 .btn-submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.14);
 }
 
 /* Responsive */
@@ -251,10 +212,6 @@
 
     .modal-header h2 {
         font-size: 1.25rem;
-    }
-
-    .tag-input-group {
-        flex-direction: column;
     }
 
     .modal-actions {

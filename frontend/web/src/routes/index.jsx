@@ -43,6 +43,7 @@ import AdminLayout from "../components/AdminLayout.jsx";
 import ModeratorHome from "../pages/moderator/ModeratorHome";
 import ManagerPost from "../pages/moderator/ManagerPost";
 import ManagerReport from "../pages/moderator/ManagerReport";
+import ModeratorProfile from "../pages/moderator/ModeratorProfile";
 
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
@@ -54,6 +55,7 @@ import FarmerGuideDetail from "../pages/farmer/GuideDetail";
 import Guides from "../pages/farmer/Guides";
 import GuideEdit from "../pages/expert/GuideEdit";
 import TrashGuides from "../pages/expert/TrashGuides";
+import TrashModels from "../pages/expert/TrashModels";
 import PostDetail from "../pages/PostDetail";
 
 // Farmer Pages - Notebook
@@ -61,6 +63,8 @@ import NotebookList from "../pages/farmer/NotebookList";
 import NotebookDetail from "../pages/farmer/NotebookDetail";
 import NotebookCreate from "../pages/farmer/NotebookCreate";
 import NotebookEdit from "../pages/farmer/NotebookEdit";
+import OverdueDetail from "../pages/farmer/OverdueDetail";
+import NotebookStatsPage from "../pages/farmer/NotebookStatsPage";
 
 // Farmer Pages - Collections
 import Collections from "../pages/farmer/Collections";
@@ -76,13 +80,20 @@ import ExpertRoutes from "./expert/ExpertRoutes.jsx";
 import ExpertContent from "../pages/ExpertContent.jsx";
 import AIChatWidget from "../components/shared/AIChatWidget";
 import StreakScreen from "../pages/farmer/StreakScreen.jsx";
-import { useLocation } from 'react-router-dom';
+
+import { useLocation } from "react-router-dom";
+import AdminDetailGuides from "../pages/admin/AdminDetailGuides.jsx";
+
+import PlantCarePricing from "../pages/Subscription/PlantCarePricing";
+import PaymentSuccess from "../pages/Subscription/PaymentSuccess";
+import PaymentFailed from "../pages/Subscription/PaymentFailed";
 
 export default function AppRoutes() {
   function ChatWrapper() {
     const location = useLocation();
     // don't show chat widget on admin paths
-    if (location.pathname && location.pathname.startsWith('/admin')) return null;
+    if (location.pathname && location.pathname.startsWith("/admin"))
+      return null;
     return <AIChatWidget />;
   }
   return (
@@ -99,9 +110,7 @@ export default function AppRoutes() {
         <Route path="/auth/verify/:token" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
-
         <Route path="/weather" element={<WeatherPage />} />
-
         <Route path="/plant-diagnosis" element={<PlantDiagnosisPage />} />
         {/* <- từ code 2 */}
         {/* ===== Protected app (từ code 2) ===== */}
@@ -197,6 +206,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/admin/guides/:id"
+          element={
+            <AdminRoute>
+              <AdminDetailGuides />
+            </AdminRoute>
+          }
+        />
+        <Route
           path="/admin/expert-applications"
           element={
             <AdminRoute>
@@ -220,7 +237,7 @@ export default function AppRoutes() {
           path="/moderator"
           element={
             // <ModeratorRoute>
-              <ModeratorHome />
+            <ModeratorHome />
             // </ModeratorRoute>
           }
         />
@@ -237,6 +254,14 @@ export default function AppRoutes() {
           element={
             <ModeratorRoute>
               <ManagerReport />
+            </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/profile"
+          element={
+            <ModeratorRoute>
+              <ModeratorProfile />
             </ModeratorRoute>
           }
         />
@@ -347,13 +372,23 @@ export default function AppRoutes() {
         <Route path="/guides/:id" element={<FarmerGuideDetail />} />
         <Route path="/weather" element={<WeatherPage />} />
         <Route path="/posts/:id" element={<PostDetail />} />
-        
         {/* Expert nested bundle (nếu bạn có thêm nhiều trang con dưới /expert) */}
         <Route path="/expert/*" element={<ExpertRoutes />} />
         {/* Direct expert home route for quick access/testing */}
         <Route path="/experthome" element={<ExpertHome />} />
         <Route path="/experthome/models" element={<ExpertModels />} />
+        <Route
+          path="/experthome/models/trash"
+          element={
+            <PrivateRoute>
+              <TrashModels />
+            </PrivateRoute>
+          }
+        />
         <Route path="/experts" element={<ExpertsList />} />
+        <Route path="/pricing" element={<PlantCarePricing />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/failed" element={<PaymentFailed />} />
         <Route path="/guides/:id" element={<GuideDetail />} />
         <Route
           path="/managerguides/trash"
@@ -389,6 +424,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/farmer/notebooks/stats"
+          element={
+            <PrivateRoute>
+              <NotebookStatsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/farmer/notebooks/create"
           element={
             <PrivateRoute>
@@ -409,6 +452,14 @@ export default function AppRoutes() {
           element={
             <PrivateRoute>
               <NotebookEdit />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/notebooks/deleted"
+          element={
+            <PrivateRoute>
+              <NotebookList showDeleted={true} />
             </PrivateRoute>
           }
         />

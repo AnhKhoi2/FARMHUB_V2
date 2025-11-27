@@ -2,8 +2,11 @@
 .footer {
     background: linear-gradient(135deg, #1a3a0f 0%, #2d5016 100%);
     color: white;
-    padding: 3rem 0 1rem;
-    margin-top: 5rem;
+    /* Move spacing from external margin into internal padding so
+       the footer background covers the visual gap and no underlying
+       element shows through as a dark strip. */
+    padding: 6rem 0 1rem;
+    margin-top: 0;
     width: 100%;
 }
 
@@ -100,8 +103,9 @@
 /* Responsive */
 @media (max-width: 768px) {
     .footer {
-        padding: 2rem 0 1rem;
-        margin-top: 3rem;
+        /* keep a comfortable top spacing on smaller screens */
+        padding: 5rem 0 1rem;
+        margin-top: 0;
     }
 
     .headfooter {
@@ -128,7 +132,7 @@
 
 @media (max-width: 576px) {
     .footer {
-        padding: 1.5rem 0 1rem;
+        padding: 4rem 0 1rem;
     }
 
     .footer .col-md-4,

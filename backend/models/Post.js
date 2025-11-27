@@ -33,7 +33,7 @@ const MarketPostSchema = new Schema(
     // 🔹 Danh mục
     category: {
       type: String,
-      enum: ['Nông sản', 'Hạt giống', 'Phân bón', 'Thiết bị', 'Dịch vụ', 'Khác'],
+      enum: ['Nông sản', 'Hạt giống', 'Phân bón', 'Thiết bị', 'Dịch vụ', 'Trao đổi', 'Cho tặng', 'Khác'],
       default: 'Khác',
     },
 

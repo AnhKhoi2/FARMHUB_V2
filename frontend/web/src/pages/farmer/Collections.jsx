@@ -4,7 +4,7 @@ import collectionsApi from "../../api/farmer/collectionsApi";
 import CreateCollectionModal from "../../components/farmer/CreateCollectionModal";
 import "../../css/farmer/Collections.css";
 import Header from "../../components/shared/Header";
-
+import Footer from "../../components/shared/Footer";
 const Collections = () => {
   const navigate = useNavigate();
   const [collections, setCollections] = useState([]);
@@ -74,11 +74,39 @@ const Collections = () => {
     }
   };
 
-  const handleCreateCollection = async (formData) => {
+  const handleCreateCollection = async (formData, previewUrl) => {
     try {
-      await collectionsApi.createCollection(formData);
+      // If a local file was provided, upload it first to get a persistent URL
+      let coverImageUrl = null;
+      if (formData.cover_file) {
+        try {
+          coverImageUrl = await collectionsApi.uploadImage(formData.cover_file);
+        } catch (uploadErr) {
+          console.error("Upload failed:", uploadErr);
+          // fallback to previewUrl for optimistic UI, but still attempt create
+          coverImageUrl = previewUrl || null;
+        }
+      }
+
+      const payload = {
+        collection_name: formData.collection_name,
+        description: formData.description,
+        ...(coverImageUrl ? { cover_image: coverImageUrl } : {}),
+      };
+
+      const response = await collectionsApi.createCollection(payload);
+      const created = response.data?.data;
+
+      if (created) {
+        // If upload wasn't available but previewUrl exists, use it for immediate UI
+        if (!created.cover_image && previewUrl) {
+          created.cover_image = previewUrl;
+        }
+
+        setCollections((prev) => [created, ...(prev || [])]);
+      }
+
       setShowCreateModal(false);
-      fetchCollections();
     } catch (err) {
       console.error("Error creating collection:", err);
       alert("Không thể tạo bộ sưu tập");
@@ -224,6 +252,7 @@ const Collections = () => {
           onSubmit={handleCreateCollection}
         />
       </div>{" "}
+      <Footer />
     </>
   );
 };

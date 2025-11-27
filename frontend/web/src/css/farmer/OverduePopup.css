@@ -1,0 +1,203 @@
+/* OverduePopup.css */
+.overdue-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.overdue-popup {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    animation: slideUp 0.3s ease-out;
+    overflow: hidden;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.overdue-popup-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+    color: white;
+    position: relative;
+}
+
+.overdue-icon {
+    font-size: 32px;
+    animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.overdue-popup-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    flex: 1;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.overdue-popup-body {
+    padding: 24px;
+}
+
+.overdue-message {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+    margin: 0 0 16px 0;
+}
+
+.overdue-count {
+    color: #ff6b6b;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.overdue-question {
+    font-size: 15px;
+    color: #666;
+    margin: 0;
+    font-weight: 500;
+}
+
+.overdue-popup-footer {
+    padding: 0 24px 24px 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.overdue-popup-footer button {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-view-detail {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-view-detail:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-skip {
+    background: #e8e8e8;
+    color: #666;
+}
+
+.btn-skip:hover {
+    background: #d0d0d0;
+    transform: translateY(-2px);
+}
+
+.btn-icon {
+    font-size: 18px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .overdue-popup {
+        max-width: 95%;
+        margin: 16px;
+    }
+
+    .overdue-popup-header {
+        padding: 20px;
+    }
+
+    .overdue-popup-header h3 {
+        font-size: 18px;
+    }
+
+    .overdue-popup-body {
+        padding: 20px;
+    }
+
+    .overdue-message {
+        font-size: 15px;
+    }
+
+    .overdue-popup-footer {
+        flex-direction: column;
+        padding: 0 20px 20px 20px;
+    }
+
+    .overdue-popup-footer button {
+        width: 100%;
+    }
+}

@@ -1,212 +1,438 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/shared/Header.jsx";
-import { profileApi } from "../../api/shared/profileApi.js";
-import expertApplicationApi from "../../api/shared/expertApplicationApi.js";
-import { toast } from "react-toastify";
+import expertApplicationApi from "../../api/expert/expertApplicationApi";
+import "../../css/auth/Login.css"; // Reuse auth styles
 
-export default function ApplyExpert() {
-  const [loading, setLoading] = useState(true);
-  const [appsLoading, setAppsLoading] = useState(true);
-  const [myApps, setMyApps] = useState([]);
-  const [applySaving, setApplySaving] = useState(false);
-  const [applyForm, setApplyForm] = useState({
+const ApplyExpert = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [existingApplication, setExistingApplication] = useState(null);
+
+  const [formData, setFormData] = useState({
     full_name: "",
     expertise_area: "",
-    experience_years: 0,
+    experience_years: "",
     description: "",
     phone_number: "",
     certificates: [""],
   });
-  const [applyFieldErrors, setApplyFieldErrors] = useState({});
 
-  const navigate = useNavigate();
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    (async () => {
+    // Check if user already has a pending application
+    const checkExisting = async () => {
       try {
-        const { data } = await profileApi.getProfile();
-        const payload = data?.data || {};
-        setApplyForm((prev) => ({
-          ...prev,
-          full_name: payload.fullName || prev.full_name,
-          phone_number: payload.phone || prev.phone_number,
-        }));
-      } catch (e) {
-        // ignore
-      } finally {
-        setLoading(false);
+        const apps = await expertApplicationApi.getMine();
+        const pending = apps.find((app) => app.status === "pending");
+        if (pending) {
+          setExistingApplication(pending);
+        }
+      } catch (err) {
+        console.error("Error checking existing applications:", err);
       }
-
-      try {
-        setAppsLoading(true);
-        const res = await expertApplicationApi.getMine();
-        setMyApps(res?.data?.data || []);
-      } catch (e) {
-        // ignore
-      } finally {
-        setAppsLoading(false);
-      }
-    })();
+    };
+    checkExisting();
   }, []);
 
-  const onApplyChange = (name, value) => {
-    setApplyForm((prev) => ({ ...prev, [name]: value }));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: null,
+      }));
+    }
   };
 
-  const addCertField = () => {
-    setApplyForm((prev) => ({ ...prev, certificates: [...prev.certificates, ""] }));
+  const handleCertificateChange = (index, value) => {
+    const newCertificates = [...formData.certificates];
+    newCertificates[index] = value;
+    setFormData((prev) => ({
+      ...prev,
+      certificates: newCertificates,
+    }));
   };
 
-  const setCertAt = (i, val) => {
-    const next = [...applyForm.certificates];
-    next[i] = val;
-    setApplyForm((prev) => ({ ...prev, certificates: next }));
+  const addCertificate = () => {
+    setFormData((prev) => ({
+      ...prev,
+      certificates: [...prev.certificates, ""],
+    }));
   };
 
-  async function submitApplication(e) {
-    e.preventDefault();
-    if (!applyForm.full_name?.trim() || !applyForm.expertise_area?.trim()) {
-      return toast.error("Họ tên + lĩnh vực là bắt buộc.");
+  const removeCertificate = (index) => {
+    if (formData.certificates.length > 1) {
+      const newCertificates = formData.certificates.filter(
+        (_, i) => i !== index
+      );
+      setFormData((prev) => ({
+        ...prev,
+        certificates: newCertificates,
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = "Họ tên là bắt buộc";
     }
 
-    setApplySaving(true);
-    setApplyFieldErrors({});
+    if (!formData.expertise_area.trim()) {
+      newErrors.expertise_area = "Lĩnh vực chuyên môn là bắt buộc";
+    }
+
+    const expYears = parseInt(formData.experience_years);
+    if (isNaN(expYears) || expYears < 0) {
+      newErrors.experience_years = "Số năm kinh nghiệm phải là số không âm";
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = "Mô tả kinh nghiệm là bắt buộc";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
     try {
-      const payload = { ...applyForm, certificates: applyForm.certificates.filter(Boolean) };
-      await expertApplicationApi.create(payload);
-      toast.success("Đã gửi đơn đăng ký Expert!");
-      // refresh list and navigate to profile after short delay
-      const res = await expertApplicationApi.getMine();
-      setMyApps(res?.data?.data || []);
-      setTimeout(() => navigate("/profile"), 800);
+      const submitData = {
+        ...formData,
+        experience_years: parseInt(formData.experience_years),
+        certificates: formData.certificates.filter(
+          (cert) => cert.trim() !== ""
+        ),
+      };
+
+      await expertApplicationApi.create(submitData);
+      setSuccess(true);
+
+      // Redirect after success
+      setTimeout(() => {
+        navigate("/expert/home");
+      }, 2000);
     } catch (err) {
-      const status = err?.response?.status;
-      const body = err?.response?.data;
-      if (status === 422 || status === 400) {
-        const errors = {};
-        if (body?.errors && typeof body.errors === "object") {
-          Object.assign(errors, body.errors);
-        } else if (Array.isArray(body?.details)) {
-          body.details.forEach((d) => {
-            const path = Array.isArray(d.path) ? d.path.join(".") : d.path;
-            errors[path] = d.message;
-          });
-        }
-        setApplyFieldErrors(errors);
-        toast.error(body?.message || "Vui lòng kiểm tra các trường");
-      } else {
-        toast.error(body?.message || body?.error || "Nộp đơn thất bại");
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Có lỗi xảy ra khi nộp đơn";
+      setError(errorMessage);
+
+      // Handle validation errors from backend
+      if (err.response?.data?.errors) {
+        setErrors(err.response.data.errors);
       }
     } finally {
-      setApplySaving(false);
+      setLoading(false);
     }
+  };
+
+  if (existingApplication) {
+    return (
+      <div className="login-page">
+        <div className="wrapper">
+          <div className="form-box register">
+            <h2>Đơn Đăng Ký Chuyên Gia</h2>
+            <div className="success-message">
+              Bạn đã có đơn đăng ký đang chờ duyệt.
+              <br />
+              Trạng thái: <strong>{existingApplication.status}</strong>
+              <br />
+              Ngày nộp:{" "}
+              {new Date(existingApplication.createdAt).toLocaleDateString(
+                "vi-VN"
+              )}
+            </div>
+            <button
+              className="btn"
+              onClick={() => navigate("/expert/home")}
+              style={{ marginTop: "20px" }}
+            >
+              Về Trang Chủ
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  if (loading) {
+  if (success) {
     return (
-      <div className="min-h-[60vh] grid place-items-center">Đang tải…</div>
+      <div className="login-page">
+        <div className="wrapper">
+          <div className="form-box register">
+            <h2>Đơn Đăng Ký Chuyên Gia</h2>
+            <div className="success-message">
+              Đơn đăng ký của bạn đã được nộp thành công!
+              <br />
+              Chúng tôi sẽ xem xét và phản hồi trong thời gian sớm nhất.
+            </div>
+            <p style={{ textAlign: "center", marginTop: "20px" }}>
+              Chuyển hướng về trang chủ...
+            </p>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div>
-      <Header />
-      <div className="agri-theme-container py-8">
-        <h1 className="text-2xl font-semibold mb-4 text-agri-primary">✉️ Nộp đơn Expert</h1>
+    <div className="login-page">
+      <div className="wrapper">
+        <div className="form-box register">
+          <h2>Đăng Ký Trở Thành Chuyên Gia</h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="agri-card lg:col-span-3">
-            <form onSubmit={submitApplication} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="agri-label">Họ và tên *</label>
-                  <input type="text" className="agri-input" value={applyForm.full_name} onChange={(e)=>onApplyChange('full_name', e.target.value)} />
-                  {applyFieldErrors?.full_name && <p className="text-sm text-red-600 mt-1">{applyFieldErrors.full_name}</p>}
-                </div>
-                <div>
-                  <label className="agri-label">Số điện thoại</label>
-                  <input type="text" className="agri-input" value={applyForm.phone_number} onChange={(e)=>onApplyChange('phone_number', e.target.value)} />
-                </div>
-              </div>
+          {error && <div className="error-message">{error}</div>}
 
-              <div>
-                <label className="agri-label">Lĩnh vực chuyên môn *</label>
-                <input type="text" className="agri-input" value={applyForm.expertise_area} onChange={(e)=>onApplyChange('expertise_area', e.target.value)} />
-                {applyFieldErrors?.expertise_area && <p className="text-sm text-red-600 mt-1">{applyFieldErrors.expertise_area}</p>}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="agri-label">Số năm kinh nghiệm</label>
-                  <input type="number" min="0" className="agri-input" value={applyForm.experience_years} onChange={(e)=>onApplyChange('experience_years', Number(e.target.value)||0)} />
-                </div>
-              </div>
-
-              <div>
-                <label className="agri-label">Giới thiệu</label>
-                <textarea rows={4} className="agri-input" value={applyForm.description} onChange={(e)=>onApplyChange('description', e.target.value)} />
-              </div>
-
-              <div>
-                <label className="agri-label">Chứng chỉ / Portfolio (URL)</label>
-                <div className="space-y-2">
-                  {applyForm.certificates.map((url, i) => (
-                    <div key={i} className="flex gap-2">
-                      <input type="text" className="flex-1 agri-input" value={url} onChange={(e)=>setCertAt(i, e.target.value)} />
-                      {i === applyForm.certificates.length - 1 && (
-                        <button type="button" className="px-3 py-2 rounded-xl border text-agri-primary hover:bg-agri-green-light" onClick={addCertField}>+</button>
-                      )}
-                      {(applyFieldErrors && (applyFieldErrors[`certificates.${i}`] || applyFieldErrors[`certificates[${i}]`])) ? (
-                        <p className="text-sm text-red-600 w-full mt-1">{applyFieldErrors[`certificates.${i}`] || applyFieldErrors[`certificates[${i}]`]}</p>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={()=>navigate(-1)} className="agri-btn-secondary">Hủy</button>
-                <button type="submit" disabled={applySaving} className="agri-btn-primary">{applySaving ? 'Đang gửi…' : '✉️ Nộp đơn'}</button>
-              </div>
-            </form>
-          </div>
-
-          <div className="agri-card lg:col-span-3">
-            <h3 className="font-semibold mb-2 text-agri-primary">Lịch sử Đơn đã nộp</h3>
-            <div className="overflow-x-auto rounded-xl border">
-              <table className="min-w-full text-sm agri-table">
-                <thead>
-                  <tr>
-                    <th>Họ tên</th>
-                    <th>Email</th>
-                    <th>Lĩnh vực</th>
-                    <th>Kinh nghiệm</th>
-                    <th>Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appsLoading ? (
-                    <tr><td colSpan="5" className="p-3 text-center text-agri-gray">Đang tải…</td></tr>
-                  ) : myApps.length ? (
-                    myApps.map((it) => (
-                      <tr key={it._id}>
-                        <td>{it.full_name}</td>
-                        <td>{it.email}</td>
-                        <td>{it.expertise_area}</td>
-                        <td>{it.experience_years} năm</td>
-                        <td><span className={"status-tag "+(it.status==='pending'?'status-pending':it.status==='approved'?'status-approved':'status-rejected')}>{it.status}</span></td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr><td colSpan="5" className="p-3 text-center text-agri-gray">Chưa có đơn nào</td></tr>
-                  )}
-                </tbody>
-              </table>
+          <form onSubmit={handleSubmit}>
+            <div className="input-box">
+              <span className="icon">
+                <ion-icon name="person"></ion-icon>
+              </span>
+              <input
+                type="text"
+                name="full_name"
+                value={formData.full_name}
+                onChange={handleInputChange}
+                required
+              />
+              <label>Họ và tên *</label>
+              {errors.full_name && (
+                <span
+                  style={{
+                    color: "red",
+                    fontSize: "12px",
+                    display: "block",
+                    marginTop: "5px",
+                  }}
+                >
+                  {errors.full_name}
+                </span>
+              )}
             </div>
+
+            <div className="input-box">
+              <span className="icon">
+                <ion-icon name="leaf"></ion-icon>
+              </span>
+              <input
+                type="text"
+                name="expertise_area"
+                value={formData.expertise_area}
+                onChange={handleInputChange}
+                placeholder="Ví dụ: Trồng cà phê, Nuôi trồng thủy sản,..."
+                required
+              />
+              <label>Lĩnh vực chuyên môn *</label>
+              {errors.expertise_area && (
+                <span
+                  style={{
+                    color: "red",
+                    fontSize: "12px",
+                    display: "block",
+                    marginTop: "5px",
+                  }}
+                >
+                  {errors.expertise_area}
+                </span>
+              )}
+            </div>
+
+            <div className="input-box">
+              <span className="icon">
+                <ion-icon name="time"></ion-icon>
+              </span>
+              <input
+                type="number"
+                name="experience_years"
+                value={formData.experience_years}
+                onChange={handleInputChange}
+                min="0"
+                required
+              />
+              <label>Số năm kinh nghiệm *</label>
+              {errors.experience_years && (
+                <span
+                  style={{
+                    color: "red",
+                    fontSize: "12px",
+                    display: "block",
+                    marginTop: "5px",
+                  }}
+                >
+                  {errors.experience_years}
+                </span>
+              )}
+            </div>
+
+            <div className="input-box">
+              <span className="icon">
+                <ion-icon name="call"></ion-icon>
+              </span>
+              <input
+                type="tel"
+                name="phone_number"
+                value={formData.phone_number}
+                onChange={handleInputChange}
+              />
+              <label>Số điện thoại</label>
+            </div>
+
+            <div className="input-box">
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Mô tả kinh nghiệm, chứng chỉ, thành tích của bạn..."
+                rows="4"
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                  borderRadius: "5px",
+                  fontSize: "16px",
+                  resize: "vertical",
+                }}
+                required
+              />
+              <label
+                style={{
+                  position: "absolute",
+                  top: "-10px",
+                  left: "10px",
+                  background: "white",
+                  padding: "0 5px",
+                }}
+              >
+                Mô tả kinh nghiệm *
+              </label>
+              {errors.description && (
+                <span
+                  style={{
+                    color: "red",
+                    fontSize: "12px",
+                    display: "block",
+                    marginTop: "5px",
+                  }}
+                >
+                  {errors.description}
+                </span>
+              )}
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "10px",
+                  fontWeight: "bold",
+                }}
+              >
+                Chứng chỉ (tùy chọn)
+              </label>
+              {formData.certificates.map((cert, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={cert}
+                    onChange={(e) =>
+                      handleCertificateChange(index, e.target.value)
+                    }
+                    placeholder="URL hoặc tên chứng chỉ"
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      border: "1px solid #ccc",
+                      borderRadius: "5px",
+                      fontSize: "16px",
+                    }}
+                  />
+                  {formData.certificates.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeCertificate(index)}
+                      style={{
+                        marginLeft: "10px",
+                        padding: "10px",
+                        background: "#dc3545",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Xóa
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addCertificate}
+                style={{
+                  padding: "8px 16px",
+                  background: "#28a745",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
+              >
+                + Thêm chứng chỉ
+              </button>
+            </div>
+
+            <button className="btn" type="submit" disabled={loading}>
+              {loading ? "Đang nộp đơn..." : "Nộp Đơn Đăng Ký"}
+            </button>
+          </form>
+
+          <div className="login-register" style={{ marginTop: "20px" }}>
+            <p>
+              <button
+                onClick={() => navigate("/expert/home")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#007bff",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                }}
+              >
+                Quay lại trang chủ
+              </button>
+            </p>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default ApplyExpert;

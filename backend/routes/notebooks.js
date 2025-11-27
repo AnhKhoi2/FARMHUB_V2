@@ -8,6 +8,7 @@ const router = Router();
 router.use(verifyToken);
 
 // Tìm kiếm và lọc - ĐẶT TRƯỚC route /:id
+router.get("/stats", notebookController.getStats);
 router.get("/search", notebookController.searchNotebooks);
 router.get("/filter", notebookController.filterNotebooks);
 router.get("/deleted", notebookController.getDeletedNotebooks);
@@ -48,5 +49,18 @@ router.post(
   "/:id/recalculate-progress",
   notebookController.recalculateProgress
 );
+
+// Daily Status & Overdue Management
+router.get("/:id/daily/status", notebookController.getDailyStatus);
+router.post("/:id/daily/overdue/skip", notebookController.skipOverdueTasks);
+router.post(
+  "/:id/daily/overdue/complete",
+  notebookController.completeOverdueTask
+);
+router.post(
+  "/:id/daily/overdue/complete-bulk",
+  notebookController.completeOverdueTasksBulk
+);
+router.get("/:id/daily/overdue/detail", notebookController.getOverdueDetail);
 
 export default router;

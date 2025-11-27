@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import Notebook from "../models/Notebook.js";
 import { sendDailyReminderNotification } from "../controllers/notificationController.js";
+import { getVietnamToday, toVietnamMidnight } from "../utils/timezone.js";
 
 /**
  * Kiểm tra notebook có tasks chưa hoàn thành từ ngày hôm trước
@@ -12,17 +13,14 @@ const checkIncompleteTasksForNotebook = async (notebook) => {
       return;
     }
 
-    const yesterday = new Date();
+    const today = getVietnamToday();
+    const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
     // Đếm số tasks chưa hoàn thành từ ngày hôm qua
     const incompleteTasks = notebook.daily_checklist.filter((task) => {
-      const taskDate = new Date(task.created_at);
-      taskDate.setHours(0, 0, 0, 0);
+      if (!task.created_at) return false;
+      const taskDate = toVietnamMidnight(task.created_at);
 
       // Task được tạo hôm qua và chưa completed
       return taskDate.getTime() === yesterday.getTime() && !task.is_completed;
@@ -83,16 +81,22 @@ const checkAllNotebooksForReminders = async () => {
  * Kiểm tra tasks chưa hoàn thành từ ngày hôm trước và gửi reminders
  */
 export const startTaskReminderJob = () => {
-  // Chạy hàng ngày lúc 9:00 sáng (sau khi users bắt đầu ngày làm việc)
-  cron.schedule("0 9 * * *", async () => {
-    console.log("🕐 [CRON] Running daily task reminder job at 9:00 AM");
-    try {
-      await checkAllNotebooksForReminders();
-      console.log("✅ [CRON] Task reminder job completed successfully");
-    } catch (error) {
-      console.error("❌ [CRON] Error in task reminder job:", error);
-    }
-  });
+  // Run daily at 02:00 UTC (equivalent to 09:00 Asia/Ho_Chi_Minh)
+  cron.schedule(
+    "0 2 * * *",
+    async () => {
+      console.log(
+        "🕐 [CRON] Running daily task reminder job at 02:00 UTC (09:00 VN)"
+      );
+      try {
+        await checkAllNotebooksForReminders();
+        console.log("✅ [CRON] Task reminder job completed successfully");
+      } catch (error) {
+        console.error("❌ [CRON] Error in task reminder job:", error);
+      }
+    },
+    { timezone: "UTC" }
+  );
 
   console.log("✅ Task reminder cron job initialized (runs daily at 9:00 AM)");
 };

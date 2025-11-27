@@ -3,6 +3,28 @@ import { ok, error } from "../utils/ApiResponse.js";
 
 // Upload single image
 export const uploadImage = asyncHandler(async (req, res) => {
+  // Debugging helpers: print request summary to help diagnose 400 errors
+  try {
+    console.log('[upload-debug] headers:', {
+      authorization: req.headers.authorization,
+      'content-type': req.headers['content-type'],
+      host: req.headers.host,
+    });
+    console.log('[upload-debug] body keys:', Object.keys(req.body || {}));
+    console.log('[upload-debug] file present:', !!req.file);
+    if (req.file) {
+      console.log('[upload-debug] req.file:', {
+        fieldname: req.file.fieldname,
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        filename: req.file.filename,
+      });
+    }
+  } catch (e) {
+    console.warn('[upload-debug] failed to log request info', e);
+  }
+
   if (!req.file) {
     return error(res, "Không có file được upload", 400);
   }

@@ -17,9 +17,18 @@ const ConversationSchema = new mongoose.Schema(
     last_message: {
       text:   { type: String, default: "" },
       at:     { type: Date,   default: null },
-      // ✅ luôn là User (kể cả chuyên gia) → dùng expert.user
+      // luôn là User (kể cả chuyên gia) → dùng expert.user
       sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }
-    }
+    },
+
+    // 👇 NEW: Ai chưa đọc tin nhắn?
+    unread_for: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: []
+      }
+    ]
   },
   { timestamps: true }
 );
@@ -40,6 +49,7 @@ ConversationSchema.pre("validate", function (next) {
 
 ConversationSchema.index({ participants: 1 });
 ConversationSchema.index({ expert: 1, updatedAt: -1 });
+ConversationSchema.index({ unread_for: 1 });  // 👈 thêm index cho tối ưu
 
 const Conversation = mongoose.model("Conversation", ConversationSchema);
 export default Conversation;

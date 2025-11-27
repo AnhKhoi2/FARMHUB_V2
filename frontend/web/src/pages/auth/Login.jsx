@@ -1,30 +1,34 @@
-
-
-
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { loginThunk, loginWithGoogleThunk } from "../../redux/authThunks.js";
 import { GoogleLogin } from "@react-oauth/google";
 import "../../css/auth/Login.css";
 
 // NEW
-import streakApi from "../../api/shared/streakApi.js";     // ← thêm
-import StreakPopup from "../../components/shared/StreakPopup"; // ← path theo dự án của bạn
-
+import streakApi from "../../api/shared/streakApi.js";
+import StreakPopup from "../../components/shared/StreakPopup";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [emailOrUsername, setEmailOrUsername] = useState("");
+  const location = useLocation();
+
+  // ⭐ Chỉ dùng username
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
   const { status, error } = useSelector((s) => s.auth);
   const loading = status === "loading";
 
   // NEW: quản lý popup & đích điều hướng
   const [streakData, setStreakData] = useState(null);
   const [redirectTo, setRedirectTo] = useState("/");
+
+  // 👉 đọc query ?expired=1
+  const params = new URLSearchParams(location.search);
+  const sessionExpired = params.get("expired") === "1";
 
   const nextRouteByRole = (role) => {
     if (role === "admin") return "/admin";
@@ -33,48 +37,49 @@ const Login = () => {
     return "/";
   };
 
-  const afterLogin = async (role) => {
+  const afterLogin = async (role = "user") => {
     // xác định đích
     const dest = nextRouteByRole(role);
     setRedirectTo(dest);
 
-    // Only record streak for farmers (do not record for experts, admins, moderators)
+    // Chỉ ghi streak cho user thường
     if (role === "user") {
       try {
-        const { data } = await streakApi.record(); // { success, data: { streak } }
+        const { data } = await streakApi.record(); // { success, data: { streak } } tuỳ cấu trúc
         const streak = data?.data?.streak || data?.streak || null;
         if (streak) {
-          setStreakData(streak); // open popup and wait for user
-          return; // wait for popup close before navigating
+          setStreakData(streak); // mở popup, chờ user đóng rồi mới navigate
+          return;
         }
       } catch (e) {
-        // errors recording streak shouldn't block navigation
         console.warn("streak record failed:", e?.message || e);
       }
     }
 
-    // For non-farmers or if no streak, navigate immediately
+    // Nếu không phải user hoặc không có streak → đi luôn
     navigate(dest);
   };
 
   const handleLogin = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const cleanedIdentifier = emailOrUsername.trim();
+    const cleanedUsername = username.trim();
+    if (!cleanedUsername || !password) return;
 
-  const result = await dispatch(
-    loginThunk({
-      emailOrUsername: cleanedIdentifier, // send as `emailOrUsername` to match API
-      password,
-    })
-  );
+    // loginThunk của bạn trả về { success, role }
+    const result = await dispatch(
+      loginThunk({
+        username: cleanedUsername,
+        password,
+      })
+    );
 
-  const { success, role } = result || {};
-  if (success) {
-    await afterLogin(role);
-  }
-};
+    const { success, role } = result || {};
 
+    if (success) {
+      await afterLogin(role || "user");
+    }
+  };
 
   const handleGoogleSuccess = async (cred) => {
     const idToken = cred?.credential;
@@ -82,7 +87,7 @@ const Login = () => {
     try {
       const res = await dispatch(loginWithGoogleThunk(idToken)).unwrap();
       const { user } = res || {};
-      await afterLogin(user?.role);
+      await afterLogin(user?.role || "user");
     } catch (e) {
       alert(e?.message || "Đăng nhập Google thất bại");
     }
@@ -95,11 +100,18 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      {/* ...giữ nguyên UI form cũ... */}
       <div className="wrapper">
         <div className="form-box login">
-      <h2>Login</h2>
+          <h2>Đăng nhập</h2>
           <form onSubmit={handleLogin}>
+            {/* Thông báo phiên hết hạn */}
+            {sessionExpired && (
+              <div className="error-message" style={{ marginBottom: "10px" }}>
+                Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.
+              </div>
+            )}
+
+            {/* Lỗi login từ Redux */}
             {error && <div className="error-message">{error}</div>}
 
             <div className="input-box">
@@ -109,53 +121,59 @@ const Login = () => {
               <input
                 type="text"
                 required
-                value={emailOrUsername}
-                onChange={(e) => setEmailOrUsername(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
-              <label>Email or Username</label>
+              <label>Tên đăng nhập</label>
             </div>
 
-            <div className="input-box">
-  {/* <span className="icon">
-    <ion-icon name="lock-closed"></ion-icon>
-  </span> */}
+            <div className="input-box" style={{ position: "relative" }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
 
-  <input
-    type={showPassword ? "text" : "password"}     // 👈 đổi type
-    required
-    value={password}
-    onChange={(e) => setPassword(e.target.value)}
-  />
+              {/* Nút toggle icon */}
+              <span
+                className="toggle-password"
+                onClick={() => setShowPassword((prev) => !prev)}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  cursor: "pointer",
+                  fontSize: "20px",
+                }}
+              >
+                <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
+              </span>
 
-  {/* Nút toggle icon */}
-  <span
-    className="toggle-password"
-    onClick={() => setShowPassword((prev) => !prev)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      cursor: "pointer",
-      fontSize: "20px",
-    }}
-  >
-    <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
-  </span>
-
-  <label>Password</label>
-</div>
-
+              <label>Mật khẩu</label>
+            </div>
 
             <button type="submit" className="btn" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
 
+            {/* Forgot password */}
             <div className="login-register">
               <p>
-                Don't have an account?{" "}
+                Quên mật khẩu?{" "}
+                <Link to="/forgot-password" className="register-link">
+                  Đặt lại
+                </Link>
+              </p>
+            </div>
+
+            {/* Register */}
+            <div className="login-register">
+              <p>
+                Chưa có tài khoản?{" "}
                 <Link to="/register" className="register-link">
-                  Register
+                  Đăng ký
                 </Link>
               </p>
             </div>
@@ -163,17 +181,22 @@ const Login = () => {
 
           <div className="divider">
             <div className="line" />
-            <span>or</span>
+            <span>hoặc</span>
             <div className="line" />
           </div>
 
-      <div className="google-btn">
-        <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => alert("Google login error")} />
-      </div>
+          <div className="google-btn">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => alert("Google login error")}
+            />
+          </div>
 
-      {/* NEW: Popup */}
-      {streakData && <StreakPopup streak={streakData} onClose={handleClosePopup} />}
-      </div>
+          {/* Popup streak */}
+          {streakData && (
+            <StreakPopup streak={streakData} onClose={handleClosePopup} />
+          )}
+        </div>
       </div>
     </div>
   );

@@ -44,7 +44,7 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // Login (user/pass) flow if bạn dùng thunk tự viết: loginStart/loginSuccess/loginFailure
+    // Login (user/pass) flow nếu bạn dùng thunk tự viết: loginStart/loginSuccess/loginFailure
     loginStart(state) {
       state.status = "loading";
       state.error = null;
@@ -63,6 +63,35 @@ const authSlice = createSlice({
     loginFailure(state, action) {
       state.status = "failed";
       state.error = action.payload || "Login failed";
+    },
+
+    // 🔴 THÊM MỚI: setUser – dùng khi bạn muốn set lại user nguyên cục
+    setUser(state, action) {
+      const newUser = action.payload || null;
+      state.user = newUser;
+      if (newUser) {
+        localStorage.setItem("user", JSON.stringify(newUser));
+      } else {
+        localStorage.removeItem("user");
+      }
+    },
+
+    // 🔴 THÊM MỚI: updateUserProfile – dùng sau khi update profile/avatar
+    updateUserProfile(state, action) {
+      if (!state.user) return;
+
+      const newProfile = action.payload || {};
+
+      state.user = {
+        ...state.user,
+        profile: {
+          ...(state.user.profile || {}),
+          ...newProfile,
+        },
+      };
+
+      // Lưu lại vào localStorage để Header load lại vẫn thấy avatar mới
+      localStorage.setItem("user", JSON.stringify(state.user));
     },
 
     // Logout: xóa sạch storage + state
@@ -106,5 +135,13 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout } = authSlice.actions;
+export const {
+  loginStart,
+  loginSuccess,
+  loginFailure,
+  logout,
+  setUser,
+  updateUserProfile,
+} = authSlice.actions;
+
 export default authSlice.reducer;

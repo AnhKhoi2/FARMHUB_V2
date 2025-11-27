@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../css/NotificationBell.css";
 
@@ -31,7 +32,8 @@ const NotificationBell = () => {
         }/api/notifications/unread-count`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUnreadCount(response.data.data?.count || 0);
+      // backend returns { success: true, data: { unread_count: N } }
+      setUnreadCount(response.data?.data?.unread_count || 0);
     } catch (error) {
       if (error?.response?.status === 401) {
         // Token invalid -> clear counts and stop spamming console
@@ -118,6 +120,23 @@ const NotificationBell = () => {
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleNotificationClick = async (notif, link) => {
+    // mark read first, then navigate using react-router
+    if (!notif.is_read) {
+      try {
+        await markAsRead(notif._id);
+      } catch (e) {
+        console.warn("Failed to mark notification read before navigation", e);
+      }
+    }
+
+    if (link) {
+      navigate(link);
+    }
+  };
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case "stage_warning":
@@ -200,27 +219,107 @@ const NotificationBell = () => {
                 <p>Không có thông báo mới</p>
               </div>
             ) : (
-              notifications.map((notif) => (
-                <div
-                  key={notif._id}
-                  className={`notification-item ${
-                    notif.is_read ? "read" : "unread"
-                  }`}
-                  onClick={() => !notif.is_read && markAsRead(notif._id)}
-                >
-                  <div className="notification-icon">
-                    {getNotificationIcon(notif.type)}
+              notifications.map((notif) => {
+                // Determine link for notification
+                let link = null;
+                const nid =
+                  notif.notebook_id &&
+                  (notif.notebook_id._id || notif.notebook_id);
+                if (nid) {
+                  if (notif.type === "stage_overdue") {
+                    link = `/farmer/notebooks/${nid}/overdue`;
+                  } else {
+                    // For warnings, skipped, completed, daily reminders -> open notebook detail
+                    link = `/farmer/notebooks/${nid}`;
+                  }
+                }
+                return (
+                  <div
+                    key={notif._id}
+                    className={`notification-item-card ${
+                      notif.is_read ? "read" : "unread"
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleNotificationClick(notif, link);
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleNotificationClick(notif, link);
+                      }
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "16px",
+                      padding: "16px 20px",
+                      borderRadius: "12px",
+                      margin: "12px 16px",
+                      boxShadow: notif.is_read
+                        ? "none"
+                        : "0 2px 8px rgba(59,130,246,0.08)",
+                      background: notif.is_read ? "#f9fafb" : "#e0f2fe",
+                      border: "1px solid #e5e7eb",
+                      cursor: "pointer",
+                      textDecoration: "none",
+                      transition: "box-shadow 0.2s, background 0.2s",
+                    }}
+                  >
+                    <div
+                      className="notification-icon"
+                      style={{
+                        fontSize: "28px",
+                        width: "48px",
+                        height: "48px",
+                        background: notif.is_read ? "#f3f4f6" : "#bae6fd",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {getNotificationIcon(notif.type)}
+                    </div>
+                    <div
+                      className="notification-content"
+                      style={{ flex: 1, minWidth: 0 }}
+                    >
+                      <h4
+                        style={{
+                          margin: "0 0 6px 0",
+                          fontSize: "15px",
+                          fontWeight: 600,
+                          color: "#1f2937",
+                        }}
+                      >
+                        {notif.title}
+                      </h4>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "13px",
+                          color: "#374151",
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {notif.message}
+                      </p>
+                      <span
+                        className="notification-time"
+                        style={{ fontSize: "11px", color: "#60a5fa" }}
+                      >
+                        {formatTimeAgo(notif.createdAt || notif.created_at)}
+                      </span>
+                    </div>
+                    {!notif.is_read && (
+                      <div className="unread-dot" style={{ right: 10 }}></div>
+                    )}
                   </div>
-                  <div className="notification-content">
-                    <h4>{notif.title}</h4>
-                    <p>{notif.message}</p>
-                    <span className="notification-time">
-                      {formatTimeAgo(notif.created_at)}
-                    </span>
-                  </div>
-                  {!notif.is_read && <div className="unread-dot"></div>}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

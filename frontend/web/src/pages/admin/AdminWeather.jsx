@@ -35,11 +35,11 @@ export default function AdminWeather() {
     <AdminLayout>
       <div className="card">
         <div className="card-body">
-          <h5 className="card-title">Weather (Admin)</h5>
+          <h5 className="card-title">THỜI TIẾT</h5>
 
           <div className="d-flex gap-2 mb-3">
-            <input className="form-control" value={q} onChange={e => setQ(e.target.value)} placeholder="City or location" />
-            <button className="btn btn-primary" onClick={fetchWeather} disabled={loading}>{loading? 'Loading...':'Fetch'}</button>
+            <input className="form-control" value={q} onChange={e => setQ(e.target.value)} placeholder="Thành phố hoặc vị trí" />
+            <button className="btn btn-primary" onClick={fetchWeather} disabled={loading}>{loading? 'Đang tải...':'Lấy dữ liệu'}</button>
           </div>
 
           {error && <div className="alert alert-danger">{error}</div>}
@@ -50,12 +50,12 @@ export default function AdminWeather() {
                 <div className="card mb-3">
                   <div className="card-body d-flex align-items-center">
                     <div>
-                      <h5 className="h3 mb-0">{payload.location?.name || payload.city || 'Unknown'}</h5>
+                      <h5 className="h3 mb-0">{payload.location?.name || payload.city || 'Không rõ'}</h5>
                       <div className="text-muted small">{payload.location?.country || ''} • {payload.location?.localtime || payload.current?.last_updated || ''}</div>
                     </div>
                     <div className="ms-auto text-end">
                       <div className="h1 mb-0">{payload.current?.temp_c ?? payload.current?.temp ?? '--'}°C</div>
-                      <div className="small text-muted">Feels like {payload.current?.feelslike_c ?? payload.current?.feelslike ?? '--'}°C</div>
+                      <div className="small text-muted">Cảm giác như {payload.current?.feelslike_c ?? payload.current?.feelslike ?? '--'}°C</div>
                     </div>
                   </div>
                   <div className="card-footer d-flex align-items-center">
@@ -64,7 +64,7 @@ export default function AdminWeather() {
                     )}
                     <div className="ms-3">
                       <div className="fw-semibold">{payload.current?.condition?.text}</div>
-                      <div className="small text-muted">Wind {payload.current?.wind_kph} kph • Humidity {payload.current?.humidity}%</div>
+                      <div className="small text-muted">Gió {payload.current?.wind_kph} kph • Độ ẩm {payload.current?.humidity}%</div>
                     </div>
                   </div>
                 </div>
@@ -73,14 +73,14 @@ export default function AdminWeather() {
               <div className="col-md-6">
                 <div className="card mb-3">
                   <div className="card-body">
-                    <h6 className="card-title">Raw data</h6>
+                    <h6 className="card-title">Dữ liệu thô</h6>
                     <pre style={{whiteSpace:'pre-wrap',maxHeight:320,overflow:'auto'}}>{JSON.stringify(payload, null, 2)}</pre>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="text-center text-muted">No data yet. Click Fetch.</div>
+            <div className="text-center text-muted">Chưa có dữ liệu. Nhấn 'Lấy dữ liệu'.</div>
           )}
         </div>
       </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axiosClient from "../../api/shared/axiosClient";
 import ModeratorLayout from "../../components/ModeratorLayout";
+import "../../css/moderator/ModeratorHome.css";
 
 import {
     Row,
@@ -64,20 +65,22 @@ export default function ModeratorHome() {
 
     return (
         <ModeratorLayout>
-            <div style={{ padding: 24 }}>
-                <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Bảng điều khiển Moderator
-                    </Title>
-                    <Paragraph type="secondary" style={{ marginBottom: 24 }}>
-                        Tổng quan nội dung và báo cáo vi phạm từ người dùng.
-                    </Paragraph>
-                </Space>
+                <div className="moderator-dashboard">
+                    <div className="moderator-hero">
+                        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                            <Title level={2} style={{ margin: 0 }}>
+                                Bảng điều khiển Moderator
+                            </Title>
+                            <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+                                Tổng quan nội dung và báo cáo vi phạm từ người dùng.
+                            </Paragraph>
+                        </Space>
+                    </div>
 
-                <Row gutter={[16, 16]}>
+                    <Row gutter={[16, 16]} className="mod-cards">
                     {/* Bài viết */}
                     <Col xs={24} sm={12} md={6}>
-                        <Card hoverable>
+                            <Card hoverable className="mod-card">
                             {loading ? (
                                 <Skeleton
                                     active
@@ -86,28 +89,16 @@ export default function ModeratorHome() {
                                 />
                             ) : (
                                 <>
-                                    <Flex align="center" gap={12}>
-                                        <div
-                                            style={{
-                                                width: 40,
-                                                height: 40,
-                                                borderRadius: 8,
-                                                background: "#e6f4ff",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
+                                    <div className="stat-row">
+                                        <div className="mod-icon-circle" style={{ background: '#e6f4ff' }}>
                                             <FileTextOutlined style={{ fontSize: 20, color: "#1677ff" }} />
                                         </div>
 
                                         <div>
-                                            <Text type="secondary">Bài viết</Text>
-                                            <Title level={2} style={{ margin: "6px 0 0" }}>
-                                                {postCount}
-                                            </Title>
+                                            <Text className="mod-muted">Bài viết</Text>
+                                            <div className="mod-stat-number">{postCount}</div>
                                         </div>
-                                    </Flex>
+                                    </div>
 
                                     <Paragraph type="secondary" style={{ marginTop: 12 }}>
                                         Tổng số bài viết cần kiểm duyệt / quản lý
@@ -115,19 +106,22 @@ export default function ModeratorHome() {
                                 </>
                             )}
 
-                            <Button
-                                type="primary"
-                                size="small"
-                                href="/moderator/managerpost"
-                            >
-                                Quản lý bài viết
-                            </Button>
+                            <div className="mod-cta">
+                                <Button
+                                    type="primary"
+                                    size="small"
+                                    href="/moderator/managerpost"
+                                    className="mod-primary"
+                                >
+                                    Quản lý bài viết
+                                </Button>
+                            </div>
                         </Card>
                     </Col>
 
                     {/* Báo cáo */}
                     <Col xs={24} sm={12} md={6}>
-                        <Card hoverable>
+                        <Card hoverable className="mod-card">
                             {loading ? (
                                 <Skeleton
                                     active
@@ -136,28 +130,16 @@ export default function ModeratorHome() {
                                 />
                             ) : (
                                 <>
-                                    <Flex align="center" gap={12}>
-                                        <div
-                                            style={{
-                                                width: 40,
-                                                height: 40,
-                                                borderRadius: 8,
-                                                background: "#fff1f0",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
+                                    <div className="stat-row">
+                                        <div className="mod-icon-circle" style={{ background: '#fff1f0' }}>
                                             <WarningOutlined style={{ fontSize: 20, color: "#cf1322" }} />
                                         </div>
 
                                         <div>
-                                            <Text type="secondary">Báo cáo</Text>
-                                            <Title level={2} style={{ margin: "6px 0 0" }}>
-                                                {reportCount}
-                                            </Title>
+                                            <Text className="mod-muted">Báo cáo</Text>
+                                            <div className="mod-stat-number">{reportCount}</div>
                                         </div>
-                                    </Flex>
+                                    </div>
 
                                     <Paragraph type="secondary" style={{ marginTop: 12 }}>
                                         Lượt báo cáo vi phạm từ người dùng
@@ -165,13 +147,16 @@ export default function ModeratorHome() {
                                 </>
                             )}
 
-                            <Button
-                                type="primary"
-                                size="small"
-                                href="/moderator/managerreport"
-                            >
-                                Xem báo cáo
-                            </Button>
+                            <div className="mod-cta">
+                                <Button
+                                    type="primary"
+                                    size="small"
+                                    href="/moderator/managerreport"
+                                    className="mod-primary"
+                                >
+                                    Xem báo cáo
+                                </Button>
+                            </div>
                         </Card>
                     </Col>
                 </Row>

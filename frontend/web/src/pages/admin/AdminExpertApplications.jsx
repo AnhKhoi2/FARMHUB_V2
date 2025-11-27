@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+﻿import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import AdminLayout from "../../components/AdminLayout";
 import axiosClient from "../../api/shared/axiosClient";
@@ -89,40 +89,46 @@ export default function AdminExpertApplications() {
   };
 
   const reject = async (id) => {
-    const reason =
-      window.prompt("Nhập lý do từ chối (có thể để trống):") ?? "";
-    // Nếu bấm Cancel -> null, nhưng đã xử lý trên; vẫn cho gửi với reason rỗng
-
+    const reason = window.prompt(
+      "Nhập lý do từ chối (có thể để trống, bấm Cancel để hủy):"
+    );
+  
+    // ⬇️ Admin bấm Cancel -> prompt trả về null -> KHÔNG gọi API
+    if (reason === null) {
+      return; // hủy quá trình từ chối, không đổi trạng thái đơn
+    }
+  
     try {
       const res = await axiosClient.patch(
         `/api/expert-applications/${id}/reject`,
-        { reason }
+        { reason: reason ?? "" }   // vẫn cho phép để trống nếu admin bấm OK
       );
-
+  
       toast.success(res.data?.message || "Đã từ chối đơn.");
       load();
     } catch (err) {
       console.error("Reject error:", err);
       const res = err.response;
-
+  
       if (!res) {
         toast.error("Không thể kết nối server.");
         return;
       }
-
+  
       if (res.status === 400) {
         toast.error(res.data?.error || "Đơn không hợp lệ.");
         return;
       }
-
+  
       if (res.status === 404) {
         toast.error("Không tìm thấy đơn đăng ký.");
         return;
       }
-
+  
       toast.error("Lỗi server khi từ chối đơn.");
     }
   };
+  
 
   const resetFilter = () => {
     setStatus("pending");
@@ -131,19 +137,34 @@ export default function AdminExpertApplications() {
 
   const renderStatusBadge = (st) => {
     let cls = "bg-secondary";
-    if (st === "pending") cls = "bg-warning text-dark";
-    else if (st === "approved") cls = "bg-success";
-    else if (st === "rejected") cls = "bg-danger";
+    let label = "Không xác định";
+    if (st === "pending") {
+      cls = "bg-warning text-dark";
+      label = "Đang chờ";
+    } else if (st === "approved") {
+      cls = "bg-success";
+      label = "Đã duyệt";
+    } else if (st === "rejected") {
+      cls = "bg-danger";
+      label = "Đã từ chối";
+    }
 
-    return <span className={`badge ${cls}`}>{st}</span>;
+    return <span className={`badge ${cls}`}>{label}</span>;
   };
 
   return (
     <AdminLayout>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="h5 mb-0">Expert Applications</h3>
+        <h3 className="h5 mb-0">Đơn ứng tuyển chuyên gia</h3>
         <div className="text-muted small">
-          Showing: {status || "all"}
+          Hiển thị:{" "}
+          {status === "pending"
+            ? "Đang chờ"
+            : status === "approved"
+            ? "Đã duyệt"
+            : status === "rejected"
+            ? "Đã từ chối"
+            : "Tất cả"}
         </div>
       </div>
 
@@ -155,25 +176,25 @@ export default function AdminExpertApplications() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
+            <option value="">Tất cả</option>
+            <option value="pending">Đang chờ</option>
+            <option value="approved">Đã duyệt</option>
+            <option value="rejected">Đã từ chối</option>
           </select>
         </div>
         <div className="col-auto">
           <input
             type="text"
             className="form-control form-control-sm"
-            placeholder="Search name / email / expertise..."
+            placeholder="Tìm theo tên / email / chuyên môn..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <div className="col-auto">
+        <div class="col-auto">
           <button
-            className="btn btn-sm btn-outline-secondary"
             type="button"
+            className="btn btn-outline-secondary btn-sm"
             onClick={resetFilter}
           >
             Reset
@@ -181,9 +202,7 @@ export default function AdminExpertApplications() {
         </div>
       </div>
 
-      {error && (
-        <div className="alert alert-danger py-1 small">{error}</div>
-      )}
+      {error && <div className="alert alert-danger py-1 small">{error}</div>}
 
       {/* Table */}
       <div className="card">
@@ -205,13 +224,13 @@ export default function AdminExpertApplications() {
                 {loading ? (
                   <tr>
                     <td colSpan={7} className="text-center py-3">
-                      Loading...
+                      Đang tải...
                     </td>
                   </tr>
                 ) : items.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-3">
-                      No data
+                      Không có dữ liệu
                     </td>
                   </tr>
                 ) : (
@@ -219,11 +238,9 @@ export default function AdminExpertApplications() {
                     <tr key={it._id}>
                       <td>{it.full_name}</td>
                       <td className="small">{it.email}</td>
-                      <td className="small">
-                        {it.phone_number || "—"}
-                      </td>
+                      <td className="small">{it.phone_number || "—"}</td>
                       <td>{it.expertise_area}</td>
-                      <td>{it.experience_years ?? 0} yrs</td>
+                      <td>{it.experience_years ?? 0} năm</td>
                       <td>{renderStatusBadge(it.status)}</td>
                       <td>
                         {it.status === "pending" ? (
@@ -232,13 +249,13 @@ export default function AdminExpertApplications() {
                               className="btn btn-outline-success"
                               onClick={() => approve(it._id)}
                             >
-                              Approve
+                              Duyệt
                             </button>
                             <button
                               className="btn btn-outline-danger"
                               onClick={() => reject(it._id)}
                             >
-                              Reject
+                              Từ chối
                             </button>
                           </div>
                         ) : (

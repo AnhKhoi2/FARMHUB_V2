@@ -1,27 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { MessageCircle, Star, BadgeCheck, Search } from "lucide-react";
 import axiosClient from "../../api/shared/axiosClient";
 import "../../css/ExpertsList.css";
-
-// ⬇️ Chat widget
+import Footer from "../../components/shared/Footer";
 import ChatWidget from "./ChatWidget";
 import Header from "../../components/shared/Header";
 
 const API_LIST = "/api/experts?is_public=true&review_status=approved";
 
-const placeholderAvatar = (seed) =>
-  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-    seed || "expert"
-  )}`;
+const placeholderAvatar = () => "";
 
 // ---------- Star UI ----------
 function StarRow({ value = 0, onSelect, canRate }) {
   const [hover, setHover] = useState(0);
+
   const v = hover || value;
   return (
-    <div className="ex-stars" style={{ display: "flex", gap: 4 }}>
+    <div className="ex-stars" style={{ display: "flex", gap: 6, justifyContent: "center" }}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
@@ -29,19 +26,23 @@ function StarRow({ value = 0, onSelect, canRate }) {
           className="ex-star-btn"
           onMouseEnter={() => canRate && setHover(n)}
           onMouseLeave={() => canRate && setHover(0)}
-          onClick={() => canRate && onSelect?.(n)}
-          aria-label={`Rate ${n}`}
-          title={canRate ? `Đánh giá ${n} sao` : `${value} sao`}
+          onClick={() => onSelect?.(n)}
+          aria-label={`Đánh giá ${n} sao`}
+          title={
+            canRate
+              ? `Đánh giá ${n} sao`
+              : `${value || 0} sao (bạn đã đánh giá rồi)`
+          }
           style={{
             background: "transparent",
             border: "none",
-            cursor: canRate ? "pointer" : "default",
+            cursor: "pointer",
             padding: 0,
             lineHeight: 0,
           }}
         >
           <Star
-            size={18}
+            size={20}
             fill={v >= n ? "#FFC107" : "none"}
             stroke={v >= n ? "#FFC107" : "currentColor"}
           />
@@ -51,25 +52,23 @@ function StarRow({ value = 0, onSelect, canRate }) {
   );
 }
 
-function ExpertCard({ expert, myScore, onRate, onChat }) {
+function ExpertCard({ expert, myScore, onRate, onChat, onView }) {
   const avatar =
-    (expert?.user?.avatar && String(expert.user.avatar).trim()) ||
-    placeholderAvatar(
-      expert?.user?.email ||
-        expert?.user?._id ||
-        expert?.expert_id ||
-        expert?._id ||
-        expert?.full_name
-    );
+    (expert?.user?.avatar && String(expert.user.avatar).trim()) || "";
 
   const canRate = !myScore;
 
   return (
-    <div className="ex-card" role="article">
+    <div
+      className="ex-card"
+      role="article"
+      onClick={() => onView?.(expert)}
+      style={{ cursor: "pointer" }}
+    >
       <div className="ex-thumb">
         <img src={avatar} alt={expert.full_name} />
         {expert.review_status === "approved" && (
-          <span className="ex-badge" title="Approved expert">
+          <span className="ex-badge" title="Chuyên gia đã được duyệt">
             <BadgeCheck size={18} />
           </span>
         )}
@@ -83,33 +82,43 @@ function ExpertCard({ expert, myScore, onRate, onChat }) {
         <div className="ex-meta" title={expert.expertise_area}>
           {expert.expertise_area}
         </div>
-
         <div className="ex-kpis" style={{ alignItems: "center", gap: 8 }}>
-          <StarRow
-            value={Number(myScore || 0)}
-            onSelect={(score) => onRate?.(expert, score)}
-            canRate={canRate}
-          />
-          <span className="ex-dot">•</span>
+
+          {/* ⭐  HIỂN THỊ SAO (KHÔNG CHO RATE Ở NGOÀI) */}
+          <div style={{ display: "flex", gap: 4 }}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Star
+                key={n}
+                size={16}
+                fill={n <= Number(expert.avg_score || 0) ? "#FFC107" : "none"}
+                stroke={n <= Number(expert.avg_score || 0) ? "#FFC107" : "#999"}
+              />
+            ))}
+          </div>
+
           <span className="ex-kpi">
             <b>{Number(expert.avg_score || 0).toFixed(1)}</b>
             <span className="ex-sub"> ({expert.total_reviews || 0})</span>
           </span>
+
           <span className="ex-dot">•</span>
-          <span className="ex-kpi">{expert.experience_years || 0} yrs</span>
+
+          <span className="ex-kpi">{expert.experience_years || 0} năm</span>
         </div>
+
       </div>
 
       <div className="ex-actions">
         <button
           type="button"
           className="ex-btn"
-          onClick={() => onChat?.(expert)}
-          aria-label={`Chat with ${expert.full_name}`}
-          title="Chat"
+          onClick={(e) => {
+            e.stopPropagation();
+            onChat?.(expert);
+          }}
         >
           <MessageCircle size={18} />
-          <span>Chat</span>
+          <span>Trò chuyện</span>
         </button>
       </div>
     </div>
@@ -122,9 +131,17 @@ export default function ExpertsList() {
   const [q, setQ] = useState("");
   const [myRatings, setMyRatings] = useState({});
 
-  // ⬇️ state cho ChatWidget
   const [chatOpen, setChatOpen] = useState(false);
-  const [chatPeer, setChatPeer] = useState(null); // payload truyền cho ChatWidget
+  const [chatPeer, setChatPeer] = useState(null);
+
+  // ==============================
+  // ⭐ VIEW DETAIL MODAL (ADD)
+  // ==============================
+  const [viewDetail, setViewDetail] = useState(null);
+
+  // SOUND
+  const [unreadCount, setUnreadCount] = useState(0);
+  const prevUnreadRef = useRef(0);
 
   // fetch experts
   useEffect(() => {
@@ -145,6 +162,34 @@ export default function ExpertsList() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // SOUND
+  useEffect(() => {
+    const notifySound = new Audio("/src/assets/sounds/notify.mp3");
+
+    const fetchUnread = async () => {
+      try {
+        const res = await axiosClient.get("/api/chat/unread");
+
+        const count =
+          res?.data?.count ??
+          (Array.isArray(res?.data?.data) ? res.data.data.length : 0);
+
+        if (count > prevUnreadRef.current) {
+          notifySound.play().catch(() => { });
+        }
+
+        prevUnreadRef.current = count;
+        setUnreadCount(count || 0);
+      } catch (err) {
+        console.error("Lỗi unread:", err);
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   // fetch my ratings
@@ -168,7 +213,7 @@ export default function ExpertsList() {
           if (it.status === "fulfilled") dict[it.value.id] = it.value.score || 0;
         });
         setMyRatings(dict);
-      } catch (_) {}
+      } catch (_) { }
     }
     if (experts.length) fetchMine();
     else setMyRatings({});
@@ -192,6 +237,31 @@ export default function ExpertsList() {
   const handleRate = async (expert, score) => {
     const id = expert.expert_id || expert._id;
     if (!id) return;
+
+    if (myRatings[id]) {
+      alert("Bạn đã đánh giá chuyên gia này rồi.");
+      return;
+    }
+
+    try {
+      const resCheck = await axiosClient.get(`/api/chat/has-talked/${id}`);
+      const payload = resCheck?.data;
+      const hasTalk =
+        payload?.hasTalked ??
+        payload?.hasChat ??
+        payload?.data?.hasTalked ??
+        payload?.data?.hasChat ??
+        false;
+      if (!hasTalk) {
+        alert("Bạn chỉ có thể đánh giá chuyên gia sau khi đã trò chuyện với họ.");
+        return;
+      }
+    } catch (err) {
+      console.error("check has-talked error:", err);
+      alert("Không kiểm tra được lịch sử trò chuyện.");
+      return;
+    }
+
     try {
       const res = await axiosClient.post(`/api/experts/${id}/rate`, { score });
       const stats = res?.data?.data;
@@ -201,10 +271,10 @@ export default function ExpertsList() {
           list.map((ex) =>
             (ex.expert_id || ex._id) === id
               ? {
-                  ...ex,
-                  avg_score: stats.avg_score ?? ex.avg_score,
-                  total_reviews: stats.total_reviews ?? ex.total_reviews,
-                }
+                ...ex,
+                avg_score: stats.avg_score ?? ex.avg_score,
+                total_reviews: stats.total_reviews ?? ex.total_reviews,
+              }
               : ex
           )
         );
@@ -213,93 +283,158 @@ export default function ExpertsList() {
       const code = e?.response?.status;
       const msg =
         e?.response?.data?.error ||
-        (code === 409 ? "Bạn đã đánh giá chuyên gia này rồi" : "Đánh giá thất bại");
+        (code === 409
+          ? "Bạn đã đánh giá chuyên gia này rồi"
+          : "Đánh giá thất bại");
       alert(msg);
     }
   };
 
-  // ✅ mở chat với expert được chọn (truyền payload đúng chuẩn ChatWidget/BE)
+  // open chat
   const handleChat = (expert) => {
-    // expertId có thể là UUID (expert.expert_id) hoặc ObjectId (expert._id)
     const expertId = expert.expert_id || expert._id || null;
 
     if (!expertId) {
-      alert("Không xác định được expertId để mở trò chuyện.");
+      alert("Không xác định được chuyên gia để mở trò chuyện.");
       return;
     }
 
-    // (tuỳ chọn) avatar để widget hiển thị tạm thời trước khi load conv xong
     const avatar =
-      (expert?.user?.avatar && String(expert.user.avatar).trim()) ||
-      placeholderAvatar(
-        expert?.user?.email ||
-          expert?.user?._id ||
-          expert?.expert_id ||
-          expert?._id ||
-          expert?.full_name
-      );
+      (expert?.user?.avatar && String(expert.user.avatar).trim()) || "";
 
-    // payload FE → ChatWidget.openWith: chỉ cần expertId
     const payload = {
-      expertId,     // ⬅️ ChatWidget sẽ gửi { expertId } cho /api/chat/open (role=user)
-      expert,       // ⬅️ đính kèm để ChatWidget có thể fallback lấy id khác nếu cần
+      expertId,
+      expert,
       avatar,
-      name: expert.full_name || "Expert",
+      name: expert.full_name || "Chuyên gia",
     };
 
-    // Quan trọng: set payload trước, rồi mở widget (tránh race)
     setChatPeer(payload);
     setChatOpen(true);
   };
 
   return (
     <>
-    <Header/>
-    <div className="ex-page user-expert-page">
-      <div className="ex-hero">
-        <h1>Experts</h1>
-        <p>Find trusted agricultural experts and start a conversation.</p>
-      </div>
-
-      <div className="ex-toolbar">
-        <div className="ex-search">
-          <Search size={18} />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by name, expertise..."
-            aria-label="Search experts"
-          />
+      <Header />
+      <div className="ex-page user-expert-page">
+        <div className="ex-hero">
+          <h1>Chuyên Gia</h1>
+          <p>
+            Tìm kiếm và kết nối với các chuyên gia nông nghiệp đáng tin cậy để được tư vấn.
+          </p>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="ex-empty">Loading experts…</div>
-      ) : filtered.length === 0 ? (
-        <div className="ex-empty">No experts found.</div>
-      ) : (
-        <div className="ex-grid">
-          {filtered.map((ex) => {
-            const id = ex.expert_id || ex._id;
-            return (
-              <ExpertCard
-                key={id}
-                expert={ex}
-                myScore={myRatings[id] || 0}
-                onRate={handleRate}
-                onChat={handleChat}
+        <div className="ex-toolbar">
+          <div className="ex-search">
+            <Search size={18} />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Nhập tên chuyên gia cần tìm"
+              aria-label="Tìm kiếm chuyên gia"
+            />
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="ex-empty">Đang tải danh sách chuyên gia…</div>
+        ) : filtered.length === 0 ? (
+          <div className="ex-empty">Không tìm thấy chuyên gia phù hợp.</div>
+        ) : (
+          <div className="ex-grid">
+            {filtered.map((ex) => {
+              const id = ex.expert_id || ex._id;
+              return (
+                <ExpertCard
+                  key={id}
+                  expert={ex}
+                  myScore={myRatings[id] || 0}
+                  onRate={handleRate}
+                  onChat={handleChat}
+                  onView={(expert) => setViewDetail(expert)}  // ADD
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* ============================================================
+            ⭐ VIEW DETAILS MODAL — ONLY ADDED, NO LOGIC MODIFIED
+        ============================================================ */}
+        {viewDetail && (
+          <div
+            className="ex-modal-overlay"
+            onClick={() => setViewDetail(null)}
+          >
+            <div
+              className="ex-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="ex-modal-header"></div>
+
+              <img
+                className="ex-modal-avatar"
+                src={viewDetail.user?.avatar}
+                alt={viewDetail.full_name}
               />
-            );
-          })}
-        </div>
-      )}
 
-      {/* ChatWidget gắn ở cuối trang để overlay */}
-      <ChatWidget
-        open={chatOpen}
-        onClose={(v) => setChatOpen(Boolean(v))} 
-        initialOpenPayload={chatPeer} // ⬅️ đúng prop ChatWidget đang nhận
-      />
-    </div></>
+<div className="ex-modal-info">
+  <h2 className="ex-info-name">{viewDetail.full_name}</h2>
+
+  {/* Lĩnh vực chuyên môn – thêm vào đây */}
+  <p><b>Lĩnh vực:</b> {viewDetail.expertise_area}</p>
+
+  <p><b>Email:</b> {viewDetail.user?.email}</p>
+  <p><b>Số điện thoại:</b> {viewDetail.phone_number}</p>
+  <p><b>Kinh nghiệm:</b> {viewDetail.experience_years} năm</p>
+</div>
+
+
+
+              {/* ⭐ RATING trong DETAILS */}
+              <div style={{ marginTop: 12 }}>
+                <StarRow
+                  value={Number(myRatings[viewDetail._id] || 0)}
+                  onSelect={(score) => handleRate(viewDetail, score)}
+                  canRate={!myRatings[viewDetail._id]}
+                />
+
+                <div className="ex-modal-rating">
+                  ⭐ {Number(viewDetail.avg_score || 0).toFixed(1)}
+                  ({viewDetail.total_reviews || 0} đánh giá)
+                </div>
+              </div>
+
+              <p className="ex-modal-desc">{viewDetail.description}</p>
+
+              <button
+                className="ex-btn-primary"
+                onClick={() => {
+                  handleChat(viewDetail);
+                  setViewDetail(null);
+                }}
+              >
+                Trò chuyện ngay
+              </button>
+
+              <button
+                className="ex-btn-close"
+                onClick={() => setViewDetail(null)}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
+
+        <ChatWidget
+          open={chatOpen}
+          onClose={(v) => setChatOpen(Boolean(v))}
+          initialOpenPayload={chatPeer}
+        />
+      </div>
+
+      <Footer />
+    </>
   );
 }

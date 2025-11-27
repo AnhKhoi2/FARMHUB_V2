@@ -53,4 +53,142 @@
   }
   .ex-btn:hover{background:var(--ex-primary-dark);border-color:var(--ex-primary-dark);}
   .ex-empty{padding:32px 0;opacity:.8;text-align:center;}
-  
+  /* viewdetails */
+  /* ==== OVERLAY ==== */
+.ex-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* ==== MODAL CONTAINER ==== */
+.ex-modal {
+  width: 440px;
+  max-width: 95%;
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 0 24px 30px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.20);
+  animation: fadeIn 0.25s ease;
+  text-align: center;
+  position: relative;
+  overflow: visible;
+}
+
+/* ==== TOP COLOR HEADER ==== */
+.ex-modal-header {
+  height: 80px;
+  background: linear-gradient(135deg, #2d8659 0%, #4CAF50 100%);
+  border-radius: 22px 22px 0 0;
+}
+
+/* ==== AVATAR ==== */
+.ex-modal-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 5px solid #fff;
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+/* ==== NAME ==== */
+.ex-modal-name {
+  margin-top: 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* ==== ROLE ==== */
+.ex-modal-role {
+  font-size: 15px;
+  color: #4caf50;
+  margin-bottom: 12px;
+}
+
+/* ==== INFO BOX ==== */
+.ex-modal-info {
+  background: #f7faf7;
+  padding: 14px 18px;
+  border-radius: 14px;
+  text-align: left;
+  margin-bottom: 12px;
+  font-size: 15px;
+  box-shadow: inset 0 0 0 1px #e4e7e4;
+}
+
+.ex-modal-info p {
+  margin: 5px 0;
+  color: #364a37;
+}
+
+/* ==== RATING ==== */
+.ex-modal-rating {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f59e0b;
+  margin: 10px 0;
+}
+
+/* ==== DESCRIPTION ==== */
+.ex-modal-desc {
+  margin-top: 10px;
+  font-size: 15px;
+  color: #555;
+  line-height: 1.55;
+}
+
+/* ==== BUTTONS ==== */
+.ex-btn-primary {
+  background: #2d8659;
+  color: #fff;
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ex-btn-primary:hover {
+  background: #236746;
+}
+
+.ex-btn-close {
+  background: #e2e2e2;
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.ex-btn-close:hover {
+  background: #cccccc;
+}
+
+/* ==== ANIMATION ==== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ex-info-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #1b1b1b;
+}
+
+.ex-info-role {
+  font-size: 14px;
+  color: #2d8659;
+  margin-bottom: 12px;
+}

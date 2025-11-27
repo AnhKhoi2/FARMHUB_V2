@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NOTEBOOK_TEMPLATE_API from "../../api/farmer/notebookTemplateApi";
 import "../../css/farmer/NotebookTimeline.css";
+import { formatVietnamLocale } from "../../utils/timezone";
 
 const NotebookTimeline = ({ notebookId }) => {
   const [timeline, setTimeline] = useState(null);
@@ -86,46 +87,27 @@ const NotebookTimeline = ({ notebookId }) => {
                 </span>
               </div>
 
-              {stage.started_at && (
-                <div className="stage-dates">
-                  <p>
-                    <strong>📅 Bắt đầu:</strong>{" "}
-                    {new Date(stage.started_at).toLocaleDateString("vi-VN", {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                    })}
-                  </p>
-                  {stage.completed_at && (
-                    <p>
-                      <strong>✅ Hoàn thành:</strong>{" "}
-                      {new Date(stage.completed_at).toLocaleDateString(
-                        "vi-VN",
-                        {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        }
-                      )}
-                    </p>
-                  )}
-                </div>
-              )}
+              <div className="stage-dates">
+                <p>
+                  <strong>📅 Bắt đầu:</strong>{" "}
+                  {stage.stage_start_date
+                    ? // backend provides YYYY-MM-DD string already normalized to VN timezone
+                      formatVietnamLocale(stage.stage_start_date)
+                    : stage.started_at
+                    ? formatVietnamLocale(stage.started_at)
+                    : "-"}
+                </p>
+                <p>
+                  <strong>✅ Hoàn thành:</strong>{" "}
+                  {stage.stage_end_date
+                    ? formatVietnamLocale(stage.stage_end_date)
+                    : stage.completed_at
+                    ? formatVietnamLocale(stage.completed_at)
+                    : "-"}
+                </p>
+              </div>
 
-              {stage.observations && stage.observations.length > 0 && (
-                <div className="stage-observations">
-                  <p>
-                    <strong>Quan sát:</strong>
-                  </p>
-                  <ul>
-                    {stage.observations.map((obs, idx) => (
-                      <li key={idx}>
-                        {obs.key}: {obs.value ? "✓ Có" : "✗ Không"}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Ẩn phần hiển thị stage-observations ở timeline tiến trình */}
             </div>
 
             {index < timeline.timeline.length - 1 && (
@@ -138,7 +120,7 @@ const NotebookTimeline = ({ notebookId }) => {
       <div className="timeline-footer">
         <p>
           <strong>Ngày trồng:</strong>{" "}
-          {new Date(timeline.planted_date).toLocaleDateString("vi-VN")}
+          {formatVietnamLocale(timeline.planted_date)}
         </p>
       </div>
     </div>
