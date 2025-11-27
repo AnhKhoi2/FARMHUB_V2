@@ -179,7 +179,11 @@ export async function getMyBasic(req, res) {
 
     // 🎯 Avatar: chỉ trả đúng chuỗi avatar trong DB
     // ❗ KHÔNG return "" nếu avatar = null → FE sẽ tự xử lý.
-    const avatar = user.avatar ?? "";
+    const avatar =
+    user.avatar && String(user.avatar).trim().length > 0
+      ? user.avatar
+      : null;   // FE sẽ biết là không có avatar
+  
 
     return res.json({
       data: {
