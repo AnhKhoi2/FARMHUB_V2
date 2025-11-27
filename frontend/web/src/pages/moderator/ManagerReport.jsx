@@ -14,6 +14,7 @@ import {
     Spin,
     message,
     Flex,
+    Input,
 } from "antd";
 
 import {
@@ -21,6 +22,7 @@ import {
     EyeOutlined,
     StopOutlined,
     ReloadOutlined,
+    DeleteOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text, Paragraph } = Typography;
@@ -31,11 +33,14 @@ export default function ManagerReport() {
 
     const [showDetail, setShowDetail] = useState(false);
     const [current, setCurrent] = useState(null);
+    const [search, setSearch] = useState("");
 
-    const fetchData = async () => {
+    const fetchData = async (q) => {
         setLoading(true);
         try {
-            const res = await axiosClient.get("/admin/managerpost/reported");
+            const params = {};
+            if (q && String(q).trim()) params.q = q.trim();
+            const res = await axiosClient.get("/admin/managerpost/reported", { params });
             const data = res.data?.data || res.data || [];
             setItems(Array.isArray(data) ? data : data.items || []);
         } catch (err) {
@@ -64,22 +69,21 @@ export default function ManagerReport() {
         }
     };
 
-    const onBanUser = async (postId) => {
+    const onHidePost = async (postId) => {
         Modal.confirm({
-            title: "Cấm người dùng này?",
-            content:
-                "Hành động sẽ ẩn toàn bộ bài viết của họ và khóa tài khoản.",
-            okText: "Cấm",
+            title: "Xóa bài viết này?",
+            content: "Bài viết sẽ được đưa vào thùng rác.",
+            okText: "Xóa",
             okType: "danger",
             cancelText: "Hủy",
             onOk: async () => {
                 try {
-                    await axiosClient.patch(`/admin/managerpost/${postId}/ban-user`);
-                    message.success("Đã cấm người dùng và ẩn toàn bộ bài viết");
+                    await axiosClient.patch(`/admin/managerpost/${postId}/hide`);
+                    message.success("Đã xóa bài viết");
                     setShowDetail(false);
                     fetchData();
                 } catch (err) {
-                    message.error("Không thể cấm người dùng");
+                    message.error("Không thể xóa bài viết");
                 }
             },
         });
@@ -128,10 +132,10 @@ export default function ManagerReport() {
                     <Button
                         size="small"
                         danger
-                        icon={<StopOutlined />}
-                        onClick={() => onBanUser(item._id)}
+                        icon={<DeleteOutlined />}
+                        onClick={() => onHidePost(item._id)}
                     >
-                        Cấm user
+                        Xóa
                     </Button>
                 </Space>
             ),
@@ -151,13 +155,28 @@ export default function ManagerReport() {
                         </Text>
                     </div>
 
-                    <Button
-                        type="primary"
-                        icon={<ReloadOutlined />}
-                        onClick={fetchData}
-                    >
-                        Làm mới
-                    </Button>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <Input.Search
+                            placeholder="Tìm kiếm tiêu đề hoặc người đăng..."
+                            allowClear
+                            enterButton
+                            style={{ width: 360 }}
+                            value={search}
+                            onChange={(e) => {
+                                setSearch(e.target.value);
+                                if (e.target.value === "") fetchData("");
+                            }}
+                            onSearch={(val) => fetchData(val)}
+                        />
+
+                        <Button
+                            type="primary"
+                            icon={<ReloadOutlined />}
+                            onClick={() => fetchData(search)}
+                        >
+                            Làm mới
+                        </Button>
+                    </div>
                 </Flex>
 
                 <Table
@@ -179,14 +198,14 @@ export default function ManagerReport() {
                         setShowDetail(false);
                         setCurrent(null);
                     }}
-                    onBan={() => onBanUser(current._id)}
+                    onDelete={onHidePost}
                 />
             )}
         </ModeratorLayout>
     );
 }
 
-function DetailModal({ open, item, onClose, onBan }) {
+function DetailModal({ open, item, onClose, onDelete }) {
     return (
         <Modal
             open={open}
@@ -196,8 +215,8 @@ function DetailModal({ open, item, onClose, onBan }) {
                 <Button key="close" onClick={onClose}>
                     Đóng
                 </Button>,
-                <Button danger icon={<StopOutlined />} onClick={onBan}>
-                    Cấm user
+                <Button danger icon={<DeleteOutlined />} onClick={() => onDelete && onDelete(item._id)}>
+                    Xóa bài
                 </Button>,
             ]}
             width={700}

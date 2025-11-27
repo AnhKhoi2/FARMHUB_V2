@@ -374,6 +374,7 @@ export default function ProfilePage() {
 
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  
 
   const handleAvatarSelect = (e) => {
     const f = e?.target?.files?.[0];
@@ -483,6 +484,8 @@ export default function ProfilePage() {
       }
     })();
   }, []);
+
+  
 
   /* =====================================================
      HANDLER PROFILE
@@ -820,6 +823,7 @@ export default function ProfilePage() {
           <h1 className="text-3xl font-bold mb-4 agri-theme-heading">
             🌿 Hồ sơ cá nhân
           </h1>
+          {/* Suggestion panel removed from profile — opened via header's Model button */}
           {getApplyError("full_name") && (
             <p className="text-sm text-red-600 mt-1">
               {getApplyError("full_name")}
