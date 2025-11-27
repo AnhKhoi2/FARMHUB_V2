@@ -61,25 +61,23 @@ const Login = () => {
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const cleanedUsername = username.trim();
-    if (!cleanedUsername || !password) return;
+  const cleanedUsername = username.trim();
 
-    // loginThunk của bạn trả về { success, role }
-    const result = await dispatch(
-      loginThunk({
-        username: cleanedUsername,
-        password,
-      })
-    );
+  const result = await dispatch(
+    loginThunk({
+      username: cleanedUsername,
+      password,
+    })
+  );
 
-    const { success, role } = result || {};
+  const { success, role } = result || {};
+  if (success) {
+    await afterLogin(role || "user");
+  }
+};
 
-    if (success) {
-      await afterLogin(role || "user");
-    }
-  };
 
   const handleGoogleSuccess = async (cred) => {
     const idToken = cred?.credential;
@@ -103,7 +101,7 @@ const Login = () => {
       <div className="wrapper">
         <div className="form-box login">
           <h2>Đăng nhập</h2>
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} noValidate>
             {/* Thông báo phiên hết hạn */}
             {sessionExpired && (
               <div className="error-message" style={{ marginBottom: "10px" }}>
@@ -120,8 +118,8 @@ const Login = () => {
               </span>
               <input
                 type="text"
-                required
                 value={username}
+                  placeholder=" "
                 onChange={(e) => setUsername(e.target.value)}
               />
               <label>Tên đăng nhập</label>
@@ -130,9 +128,9 @@ const Login = () => {
             <div className="input-box" style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                  placeholder=" "
               />
 
               {/* Nút toggle icon */}

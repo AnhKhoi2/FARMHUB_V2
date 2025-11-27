@@ -75,4 +75,10 @@ export const ERROR_CODES = {
     message: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
     statusCode: 500,
   },
+
+  TERMS_NOT_ACCEPTED: {
+  message: "Bạn phải đồng ý với điều khoản sử dụng trước khi đăng ký.",
+  statusCode: 400,
+},
+
 };

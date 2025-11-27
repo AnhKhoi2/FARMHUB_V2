@@ -65,35 +65,47 @@ export const logoutThunk = () => async (dispatch) => {
   localStorage.removeItem("user");
   localStorage.removeItem("accessToken");
 };
-
 // =========================
-// REGISTER – dùng lại logic cũ của bạn
+// REGISTER – bản nâng cấp HOÀN CHỈNH
 // =========================
 export const registerThunk = (formData) => async () => {
   try {
     const res = await authApi.registerApi(formData);
 
-    const data = res?.data;
+    const data = res?.data || {};
     const message =
-      data?.message ||
-      data?.msg ||
+      data.message ||
+      data.msg ||
       "Đăng ký thành công! Vui lòng kiểm tra email xác nhận.";
 
-    return { success: true, message };
+    return {
+      success: true,
+      message,
+      data,
+      code: data.code || null,
+      status: res.status,
+    };
   } catch (err) {
     console.error("Register error:", err?.response?.data || err);
 
-    const data = err?.response?.data;
-    const uiMessage =
-      data?.message ||
-      data?.error?.message ||
-      data?.errorMessage ||
-      data?.errors?.[0]?.msg ||
+    const data = err?.response?.data || {};
+
+    const message =
+      data.message ||
+      data.error?.message ||
+      data.errorMessage ||
+      data.errors?.[0]?.msg ||
       "Đăng ký thất bại. Vui lòng thử lại.";
 
-    return { success: false, message: uiMessage };
+    return {
+      success: false,
+      message,
+      code: data.code || null,          // ⬅ lấy đúng error code từ BE
+      status: err?.response?.status || null, // ⬅ lấy status (429, 400, 409…)
+    };
   }
 };
+
 
 // =========================
 /* GOOGLE LOGIN */
