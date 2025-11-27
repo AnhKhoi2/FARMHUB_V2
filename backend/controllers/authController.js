@@ -32,7 +32,7 @@ async function sendVerificationEmail(user) {
   const verifyToken = jwt.sign(
     { email: user.email },
     process.env.JWT_VERIFY_KEY,
-    { expiresIn: "1h" }
+    { expiresIn: "5m" }
   );
   const verifyLink = `${process.env.CLIENT_URL}/auth/verify/${verifyToken}`;
 
@@ -44,7 +44,7 @@ async function sendVerificationEmail(user) {
       <h2>Chào ${user.username}!</h2>
       <p>Nhấn vào link sau để xác nhận tài khoản của bạn:</p>
       <a href="${verifyLink}">Xác nhận tài khoản</a>
-      <p>Link này sẽ hết hạn sau 1 giờ.</p>
+      <p>Link này sẽ hết hạn sau 5p.</p>
     `,
   });
 
@@ -100,12 +100,43 @@ export const authController = {
     }
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      const { message, statusCode } = ERROR_CODES.USER_EXISTS;
-      throw new AppError(message, statusCode, "USER_EXISTS");
-    }
 
-    const salt = await bcrypt.genSalt(10);
+// Nếu email đã tồn tại nhưng CHƯA xác thực => cập nhật lại thông tin + gửi lại email xác thực
+if (existingUser && !existingUser.isVerified) {
+  const salt = await bcrypt.genSalt(10);
+  const hashed = await bcrypt.hash(password, salt);
+
+  // Cập nhật lại username, password theo lần đăng ký mới
+  existingUser.username = username;
+  existingUser.password = hashed;
+  await existingUser.save();
+
+  const verifyLink = await sendVerificationEmail({
+    _id: existingUser._id,
+    email: existingUser.email,
+    username: existingUser.username,
+  });
+
+  const userToReturn = { ...existingUser._doc };
+  delete userToReturn.password;
+
+  return ok(res, {
+    message:
+      "Email này đã được đăng ký nhưng chưa xác thực. Chúng tôi đã gửi lại email xác thực, vui lòng kiểm tra hộp thư.",
+    needVerify: true,
+    verifyLink,
+    user: userToReturn,
+  });
+}
+
+// Nếu email đã tồn tại và ĐÃ xác thực => báo lỗi như cũ
+if (existingUser) {
+  const { message, statusCode } = ERROR_CODES.USER_EXISTS;
+  throw new AppError(message, statusCode, "USER_EXISTS");
+}
+
+const salt = await bcrypt.genSalt(10);
+
     const hashed = await bcrypt.hash(password, salt);
 
     const newUser = new User({
@@ -158,6 +189,9 @@ export const authController = {
   }),
 
   // Xác thực email
+  // ... các import & phần trên giữ nguyên
+
+  // Xác thực email
   verifyEmail: asyncHandler(async (req, res) => {
     const { token } = req.params;
     if (!token) {
@@ -170,8 +204,13 @@ export const authController = {
       decoded = jwt.verify(token, process.env.JWT_VERIFY_KEY);
     } catch (err) {
       if (err.name === "TokenExpiredError") {
-        const { message, statusCode } = ERROR_CODES.TOKEN_EXPIRED;
-        throw new AppError(message, statusCode, "TOKEN_EXPIRED");
+        // ✅ Riêng luồng xác thực email: dùng status 410 + code khác
+        // để FE biết là "phiên đăng kí" chứ không phải "phiên đăng nhập"
+        throw new AppError(
+          "Phiên đăng kí đã hết hạn, vui lòng đăng kí lại.",
+          410, // HTTP 410 Gone
+          "VERIFY_TOKEN_EXPIRED"
+        );
       }
       const { message, statusCode } = ERROR_CODES.INVALID_TOKEN;
       throw new AppError(message, statusCode, "INVALID_TOKEN");
@@ -190,8 +229,44 @@ export const authController = {
     user.isVerified = true;
     await user.save();
 
-    return ok(res, { message: "Xác thực email thành công! Bạn có thể đăng nhập." });
+    return ok(res, {
+      message: "Xác thực email thành công! Bạn có thể đăng nhập.",
+    });
   }),
+
+// ... phần dưới giữ nguyên y như file của bạn
+
+  // Gửi lại email xác thực
+// resendVerifyEmail: asyncHandler(async (req, res) => {
+//   const { email } = req.body;
+
+//   if (!email) {
+//     const { message, statusCode } = ERROR_CODES.MISSING_FIELDS;
+//     throw new AppError(message, statusCode, "MISSING_FIELDS");
+//   }
+
+//   const user = await User.findOne({ email });
+//   if (!user) {
+//     const { message, statusCode } = ERROR_CODES.USER_NOT_FOUND;
+//     throw new AppError(message, statusCode, "USER_NOT_FOUND");
+//   }
+
+//   if (user.isVerified) {
+//     const { message, statusCode } = ERROR_CODES.EMAIL_ALREADY_VERIFIED;
+//     throw new AppError(message, statusCode, "EMAIL_ALREADY_VERIFIED");
+//   }
+
+//   // Gửi lại email xác thực
+//   const verifyLink = await sendVerificationEmail({
+//     email: user.email,
+//     username: user.username,
+//   });
+
+//   return ok(res, { 
+//     message: "Đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư của bạn.",
+//     verifyLink 
+//   });
+// }),
 
   // Đăng nhập
  // Đăng nhập CHỈ bằng username
@@ -228,6 +303,12 @@ login: asyncHandler(async (req, res) => {
       "INVALID_CREDENTIALS"
     );
   }
+
+  if (!user.isVerified) {
+  const { message, statusCode } = ERROR_CODES.ACCOUNT_NOT_VERIFIED;
+  throw new AppError(message, statusCode, "ACCOUNT_NOT_VERIFIED");
+}
+
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);

@@ -23,5 +23,6 @@ router.get("/me", verifyToken, authController.me);
 router.put("/password/change", verifyToken, authController.changePassword);
 router.post("/google", authController.loginWithGoogle);
 router.put("/password/set", verifyToken, authController.setPassword);
+// router.post("/resend-verify-email", authController.resendVerifyEmail);
 
 export default router;

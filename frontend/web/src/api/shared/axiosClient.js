@@ -86,7 +86,9 @@ axiosClient.interceptors.response.use(
                 detail: { notebookId },
               })
             );
-          } catch (e) {
+          } catch (err) {
+            console.log(err);
+            
             // Fallback for older browsers
             const ev = document.createEvent && document.createEvent("Event");
             if (ev && ev.initEvent) {
@@ -99,6 +101,8 @@ axiosClient.interceptors.response.use(
       }
     } catch (err) {
       // ignore
+      console.log(err);
+      
     }
 
     return response;
