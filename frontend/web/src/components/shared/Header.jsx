@@ -11,6 +11,7 @@ import "./Header.css";
 import { RadarChartOutlined } from "@ant-design/icons";
 import { Tooltip } from "antd";
 import axiosClient from "../../api/shared/axiosClient";
+import SuggestionModal from "./SuggestionModal";
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
 
@@ -21,12 +22,47 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState(false);
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+  const [suggestionMode, setSuggestionMode] = useState("view");
 
   useEffect(() => {
     setDropdownOpen(false);
     setMenuOpen(false);
     setSubmenuOpen(false);
   }, [location.pathname]);
+
+  // show onboarding once after login if user has not selected model options
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) return;
+
+    const shownKey = "modelSuggestionShownAtLogin";
+    const alreadyShown = sessionStorage.getItem(shownKey);
+    if (alreadyShown) return;
+
+    // fetch profile model suggestion quickly
+    (async () => {
+      try {
+        const res = await axiosClient.get("/profile/model-suggestion");
+        const data = res.data?.data || {};
+        const ms = data.modelSuggestion || {};
+        const selected = ms.selectedOptions || {};
+        const hasSelection = Object.keys(selected).length > 0;
+        if (!cancelled && !hasSelection) {
+          // show onboarding modal once for this login session
+          sessionStorage.setItem(shownKey, "1");
+          setSuggestionMode("onboarding");
+          setSuggestionOpen(true);
+        }
+      } catch (err) {
+        // ignore silently
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (menuOpen) document.body.style.overflow = "hidden";
@@ -185,6 +221,18 @@ const Header = () => {
                       </Tooltip>
                     </Link>
                   </li>
+                  <li>
+                    <button
+                      className="btn btn-link"
+                      style={{ color: "#fff", textDecoration: "none" }}
+                      onClick={() => {
+                        setSuggestionMode("view");
+                        setSuggestionOpen(true);
+                      }}
+                    >
+                      Gợi ý Model
+                    </button>
+                  </li>
                 </>
               )}
               {/* USER MENU */}
@@ -322,6 +370,7 @@ const Header = () => {
           onClick={() => setMenuOpen(false)}
         />
       )}
+      <SuggestionModal open={suggestionOpen} mode={suggestionMode} onClose={() => setSuggestionOpen(false)} />
     </>
   );
 };
