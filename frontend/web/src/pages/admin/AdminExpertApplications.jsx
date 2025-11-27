@@ -213,7 +213,7 @@ export default function AdminExpertApplications() {
                 <tr>
                   <th>Full name</th>
                   <th>Email</th>
-                  <th>Phone</th>
+                  <th style={{ width: "12ch", maxWidth: "12ch" }}>Phone</th>
                   <th>Expertise</th>
                   <th>Experience</th>
                   <th>Status</th>
@@ -238,7 +238,19 @@ export default function AdminExpertApplications() {
                     <tr key={it._id}>
                       <td>{it.full_name}</td>
                       <td className="small">{it.email}</td>
-                      <td className="small">{it.phone_number || "—"}</td>
+                      <td
+                        className="small"
+                        style={{
+                          width: "12ch",
+                          maxWidth: "12ch",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        {it.phone_number || "—"}
+                      </td>
                       <td>{it.expertise_area}</td>
                       <td>{it.experience_years ?? 0} năm</td>
                       <td>{renderStatusBadge(it.status)}</td>

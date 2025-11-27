@@ -181,7 +181,27 @@ export default function ManagerPost() {
         {
             title: "Điện thoại",
             dataIndex: "phone",
-            render: (phone) => <Text>{phone || "—"}</Text>,
+            render: (phone) => {
+                const phoneStr = phone == null ? "" : String(phone);
+                // remove whitespace/newlines so numbers don't break into multiple lines
+                const phoneClean = phoneStr.replace(/\s+/g, "").trim();
+                const display = phoneClean || "—";
+                return (
+                    <Text
+                        style={{
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            maxWidth: "12ch",
+                            display: "inline-block",
+                            fontFamily: "monospace",
+                        }}
+                        ellipsis={{ tooltip: phoneClean || false }}
+                    >
+                        {display}
+                    </Text>
+                );
+            },
         },
         {
             title: "Địa điểm",
@@ -227,8 +247,11 @@ export default function ManagerPost() {
         },
         {
             title: "Hành động",
+            dataIndex: "actions",
+            width: 140,
+            align: "center",
             render: (_, it) => (
-                <Space wrap size="small">
+                <Space size="small" style={{ whiteSpace: "nowrap" }}>
                     <Tooltip title="Xem chi tiết">
                         <Button
                             size="small"
