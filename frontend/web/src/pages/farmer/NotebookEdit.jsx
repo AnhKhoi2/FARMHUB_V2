@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import notebookApi from "../../api/farmer/notebookApi";
 import ImageUploader from "../../components/farmer/ImageUploader";
 import "../../css/farmer/NotebookForm.css";
+import { formatVietnamLocale } from "../../utils/timezone";
 
 const NotebookEdit = () => {
   const { id } = useParams();
@@ -179,8 +180,7 @@ const NotebookEdit = () => {
               <div className="info-item">
                 <span className="info-label">Ngày trồng:</span>
                 <span className="info-value">
-                  📅{" "}
-                  {new Date(notebook.planted_date).toLocaleDateString("vi-VN")}
+                  📅 {formatVietnamLocale(notebook.planted_date)}
                 </span>
               </div>
               {notebook.template_id && (

@@ -81,13 +81,12 @@ import ExpertContent from "../pages/ExpertContent.jsx";
 import AIChatWidget from "../components/shared/AIChatWidget";
 import StreakScreen from "../pages/farmer/StreakScreen.jsx";
 
-import { useLocation } from 'react-router-dom';
+import { useLocation } from "react-router-dom";
 import AdminDetailGuides from "../pages/admin/AdminDetailGuides.jsx";
 
 import PlantCarePricing from "../pages/Subscription/PlantCarePricing";
 import PaymentSuccess from "../pages/Subscription/PaymentSuccess";
 import PaymentFailed from "../pages/Subscription/PaymentFailed";
-
 
 export default function AppRoutes() {
   function ChatWrapper() {
@@ -457,10 +456,10 @@ export default function AppRoutes() {
           }
         />
         <Route
-          path="/farmer/notebooks/:id/overdue"
+          path="/farmer/notebooks/deleted"
           element={
             <PrivateRoute>
-              <OverdueDetail />
+              <NotebookList showDeleted={true} />
             </PrivateRoute>
           }
         />

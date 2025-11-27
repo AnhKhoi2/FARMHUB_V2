@@ -8,6 +8,7 @@ import ImageUploader from "../../components/farmer/ImageUploader";
 import OverduePopup from "../../components/farmer/OverduePopup";
 import { generateNotebookPDF } from "../../utils/pdfGenerator";
 import "../../css/farmer/NotebookDetail.css";
+import { formatVietnamLocale } from "../../utils/timezone";
 
 const NotebookDetail = () => {
   const { id } = useParams();
@@ -221,7 +222,7 @@ const NotebookDetail = () => {
     const expectedEndDate = new Date(plantedDate);
     expectedEndDate.setDate(plantedDate.getDate() + currentStage.day_end);
 
-    return expectedEndDate.toLocaleDateString("vi-VN");
+    return formatVietnamLocale(expectedEndDate);
   };
 
   if (loading) {
@@ -253,6 +254,10 @@ const NotebookDetail = () => {
 
   const currentStage = getCurrentStageInfo();
   const daysPlanted = calculateDaysPlanted();
+  // Find stage tracking object for current stage (to check flags like pending_transition)
+  const currentStageTracking = notebook?.stages_tracking?.find(
+    (s) => s.stage_number === notebook.current_stage
+  );
 
   return (
     <div className="notebook-detail-container">
@@ -456,7 +461,7 @@ const NotebookDetail = () => {
                     </div>
                   </div>
 
-                  {notebook.stage_completion >= 100 && (
+                  {currentStageTracking?.pending_transition === true && (
                     <p className="completion-note">
                       🎉 Xuất sắc! Bạn đã hoàn thành giai đoạn này.
                     </p>

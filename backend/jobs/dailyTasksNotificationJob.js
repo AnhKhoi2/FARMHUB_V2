@@ -10,10 +10,13 @@ import { getVietnamToday, toVietnamMidnight } from "../utils/timezone.js";
  * - Nếu chưa gửi notification `daily_tasks_generated` cho notebook đó trong ngày hôm nay thì gửi
  */
 export const startDailyTasksNotificationJob = () => {
+  // Run daily at 00:00 UTC (equivalent to 07:00 Asia/Ho_Chi_Minh)
   cron.schedule(
-    "0 7 * * *",
+    "0 0 * * *",
     async () => {
-      console.log("🕐 [CRON] Running daily tasks notification job at 07:00 VN");
+      console.log(
+        "🕐 [CRON] Running daily tasks notification job at 00:00 UTC (07:00 VN)"
+      );
       try {
         const today = getVietnamToday();
         const todayStart = toVietnamMidnight(today);
@@ -71,9 +74,7 @@ export const startDailyTasksNotificationJob = () => {
         console.error("❌ [CRON] Error in daily tasks notification job:", err);
       }
     },
-    {
-      timezone: "Asia/Ho_Chi_Minh",
-    }
+    { timezone: "UTC" }
   );
 
   console.log(
