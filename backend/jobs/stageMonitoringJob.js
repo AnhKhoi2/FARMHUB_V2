@@ -42,16 +42,22 @@ const monitorAllNotebooks = async () => {
  * Kiểm tra tất cả notebook và gửi cảnh báo nếu cần
  */
 export const startStageMonitoringJob = () => {
-  // Chạy hàng ngày lúc 8:00 sáng
-  cron.schedule("0 8 * * *", async () => {
-    console.log("🕐 [CRON] Running daily stage monitoring job at 8:00 AM");
-    try {
-      await monitorAllNotebooks();
-      console.log("✅ [CRON] Stage monitoring job completed successfully");
-    } catch (error) {
-      console.error("❌ [CRON] Error in stage monitoring job:", error);
-    }
-  });
+  // Run daily at 01:00 UTC (equivalent to 08:00 Asia/Ho_Chi_Minh)
+  cron.schedule(
+    "0 1 * * *",
+    async () => {
+      console.log(
+        "🕐 [CRON] Running daily stage monitoring job at 01:00 UTC (08:00 VN)"
+      );
+      try {
+        await monitorAllNotebooks();
+        console.log("✅ [CRON] Stage monitoring job completed successfully");
+      } catch (error) {
+        console.error("❌ [CRON] Error in stage monitoring job:", error);
+      }
+    },
+    { timezone: "UTC" }
+  );
 
   console.log(
     "✅ Stage monitoring cron job initialized (runs daily at 8:00 AM)"

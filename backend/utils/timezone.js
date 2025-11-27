@@ -3,12 +3,10 @@
  */
 
 import moment from "moment-timezone";
-const VIETNAM_TZ = "Asia/Ho_Chi_Minh";
-
-// Number of minutes past midnight to consider as the "start of day" in Vietnam timezone.
-// Default to 5 minutes (00:05) per new requirement. Can be overridden by env var `VN_DAY_START_MINUTES`.
+// This project now uses UTC as the canonical timezone for internal logic.
+// Keep an optional minute offset for the day-start boundary; default 0 (midnight UTC).
 const DAY_START_OFFSET_MINUTES = parseInt(
-  process.env.VN_DAY_START_MINUTES || "5",
+  process.env.UTC_DAY_START_MINUTES || process.env.VN_DAY_START_MINUTES || "0",
   10
 );
 
@@ -17,7 +15,8 @@ const DAY_START_OFFSET_MINUTES = parseInt(
  * @returns {Date} Date object adjusted to Vietnam time
  */
 export const getVietnamTime = () => {
-  return moment().tz(VIETNAM_TZ).toDate();
+  // Returns current time as a Date (UTC instant). Named for backward compatibility.
+  return moment.utc().toDate();
 };
 
 /**
@@ -28,8 +27,9 @@ export const getVietnamTime = () => {
  * @returns {Date} Date at Vietnam day-start (as UTC representation)
  */
 export const toVietnamMidnight = (date) => {
+  // Normalize a date to the project's canonical day-start (UTC midnight + optional offset).
   return moment
-    .tz(date, VIETNAM_TZ)
+    .utc(date)
     .startOf("day")
     .add(DAY_START_OFFSET_MINUTES, "minutes")
     .toDate();
@@ -51,12 +51,13 @@ export const getVietnamToday = () => {
  * @returns {number} Number of days difference
  */
 export const getDaysDifferenceVN = (startDate, endDate) => {
+  // Compute difference in days using UTC day boundaries (with optional offset).
   const start = moment
-    .tz(startDate, VIETNAM_TZ)
+    .utc(startDate)
     .startOf("day")
     .add(DAY_START_OFFSET_MINUTES, "minutes");
   const end = moment
-    .tz(endDate, VIETNAM_TZ)
+    .utc(endDate)
     .startOf("day")
     .add(DAY_START_OFFSET_MINUTES, "minutes");
   return end.diff(start, "days");
@@ -68,7 +69,7 @@ export const getDaysDifferenceVN = (startDate, endDate) => {
  * @returns {string} Formatted date string (YYYY-MM-DD)
  */
 export const formatVietnamDate = (date) => {
-  return moment.tz(date, VIETNAM_TZ).format("YYYY-MM-DD");
+  return moment.utc(date).format("YYYY-MM-DD");
 };
 
 /**
@@ -91,16 +92,27 @@ export const parseVietnamDate = (input) => {
     return toVietnamMidnight(new Date(Number(input)));
   }
 
-  // If the input looks like a date-only string YYYY-MM-DD, parse in VN tz
+  // If the input looks like a date-only string YYYY-MM-DD, parse as UTC date-start
   const dateOnlyMatch = /^\d{4}-\d{2}-\d{2}$/.test(String(input).trim());
   if (dateOnlyMatch) {
     return moment
-      .tz(String(input).trim(), "YYYY-MM-DD", VIETNAM_TZ)
+      .utc(String(input).trim(), "YYYY-MM-DD")
       .startOf("day")
       .add(DAY_START_OFFSET_MINUTES, "minutes")
       .toDate();
   }
 
-  // Fallback: create a Date and normalize to VN day-start
+  // Fallback: create a Date and normalize to UTC day-start
   return toVietnamMidnight(new Date(input));
+};
+
+/**
+ * Format a date/time into Vietnam timezone string with time.
+ * Example: '2025-11-26 00:05:00'
+ * @param {Date|string|number} date - Date to format
+ * @returns {string|null} Formatted datetime string in VN timezone
+ */
+export const formatVietnamDatetime = (date) => {
+  if (!date) return null;
+  return moment.utc(date).format("YYYY-MM-DD HH:mm:ss");
 };

@@ -144,6 +144,8 @@ const notebookSchema = new mongoose.Schema(
 
     // Ngày trồng (quan trọng để tính stage)
     planted_date: { type: Date, default: Date.now },
+    // Ngày trồng theo múi giờ Việt Nam (string: YYYY-MM-DD HH:mm:ss) để hiển thị trực tiếp
+    planted_date_vn: { type: String },
 
     cover_image: { type: String },
     description: { type: String },
@@ -168,6 +170,8 @@ const notebookSchema = new mongoose.Schema(
 
     // Last checklist generation date
     last_checklist_generated: { type: Date },
+    // Last checklist generation date as Vietnam datetime string for direct display
+    last_checklist_generated_vn: { type: String },
 
     // Số ngày đã trồng
     days_planted: { type: Number, default: 0 },
@@ -248,6 +252,8 @@ notebookSchema.methods.updateProgress = async function (templateStages) {
   }
 
   this.progress = Math.min(100, Math.round(totalProgress));
+  // Clamp to [0,100] and ensure integer
+  this.progress = Math.max(0, Math.min(100, Math.round(totalProgress)));
   console.log(`🌱 Total plant progress: ${this.progress}%`);
 
   return this.progress;
@@ -324,9 +330,12 @@ notebookSchema.methods.getCurrentStageCompletion = async function () {
   console.log(`📈 Total daily progress: ${totalDailyProgress}%`);
 
   // Stage progress = (tổng daily_progress) / duration_days
-  // Ví dụ: Ngày 1: 100%, Ngày 2: 50%, Duration: 7 ngày
-  // → (100 + 50) / 7 = 21.43%
-  return Math.round(totalDailyProgress / durationDays);
+  // Example: Day1:100%, Day2:50%, Duration:7 -> (100+50)/7 = 21.43%
+  const raw = Math.round(totalDailyProgress / durationDays);
+  // Clamp to [0,100]
+  const clamped = Math.max(0, Math.min(100, raw));
+  console.log(`📊 Stage completion (clamped): ${clamped}%`);
+  return clamped;
 };
 
 // Index

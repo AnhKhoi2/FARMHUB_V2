@@ -56,6 +56,16 @@ const NotebookCreate = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    // Enforce planted_date must be today's date when creating a notebook
+    if (name === "planted_date") {
+      const todayStr = new Date().toISOString().split("T")[0];
+      if (value !== todayStr) {
+        alert("Ngày trồng chỉ được chọn là ngày hiện tại.");
+        setFormData((prev) => ({ ...prev, planted_date: todayStr }));
+        return;
+      }
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -192,6 +202,8 @@ const NotebookCreate = () => {
               name="planted_date"
               value={formData.planted_date}
               onChange={handleInputChange}
+              min={new Date().toISOString().split("T")[0]}
+              max={new Date().toISOString().split("T")[0]}
               required
             />
           </div>
