@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NOTEBOOK_TEMPLATE_API from "../../api/farmer/notebookTemplateApi";
 import "../../css/farmer/NotebookTimeline.css";
+import { formatVietnamLocale } from "../../utils/timezone";
 
 const NotebookTimeline = ({ notebookId }) => {
   const [timeline, setTimeline] = useState(null);
@@ -91,39 +92,17 @@ const NotebookTimeline = ({ notebookId }) => {
                   <strong>📅 Bắt đầu:</strong>{" "}
                   {stage.stage_start_date
                     ? // backend provides YYYY-MM-DD string already normalized to VN timezone
-                      new Date(stage.stage_start_date).toLocaleDateString(
-                        "vi-VN",
-                        {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        }
-                      )
+                      formatVietnamLocale(stage.stage_start_date)
                     : stage.started_at
-                    ? new Date(stage.started_at).toLocaleDateString("vi-VN", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                      })
+                    ? formatVietnamLocale(stage.started_at)
                     : "-"}
                 </p>
                 <p>
                   <strong>✅ Hoàn thành:</strong>{" "}
                   {stage.stage_end_date
-                    ? new Date(stage.stage_end_date).toLocaleDateString(
-                        "vi-VN",
-                        {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        }
-                      )
+                    ? formatVietnamLocale(stage.stage_end_date)
                     : stage.completed_at
-                    ? new Date(stage.completed_at).toLocaleDateString("vi-VN", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                      })
+                    ? formatVietnamLocale(stage.completed_at)
                     : "-"}
                 </p>
               </div>
@@ -141,7 +120,7 @@ const NotebookTimeline = ({ notebookId }) => {
       <div className="timeline-footer">
         <p>
           <strong>Ngày trồng:</strong>{" "}
-          {new Date(timeline.planted_date).toLocaleDateString("vi-VN")}
+          {formatVietnamLocale(timeline.planted_date)}
         </p>
       </div>
     </div>

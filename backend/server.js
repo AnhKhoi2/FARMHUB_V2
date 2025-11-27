@@ -98,6 +98,8 @@ app.use("/admin/weather", weatherRoutes);
 app.use("/test", testRoute);
 app.use("/guides", guidesRoute);
 app.use("/notebooks", notebooksRoute);
+// Backwards-compatible alias: some frontends call /api/notebooks
+app.use("/api/notebooks", notebooksRoute);
 app.use("/admin/users", usersRoute);
 // app.use("/api/expert-applications", expertApplicationRoutes);
 
@@ -136,8 +138,10 @@ app.listen(PORT, () => {
 
 // 404 cho route không tồn tại (optional)
 app.use((req, res, next) => {
+  // Log missing route for easier debugging, then return NotFound error
+  console.warn(`⚠️ 404 - Route not found: ${req.method} ${req.originalUrl}`);
   // Route not found -> use NotFound helper to create ApiError (status 404)
-  next(NotFound("Route không tồn tại"));
+  next(NotFound(`Route không tồn tại: ${req.originalUrl}`));
 });
 
 // ERROR HANDLER

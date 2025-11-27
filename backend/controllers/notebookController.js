@@ -16,6 +16,7 @@ import {
   toVietnamMidnight,
   getVietnamToday,
   formatVietnamDate,
+  formatVietnamDatetime,
   parseVietnamDate,
 } from "../utils/timezone.js";
 
@@ -458,6 +459,53 @@ export const generateDailyChecklist = async (notebookId) => {
 
   notebook.daily_checklist = newChecklist;
   notebook.last_checklist_generated = today;
+  // Store VN datetime string for direct display in DB to avoid UTC confusion
+  try {
+    notebook.last_checklist_generated_vn = formatVietnamDatetime(today);
+  } catch (e) {
+    // Non-fatal: if formatting fails, leave VN string undefined
+    console.warn("Failed to format last_checklist_generated_vn:", e);
+  }
+  // Ensure today's daily_log reflects the newly generated checklist so that
+  // `stages_tracking.daily_logs` stays consistent with `daily_checklist`.
+  try {
+    if (updatedStageTracking) {
+      if (!updatedStageTracking.daily_logs)
+        updatedStageTracking.daily_logs = [];
+
+      const todayKey = today.toISOString().split("T")[0];
+      let todayLog = updatedStageTracking.daily_logs.find(
+        (log) =>
+          toVietnamMidnight(new Date(log.date)).toISOString().split("T")[0] ===
+          todayKey
+      );
+
+      const todayTasks = newChecklist || [];
+      const completedTodayTasks = todayTasks.filter(
+        (t) => t.is_completed
+      ).length;
+      const totalTodayTasks = todayTasks.length || 0;
+
+      if (!todayLog) {
+        todayLog = { date: today, daily_progress: 0 };
+        updatedStageTracking.daily_logs.push(todayLog);
+      }
+
+      if (totalTodayTasks > 0) {
+        todayLog.daily_progress = Math.round(
+          (completedTodayTasks / totalTodayTasks) * 100
+        );
+      } else {
+        // If no tasks today, keep existing progress or set to 0 conservatively
+        todayLog.daily_progress = todayLog.daily_progress || 0;
+      }
+    }
+  } catch (e) {
+    console.warn(
+      "Failed to synchronize daily_log with generated checklist:",
+      e
+    );
+  }
   await notebook.save();
 
   return newChecklist;
@@ -828,15 +876,38 @@ const completeChecklistTask = async (notebookId, taskName) => {
     throw new AppError("Không tìm thấy nhật ký", 404);
   }
 
+  console.log(
+    `🔔 completeChecklistTask called for notebook=${notebookId} taskName='${taskName}'`
+  );
   const task = notebook.daily_checklist.find((t) => t.task_name === taskName);
+  if (!task) {
+    // Try fuzzy match by trimming/normalizing whitespace for better diagnostics
+    const alt = notebook.daily_checklist.find(
+      (t) =>
+        (t.task_name || "").trim().toLowerCase() ===
+        (taskName || "").trim().toLowerCase()
+    );
+    if (alt) {
+      console.warn(
+        `⚠️ Task name mismatch: exact match not found but fuzzy match succeeded. Using '${alt.task_name}'`
+      );
+    }
+  }
 
   if (!task) {
     throw new AppError("Không tìm thấy công việc", 404);
   }
 
+  const prev = {
+    is_completed: task.is_completed,
+    completed_at: task.completed_at,
+  };
   task.is_completed = !task.is_completed;
   task.completed_at = task.is_completed ? new Date() : null;
   task.status = task.is_completed ? "completed" : "pending"; // ✅ Update status
+  console.log(
+    `ℹ️ Task '${task.task_name}' toggled: ${prev.is_completed} -> ${task.is_completed}; completed_at=${task.completed_at}`
+  );
 
   const currentStageTracking = notebook.stages_tracking.find(
     (s) => s.stage_number === notebook.current_stage
@@ -856,6 +927,17 @@ const completeChecklistTask = async (notebookId, taskName) => {
           task_name: taskName,
           completed_at: new Date(),
         });
+      } else {
+        // If an entry exists from previous days, update its completed_at to today
+        const existing = currentStageTracking.completed_tasks.find(
+          (t) => t.task_name === taskName
+        );
+        if (existing) {
+          existing.completed_at = new Date();
+          console.log(
+            `ℹ️ Updated existing completed_tasks entry for '${taskName}' to today.`
+          );
+        }
       }
     } else {
       if (currentStageTracking.completed_tasks) {
@@ -1001,6 +1083,11 @@ export const updateStageObservation = async (
   observationKey,
   value
 ) => {
+  // Ensure today's checklist is up-to-date before validating observations.
+  // This keeps `daily_checklist` and `stages_tracking.daily_logs` consistent
+  // with the current date and any recently completed tasks.
+  await generateDailyChecklist(notebookId);
+
   const notebook = await Notebook.findById(notebookId).populate("template_id");
 
   if (!notebook) {
@@ -1244,12 +1331,13 @@ export const createNotebook = asyncHandler(async (req, res) => {
   }
 
   // Tạo notebook với plant_group
-  // Normalize planted_date to Vietnam day-start to avoid timezone shifts.
-  // Use parseVietnamDate so date-only strings (e.g. '2025-11-24') are
-  // interpreted as Vietnam local dates instead of UTC-midnight.
+  // Parse planted_date if provided; otherwise use precise UTC creation time
+  // We store planted_date as a UTC instant (new Date()). For date-only strings
+  // parseVietnamDate will interpret them as UTC-day-start; ISO datetime strings
+  // will be parsed as provided.
   const normalizedPlantedDate = planted_date
     ? parseVietnamDate(planted_date)
-    : getVietnamToday();
+    : new Date();
 
   const newNotebook = await Notebook.create({
     user_id: req.user.id,
@@ -1260,6 +1348,7 @@ export const createNotebook = asyncHandler(async (req, res) => {
     description,
     cover_image,
     planted_date: normalizedPlantedDate,
+    planted_date_vn: formatVietnamDatetime(normalizedPlantedDate),
   });
 
   // ✅ TỰ ĐỘNG GÁN TEMPLATE nếu tìm được
@@ -1301,6 +1390,27 @@ export const createNotebook = asyncHandler(async (req, res) => {
 // 🔄 Cập nhật notebook
 export const updateNotebook = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  // Normalize planted_date (if provided) to Vietnam day-start to avoid timezone shift
+  if (req.body && req.body.planted_date !== undefined) {
+    try {
+      req.body.planted_date = req.body.planted_date
+        ? parseVietnamDate(req.body.planted_date)
+        : undefined;
+      // Also persist VN datetime string for display/storage
+      req.body.planted_date_vn =
+        req.body.planted_date !== undefined
+          ? req.body.planted_date
+            ? formatVietnamDatetime(req.body.planted_date)
+            : undefined
+          : req.body.planted_date_vn;
+    } catch (e) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid planted_date format",
+      });
+    }
+  }
+
   const notebook = await Notebook.findOneAndUpdate(
     { _id: id, user_id: req.user.id },
     req.body,

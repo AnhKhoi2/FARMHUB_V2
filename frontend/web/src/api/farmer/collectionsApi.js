@@ -33,6 +33,28 @@ const collectionsApi = {
     });
   },
 
+  // Upload a single image file and return the absolute URL
+  uploadImage: async (file) => {
+    const token = localStorage.getItem("accessToken");
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const resp = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Let axios set Content-Type with proper boundary
+      },
+    });
+
+    // API returns data in { success, data: { url: '/uploads/..' }}
+    const returned = resp.data?.data;
+    if (!returned || !returned.url) return null;
+
+    // Build absolute URL so client can use it directly in <img src>
+    const absolute = `${API_BASE_URL}${returned.url}`;
+    return absolute;
+  },
+
   // Cập nhật collection
   updateCollection: async (id, data) => {
     const token = localStorage.getItem("accessToken");

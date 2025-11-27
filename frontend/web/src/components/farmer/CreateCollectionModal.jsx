@@ -5,39 +5,38 @@ const CreateCollectionModal = ({ show, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     collection_name: "",
     description: "",
-    cover_image: "",
-    tags: [],
+    cover_file: null,
   });
-  const [tagInput, setTagInput] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit(formData, previewUrl);
     // Reset form
     setFormData({
       collection_name: "",
       description: "",
-      cover_image: "",
-      tags: [],
+      cover_file: null,
     });
-    setTagInput("");
+    // Do not revoke previewUrl here — parent may use it for optimistic UI.
   };
 
-  const handleAddTag = () => {
-    if (tagInput.trim() && formData.tags.length < 10) {
-      setFormData({
-        ...formData,
-        tags: [...formData.tags, tagInput.trim()],
-      });
-      setTagInput("");
-    }
+  // Note: cover image URL and tags removed as requested
+
+  const handleFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    // revoke previous
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setFormData({ ...formData, cover_file: file });
   };
 
-  const handleRemoveTag = (index) => {
-    setFormData({
-      ...formData,
-      tags: formData.tags.filter((_, i) => i !== index),
-    });
+  const handleRemoveImage = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setFormData({ ...formData, cover_file: null });
   };
 
   if (!show) return null;
@@ -98,73 +97,23 @@ const CreateCollectionModal = ({ show, onClose, onSubmit }) => {
             </small>
           </div>
 
+          {/* cover image URL and tags fields removed per request */}
+
           <div className="form-group">
-            <label>URL ảnh bìa</label>
-            <input
-              type="url"
-              value={formData.cover_image}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  cover_image: e.target.value,
-                })
-              }
-              placeholder="https://example.com/image.jpg"
-            />
-            {formData.cover_image && (
+            <label>Ảnh bìa (tải từ máy)</label>
+            <input type="file" accept="image/*" onChange={handleFileChange} />
+            {previewUrl && (
               <div className="image-preview">
-                <img
-                  src={formData.cover_image}
-                  alt="Preview"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>Tags (tối đa 10)</label>
-            <div className="tag-input-group">
-              <input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                placeholder="Nhập tag và nhấn Enter"
-                maxLength={50}
-                disabled={formData.tags.length >= 10}
-              />
-              <button
-                type="button"
-                className="btn-add-tag"
-                onClick={handleAddTag}
-                disabled={!tagInput.trim() || formData.tags.length >= 10}
-              >
-                + Thêm
-              </button>
-            </div>
-
-            {formData.tags.length > 0 && (
-              <div className="tags-container">
-                {formData.tags.map((tag, index) => (
-                  <span key={index} className="tag">
-                    {tag}
-                    <button
-                      type="button"
-                      className="btn-remove-tag"
-                      onClick={() => handleRemoveTag(index)}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
+                <img src={previewUrl} alt="Preview" />
+                <div className="preview-actions">
+                  <button
+                    type="button"
+                    className="btn-remove-image"
+                    onClick={handleRemoveImage}
+                  >
+                    Xóa ảnh
+                  </button>
+                </div>
               </div>
             )}
           </div>
