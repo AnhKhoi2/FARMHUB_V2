@@ -17,20 +17,21 @@ const Register = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
 
+  const [agree, setAgree] = useState(false);
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccessMessage("");
-
+    // gọi API như cũ
     const result = await dispatch(
-      registerThunk({ username, email, password })
+      registerThunk({ username, email, password, agreedToTerms: agree })
     );
 
     setLoading(false);
 
     if (result?.success) {
-      // Lấy message từ BE: "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản."
       const msg =
         result.message ||
         "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.";
@@ -38,12 +39,11 @@ const Register = () => {
       setSuccessMessage(msg);
       setError(null);
 
-      // Tự động chuyển sang trang login sau 2 giây
       setTimeout(() => {
         navigate("/login");
       }, 2000);
     } else if (result?.message) {
-      setError(result.message); // in đúng message lỗi từ BE
+      setError(result.message);
     } else {
       setError("Đăng ký thất bại. Vui lòng thử lại.");
     }
@@ -61,27 +61,21 @@ const Register = () => {
 
           {/* Thông báo thành công */}
           {successMessage && (
-            <div className="success-message">
-              {successMessage}
-            </div>
+            <div className="success-message">{successMessage}</div>
           )}
 
           {/* Thông báo lỗi */}
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
+          {error && <div className="error-message">{error}</div>}
 
-          <form onSubmit={handleRegister}>
+          <form onSubmit={handleRegister} noValidate>
             <div className="input-box">
               <span className="icon">
                 <ion-icon name="person"></ion-icon>
               </span>
               <input
                 type="text"
-                required
                 value={username}
+                placeholder=" "
                 onChange={(e) => setUsername(e.target.value)}
               />
               <label>Username</label>
@@ -93,8 +87,8 @@ const Register = () => {
               </span>
               <input
                 type="email"
-                required
                 value={email}
+                placeholder=" "
                 onChange={(e) => setEmail(e.target.value)}
               />
               <label>Email</label>
@@ -103,8 +97,8 @@ const Register = () => {
             <div className="input-box" style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
-                required
                 value={password}
+                placeholder=" "
                 onChange={(e) => setPassword(e.target.value)}
               />
 
@@ -130,7 +124,12 @@ const Register = () => {
 
             <div className="remember-forgot">
               <label>
-                <input type="checkbox" required /> I agree to terms & conditions
+                <input
+                  type="checkbox"
+                  checked={agree}
+                  onChange={(e) => setAgree(e.target.checked)}
+                />
+                I agree to terms & conditions
               </label>
             </div>
 
