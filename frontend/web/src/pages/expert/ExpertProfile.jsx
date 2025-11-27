@@ -70,44 +70,38 @@ export default function ExpertProfile() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // ================================
+  // ⭐ SỬA ĐÚNG: CHỈ GỌI 1 ROUTE DUY NHẤT
+  // ================================
   useEffect(() => {
     (async () => {
-      const candidates = ["/api/experts/me/basic", "/experts/me/basic"];
-      let ok = false;
+      try {
+        const res = await axiosClient.get("/api/experts/me/basic");
+        const data = res?.data?.data;
 
-      for (const url of candidates) {
-        try {
-          const res = await axiosClient.get(url);
-          const data = res?.data?.data;
-          if (data && (data.name || data.email)) {
-            const payload = {
-              name: data.name || "Expert",
-              email: data.email || "",
-              role: data.role || "Chuyên gia nông nghiệp",
-              phone: data.phone || "",
-              avatarSeed: data.avatarSeed || "",
-              avatar: data.avatar || "",
-              notifications: Number(data.notifications || 0),
-            };
+        if (!data) throw new Error("No data");
 
-            setBasic(payload);
-            setForm({
-              name: payload.name,
-              email: payload.email,
-              role: payload.role,
-              phone: payload.phone,
-              avatarSeed: payload.avatarSeed || "",
-            });
+        const payload = {
+          name: data.name || "Expert",
+          email: data.email || "",
+          role: data.role || "Chuyên gia nông nghiệp",
+          phone: data.phone || "",
+          avatarSeed: data.avatarSeed || "",
+          avatar: data.avatar || "",
+          notifications: Number(data.notifications || 0),
+        };
 
-            setPhotoPreview(payload.avatar || null);
-
-            ok = true;
-            break;
-          }
-        } catch {}
-      }
-
-      if (!ok) {
+        setBasic(payload);
+        setForm({
+          name: payload.name,
+          email: payload.email,
+          role: payload.role,
+          phone: payload.phone,
+          avatarSeed: payload.avatarSeed || "",
+        });
+        setPhotoPreview(payload.avatar || null);
+      } catch (err) {
+        console.log("Load expert basic failed → dùng fallback");
         const fallback = getLocalUserFallback();
         setBasic(fallback);
         setForm({
@@ -201,6 +195,7 @@ export default function ExpertProfile() {
     try {
       let avatarUrlToSend = null;
 
+      // Upload ảnh nếu có file mới
       if (photoFile) {
         try {
           const fd = new FormData();
@@ -219,7 +214,9 @@ export default function ExpertProfile() {
                 "";
               returnedUrl =
                 base.replace(/\/$/, "") +
-                (returnedUrl.startsWith("/") ? returnedUrl : "/" + returnedUrl);
+                (returnedUrl.startsWith("/")
+                  ? returnedUrl
+                  : "/" + returnedUrl);
             }
             avatarUrlToSend = returnedUrl;
           } else {
@@ -333,7 +330,7 @@ export default function ExpertProfile() {
                 try {
                   await dispatch(logoutThunk());
                 } catch {}
-                  navigate("/login");
+                navigate("/login");
               }}
             >
               <LogOut size={18} />
@@ -491,6 +488,7 @@ export default function ExpertProfile() {
                 >
                   Hủy
                 </button>
+
                 <button className="xp-btn" disabled={saving}>
                   {saving ? "Đang lưu…" : "Lưu thay đổi"}
                 </button>
@@ -507,10 +505,7 @@ export default function ExpertProfile() {
                 Trở về trang chuyên gia
               </button>
 
-              <button
-                className="xp-btn outline"
-                onClick={() => setEditing(true)}
-              >
+              <button className="xp-btn outline" onClick={() => setEditing(true)}>
                 Chỉnh sửa hồ sơ
               </button>
             </div>

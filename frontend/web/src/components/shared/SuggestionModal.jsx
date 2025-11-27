@@ -6,12 +6,13 @@ import { updateUserProfile } from "../../redux/authSlice";
 
 const { Option } = Select;
 
-export default function SuggestionModal({ open, onClose, mode = "onboarding" }) {
+export default function SuggestionModal({ open, onClose, mode = "onboarding", inline = false }) {
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState({});
   const [selected, setSelected] = useState({});
   const [suggestedModels, setSuggestedModels] = useState([]);
   const [error, setError] = useState(null);
+  const [viewing, setViewing] = useState(mode === "view");
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -39,6 +40,8 @@ export default function SuggestionModal({ open, onClose, mode = "onboarding" }) 
       const res = await axiosClient.post("/profile/model-suggestion/select", { selectedOptions: selected });
       // after saving, fetch suggestions to show
       await fetchSuggestions();
+      // switch to suggestions view inside the same component
+      setViewing(true);
       try {
         const modelSuggestion = res.data?.data?.modelSuggestion || { selectedOptions: selected };
         // update redux profile so app immediately knows user has selected options
@@ -85,8 +88,13 @@ export default function SuggestionModal({ open, onClose, mode = "onboarding" }) 
 
   useEffect(() => {
     if (mode === "view" && open) {
+      setViewing(true);
       fetchSuggestions();
+      return;
     }
+
+    // sync viewing with props when modal/panel opens or mode changes
+    setViewing(mode === "view");
   }, [open, mode]);
 
   const renderForm = () => {
@@ -242,9 +250,23 @@ export default function SuggestionModal({ open, onClose, mode = "onboarding" }) 
     );
   };
 
+  const title = viewing || mode === "view" ? "Gợi ý model của bạn" : "Chọn tuỳ chọn model của bạn";
+
+  if (inline) {
+    const panelStyle = { padding: 16, background: "#fff", borderRadius: 8 };
+    return (
+      <div style={{ marginTop: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <h3 style={{ margin: 0 }}>{title}</h3>
+        </div>
+        <div style={panelStyle}>{viewing ? renderSuggestions() : renderForm()}</div>
+      </div>
+    );
+  }
+
   return (
-    <Modal open={open} title={mode === "onboarding" ? "Chọn tuỳ chọn model của bạn" : "Gợi ý model của bạn"} onCancel={onClose} footer={null} width={880}>
-      {mode === "onboarding" ? renderForm() : renderSuggestions()}
+    <Modal open={open} title={title} onCancel={onClose} footer={null} width={880}>
+      {viewing ? renderSuggestions() : renderForm()}
     </Modal>
   );
 }

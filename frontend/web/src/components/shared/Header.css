@@ -468,20 +468,34 @@
     }
   }
 /* Căn đều nội dung 2 mục Hồ Sơ & Đăng Xuất */
+/* Dropdown: align icon + label to the left for better readability */
 .user-dropdown-menu li a,
-.user-dropdown-menu li button.logout-btn {
-  text-align: center !important;     /* căn giữa chữ */
-  justify-content: center !important; /* căn giữa cả icon + chữ */
-  gap: 8px !important;
-  padding: 0.8rem 1rem !important;
+.user-dropdown-menu li button {
+  text-align: left !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  padding: 0.6rem 0.9rem !important;
 }
 
-/* Icon cũng căn giữa */
-.user-dropdown-menu li a svg {
-  display: block;
-  margin-right: 0 !important;
+/* Icon spacing */
+.user-dropdown-menu li a svg,
+.user-dropdown-menu li button svg {
+  display: inline-block;
+  margin-right: 8px;
+  width: 18px;
+  height: 18px;
 }
-.user-dropdown-menu li a {
-    font-size: 15px !important;   /* sửa tại đây */
-  }
+
+/* Keep Logout visually centered and prominent */
+.user-dropdown-menu li .logout-btn {
+  text-align: center !important;
+  justify-content: center !important;
+  padding: 0.75rem 1rem !important;
+}
+
+/* Slightly larger readable font */
+.user-dropdown-menu li a,
+.user-dropdown-menu li button {
+  font-size: 15px !important;
+}
   
