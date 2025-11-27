@@ -35,6 +35,9 @@ import AdminPost from "../pages/admin/AdminPost";
 import AdminGuides from "../pages/admin/AdminGuides";
 // lazy load để tránh require() trên browser
 const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
+const AdminTransactions = React.lazy(() =>
+  import("../pages/admin/AdminTransactions")
+);
 
 // Admin layout + nested
 import AdminLayout from "../components/AdminLayout.jsx";
@@ -169,6 +172,16 @@ export default function AppRoutes() {
             <AdminRoute>
               <React.Suspense fallback={<div>Loading...</div>}>
                 <AdminUsers />
+              </React.Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/transactions"
+          element={
+            <AdminRoute>
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <AdminTransactions />
               </React.Suspense>
             </AdminRoute>
           }
