@@ -1120,11 +1120,11 @@ export default function ProfilePage() {
 
               {/* Lịch sử đơn */}
               <div className="pt-4 border-t">
-                {/* <h3 className="font-semibold mb-2 text-agri-primary">
+                <h3 className="font-semibold mb-2 text-agri-primary">
                   Lịch sử Đơn đã nộp
-                </h3> */}
+                </h3>
 
-                {/* <div className="overflow-x-auto rounded-xl border">
+                <div className="overflow-x-auto rounded-xl border">
                   <table className="min-w-full text-sm agri-table">
                     <thead>
                       <tr>
@@ -1181,7 +1181,7 @@ export default function ProfilePage() {
                       )}
                     </tbody>
                   </table>
-                </div> */}
+                </div>
 
                 {!hasApproved && hasPending && (
                   <p className="text-sm text-agri-gray mt-3 p-3 bg-agri-green-light rounded-lg">

@@ -111,3 +111,42 @@
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
   }
+/* ==== FONT MẢNH – MÀU NHẸ – GIỐNG HÌNH ==== */
+
+/* Toàn bảng */
+.table th,
+.table td {
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+    color: #1f2937 !important;   /* màu giống hình */
+    font-weight: 400 !important; /* chữ mảnh */
+    letter-spacing: 0.2px;
+}
+
+/* Header không bold */
+.table thead th {
+    background: #f2f8f2 !important;
+    font-weight: 500 !important;
+    color: #1f2937 !important;
+}
+
+/* Dòng dữ liệu */
+.table tbody td {
+    font-weight: 400 !important;
+}
+
+/* Hover nhẹ */
+.table tbody tr:hover td {
+    background: #f9fafb !important;
+}
+
+/* Icon hành động */
+.table td button svg {
+    stroke-width: 1.8; /* icon mảnh hơn cho đẹp */
+}
+
+/* Khoảng cách dòng */
+.table td {
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+}
