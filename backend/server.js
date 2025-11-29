@@ -21,6 +21,7 @@ import usersRoute from "./routes/users.js";
 import expertRoutes from "./routes/expert.routes.js";
 import plantTemplateRoutes from "./routes/plantTemplates.js";
 import uploadRoutes from "./routes/upload.js";
+import plantGroupsRoute from "./routes/plantGroups.js";
 import collectionsRoute from "./routes/collections.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -110,6 +111,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/api/plant-templates", plantTemplateRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/plant-groups", plantGroupsRoute);
 // Legacy/compatibility: some frontends post to /upload (no /api prefix)
 app.use("/upload", uploadRoutes);
 app.use("/api/collections", collectionsRoute);

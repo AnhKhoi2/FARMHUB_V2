@@ -52,27 +52,52 @@ export default function ManagerGuides() {
   const [total, setTotal] = useState(0);
   const [plantSearch, setPlantSearch] = useState("");
   const [category, setCategory] = useState("");
-
+  // availablePlantTags: array of { value: slug, label: displayName }
+  const [availablePlantTags, setAvailablePlantTags] = useState([]);
   // ====== STATE CHAT ======
   const [chatOpen, setChatOpen] = useState(false);
   const handleChatClick = () => setChatOpen(true);
 
-  const availablePlantTags = [
-    "Rau củ dễ chăm",
-    "Trái cây ngắn hạn",
-    "Cây gia vị",
-    "Trồng trong chung cư",
-    "Ít thời gian chăm sóc",
-    "Cây leo nhỏ",
-  ];
+  // Fetch available plant groups/categories from backend
+  const fetchPlantGroups = useCallback(async () => {
+    let mounted = true;
+    try {
+      const res = await axiosClient.get("/api/plant-groups");
+      const data = res.data?.data || [];
+      console.log('[DEBUG] /api/plant-groups response count=', (data || []).length, data);
+      // Normalize to { value: slugOrId, label: displayName }
+      const items = data
+        .map((d) => {
+          if (!d) return null;
+          if (typeof d === "string") return { value: d, label: d };
+          const name = d.name || d.slug || d._id;
+          const value = d.slug || d._id || name;
+          return { value, label: name };
+        })
+        .filter(Boolean);
+      // Prepend an explicit "TẤT CẢ" option (empty value) so users can select all
+      if (mounted) {
+        const withAll = [{ value: "", label: "TẤT CẢ" }, ...items];
+        setAvailablePlantTags(withAll);
+      }
+    } catch (err) {
+      console.warn("Failed to load plant groups:", err?.message || err);
+    }
+    return () => (mounted = false);
+  }, []);
+
+  useEffect(() => {
+    fetchPlantGroups();
+  }, [fetchPlantGroups]);
 
   const fetchGuides = useCallback(
-    async (p = 1, l = limit) => {
+    async (p = 1, l = limit, cat) => {
       setLoading(true);
       try {
         const params = { page: p, limit: l };
         if (plantSearch) params.plant = plantSearch;
-        if (category) params.category = category;
+        const catToUse = typeof cat !== "undefined" ? cat : category;
+        if (catToUse) params.category = catToUse;
 
         const res = await axiosClient.get("/guides", { params });
         const data = res.data || {};
@@ -101,6 +126,15 @@ export default function ManagerGuides() {
     const { current = 1, pageSize = limit } = pagination || {};
     setPage(current);
     setLimit(pageSize);
+    // If user used column filters (category), prefer server-side filtering
+    const filters = _filters || {};
+    if (filters.category && filters.category.length) {
+      // AntD passes an array of selected values; take first for single-select behavior
+      const sel = Array.isArray(filters.category) ? (filters.category[0] || "") : filters.category;
+      setCategory(sel);
+      fetchGuides(current, pageSize, sel);
+      return;
+    }
     fetchGuides(current, pageSize);
   };
 
@@ -167,6 +201,15 @@ export default function ManagerGuides() {
 
   const columns = [
     {
+      title: "STT",
+      key: "index",
+      width: 70,
+      render: (_t, _record, idx) => {
+        const num = (page - 1) * limit + (idx + 1);
+        return <span>{num}</span>;
+      },
+    },
+    {
       title: "Ảnh",
       dataIndex: "image",
       key: "image",
@@ -201,9 +244,19 @@ export default function ManagerGuides() {
       title: "Loại cây",
       dataIndex: "category",
       key: "category",
-      filters: availablePlantTags.map((t) => ({ text: t, value: t })),
-      onFilter: (value, record) => record.category === value,
-      render: (cat) => <Tag color="green">{cat || "Không có"}</Tag>,
+      filters: availablePlantTags.map((t) => ({ text: t.label, value: t.value })),
+      // try matching by plantTags label OR by category slug/plant_group
+      onFilter: (value, record) => {
+        // empty value means "TẤT CẢ" — match all
+        if (value === "") return true;
+        const label = (availablePlantTags.find((a) => a.value === value) || {}).label || value;
+        const byTags = Array.isArray(record.plantTags) && record.plantTags.includes(label);
+        const bySlug = (record.category_slug && record.category_slug === value) || (record.plant_group && record.plant_group === value);
+        return byTags || bySlug;
+      },
+      render: (_cat, record) => (
+        <Tag color="green">{record.category || (Array.isArray(record.plantTags) && record.plantTags[0]) || "Không có"}</Tag>
+      ),
     },
     {
       title: "Ngày tạo",
@@ -301,7 +354,9 @@ export default function ManagerGuides() {
                 placeholder="Tìm theo tên cây hoặc tiêu đề"
                 onSearch={(v) => {
                   setPlantSearch(v);
-                  fetchGuides(1, limit);
+                  // When searching via the main Search button, ignore current category
+                  // so the search is performed across all categories.
+                  fetchGuides(1, limit, "");
                 }}
                 allowClear
                 enterButton={<SearchOutlined />}
@@ -312,15 +367,22 @@ export default function ManagerGuides() {
                 value={category}
                 onChange={(v) => {
                   setCategory(v);
-                  fetchGuides(1, limit);
+                  fetchGuides(1, limit, v);
+                }}
+                onDropdownVisibleChange={(open) => {
+                  if (open) fetchPlantGroups();
                 }}
                 style={{ minWidth: 220 }}
                 allowClear
+                showSearch
+                optionFilterProp="children"
+                dropdownMatchSelectWidth={false}
+                dropdownStyle={{ maxHeight: 300, overflow: 'auto' }}
                 placeholder="-- Lọc theo loại cây --"
               >
-                {availablePlantTags.map((t) => (
-                  <Option key={t} value={t}>
-                    {t}
+                {availablePlantTags.map(({ value, label }) => (
+                  <Option key={value} value={value}>
+                    {label}
                   </Option>
                 ))}
               </Select>

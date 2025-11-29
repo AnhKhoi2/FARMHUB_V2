@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import guidesApi from "../../api/shared/guidesApi";
-import { Card, Row, Col, Typography, Spin, message, Input, Pagination, Select } from "antd";
+import axiosClient from "../../api/shared/axiosClient";
+import { Card, Row, Col, Typography, Spin, message, Input, Pagination, Select, Button } from "antd";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
@@ -12,6 +13,7 @@ export default function Guides() {
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [categories, setCategories] = useState([]);
+  const [availablePlantTags, setAvailablePlantTags] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(18);
@@ -70,6 +72,31 @@ export default function Guides() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // fetch plant groups from backend API and normalize to { label, value }
+  const fetchPlantGroups = async () => {
+    try {
+      const res = await axiosClient.get("/api/plant-groups");
+      const data = res.data?.data || [];
+      const items = (data || [])
+        .map((d) => {
+          if (!d) return null;
+          if (typeof d === "string") return { label: d, value: d };
+          const name = d.name || d.slug || d._id;
+          const value = d.slug || d._id || name;
+          return { label: name, value };
+        })
+        .filter(Boolean);
+      const withAll = [{ label: "TẤT CẢ", value: "" }, ...items];
+      setAvailablePlantTags(withAll);
+    } catch (e) {
+      console.warn("Failed to load plant groups", e?.message || e);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlantGroups();
+  }, []);
+
   const onSearch = (val) => {
     setQ(val);
     fetchGuides(val, 1, pageSize, selectedCategory);
@@ -112,8 +139,16 @@ export default function Guides() {
                 onChange={onCategoryChange}
                 placeholder="Tất cả danh mục"
                 style={{ minWidth: 160 }}
-                options={[{ label: 'Tất cả', value: '' }, ...(categories || []).map((c) => ({ label: c, value: c }))]}
+                options={availablePlantTags.length ? availablePlantTags : [{ label: 'TẤT CẢ', value: '' }]}
                 allowClear
+                showSearch
+                optionFilterProp="label"
+                dropdownMatchSelectWidth={false}
+                dropdownStyle={{ maxHeight: 400, overflow: 'auto', zIndex: 2000 }}
+                getPopupContainer={(trigger) => document.body}
+                onDropdownVisibleChange={(open) => {
+                  if (open) fetchPlantGroups();
+                }}
               />
               <Input.Search
                 placeholder="Tìm rau/cây trồng..."
