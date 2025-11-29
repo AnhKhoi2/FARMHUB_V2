@@ -78,7 +78,11 @@ export default function ExpertProfile() {
       try {
         const res = await axiosClient.get("/api/experts/me/basic");
         const data = res?.data?.data;
-
+        if (!data || data.role !== "expert") {
+          navigate("/");   // hoặc navigate("/home")
+          return;
+        }
+        
         if (!data) throw new Error("No data");
 
         const payload = {
