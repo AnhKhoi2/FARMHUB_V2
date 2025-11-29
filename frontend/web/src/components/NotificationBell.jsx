@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../css/NotificationBell.css";
+import toast from "react-hot-toast";
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
@@ -15,6 +16,98 @@ const NotificationBell = () => {
     // Poll for new notifications every 30 seconds (only if logged in)
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Listen to storage events so other tabs know when auto-open has been used
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === AUTO_SHOWN_KEY && e.newValue) {
+        autoShownRef.current = true;
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // Keep track of seen notification ids so we can detect new ones
+  const seenNotifIds = useRef(new Set());
+
+  // Track whether we've already auto-opened/played notification sound across tabs
+  // We persist this in localStorage so other tabs won't repeat the auto-open behavior.
+  const AUTO_SHOWN_KEY = "fh_notifications_auto_shown";
+  const autoShownRef = useRef(
+    Boolean(localStorage.getItem(AUTO_SHOWN_KEY)) || false
+  );
+
+  // Background poll: fetch full notifications silently and auto-open dropdown
+  useEffect(() => {
+    let mounted = true;
+
+    const poll = async () => {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const resp = await axios.get(
+          `${
+            import.meta.env.VITE_API_URL || "http://localhost:5000"
+          }/api/notifications`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const notifs = resp.data?.data || [];
+        if (!mounted) return;
+
+        // find new unread notifications that we haven't seen
+        const newUnreads = notifs.filter(
+          (n) => !n.is_read && !seenNotifIds.current.has(n._id)
+        );
+
+        // update seen set for current notifications
+        notifs.forEach((n) => seenNotifIds.current.add(n._id));
+
+        if (newUnreads.length > 0) {
+          // update local state and unread count always
+          setNotifications(notifs);
+          setUnreadCount(resp.data?.meta?.unread_count || 0);
+
+          // Auto-open / play sound only once per browser (across tabs).
+          // Use localStorage flag to ensure other tabs don't repeat the behavior.
+          const alreadyAutoShown =
+            autoShownRef.current ||
+            Boolean(localStorage.getItem(AUTO_SHOWN_KEY));
+
+          if (!alreadyAutoShown) {
+            // show toast and open dropdown so user sees it the first time
+            toast.success(`Bạn có ${newUnreads.length} thông báo mới`);
+            setIsOpen(true);
+            try {
+              const audio = new Audio("/src/assets/sounds/notify.mp3");
+              audio.play().catch(() => {});
+            } catch (e) {}
+
+            // mark as shown across tabs
+            try {
+              localStorage.setItem(AUTO_SHOWN_KEY, new Date().toISOString());
+              autoShownRef.current = true;
+            } catch (e) {}
+          } else {
+            // If already auto-shown, still show a small toast but don't open or play sound.
+            toast(`Bạn có ${newUnreads.length} thông báo mới`);
+          }
+        }
+      } catch (e) {
+        // silent
+      }
+    };
+
+    // initial silent fetch to populate seen set
+    poll();
+    const id = setInterval(poll, 30000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
   }, []);
 
   const getToken = () =>
@@ -205,9 +298,38 @@ const NotificationBell = () => {
           <div className="notification-header">
             <h3>Thông báo</h3>
             {notifications.length > 0 && (
-              <button className="mark-all-read-btn" onClick={markAllAsRead}>
-                Đánh dấu tất cả đã đọc
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="mark-all-read-btn" onClick={markAllAsRead}>
+                  Đánh dấu tất cả đã đọc
+                </button>
+                <button
+                  className="clear-all-btn"
+                  onClick={async () => {
+                    if (!confirm("Bạn có chắc muốn xóa tất cả thông báo?"))
+                      return;
+                    const token = getToken();
+                    if (!token) return;
+                    try {
+                      await axios.delete(
+                        `${
+                          import.meta.env.VITE_API_URL ||
+                          "http://localhost:5000"
+                        }/api/notifications/clear`,
+                        { headers: { Authorization: `Bearer ${token}` } }
+                      );
+                      // Update UI
+                      setNotifications([]);
+                      setUnreadCount(0);
+                      toast.success("Đã xóa tất cả thông báo");
+                    } catch (err) {
+                      console.error("Error clearing notifications:", err);
+                      toast.error("Không thể xóa thông báo");
+                    }
+                  }}
+                >
+                  Xóa tất cả
+                </button>
+              </div>
             )}
           </div>
 
@@ -226,10 +348,18 @@ const NotificationBell = () => {
                   notif.notebook_id &&
                   (notif.notebook_id._id || notif.notebook_id);
                 if (nid) {
-                  if (notif.type === "stage_overdue") {
+                  // Navigate to overdue detail for overdue and reminder types
+                  if (
+                    notif.type === "stage_overdue" ||
+                    notif.type === "daily_reminder" ||
+                    notif.type === "stage_reminder"
+                  ) {
                     link = `/farmer/notebooks/${nid}/overdue`;
+                  } else if (notif.type === "observation_required") {
+                    // Open notebook and switch to Observations tab
+                    link = `/farmer/notebooks/${nid}?tab=observations`;
                   } else {
-                    // For warnings, skipped, completed, daily reminders -> open notebook detail
+                    // For warnings, skipped, completed -> open notebook detail
                     link = `/farmer/notebooks/${nid}`;
                   }
                 }

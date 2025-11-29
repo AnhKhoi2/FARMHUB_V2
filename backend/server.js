@@ -35,6 +35,7 @@ import vnpayRoutes from "./routes/vnpay.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
 import { startDailyTasksNotificationJob } from "./jobs/dailyTasksNotificationJob.js";
+import { startObservationNotificationJob } from "./jobs/observationNotificationJob.js";
 import pino from "pino-http";
 import ApiError, { NotFound } from "./utils/ApiError.js";
 import geocodeRoute from "./routes/geocode.js";
@@ -130,9 +131,10 @@ const __dirname = path.dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // 🔄 Khởi chạy cron jobs
-startStageMonitoringJob(); // Chạy hàng ngày lúc 8:00 sáng - kiểm tra stage status
-startTaskReminderJob(); // Chạy hàng ngày lúc 9:00 sáng - nhắc nhở tasks chưa hoàn thành
-startDailyTasksNotificationJob(); // Chạy hàng ngày lúc 7:00 sáng VN - thông báo tasks đã được sinh
+startStageMonitoringJob(); // Chạy hàng ngày lúc 08:00 VN (01:00 UTC) - kiểm tra stage status
+startTaskReminderJob(); // Chạy hàng ngày lúc 07:00 UTC - nhắc nhở tasks chưa hoàn thành
+startDailyTasksNotificationJob(); // Chạy hàng ngày lúc 07:00 UTC - thông báo tasks đã được sinh
+startObservationNotificationJob(); // Chạy hàng ngày lúc 07:00 UTC - thông báo yêu cầu quan sát
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);

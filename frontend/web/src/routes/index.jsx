@@ -461,6 +461,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/farmer/notebooks/:id/overdue"
+          element={
+            <PrivateRoute>
+              <OverdueDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/farmer/notebooks/:id/edit"
           element={
             <PrivateRoute>

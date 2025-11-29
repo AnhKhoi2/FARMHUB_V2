@@ -40,6 +40,12 @@ router.patch(
 );
 
 /**
+ * @route DELETE /api/notifications/clear
+ * @desc Xóa tất cả thông báo của user
+ */
+router.delete("/clear", notificationController.clearNotifications);
+
+/**
  * @route DELETE /api/notifications/:id
  * @desc Xóa một thông báo
  */
