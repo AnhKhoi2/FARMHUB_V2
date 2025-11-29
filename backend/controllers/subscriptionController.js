@@ -22,6 +22,27 @@ export const subscriptionController = {
       usage: { used, limit: limitLabel },
     });
   }),
+
+  // PATCH /subscription/downgrade
+  downgrade: asyncHandler(async (req, res) => {
+    const userId = req.user?.id;
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    // Downgrade to free
+    user.subscriptionPlan = "free";
+    user.subscriptionExpires = null;
+    await user.save();
+
+    return ok(res, {
+      message: "Đã hạ gói về Free",
+      subscriptionPlan: user.subscriptionPlan,
+      subscriptionExpires: user.subscriptionExpires || null,
+      user: await User.findById(userId).select(
+        "-password -refreshTokens -resetPasswordToken -resetPasswordExpires"
+      ),
+    });
+  }),
 };
 
 export default subscriptionController;
