@@ -40,9 +40,17 @@ const userSchema = new mongoose.Schema(
     verifyEmailCount: { type: Number, default: 0 }, // số lần gửi mail
     lastVerifyEmailAt: { type: Date, default: null }, // lần gửi gần nhất
 
-      // ✅ Lưu việc người dùng đã đồng ý điều khoản
+    // ✅ Lưu việc người dùng đã đồng ý điều khoản
     acceptedTerms: { type: Boolean, default: false },
     acceptedTermsAt: { type: Date, default: null },
+
+    // 🟢 SUBSCRIPTION FIELDS
+    subscriptionPlan: {
+      type: String,
+      enum: ["free", "smart", "vip", "pro"],
+      default: "free",
+    },
+    subscriptionExpires: { type: Date, default: null },
   },
   { timestamps: true }
 );

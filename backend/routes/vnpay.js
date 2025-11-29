@@ -3,6 +3,8 @@ import crypto from "crypto";
 import qs from "qs";
 import moment from "moment";
 import Order from "../models/Order.js";
+import User from "../models/User.js";
+import { sendSubscriptionUpgradeNotification } from "../controllers/notificationController.js";
 import requestIp from "request-ip";
 import "dotenv/config";
 
@@ -197,6 +199,9 @@ router.get("/return", async (req, res) => {
 
     await order.save();
 
+    // Cập nhật subscription nếu thanh toán thành công
+    await updateSubscriptionForOrder(order);
+
     // 🔥 Redirect về frontend sau khi thanh toán xong
     if (vnp_Params.vnp_ResponseCode === "00") {
       return res.redirect(
@@ -266,6 +271,9 @@ router.get("/ipn", async (req, res) => {
       order.paidAt = new Date();
       order.paymentInfo = vnp_Params;
       await order.save();
+
+      // Cập nhật subscription nếu thanh toán thành công
+      await updateSubscriptionForOrder(order);
 
       console.log("✅ IPN: Thanh toán thành công:", orderRef);
       return res.status(200).json({ RspCode: "00", Message: "Success" });
@@ -353,6 +361,60 @@ router.get("/orders/user/:userId", async (req, res) => {
     });
   }
 });
+
+// 🟢 Hàm cập nhật subscription cho user sau thanh toán thành công
+async function updateSubscriptionForOrder(order) {
+  if (order.paymentStatus !== "paid") return;
+
+  // Kiểm tra nếu order có item subscription
+  const subscriptionItem = order.items.find(
+    (item) => item.itemType === "Subscription"
+  );
+  if (!subscriptionItem) return;
+
+  // Mapping tên gói sang plan
+  const planMapping = {
+    "Gói Thông Minh": "smart",
+    "Gói VIP": "vip",
+    "Gói Pro": "pro",
+  };
+
+  const plan = planMapping[subscriptionItem.name];
+  if (!plan) {
+    console.warn("⚠️ Không tìm thấy mapping cho gói:", subscriptionItem.name);
+    return;
+  }
+
+  // Tính expires: giả sử 30 ngày từ paidAt
+  const expires = new Date(order.paidAt);
+  expires.setMonth(expires.getMonth() + 1); // +1 tháng
+
+  // Cập nhật user
+  await User.findByIdAndUpdate(order.userId, {
+    subscriptionPlan: plan,
+    subscriptionExpires: expires,
+  });
+
+  console.log(
+    `✅ Cập nhật subscription cho user ${
+      order.userId
+    }: plan=${plan}, expires=${expires.toISOString()}`
+  );
+
+  // Gửi thông báo cho user
+  try {
+    await sendSubscriptionUpgradeNotification({
+      userId: order.userId,
+      plan,
+      planName: subscriptionItem.name,
+      expires,
+      orderRef: order.orderRef,
+      amount: order.totalAmount,
+    });
+  } catch (err) {
+    console.error("Lỗi khi gửi notification subscription_upgrade:", err);
+  }
+}
 
 // 🧩 Hàm sort object chuẩn VNPay
 function sortObject(obj) {

@@ -7,7 +7,7 @@ export default function AdminTransactions() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit] = useState(10); // show 10 transactions per page
   const [total, setTotal] = useState(0);
 
   // Filters
@@ -111,12 +111,38 @@ export default function AdminTransactions() {
         <style>{`
         .transactions-page { --primary: #00FF4C; --dark: #23622B; --muted: #6c757d; }
         .transactions-page .card { border: 0; border-radius: 12px; box-shadow: 0 6px 18px rgba(32,45,60,0.06); }
-        .transactions-page .card .card-body { padding: 14px; }
+        .transactions-page .card .card-body { padding: 14px; background: #ffffff; min-height: unset; }
         .transactions-page .form-label { font-size: 13px; color: #42515a; }
         .transactions-page .form-control, .transactions-page .form-select { border-radius: 8px; border: 1px solid #e6eef0; }
         .transactions-page .input-group .form-control { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
         .transactions-page .btn-primary { background: var(--primary); border: 0; box-shadow: 0 6px 18px rgba(0,200,83,0.12); }
-        .transactions-page .btn-outline-secondary { border-radius: 8px; }
+        .transactions-page .btn-outline-secondary { border-radius: 8px; min-width: 110px; max-width: 160px; padding: 6px 12px; white-space: nowrap; }
+
+        /* Themed buttons: outline emerald for "Làm mới", solid emerald for "Tải xuống các báo cáo" */
+        .transactions-page .btn-outline-secondary {
+          border: 1px solid var(--primary);
+          color: var(--dark);
+          background: transparent;
+          font-weight: 700;
+        }
+
+        .transactions-page .btn-outline.border-black {
+          background: var(--primary);
+          color: #ffffff;
+          border: 1px solid var(--primary);
+          box-shadow: 0 6px 18px rgba(16,185,129,0.12);
+          min-width: 120px;
+          padding: 6px 14px;
+          font-weight: 700;
+        }
+
+        .transactions-page .btn-outline-secondary:hover {
+          background: rgba(16,185,129,0.06);
+        }
+
+        .transactions-page .btn-outline.border-black:hover {
+          filter: brightness(0.95);
+        }
         .transactions-page table thead th { background: #f3fff5; color: var(--dark); font-weight: 700; border-bottom: 0; }
         .transactions-page table tbody tr { border-bottom: 1px solid #f3f6f7; }
         .transactions-page table tbody tr:hover { background: rgba(0, 200, 83, 0.03); }
@@ -158,6 +184,9 @@ export default function AdminTransactions() {
           border: 1px solid rgba(0,0,0,0.08) !important;
         }
         .transactions-page .pagination-info { color: #333; font-weight: 600; }
+
+        /* Ensure the table area doesn't show patterned background from parent layers */
+        .transactions-page .card .table-responsive { background: #ffffff; border-radius: 8px; overflow: hidden; }
       `}</style>
         <div className="mb-3">
           <h2 className="mb-2">Giao dịch</h2>
@@ -236,32 +265,34 @@ export default function AdminTransactions() {
                   </div>
                 </div>
 
-                <div className="col-auto ms-auto d-flex align-items-end">
-                  <div>
-                    <button
-                      className="btn btn-sm btn-outline-secondary me-2"
-                      onClick={() => {
-                        setDate("");
-                        setType("all");
-                        setCurrency("all");
-                        setStatus("all");
-                        setQ("");
-                        setPage(1);
-                        load(1);
-                      }}
-                    >
-                      Làm mới
-                    </button>
-                    <button
-                      className="btn btn-sm btn-outline border-black text-black hover:bg-black hover:text-white"
-                      onClick={exportCSV}
-                    >
-                      Tải xuống các báo cáo
-                    </button>
-                  </div>
-                </div>
+                {/* Buttons moved below filters to show horizontally */}
               </div>
             </div>
+          </div>
+
+          {/* Horizontal buttons row placed under the filters */}
+          <div className="d-flex justify-content-end gap-2 mb-3">
+            <button
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => {
+                setDate("");
+                setType("all");
+                setCurrency("all");
+                setStatus("all");
+                setQ("");
+                setPage(1);
+                load(1);
+              }}
+            >
+              Làm mới
+            </button>
+
+            <button
+              className="btn btn-sm btn-outline border-black text-black"
+              onClick={exportCSV}
+            >
+              Tải xuống các báo cáo
+            </button>
           </div>
         </div>
 
