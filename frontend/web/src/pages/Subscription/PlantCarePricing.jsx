@@ -5,6 +5,9 @@ import "./PlantCarePricing.css";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
 import vnpayService from "../../api/vnpayService";
+import axiosClient from "../../api/shared/axiosClient";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../redux/authSlice";
 
 const plans = [
   {
@@ -25,7 +28,7 @@ const plans = [
   {
     key: "smart",
     name: "Thông Minh",
-    price: 9900,
+    price: 99000,
     unit: "VNĐ/tháng",
     description: "Tự động hóa việc chăm sóc với công nghệ AI",
     features: [
@@ -45,6 +48,7 @@ const PlantCarePricing = () => {
   const [currentPlan, setCurrentPlan] = useState("basic");
 
   const user = useSelector((s) => s.auth.user);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     // Prefer backend field `subscriptionPlan`, fall back to older `plan` field
@@ -52,9 +56,37 @@ const PlantCarePricing = () => {
   }, [user]);
 
   const handleUpgrade = async (planKey) => {
-    // Nếu là gói basic (miễn phí), không cần thanh toán
+    // Nếu người dùng nhấn gói basic và hiện đang ở gói khác -> downgrade
     if (planKey === "basic") {
-      alert("Bạn đang sử dụng gói miễn phí!");
+      if (currentPlan === "basic") {
+        alert("Bạn đang sử dụng gói miễn phí!");
+        return;
+      }
+
+      // Hỏi xác nhận
+      const ok = window.confirm(
+        "Bạn có chắc muốn hạ xuống gói Miễn Phí? Hành động này sẽ mất quyền lợi của các gói trả phí."
+      );
+      if (!ok) return;
+
+      // Gọi API để hạ gói
+      try {
+        setLoading(true);
+        const resp = await axiosClient.patch("/api/subscription/downgrade");
+        // Cập nhật Redux user nếu backend trả về user
+        const updatedUser = resp.data?.user;
+        if (updatedUser) {
+          dispatch(setUser(updatedUser));
+        }
+        setCurrentPlan("basic");
+        alert("Bạn đã chuyển về gói Miễn Phí");
+      } catch (err) {
+        console.error("Downgrade error:", err);
+        alert("Không thể hạ gói, vui lòng thử lại sau");
+      } finally {
+        setLoading(false);
+      }
+
       return;
     }
 
