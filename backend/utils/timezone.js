@@ -1,18 +1,23 @@
 /**
- * Timezone utilities for Vietnam (UTC+7)
+ * Timezone utilities (canonical UTC day boundaries)
+ *
+ * This module provides helpers to normalize dates to a canonical day-start
+ * boundary using UTC (by default midnight UTC). You can configure a small
+ * offset (in minutes) via `UTC_DAY_START_MINUTES` environment variable
+ * to shift the day-start (useful for business rules that treat day-start
+ * slightly after midnight).
  */
 
 import moment from "moment-timezone";
-// This project now uses UTC as the canonical timezone for internal logic.
-// Keep an optional minute offset for the day-start boundary; default 0 (midnight UTC).
+// Use UTC_DAY_START_MINUTES if provided, fallback to VN_DAY_START_MINUTES for compatibility.
 const DAY_START_OFFSET_MINUTES = parseInt(
   process.env.UTC_DAY_START_MINUTES || process.env.VN_DAY_START_MINUTES || "0",
   10
 );
 
 /**
- * Get current date/time in Vietnam timezone
- * @returns {Date} Date object adjusted to Vietnam time
+ * Get current date/time (UTC instant). Kept as a small convenience wrapper.
+ * @returns {Date} Current Date (UTC instant)
  */
 export const getVietnamTime = () => {
   // Returns current time as a Date (UTC instant). Named for backward compatibility.
@@ -20,11 +25,10 @@ export const getVietnamTime = () => {
 };
 
 /**
- * Convert any date to Vietnam timezone day-start (00:00 + offset minutes)
- * This replaces the previous "midnight" concept so that a new day may start
- * at a small offset past midnight (e.g., 00:05).
+ * Convert any date to canonical UTC day-start (00:00 UTC + optional offset minutes)
+ * The returned Date is the UTC instant representing that day-start.
  * @param {Date} date - Date to convert
- * @returns {Date} Date at Vietnam day-start (as UTC representation)
+ * @returns {Date} Date at canonical UTC day-start (as UTC representation)
  */
 export const toVietnamMidnight = (date) => {
   // Normalize a date to the project's canonical day-start (UTC midnight + optional offset).
@@ -36,15 +40,15 @@ export const toVietnamMidnight = (date) => {
 };
 
 /**
- * Get today at Vietnam day-start (00:00 + offset minutes)
- * @returns {Date} Today at configured Vietnam day-start
+ * Get today at canonical UTC day-start (00:00 UTC + offset minutes)
+ * @returns {Date} Today at configured UTC day-start
  */
 export const getVietnamToday = () => {
   return toVietnamMidnight(new Date());
 };
 
 /**
- * Calculate difference in days between two dates using Vietnam day-start
+ * Calculate difference in days between two dates using canonical UTC day-start
  * (i.e., both dates are normalized to startOf('day') + offset minutes).
  * @param {Date} startDate - Start date
  * @param {Date} endDate - End date
@@ -64,7 +68,7 @@ export const getDaysDifferenceVN = (startDate, endDate) => {
 };
 
 /**
- * Format date to Vietnam timezone string (YYYY-MM-DD)
+ * Format date to canonical UTC date string (YYYY-MM-DD)
  * @param {Date} date - Date to format
  * @returns {string} Formatted date string (YYYY-MM-DD)
  */
@@ -73,10 +77,10 @@ export const formatVietnamDate = (date) => {
 };
 
 /**
- * Parse an input (string or Date) into a Vietnam-day-start Date.
- * - If input is a date-only string like 'YYYY-MM-DD', parse it as a
- *   Vietnam local date (not UTC) so clients sending date-only values
- *   are interpreted correctly in VN timezone.
+ * Parse an input (string or Date) into canonical UTC day-start Date.
+ * - If input is a date-only string like 'YYYY-MM-DD', parse it in UTC
+ *   and normalize to the configured day-start. This keeps behavior
+ *   consistent for clients sending date-only values.
  * - Otherwise, fall back to normal toVietnamMidnight(new Date(input)).
  */
 export const parseVietnamDate = (input) => {
@@ -107,10 +111,10 @@ export const parseVietnamDate = (input) => {
 };
 
 /**
- * Format a date/time into Vietnam timezone string with time.
+ * Format a date/time into UTC string with time.
  * Example: '2025-11-26 00:05:00'
  * @param {Date|string|number} date - Date to format
- * @returns {string|null} Formatted datetime string in VN timezone
+ * @returns {string|null} Formatted datetime string in UTC
  */
 export const formatVietnamDatetime = (date) => {
   if (!date) return null;

@@ -22,6 +22,7 @@ import usersRoute from "./routes/users.js";
 import expertRoutes from "./routes/expert.routes.js";
 import plantTemplateRoutes from "./routes/plantTemplates.js";
 import uploadRoutes from "./routes/upload.js";
+import plantGroupsRoute from "./routes/plantGroups.js";
 import collectionsRoute from "./routes/collections.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -33,9 +34,11 @@ import expertRatingRoutes from "./routes/expertRating.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import notificationRoutes from "./routes/notifications.js";
 import vnpayRoutes from "./routes/vnpay.js";
+import subscriptionRoutes from "./routes/subscription.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
 import { startDailyTasksNotificationJob } from "./jobs/dailyTasksNotificationJob.js";
+import { startObservationNotificationJob } from "./jobs/observationNotificationJob.js";
 import pino from "pino-http";
 import ApiError, { NotFound } from "./utils/ApiError.js";
 import geocodeRoute from "./routes/geocode.js";
@@ -115,6 +118,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/api/plant-templates", plantTemplateRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/plant-groups", plantGroupsRoute);
 // Legacy/compatibility: some frontends post to /upload (no /api prefix)
 app.use("/upload", uploadRoutes);
 app.use("/api/collections", collectionsRoute);
@@ -128,6 +132,7 @@ app.use("/admin/transactions", adminTransactionsRoute);
 // (legacy alias removed) '/admin/managerpost' is the canonical path for post management
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/vnpay", vnpayRoutes);
+app.use("/api/subscription", subscriptionRoutes);
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
@@ -135,9 +140,10 @@ const __dirname = path.dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // 🔄 Khởi chạy cron jobs
-startStageMonitoringJob(); // Chạy hàng ngày lúc 8:00 sáng - kiểm tra stage status
-startTaskReminderJob(); // Chạy hàng ngày lúc 9:00 sáng - nhắc nhở tasks chưa hoàn thành
-startDailyTasksNotificationJob(); // Chạy hàng ngày lúc 7:00 sáng VN - thông báo tasks đã được sinh
+startStageMonitoringJob(); // Chạy hàng ngày lúc 08:00 VN (01:00 UTC) - kiểm tra stage status
+startTaskReminderJob(); // Chạy hàng ngày lúc 07:00 UTC - nhắc nhở tasks chưa hoàn thành
+startDailyTasksNotificationJob(); // Chạy hàng ngày lúc 07:00 UTC - thông báo tasks đã được sinh
+startObservationNotificationJob(); // Chạy hàng ngày lúc 07:00 UTC - thông báo yêu cầu quan sát
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);

@@ -34,7 +34,8 @@ function getLocalUserFallback() {
             name,
             email: u.email || "",
             role: "Chuyên gia nông nghiệp",
-            avatar: u.avatar || "",
+            avatar: null,
+
 
           };
         }
@@ -166,17 +167,25 @@ export default function ExpertHome({
         const data = res?.data?.data;
 
         if (data) {
+          if (data.role !== "expert") {
+            navigate("/");
+            return;
+        }
           const payload = {
             name: data.name || "Expert",
             email: data.email || "",
             role: data.role || "Chuyên gia nông nghiệp",
             avatar: data.avatar, // luôn là ảnh upload hoặc DiceBear từ BE
           };
+          
           setProfile(payload);
 
           // Lưu đồng bộ cho tất cả màn hình dùng chung
+          localStorage.removeItem("authUser");
+          localStorage.removeItem("profile");
           localStorage.setItem("authUser", JSON.stringify(payload));
           localStorage.setItem("profile", JSON.stringify(payload));
+          
 
           setLoading(false);
 
@@ -186,10 +195,8 @@ export default function ExpertHome({
         console.error("Lỗi lấy profile từ API:", err);
       }
 
-      // Fallback chỉ khi API thật sự fail
-      const fallback = getLocalUserFallback();
-      setProfile(fallback);
-      setLoading(false);
+      navigate("/login");
+
     })();
   }, []);
 
@@ -350,12 +357,12 @@ export default function ExpertHome({
                       {m.description?.slice(0, 80)}...
                     </p>
 
-                    {/* <button
+                    <button
                       className="item-btn"
                       onClick={() => navigate(`/experthome/models/${m._id}`)}
                     >
                       Xem chi tiết
-                    </button> */}
+                    </button>
                   </div>
                 ))}
               </div>

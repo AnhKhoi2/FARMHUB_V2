@@ -81,13 +81,11 @@ const checkAllNotebooksForReminders = async () => {
  * Kiểm tra tasks chưa hoàn thành từ ngày hôm trước và gửi reminders
  */
 export const startTaskReminderJob = () => {
-  // Run daily at 02:00 UTC (equivalent to 09:00 Asia/Ho_Chi_Minh)
+  // Run daily at 07:00 UTC
   cron.schedule(
-    "0 2 * * *",
+    "0 7 * * *",
     async () => {
-      console.log(
-        "🕐 [CRON] Running daily task reminder job at 02:00 UTC (09:00 VN)"
-      );
+      console.log("🕐 [CRON] Running daily task reminder job at 07:00 UTC");
       try {
         await checkAllNotebooksForReminders();
         console.log("✅ [CRON] Task reminder job completed successfully");
@@ -98,7 +96,9 @@ export const startTaskReminderJob = () => {
     { timezone: "UTC" }
   );
 
-  console.log("✅ Task reminder cron job initialized (runs daily at 9:00 AM)");
+  console.log(
+    "✅ Task reminder cron job initialized (runs daily at 07:00 UTC)"
+  );
 };
 
 /**

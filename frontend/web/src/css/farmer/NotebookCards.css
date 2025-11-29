@@ -86,6 +86,11 @@
     line-height: 1.2
 }
 
+/* Ensure notebook card titles do not use text-shadow (override global rules) */
+.notebook-card .card-title {
+    text-shadow: none !important;
+}
+
 .card-desc {
     color: #111;
     font-size: 0.92rem;

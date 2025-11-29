@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import notebookApi from "../../api/farmer/notebookApi";
 import DailyChecklist from "../../components/farmer/DailyChecklist";
 import StageObservations from "../../components/farmer/StageObservations";
@@ -13,6 +13,7 @@ import { formatVietnamLocale } from "../../utils/timezone";
 const NotebookDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("progress");
   const [notebook, setNotebook] = useState(null);
   const [template, setTemplate] = useState(null);
@@ -26,8 +27,26 @@ const NotebookDetail = () => {
     if (id && id !== "undefined") {
       fetchNotebookData();
       checkDailyStatus();
+
+      // If URL contains ?tab=observations (or other tab), set active tab accordingly
+      try {
+        const params = new URLSearchParams(location.search);
+        const tab = params.get("tab");
+        if (tab) setActiveTab(tab);
+      } catch (e) {
+        // ignore
+      }
     }
   }, [id]);
+
+  // Also update activeTab when search changes (e.g., navigating with ?tab=...)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const tab = params.get("tab");
+      if (tab) setActiveTab(tab);
+    } catch (e) {}
+  }, [location.search]);
 
   // Listen for global notebook task updates (dispatched by axios interceptor)
   useEffect(() => {

@@ -83,6 +83,25 @@
     background: #f9fafb;
 }
 
+.notification-header .clear-all-btn,
+.notification-header .mark-all-read-btn {
+    background: transparent;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 12px;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.notification-header .clear-all-btn:hover {
+    background: rgba(239, 68, 68, 0.06);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
 .notification-header h3 {
     margin: 0;
     font-size: 18px;

@@ -216,13 +216,13 @@ export default function AdminExpertApplications() {
             <table className="table table-sm table-hover mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Full name</th>
+                  <th>Họ và Tên</th>
                   <th>Email</th>
-                  <th>Phone</th>
-                  <th>Expertise</th>
-                  <th>Experience</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>Số Điện Thoại</th>
+                  <th>Lĩnh Vực</th>
+                  <th>Kinh Nghiệm</th>
+                  <th>Trạng Thái</th>
+                  <th>Hành Động</th>
                 </tr>
               </thead>
               <tbody>

@@ -96,7 +96,7 @@ import vnpayService from "../api/vnpayService";
 const handlePayment = async () => {
   try {
     const response = await vnpayService.createPaymentUrl({
-      amount: 99000,
+      amount: 9900,
       orderDescription: "Nâng cấp gói Thông Minh",
       userId: user._id,
       items: [
@@ -104,7 +104,7 @@ const handlePayment = async () => {
           itemType: "Subscription",
           name: "Gói Thông Minh",
           quantity: 1,
-          price: 99000,
+          price: 9900,
         },
       ],
     });

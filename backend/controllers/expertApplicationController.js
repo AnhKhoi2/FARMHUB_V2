@@ -283,89 +283,84 @@ export async function approve(req, res) {
       return res.status(400).json({ error: "Invalid application ID" });
     }
 
-    // Lấy đơn (chỉ cần dữ liệu → dùng lean cho nhẹ)
     const app = await ExpertApplication.findById(id);
-
-    if (!app) {
-      return res.status(404).json({ error: "Application not found" });
+    if (!app) return res.status(404).json({ error: "Application not found" });
+    if (app.status !== "pending") {
+      return res.status(400).json({ error: "Only pending applications can be approved" });
     }
 
-    if (app.status && app.status !== "pending") {
-      return res
-        .status(400)
-        .json({ error: "Only pending applications can be approved" });
-    }
-
+    // ⭐ Payload chuyên gia mới
     const payload = {
       user: app.user,
       full_name: app.full_name,
-      phone_number: app.phone_number || null,
+      phone_number: app.phone_number,
       expertise_area: app.expertise_area,
       experience_years: app.experience_years || 0,
+    
       certificates: Array.isArray(app.certificates)
-        ? app.certificates.map((c) =>
-            typeof c === "string" ? { url: c } : c
-          )
+        ? app.certificates.map(c => (typeof c === "string" ? { url: c } : c))
         : [],
+    
       description: app.description || "",
+      avatar: app.avatar || null,  // avatar từ đơn mới nhất
+    
+      // ⭐ BẮT BUỘC ĐỂ EXPERTLIST HIỂN THỊ
       review_status: "approved",
-      is_public: !!activate_expert,
-      review_notes: review_notes || "",
+      is_public: true,   // thay vì !!activate_expert (Admin đâu bật tắt gì trong approve)
+      is_deleted: false,
+      is_active: true,
+    
+      // ⭐ RẤT QUAN TRỌNG (thiếu là ExpertList không nhận expert mới)
+      created_at: new Date(),
+      updated_at: new Date(),
+    
+      deleted_at: null
     };
+    
 
-    // Tạo / cập nhật Expert + cập nhật role user CHẠY SONG SONG
-    const [expert, updatedUser] = await Promise.all([
-      Expert.findOneAndUpdate(
-        { user: app.user, is_deleted: false },
-        { $set: payload },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      ),
-      User.findByIdAndUpdate(
-        app.user,
-        { role: "expert" },
-        { new: true }
-      ),
-    ]);
+    // ⭐ Tạo / cập nhật expert
+    const expert = await Expert.findOneAndUpdate(
+      { user: app.user },
+      { $set: payload },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
-    // Xoá đơn sau khi duyệt
-// Cập nhật trạng thái đơn sang "approved" thay vì xoá
-app.status = "approved";
-app.review_notes = review_notes || "";
-await app.save();
+    // ⭐ Cập nhật role user + avatar mới
+    const updatedUser = await User.findByIdAndUpdate(
+      app.user,
+      { 
+        role: "expert",
+        avatar: expert?.avatar || null    // ⭐ RẤT QUAN TRỌNG
+      },
+      { new: true }
+    );
 
+    // Cập nhật đơn
+    app.status = "approved";
+    app.review_notes = review_notes;
+    await app.save();
 
-    // ✅ Trả response CHO FE NGAY → UI không bị khựng vì chờ gửi mail
     res.status(200).json({
-      message:
-        "Application approved, expert profile created, and user role updated to expert.",
+      message: "Application approved successfully",
       expert,
+      user: updatedUser
     });
 
-    // 📧 Gửi mail THÊM, fire-and-forget, không chặn response
     if (updatedUser?.email) {
       sendMail({
         to: updatedUser.email,
-        subject: "FarmHub - Đơn đăng ký Expert đã được duyệt",
-        html: `
-          <p>Xin chào ${
-            updatedUser.fullName || updatedUser.username || "bạn"
-          },</p>
-          <p>Chúc mừng! Đơn đăng ký trở thành Expert của bạn đã được duyệt 🎉</p>
-          <p>Bạn có thể đăng nhập lại để bắt đầu sử dụng quyền Expert.</p>
-          <p>— FarmHub Team</p>
-        `,
-      }).catch((e) => {
-        console.warn("sendMail USER failed:", e?.message);
-      });
+        subject: "FarmHub - Expert Approved",
+        html: `<p>Đơn expert của bạn đã được duyệt.</p>`
+      }).catch(() => {});
     }
+
   } catch (err) {
     console.error("Approve application error:", err);
-    return res.status(500).json({
-      error: "Failed to approve application",
-      detail: err.message,
-    });
+    res.status(500).json({ error: "Failed to approve", detail: err.message });
   }
 }
+
+
 
 
 // ===============================
