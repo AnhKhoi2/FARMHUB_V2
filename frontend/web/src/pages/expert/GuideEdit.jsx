@@ -12,6 +12,7 @@ import {
   Col,
   Space,
   Checkbox,
+  Alert,
   Spin,
   message,
   Divider,
@@ -27,6 +28,7 @@ import {
   ArrowLeftOutlined,
   SaveOutlined,
   FileImageOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -44,18 +46,48 @@ export default function GuideEdit() {
   const [description, setDescription] = useState("");
   const [steps, setSteps] = useState([]);
   const [plantTags, setPlantTags] = useState([]);
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const duplicateCheckRef = React.useRef({ timer: null });
+  const [plantName, setPlantName] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const [mainFile, setMainFile] = useState(null);
   const [mainFileList, setMainFileList] = useState([]);
 
-  const availablePlantTags = [
-    "Rau củ dễ chăm",
-    "Trái cây ngắn hạn",
-    "Cây gia vị",
-    "Trồng trong chung cư",
-    "Ít thời gian chăm sóc",
-    "Cây leo nhỏ",
-  ];
+  const [availablePlantTags, setAvailablePlantTags] = useState([]);
+  const [slugToLabelMap, setSlugToLabelMap] = useState({});
+  const [labelToSlugMap, setLabelToSlugMap] = useState({});
+
+  // Load plant groups from backend and map to checkbox options (label/value both = display name)
+  const fetchPlantGroups = async () => {
+    let mounted = true;
+    try {
+      const res = await axiosClient.get('/api/plant-groups');
+      const data = res.data?.data || [];
+      const opts = [];
+      const s2l = {};
+      const l2s = {};
+      data.forEach((d) => {
+        if (!d) return;
+        const name = typeof d === 'string' ? d : (d.name || d.slug || d._id);
+        const slug = typeof d === 'string' ? d : (d.slug || (d._id && String(d._id)) || name);
+        opts.push({ label: name, value: slug });
+        s2l[slug] = name;
+        l2s[name] = slug;
+      });
+      if (mounted) {
+        setAvailablePlantTags(opts);
+        setSlugToLabelMap(s2l);
+        setLabelToSlugMap(l2s);
+      }
+    } catch (e) {
+      console.warn('Failed to load plant groups', e?.message || e);
+    }
+    return () => (mounted = false);
+  };
+
+  useEffect(() => {
+    fetchPlantGroups();
+  }, []);
 
   // ==================== LOAD DỮ LIỆU ====================
   useEffect(() => {
@@ -90,7 +122,11 @@ export default function GuideEdit() {
 
         setTitle(g.title || "");
         setDescription(g.description || "");
-        setPlantTags(g.plantTags || []);
+        setPlantName(g.plant_name || "");
+        // convert loaded plantTags (labels) to slugs for checkbox values
+        const incomingTags = Array.isArray(g.plantTags) ? g.plantTags : [];
+        const selSlugs = incomingTags.map((lab) => labelToSlugMap[lab] || lab);
+        setPlantTags(selSlugs);
 
         // Ảnh chính cũ
         if (g.image) {
@@ -244,7 +280,17 @@ export default function GuideEdit() {
         }
       });
 
-      formData.append("plantTags", JSON.stringify(plantTags));
+      // plantTags state stores slugs now; send display labels as plantTags to backend
+      const labelsToSend = (plantTags || []).map((s) => slugToLabelMap[s] || s);
+      formData.append("plantTags", JSON.stringify(labelsToSend));
+      // also append primary plant_group (slug) if any
+      if (plantTags && plantTags.length) {
+        formData.append("plant_group", plantTags[0]);
+      }
+
+      // include plant_name if available (use title as fallback)
+      const plantNameForSubmit = plantName || title || '';
+      if (plantNameForSubmit) formData.append('plant_name', plantNameForSubmit);
 
       // Debug (giữ lại khi dev)
       if (process.env.NODE_ENV !== "production") {
@@ -276,6 +322,48 @@ export default function GuideEdit() {
       setSaving(false);
     }
   };
+
+  // ==================== DUPLICATE CHECK (UI WARNING) ====================
+  // Warn the user as soon as they type a plant name/title — search across all categories
+  // if no category is selected, otherwise limit to the primary selected category.
+  useEffect(() => {
+    // debounce check when title, plantName or plantTags change
+    if (duplicateCheckRef.current.timer) clearTimeout(duplicateCheckRef.current.timer);
+    duplicateCheckRef.current.timer = setTimeout(async () => {
+      setDuplicateWarning(null);
+      const checkName = (plantName || title || '').trim();
+      if (!checkName) return;
+
+      const params = { plant: checkName, limit: 3 };
+      const primary = Array.isArray(plantTags) && plantTags.length ? plantTags[0] : null;
+      if (primary) params.category = primary;
+
+      try {
+        const res = await axiosClient.get('/guides', { params });
+        const data = res.data || {};
+        const docs = data.data || data.docs || data.guides || [];
+        if (Array.isArray(docs) && docs.length > 0) {
+          const count = docs.length;
+          // collect distinct group display names for message
+          const groups = Array.from(
+            new Set(
+              docs.map((d) => d.category || d.category_slug || (Array.isArray(d.plantTags) && d.plantTags[0]) || "Không rõ")
+            )
+          );
+          if (primary) {
+            setDuplicateWarning(`Đã tồn tại ${count} hướng dẫn tương tự trong nhóm đã chọn (${groups.join(", ")}).`);
+          } else {
+            setDuplicateWarning(`Đã tìm thấy ${count} hướng dẫn tương tự trong nhóm: ${groups.join(", ")}.`);
+          }
+        }
+      } catch (e) {
+        // ignore errors silently
+      }
+    }, 600);
+    return () => {
+      if (duplicateCheckRef.current.timer) clearTimeout(duplicateCheckRef.current.timer);
+    };
+  }, [title, plantTags, plantName]);
 
   // ==================== RENDER ====================
   if (loading) {
@@ -352,13 +440,40 @@ export default function GuideEdit() {
                 />
               </Form.Item>
 
-              <Form.Item label="Loại cây (chọn nhiều)">
+              <Form.Item label="Tên cây (tùy chọn)">
+                <Input
+                  value={plantName}
+                  onChange={(e) => setPlantName(e.target.value)}
+                  placeholder="Tên cây (ví dụ: Dâu tây)"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span>
+                    Loại cây (chọn nhiều){" "}
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<ReloadOutlined />}
+                      onClick={() => fetchPlantGroups()}
+                    />
+                  </span>
+                }
+              >
                 <Checkbox.Group
                   options={availablePlantTags}
                   value={plantTags}
                   onChange={setPlantTags}
                 />
               </Form.Item>
+              {duplicateWarning && (
+                <Alert
+                  style={{ marginBottom: 12 }}
+                  type="warning"
+                  message={duplicateWarning}
+                />
+              )}
             </Card>
 
             <Card

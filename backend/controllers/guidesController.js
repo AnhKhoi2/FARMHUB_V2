@@ -1,4 +1,5 @@
 import Guide from "../models/Guide.js";
+import PlantGroup from "../models/PlantGroup.js";
 import { ok } from "../utils/ApiResponse.js";
 import fs from "fs";
 import path from "path";
@@ -10,7 +11,9 @@ const __dirname = path.dirname(__filename);
 // GET /guides?page=1&limit=10&search=abc&tag=foo
 export const getGuides = async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
-  const limit = Math.max(1, parseInt(req.query.limit) || 10);
+  // support returning all guides when client passes `all=true`
+  const wantAll = String(req.query.all || '').toLowerCase() === 'true';
+  const limit = wantAll ? 0 : Math.max(1, parseInt(req.query.limit) || 10);
   const search = req.query.search || ""; // generic text search
   const plant = (req.query.plant || "").trim(); // search by plant name (title or plantTags)
   const category = req.query.category || req.query.tag || req.query.plantTag; // filter by plant type
@@ -36,25 +39,49 @@ export const getGuides = async (req, res) => {
     filter.$or.push({ title: plantRegexOp }, { plantTags: plantRegexOp });
   }
 
-  // filter by explicit category / plantTag
+  // filter by explicit category / plantTag OR plant_group slug
   if (category) {
-    // allow comma-separated list
-    const vals = typeof category === 'string' ? category.split(',').map(s=>s.trim()).filter(Boolean) : category;
-    if (Array.isArray(vals)) {
-      filter.plantTags = { $in: vals };
-    } else {
-      filter.plantTags = vals;
+    // if category matches a plantgroup slug or name, prefer filtering by plant_group
+    try {
+      const pg = await PlantGroup.findOne({ $or: [{ slug: category }, { name: category }] }).lean();
+      if (pg && pg.slug) {
+        filter.plant_group = pg.slug;
+      } else {
+        // allow comma-separated list
+        const vals = typeof category === 'string' ? category.split(',').map(s=>s.trim()).filter(Boolean) : category;
+        if (Array.isArray(vals)) {
+          filter.plantTags = { $in: vals };
+        } else {
+          filter.plantTags = vals;
+        }
+      }
+    } catch (e) {
+      // fallback to plantTags filtering on error
+      const vals = typeof category === 'string' ? category.split(',').map(s=>s.trim()).filter(Boolean) : category;
+      if (Array.isArray(vals)) filter.plantTags = { $in: vals };
+      else filter.plantTags = vals;
     }
   }
 
-  const skip = (page - 1) * limit;
   // use lean() to get plain JS objects we can normalize
-  const [total, rawGuides] = await Promise.all([
-    Guide.countDocuments(filter),
-    Guide.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-  ]);
+  let total = await Guide.countDocuments(filter);
+  let rawGuides;
+  if (wantAll) {
+    // return all matching guides (no pagination)
+    rawGuides = await Guide.find(filter).sort({ createdAt: -1 }).lean();
+    // override page/limit to reflect full set
+  } else {
+    const skip = (page - 1) * limit;
+    rawGuides = await Guide.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+  }
 
   // Normalize image field: if document has `image` use it; otherwise try `images` array (first element)
+  // Build a map of plant_group slug -> display name for category labeling
+  const slugs = Array.from(new Set(rawGuides.map(r => r.plant_group).filter(Boolean)));
+  const pgDocs = slugs.length ? await PlantGroup.find({ slug: { $in: slugs } }).lean() : [];
+  const slugToName = {};
+  pgDocs.forEach(p => { if (p && p.slug) slugToName[p.slug] = p.name; });
+
   const guides = rawGuides.map((g) => {
     const out = { ...g };
     if (!out.image) {
@@ -89,32 +116,10 @@ export const getGuides = async (req, res) => {
         // ignore filesystem errors
       }
     }
-    // Ensure a `category` field is present for the frontend. Priority:
-    // 1) explicit `category` in DB
-    // 2) tag prefixed with 'Loại:' (e.g. 'Loại:Trồng trong chung cư')
-    // 3) a matching value from `plantTags` that the frontend expects
-    try {
-      let cat = out.category || "";
-      if (!cat && Array.isArray(out.tags)) {
-        const tag = out.tags.find(t => typeof t === 'string' && t.startsWith('Loại:'));
-        if (tag) cat = String(tag).replace(/^Loại:/, '').trim();
-      }
-      if (!cat && Array.isArray(out.plantTags)) {
-        const candidates = [
-          "Rau củ dễ chăm",
-          "Trái cây ngắn hạn",
-          "Cây gia vị",
-          "Trồng trong chung cư",
-          "Ít thời gian chăm sóc",
-          "Cây leo nhỏ",
-        ];
-        const found = out.plantTags.find(pt => candidates.includes(pt));
-        if (found) cat = found;
-      }
-      out.category = cat || "";
-    } catch (e) {
-      out.category = out.category || "";
-    }
+    // Note: do not set `category` here — frontend will use `plantTags` / `plant_group`.
+    // Provide a convenient `category` display field (human-readable)
+    out.category = slugToName[out.plant_group] || (out.plantTags && out.plantTags.length ? out.plantTags[0] : null);
+    out.category_slug = out.plant_group || null;
     return out;
   });
 
@@ -133,7 +138,7 @@ export const createGuide = async (req, res) => {
   } catch (e) {
     console.warn('[upload-debug] failed to log createGuide request', e);
   }
-  const { title, description, content, tags, plantTags, expert_id } = req.body;
+  const { title, description, content, tags, plantTags, expert_id, plant_name, plant_group } = req.body;
   console.log(req.files);
   
   const guideData = { title, description, content };
@@ -142,6 +147,24 @@ export const createGuide = async (req, res) => {
   }
   if (plantTags !== undefined) {
     try { guideData.plantTags = typeof plantTags === 'string' ? JSON.parse(plantTags) : plantTags; } catch(e) { guideData.plantTags = plantTags; }
+  }
+  if (plant_name) guideData.plant_name = plant_name;
+  if (plant_group) guideData.plant_group = plant_group;
+
+  // Prevent duplicate guide entries by plant_name globally (case-insensitive)
+  try {
+    if (guideData.plant_name) {
+      const esc = String(guideData.plant_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const dup = await Guide.findOne({
+        plant_name: { $regex: `^${esc}$`, $options: 'i' },
+        deleted: { $ne: true }
+      }).lean();
+      if (dup) {
+        return res.status(409).json({ success: false, message: `Hướng dẫn cho "${guideData.plant_name}" đã tồn tại.` });
+      }
+    }
+  } catch (e) {
+    console.warn('Duplicate check failed', e?.message || e);
   }
   if (expert_id) guideData.expert_id = expert_id;
 
@@ -283,29 +306,19 @@ export const getGuideById = async (req, res) => {
 
   // debug log - remove in production
   console.log("[guides] returning guide id=", id, "image=", guide.image);
-
-  // Ensure `category` is present on single guide responses as well
+  // Provide a convenient `category` display field when possible
   try {
-    let cat = guide.category || "";
-    if (!cat && Array.isArray(guide.tags)) {
-      const tag = guide.tags.find(t => typeof t === 'string' && t.startsWith('Loại:'));
-      if (tag) cat = String(tag).replace(/^Loại:/, '').trim();
+    let pg = null;
+    if (guide.plant_group_id) {
+      pg = await PlantGroup.findById(guide.plant_group_id).lean();
     }
-    if (!cat && Array.isArray(guide.plantTags)) {
-      const candidates = [
-        "Rau củ dễ chăm",
-        "Trái cây ngắn hạn",
-        "Cây gia vị",
-        "Trồng trong chung cư",
-        "Ít thời gian chăm sóc",
-        "Cây leo nhỏ",
-      ];
-      const found = guide.plantTags.find(pt => candidates.includes(pt));
-      if (found) cat = found;
+    if (!pg && guide.plant_group) {
+      pg = await PlantGroup.findOne({ slug: guide.plant_group }).lean();
     }
-    guide.category = cat || "";
+    guide.category = pg?.name || (guide.plantTags && guide.plantTags.length ? guide.plantTags[0] : null);
+    guide.category_slug = pg?.slug || guide.plant_group || null;
   } catch (e) {
-    guide.category = guide.category || "";
+    // ignore category lookup errors
   }
 
   return ok(res, guide);
@@ -414,6 +427,9 @@ export const updateGuide = async (req, res) => {
     // Cập nhật các field text
     if (req.body.title) updates.title = req.body.title.trim();
     if (req.body.description !== undefined) updates.description = req.body.description;
+    // plant_group and plant_name (if provided)
+    if (req.body.plant_group) updates.plant_group = req.body.plant_group;
+    if (req.body.plant_name) updates.plant_name = req.body.plant_name;
 
     // plantTags
     if (req.body.plantTags) {
@@ -458,6 +474,23 @@ export const updateGuide = async (req, res) => {
     }
 
     // Cập nhật vào DB
+    // Before updating, ensure we don't create a duplicate by plant_name globally (exclude self)
+    if (updates.plant_name) {
+      try {
+        const esc = String(updates.plant_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const conflict = await Guide.findOne({
+          _id: { $ne: req.params.id },
+          plant_name: { $regex: `^${esc}$`, $options: 'i' },
+          deleted: { $ne: true }
+        }).lean();
+        if (conflict) {
+          return res.status(409).json({ success: false, message: `Đã tồn tại hướng dẫn cho "${updates.plant_name}".` });
+        }
+      } catch (e) {
+        console.warn('Duplicate check (update) failed', e?.message || e);
+      }
+    }
+
     const guide = await Guide.findByIdAndUpdate(
       req.params.id,
       { $set: updates },
