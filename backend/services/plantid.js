@@ -1,4 +1,3 @@
-// be/services/plantid.js
 import { http } from '../lib/http.js';
 import { ApiError } from '../lib/http.js';
 
@@ -17,7 +16,6 @@ export async function diagnosePlant({ imageUrl, base64 }) {
   const images = [];
 
   if (base64) {
-    // Nếu là data URL, tách phần base64
     const m = base64.match(/^data:.*;base64,(.*)$/);
     images.push(m ? m[1] : base64);
   } else if (imageUrl) {
@@ -30,7 +28,14 @@ export async function diagnosePlant({ imageUrl, base64 }) {
       {
         images,
         modifiers: ['health_all', 'similar_images'],
-        plant_details: ['common_names', 'url', 'watering', 'care'],
+        plant_details: [
+          'common_names',
+          'url',
+          'watering',
+          'care',
+          'wiki_description',
+          'taxonomy',
+        ],
       },
       {
         headers: {
@@ -48,9 +53,7 @@ export async function diagnosePlant({ imageUrl, base64 }) {
 
     throw new ApiError(
       status,
-      typeof detail === 'string'
-        ? detail
-        : `Plant.id error (${status})`
+      typeof detail === 'string' ? detail : `Plant.id error (${status})`
     );
   }
 }

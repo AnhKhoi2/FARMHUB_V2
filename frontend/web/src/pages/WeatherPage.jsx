@@ -283,7 +283,7 @@ const WeatherPage = () => {
           <input
             type="text"
             className="form-control"
-            placeholder="Nhập tên khu vực (ví dụ: Đồng Tháp)"
+            placeholder="Nhập tên khu vực (ví dụ: Cần thơ)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />

@@ -111,14 +111,14 @@ const PlantCarePricing = () => {
     <>
       <Header />
       <div className="pricing-page p-4">
-      <button
+      {/* <button
         type="button"
         className="back-button"
         onClick={() => window.history.back()}
         aria-label="Quay lại"
       >
         ← Quay lại
-      </button>
+      </button> */}
       <div className="pricing-hero text-center mb-4">
         <h1 className="display-4">Nâng cấp gói của bạn</h1>
         <p className="lead text-muted">
