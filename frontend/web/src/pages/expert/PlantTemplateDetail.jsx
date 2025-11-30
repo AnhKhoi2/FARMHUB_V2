@@ -371,9 +371,7 @@ const PlantTemplateDetail = () => {
                           <div key={obsIdx} className="observation-card">
                             <h4>{obs.label}</h4>
                             {obs.description && <p>{obs.description}</p>}
-                            <div className="observation-key">
-                              Key: <code>{obs.key}</code>
-                            </div>
+                            <div className="observation-key"></div>
                           </div>
                         ))}
                       </div>

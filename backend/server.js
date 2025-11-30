@@ -46,6 +46,7 @@ import airRoute from "./routes/air.js";
 
 import tilesRoute from "./routes/tiles.js";
 import plantRoute from "./routes/plant.js";
+import plantsRoute from "./routes/plants.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 import adminTransactionsRoute from "./routes/adminTransactions.js";
 const PORT = process.env.PORT || 5000;
@@ -89,6 +90,7 @@ app.use("/api/weather", weatherRoute);
 app.use("/api/air", airRoute);
 app.use("/api/plant", plantRoute);
 app.use("/api/ow/tiles", tilesRoute);
+app.use("/api/plants", plantsRoute);
 app.use("/auth", authRoute);
 app.use("/profile", profileRoute);
 app.use("/admin/diseases", diseaseRoutes);

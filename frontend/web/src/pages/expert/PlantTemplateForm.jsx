@@ -32,10 +32,11 @@ const PlantTemplateForm = ({ mode = "create" }) => {
   const [tempInput, setTempInput] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
   const [availableGuides, setAvailableGuides] = useState([]);
+  const [availablePlants, setAvailablePlants] = useState([]);
   const [loadingGuides, setLoadingGuides] = useState(false);
   const [showPlantDropdown, setShowPlantDropdown] = useState(false);
 
-  const plantGroups = [
+  const [plantGroups, setPlantGroups] = useState([
     { value: "leaf_vegetable", label: "Rau ăn lá", icon: "🥬" },
     { value: "root_vegetable", label: "Cây củ", icon: "🥕" },
     { value: "fruit_short_term", label: "Rau/quả ngắn ngày", icon: "🥒" },
@@ -44,7 +45,8 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     { value: "herb", label: "Cây gia vị", icon: "🌿" },
     { value: "flower_vegetable", label: "Rau ăn hoa", icon: "🥦" },
     { value: "other", label: "Khác", icon: "🌱" },
-  ];
+  ]);
+  const [loadingPlantGroups, setLoadingPlantGroups] = useState(false);
 
   const steps = [
     { number: 1, title: "Thông tin cơ bản", icon: "📝" },
@@ -59,33 +61,83 @@ const PlantTemplateForm = ({ mode = "create" }) => {
       loadTemplate();
     }
     fetchAvailableGuides();
+    fetchPlantGroupsFromApi();
   }, [mode, id]);
 
+  const fetchPlantGroupsFromApi = async () => {
+    try {
+      setLoadingPlantGroups(true);
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+      // Build endpoint robustly: allow API_URL to be either with or without trailing '/api'
+      let base = API_URL || "http://localhost:5000";
+      base = base.replace(/\/+$/, "");
+      const apiBase = base.endsWith("/api") ? base : `${base}/api`;
+      const endpoint = `${apiBase}/plant-groups`;
+
+      const res = await axios.get(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      const items = res.data?.data || [];
+
+      // Map API objects { _id, name, slug } to expected { value, label, icon }
+      const iconMap = {
+        leaf_vegetable: "🥬",
+        root_vegetable: "🥕",
+        fruit_short_term: "🥒",
+        fruit_long_term: "🍊",
+        bean_family: "🫘",
+        herb: "🌿",
+        flower_vegetable: "🥦",
+      };
+
+      if (items.length > 0) {
+        const mapped = items.map((it) => ({
+          value: it.slug || it._id,
+          label: it.name || it.slug || it._id,
+          icon: iconMap[it.slug] || "🌱",
+          plants: Array.isArray(it.plants) ? it.plants : [],
+        }));
+        setPlantGroups(mapped);
+      }
+    } catch (err) {
+      console.warn(
+        "Could not fetch plant groups, using defaults:",
+        err?.message || err
+      );
+    } finally {
+      setLoadingPlantGroups(false);
+    }
+  };
+
   const fetchAvailableGuides = async () => {
+    // We now source plant examples from the plants collection via /api/plants
     try {
       setLoadingGuides(true);
-      console.log("🔍 Fetching guides from API...");
-      const response = await guidesApi.getAllGuides({ limit: 1000 });
-      console.log("📦 API Response:", response);
 
-      // API trả về { success: true, data: [...], meta: {...} }
-      const guides = response.data?.data || [];
-      console.log("📋 Guides array:", guides);
-      console.log("📊 Total guides:", guides.length);
+      let base = API_URL || "http://localhost:5000";
+      base = base.replace(/\/+$/, "");
+      const apiBase = base.endsWith("/api") ? base : `${base}/api`;
+      const endpoint = `${apiBase}/plants?limit=1000`;
 
-      // Extract unique plant names from guides
-      const plantNames = guides
-        .map((guide) => guide.plant_name)
-        .filter((name) => name && name.trim())
-        .filter((name, index, self) => self.indexOf(name) === index)
+      console.log("🔍 Fetching plants from API...", endpoint);
+      const res = await axios.get(endpoint);
+      const plants = res.data?.data || [];
+      console.log("📦 Plants response count:", plants.length);
+
+      // keep full plant objects for filtering by group
+      setAvailablePlants(Array.isArray(plants) ? plants : []);
+
+      const plantNames = (Array.isArray(plants) ? plants : [])
+        .map((p) => p.name)
+        .filter((n) => n && n.toString().trim())
+        .filter((v, i, a) => a.indexOf(v) === i)
         .sort();
-
-      console.log("🌱 Plant names extracted:", plantNames);
-      console.log("✅ Total unique plants:", plantNames.length);
 
       setAvailableGuides(plantNames);
     } catch (err) {
-      console.error("❌ Error fetching guides:", err);
+      console.error("❌ Error fetching plants:", err);
     } finally {
       setLoadingGuides(false);
     }
@@ -618,7 +670,7 @@ const Step1BasicInfo = ({
 
     <div className="form-group">
       <label>🌱 Các loại cây phù hợp</label>
-      <p className="hint">Chọn các loại cây từ danh sách guides có sẵn</p>
+      <p className="hint">Chọn các loại cây từ danh sách có sẵn</p>
 
       <div className="plant-selector">
         <button
@@ -652,32 +704,94 @@ const Step1BasicInfo = ({
               </button>
             </div>
             <div className="plant-dropdown-list">
-              {availableGuides.length === 0 ? (
-                <div className="plant-dropdown-empty">
-                  Không có dữ liệu cây từ guides
-                </div>
-              ) : (
-                availableGuides
-                  .filter((plant) =>
-                    plant.toLowerCase().includes(tempInput.toLowerCase())
+              {(() => {
+                // If current plant group provides embedded plants, use them
+                if (formData.plant_group) {
+                  const group = plantGroups.find(
+                    (g) => String(g.value) === String(formData.plant_group)
+                  );
+                  if (
+                    group &&
+                    Array.isArray(group.plants) &&
+                    group.plants.length
+                  ) {
+                    const filtered = group.plants
+                      .map((pp) => pp.name)
+                      .filter(
+                        (n) =>
+                          n &&
+                          n
+                            .toString()
+                            .toLowerCase()
+                            .includes(tempInput.toLowerCase())
+                      );
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="plant-dropdown-empty">
+                          Không có cây thuộc nhóm này
+                        </div>
+                      );
+                    }
+                    return filtered.map((plant, index) => (
+                      <div
+                        key={index}
+                        className={`plant-dropdown-item ${
+                          formData.plant_examples.includes(plant)
+                            ? "selected"
+                            : ""
+                        }`}
+                        onClick={() => addPlantExampleFromDropdown(plant)}
+                      >
+                        <span>{plant}</span>
+                        {formData.plant_examples.includes(plant) && (
+                          <span className="check-icon">✓</span>
+                        )}
+                      </div>
+                    ));
+                  }
+                }
+
+                // Fallback: use global availablePlants filtered by group (if any)
+                const pool =
+                  Array.isArray(availablePlants) && availablePlants.length
+                    ? availablePlants
+                    : [];
+                const poolFiltered = pool
+                  .filter((p) =>
+                    tempInput && tempInput.trim()
+                      ? p.name.toLowerCase().includes(tempInput.toLowerCase())
+                      : true
                   )
-                  .map((plant, index) => (
-                    <div
-                      key={index}
-                      className={`plant-dropdown-item ${
-                        formData.plant_examples.includes(plant)
-                          ? "selected"
-                          : ""
-                      }`}
-                      onClick={() => addPlantExampleFromDropdown(plant)}
-                    >
-                      <span>{plant}</span>
-                      {formData.plant_examples.includes(plant) && (
-                        <span className="check-icon">✓</span>
-                      )}
+                  .filter((p) =>
+                    formData.plant_group
+                      ? (p.plant_group_slug || p.plant_group) ===
+                        formData.plant_group
+                      : true
+                  );
+
+                if (poolFiltered.length === 0) {
+                  return (
+                    <div className="plant-dropdown-empty">
+                      Không có dữ liệu cây từ guides
                     </div>
-                  ))
-              )}
+                  );
+                }
+
+                return poolFiltered.map((p, index) => (
+                  <div
+                    key={p._id || index}
+                    className={`plant-dropdown-item ${
+                      formData.plant_examples.includes(p.name) ? "selected" : ""
+                    }`}
+                    onClick={() => addPlantExampleFromDropdown(p.name)}
+                  >
+                    <span>{p.name}</span>
+                    {formData.plant_examples.includes(p.name) && (
+                      <span className="check-icon">✓</span>
+                    )}
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         )}

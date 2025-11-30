@@ -44,6 +44,18 @@ const OverdueDetail = () => {
     });
   };
 
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const getPriorityClass = (priority) => {
     switch (priority) {
       case "high":
@@ -174,9 +186,11 @@ const OverdueDetail = () => {
           </button>
           <div className="header-info">
             <h2>Công việc quá hạn</h2>
-            <p className="overdue-date">
-              Ngày: {formatDate(overdueData.overdue_date)}
-            </p>
+            {overdueData.overdue_date ? (
+              <p className="overdue-date">Ngày: {formatDate(overdueData.overdue_date)}</p>
+            ) : (
+              <p className="overdue-date">Lịch sử công việc quá hạn</p>
+            )}
           </div>
           <div className="header-count">
             <span className="count-badge">{overdueData.overdue_count}</span>
@@ -193,66 +207,122 @@ const OverdueDetail = () => {
           </div>
 
           <div className="overdue-tasks-list">
-            {overdueData.overdue_tasks.map((task, index) => (
-              <div key={index} className="overdue-task-card">
-                <div className="task-header">
-                  <div className="task-info">
-                    <h3 className="task-name">{task.task_name}</h3>
-                    <span
-                      className={`task-priority ${getPriorityClass(
-                        task.priority
-                      )}`}
-                    >
-                      {getPriorityLabel(task.priority)}
-                    </span>
+            {/* Prefer grouped view when backend provides overdue_groups */}
+            {overdueData.overdue_groups && overdueData.overdue_groups.length > 0 ? (
+              overdueData.overdue_groups.map((group, gIdx) => (
+                <div key={gIdx} className="overdue-group">
+                  <div className="overdue-group-header">
+                    <h4>Ngày gốc: {formatDate(group.date)}</h4>
+                    <span className="group-count">{group.tasks.length} công việc</span>
                   </div>
-                  <span className="task-status overdue">Quá hạn</span>
+
+                  {group.tasks.map((task, index) => (
+                    <div key={index} className="overdue-task-card">
+                      <div className="task-header">
+                        <div className="task-info">
+                          <h3 className="task-name">{task.task_name}</h3>
+                          <span className={`task-priority ${getPriorityClass(task.priority)}`}>
+                            {getPriorityLabel(task.priority)}
+                          </span>
+                        </div>
+                        <span className="task-status overdue">Quá hạn</span>
+                      </div>
+
+                      {task.description && (
+                        <p className="task-description">{task.description}</p>
+                      )}
+
+                      <div className="task-meta">
+                        <span className="task-frequency">
+                          📅 {task.frequency === "daily" ? "Hàng ngày" : task.frequency}
+                        </span>
+                        {task.overdue_at && (
+                          <span className="task-overdue-date">
+                            ⏰ Quá hạn từ: {formatDateTime(task.overdue_at)}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="task-actions">
+                        <button
+                          onClick={() => handleCompleteTask(task.task_name)}
+                          className="btn-complete-task"
+                          disabled={task.is_completed || processingTask === task.task_name}
+                        >
+                          {task.is_completed ? (
+                            <>
+                              <span className="btn-icon">✓</span>
+                              Đã hoàn thành
+                            </>
+                          ) : processingTask === task.task_name ? (
+                            <>
+                              <span className="btn-icon">⏳</span>
+                              Đang xử lý...
+                            </>
+                          ) : (
+                            <>
+                              <span className="btn-icon">✓</span>
+                              Hoàn thành bù
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              ))
+            ) : (
+              // Fallback to flat list for backward compatibility
+              overdueData.overdue_tasks.map((task, index) => (
+                <div key={index} className="overdue-task-card">
+                  <div className="task-header">
+                    <div className="task-info">
+                      <h3 className="task-name">{task.task_name}</h3>
+                      <span className={`task-priority ${getPriorityClass(task.priority)}`}>
+                        {getPriorityLabel(task.priority)}
+                      </span>
+                    </div>
+                    <span className="task-status overdue">Quá hạn</span>
+                  </div>
 
-                {task.description && (
-                  <p className="task-description">{task.description}</p>
-                )}
+                  {task.description && <p className="task-description">{task.description}</p>}
 
-                <div className="task-meta">
-                  <span className="task-frequency">
-                    📅{" "}
-                    {task.frequency === "daily" ? "Hàng ngày" : task.frequency}
-                  </span>
-                  {task.overdue_at && (
-                    <span className="task-overdue-date">
-                      ⏰ Quá hạn từ: {formatDate(task.overdue_at)}
+                  <div className="task-meta">
+                    <span className="task-frequency">
+                      📅 {task.frequency === "daily" ? "Hàng ngày" : task.frequency}
                     </span>
-                  )}
-                </div>
-
-                <div className="task-actions">
-                  <button
-                    onClick={() => handleCompleteTask(task.task_name)}
-                    className="btn-complete-task"
-                    disabled={
-                      task.is_completed || processingTask === task.task_name
-                    }
-                  >
-                    {task.is_completed ? (
-                      <>
-                        <span className="btn-icon">✓</span>
-                        Đã hoàn thành
-                      </>
-                    ) : processingTask === task.task_name ? (
-                      <>
-                        <span className="btn-icon">⏳</span>
-                        Đang xử lý...
-                      </>
-                    ) : (
-                      <>
-                        <span className="btn-icon">✓</span>
-                        Hoàn thành bù
-                      </>
+                    {task.overdue_at && (
+                      <span className="task-overdue-date">⏰ Quá hạn từ: {formatDateTime(task.overdue_at)}</span>
                     )}
-                  </button>
+                  </div>
+
+                  <div className="task-actions">
+                    <button
+                      onClick={() => handleCompleteTask(task.task_name)}
+                      className="btn-complete-task"
+                      disabled={task.is_completed || processingTask === task.task_name}
+                    >
+                      {task.is_completed ? (
+                        <>
+                          <span className="btn-icon">✓</span>
+                          Đã hoàn thành
+                        </>
+                      ) : processingTask === task.task_name ? (
+                        <>
+                          <span className="btn-icon">⏳</span>
+                          Đang xử lý...
+                        </>
+                      ) : (
+                        <>
+                          <span className="btn-icon">✓</span>
+                          Hoàn thành bù
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

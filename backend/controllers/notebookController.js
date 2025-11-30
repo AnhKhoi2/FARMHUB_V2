@@ -1322,6 +1322,25 @@ export const createNotebook = asyncHandler(async (req, res) => {
     }
   }
 
+  // If no guide_id provided, allow frontend to pass plant_group (slug) to auto-find template
+  if (!guide_id && req.body.plant_group) {
+    plant_group = req.body.plant_group;
+    if (plant_group && plant_group !== "other") {
+      autoFoundTemplate = await PlantTemplate.findOne({
+        plant_group: plant_group,
+        status: "active",
+      }).sort({ usage_count: -1 });
+
+      if (autoFoundTemplate) {
+        console.log(
+          `✅ Auto-found template by plant_group: ${autoFoundTemplate.template_name}`
+        );
+      } else {
+        console.log(`⚠️ No active template found for group: ${plant_group}`);
+      }
+    }
+  }
+
   if (!plant_type) {
     return res.status(400).json({
       success: false,
@@ -2594,20 +2613,50 @@ export const getOverdueDetail = asyncHandler(async (req, res) => {
   const allOverdueTasks = currentStageTracking?.overdue_tasks || [];
   // Return only tasks that are still in 'overdue' status. Completed/skipped
   // entries remain in the array for history but should not be counted as active overdue.
-  const activeOverdueTasks = allOverdueTasks.filter(
-    (t) => t.status === "overdue"
-  );
+  const activeOverdueTasks = allOverdueTasks.filter((t) => t.status === "overdue");
 
   console.log(
     `🔍 Overdue tasks for notebook=${id} stage=${notebook.current_stage}: persisted=${allOverdueTasks.length} active=${activeOverdueTasks.length}`
   );
 
+  // Group active overdue tasks by their original_date (the date the checklist belonged to)
+  // and exclude tasks whose original_date is today (these are tasks that became overdue today
+  // and the user indicated today's tasks are not relevant for overdue history notifications).
+  const todayMid = toVietnamMidnight(getVietnamToday());
+
+  const groupsMap = {};
+  activeOverdueTasks.forEach((t) => {
+    // original_date may be stored as Date or string
+    const orig = t.original_date ? toVietnamMidnight(new Date(t.original_date)) : null;
+
+    // If original_date equals today, skip grouping (we will not include today's original_date tasks)
+    if (orig && orig.getTime() === todayMid.getTime()) return;
+
+    const key = orig ? orig.toISOString().split("T")[0] : "unknown";
+    if (!groupsMap[key]) groupsMap[key] = { date: orig, tasks: [] };
+    groupsMap[key].tasks.push(t);
+  });
+
+  // Convert groupsMap to sorted array by date ascending
+  const overdue_groups = Object.keys(groupsMap)
+    .map((k) => ({ date: groupsMap[k].date, tasks: groupsMap[k].tasks }))
+    .sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return a.date.getTime() - b.date.getTime();
+    });
+
+  // Total active overdue count excluding today's original_date tasks
+  const overdue_count = overdue_groups.reduce((s, g) => s + g.tasks.length, 0);
+
   return ok(
     res,
     {
+      // keep backward-compatible fields
       overdue_date: currentStageTracking?.overdue_summary?.date || null,
-      overdue_count: activeOverdueTasks.length,
+      overdue_count,
       overdue_tasks: activeOverdueTasks,
+      overdue_groups,
     },
     null,
     "Overdue tasks detail fetched successfully"
