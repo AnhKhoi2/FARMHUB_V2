@@ -5,9 +5,22 @@ import { loginThunk, loginWithGoogleThunk } from "../../redux/authThunks.js";
 import { GoogleLogin } from "@react-oauth/google";
 import "../../css/auth/Login.css";
 
-// NEW
 import streakApi from "../../api/shared/streakApi.js";
 import StreakPopup from "../../components/shared/StreakPopup";
+
+const EyeIcon = ({ open }) => (
+  open ? (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" stroke="#234" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="12" cy="12" r="3" stroke="#234" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ) : (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 3l18 18" stroke="#234" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M10.58 10.58A3 3 0 0113.42 13.42" stroke="#234" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+);
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,18 +28,15 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ⭐ Chỉ dùng username
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const { status, error } = useSelector((s) => s.auth);
   const loading = status === "loading";
 
-  // NEW: quản lý popup & đích điều hướng
   const [streakData, setStreakData] = useState(null);
   const [redirectTo, setRedirectTo] = useState("/");
 
-  // 👉 đọc query ?expired=1
   const params = new URLSearchParams(location.search);
   const sessionExpired = params.get("expired") === "1";
 
@@ -38,17 +48,15 @@ const Login = () => {
   };
 
   const afterLogin = async (role = "user") => {
-    // xác định đích
     const dest = nextRouteByRole(role);
     setRedirectTo(dest);
 
-    // Chỉ ghi streak cho user thường
     if (role === "user") {
       try {
-        const { data } = await streakApi.record(); // { success, data: { streak } } tuỳ cấu trúc
+        const { data } = await streakApi.record();
         const streak = data?.data?.streak || data?.streak || null;
         if (streak) {
-          setStreakData(streak); // mở popup, chờ user đóng rồi mới navigate
+          setStreakData(streak);
           return;
         }
       } catch (e) {
@@ -56,28 +64,25 @@ const Login = () => {
       }
     }
 
-    // Nếu không phải user hoặc không có streak → đi luôn
     navigate(dest);
   };
 
   const handleLogin = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    const cleanedUsername = username.trim();
 
-  const cleanedUsername = username.trim();
+    const result = await dispatch(
+      loginThunk({
+        username: cleanedUsername,
+        password,
+      })
+    );
 
-  const result = await dispatch(
-    loginThunk({
-      username: cleanedUsername,
-      password,
-    })
-  );
-
-  const { success, role } = result || {};
-  if (success) {
-    await afterLogin(role || "user");
-  }
-};
-
+    const { success, role } = result || {};
+    if (success) {
+      await afterLogin(role || "user");
+    }
+  };
 
   const handleGoogleSuccess = async (cred) => {
     const idToken = cred?.credential;
@@ -97,105 +102,66 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page">
-      <div className="wrapper">
-        <div className="form-box login">
-          <h2>Đăng nhập</h2>
-          <form onSubmit={handleLogin} noValidate>
-            {/* Thông báo phiên hết hạn */}
-            {sessionExpired && (
-              <div className="error-message" style={{ marginBottom: "10px" }}>
-                Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.
-              </div>
-            )}
+    <div className="login-page" aria-live="polite">
+      <div className="login-card-simple">
+        <h1 className="login-title">Đăng nhập</h1>
+        <p className="login-sub">Dùng tài khoản để truy cập — chữ lớn, nút to</p>
 
-            {/* Lỗi login từ Redux */}
-            {error && <div className="error-message">{error}</div>}
+        <form onSubmit={handleLogin} noValidate className="login-form-simple">
+          {sessionExpired && <div className="alert-simple error">Phiên đã hết hạn. Đăng nhập lại.</div>}
+          {error && <div className="alert-simple error">{error}</div>}
 
-            <div className="input-box">
-              <span className="icon">
-                <ion-icon name="person"></ion-icon>
-              </span>
-              <input
-                type="text"
-                value={username}
-                  placeholder=" "
-                onChange={(e) => setUsername(e.target.value)}
-              />
-              <label>Tên đăng nhập</label>
-            </div>
+          <label className="label-simple">Tên đăng nhập</label>
+          <input
+            className="input-simple"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Tên đăng nhập"
+            required
+            autoComplete="username"
+          />
 
-            <div className="input-box" style={{ position: "relative" }}>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                  placeholder=" "
-              />
-
-              {/* Nút toggle icon */}
-              <span
-                className="toggle-password"
-                onClick={() => setShowPassword((prev) => !prev)}
-                style={{
-                  position: "absolute",
-                  right: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                  fontSize: "20px",
-                }}
-              >
-                <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
-              </span>
-
-              <label>Mật khẩu</label>
-            </div>
-
-            <button type="submit" className="btn" disabled={loading}>
-              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-            </button>
-
-            {/* Forgot password */}
-            <div className="login-register">
-              <p>
-                Quên mật khẩu?{" "}
-                <Link to="/forgot-password" className="register-link">
-                  Đặt lại
-                </Link>
-              </p>
-            </div>
-
-            {/* Register */}
-            <div className="login-register">
-              <p>
-                Chưa có tài khoản?{" "}
-                <Link to="/register" className="register-link">
-                  Đăng ký
-                </Link>
-              </p>
-            </div>
-          </form>
-
-          <div className="divider">
-            <div className="line" />
-            <span>hoặc</span>
-            <div className="line" />
-          </div>
-
-          <div className="google-btn">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => alert("Google login error")}
+          <label className="label-simple">Mật khẩu</label>
+          <div className="input-with-icon">
+            <input
+              className="input-simple"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mật khẩu"
+              required
+              autoComplete="current-password"
             />
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setShowPassword((p) => !p)}
+              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            >
+              <EyeIcon open={!showPassword} />
+            </button>
           </div>
 
-          {/* Popup streak */}
-          {streakData && (
-            <StreakPopup streak={streakData} onClose={handleClosePopup} />
-          )}
-        </div>
+          <button type="submit" className="btn-primary-simple" disabled={loading}>
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+          </button>
+
+          <div className="links-row">
+            <Link to="/forgot-password" className="link-simple">Quên mật khẩu?</Link>
+            <Link to="/register" className="link-simple">Đăng ký</Link>
+          </div>
+
+          <div className="divider-simple"><span>hoặc</span></div>
+
+          <div className="google-wrap">
+            <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => alert("Google login error")} />
+          </div>
+        </form>
       </div>
+
+      {streakData && <StreakPopup streak={streakData} onClose={handleClosePopup} />}
     </div>
   );
 };
