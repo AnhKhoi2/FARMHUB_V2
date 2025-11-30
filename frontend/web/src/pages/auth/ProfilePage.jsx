@@ -1006,7 +1006,7 @@ export default function ProfilePage() {
                             onChange={handleAvatarSelect}
                             className="hidden"
                           />
-                          <button
+                          {/* <button
                             type="button"
                             onClick={() =>
                               fileInputRef.current &&
@@ -1015,7 +1015,7 @@ export default function ProfilePage() {
                             className="agri-btn-secondary"
                           >
                             Tải ảnh lên
-                          </button>
+                          </button> */}
                           <button
                             type="button"
                             onClick={clearAvatar}

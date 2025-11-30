@@ -105,7 +105,6 @@ const Login = () => {
     <div className="login-page" aria-live="polite">
       <div className="login-card-simple">
         <h1 className="login-title">Đăng nhập</h1>
-        <p className="login-sub">Dùng tài khoản để truy cập — chữ lớn, nút to</p>
 
         <form onSubmit={handleLogin} noValidate className="login-form-simple">
           {sessionExpired && <div className="alert-simple error">Phiên đã hết hạn. Đăng nhập lại.</div>}
@@ -124,25 +123,31 @@ const Login = () => {
 
           <label className="label-simple">Mật khẩu</label>
           <div className="input-with-icon">
-            <input
-              className="input-simple"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mật khẩu"
-              required
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={() => setShowPassword((p) => !p)}
-              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-            >
-              <EyeIcon open={!showPassword} />
-            </button>
-          </div>
+  <input
+    className="input-simple"
+    type={showPassword ? "text" : "password"}
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    placeholder="Mật khẩu"
+    required
+    autoComplete="current-password"
+  />
+
+  <button
+    type="button"
+    className="icon-btn"
+    onClick={() => setShowPassword((p) => !p)}
+    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+    title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+  >
+    {showPassword ? (
+      <ion-icon name="eye-off-outline"></ion-icon>
+    ) : (
+      <ion-icon name="eye-outline"></ion-icon>
+    )}
+  </button>
+</div>
+
 
           <button type="submit" className="btn-primary-simple" disabled={loading}>
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
