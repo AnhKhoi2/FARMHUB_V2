@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import expertApplicationApi from "../../api/shared/expertApplicationApi.js";
 import axiosClient from "../../api/shared/axiosClient.js";
 
+// add CSS import
+import "../../css/auth/ExpertApplyForm.css";
+
 export default function ExpertApplyForm() {
   const [form, setForm] = useState({
     full_name: "",
@@ -82,9 +85,11 @@ export default function ExpertApplyForm() {
   const validateForm = () => {
     const errors = {};
 
-    // Họ tên bắt buộc
+    // Họ tên bắt buộc + max length 50
     if (!form.full_name || !form.full_name.trim()) {
       errors.full_name = "Họ và tên là bắt buộc.";
+    } else if (form.full_name.trim().length > 50) {
+      errors.full_name = "Họ và tên tối đa 50 ký tự.";
     }
 
     // Lĩnh vực chuyên môn bắt buộc
@@ -98,7 +103,7 @@ export default function ExpertApplyForm() {
       errors.experience_years = "Số năm kinh nghiệm phải ≥ 0.";
     }
 
-    // Số điện thoại: nếu có thì phải đúng pattern VN: 0xxxxxxxxx hoặc +84xxxxxxxxx
+    // Số điện thoại: nếu có thì phải đúng pattern VN
     if (form.phone_number && form.phone_number.trim()) {
       const phone = form.phone_number.trim();
       const phoneRegex = /^((0\d{9})|(\+84\d{9}))$/;
@@ -108,7 +113,17 @@ export default function ExpertApplyForm() {
       }
     }
 
-    // Nếu có lỗi → setFieldErrors + toast
+    // Giới thiệu tối đa 250 ký tự
+    if (form.description && form.description.trim().length > 250) {
+      errors.description = "Giới thiệu tối đa 250 ký tự.";
+    }
+
+    // Certificates: no per-item length validation (removed as requested)
+    // keep basic structure check
+    if (!Array.isArray(form.certificates)) {
+      errors.certificates = "Chứng chỉ phải là một mảng.";
+    }
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       toast.error("Vui lòng kiểm tra lại các thông tin bắt buộc.");
@@ -134,15 +149,39 @@ export default function ExpertApplyForm() {
       if (certFiles.length > 0) {
         for (const file of certFiles) {
           const fd = new FormData();
-          // backend hiện đang dùng field "image" cho upload avatar → tái sử dụng cho chứng chỉ
           fd.append("image", file);
 
-          const resUpload = await axiosClient.post("/api/upload", fd);
-          const url = resUpload?.data?.data?.url || resUpload?.data?.url;
-          if (!url) {
-            throw new Error("Upload chứng chỉ thất bại");
+          try {
+            const resUpload = await axiosClient.post("/api/upload", fd, {
+              headers: { "Content-Type": "multipart/form-data" },
+            });
+            const url = resUpload?.data?.data?.url || resUpload?.data?.url;
+            if (!url) throw new Error("Upload chứng chỉ thất bại (no url)");
+            uploadedUrls.push(url);
+          } catch (errUpload) {
+            // Nếu server trả 400 vì field name, thử lại với field 'file'
+            try {
+              const fd2 = new FormData();
+              fd2.append("file", file);
+              const res2 = await axiosClient.post("/api/upload", fd2, {
+                headers: { "Content-Type": "multipart/form-data" },
+              });
+              const url2 = res2?.data?.data?.url || res2?.data?.url;
+              if (!url2) throw new Error("Upload chứng chỉ thất bại (no url, fallback)");
+              uploadedUrls.push(url2);
+              continue;
+            } catch (err2) {
+              // Lấy message từ response nếu có để debug
+              const msg =
+                err2?.response?.data?.message ||
+                errUpload?.response?.data?.message ||
+                err2?.message ||
+                errUpload?.message ||
+                "Upload chứng chỉ thất bại";
+              console.error("Upload error detail:", err2 || errUpload);
+              throw new Error(msg);
+            }
           }
-          uploadedUrls.push(url);
         }
       }
 
@@ -219,8 +258,9 @@ export default function ExpertApplyForm() {
   return (
     <>
       {/* FORM ĐĂNG KÝ EXPERT */}
-      <form onSubmit={handleSubmit}>
-        <h3 className="mb-3">Đăng ký trở thành chuyên gia</h3>
+      <div className="expert-apply-page">
+        <form className="expert-card" onSubmit={handleSubmit}>
+         <h3 className="mb-3">Đăng ký trở thành chuyên gia</h3>
 
         {/* Họ tên */}
         <div className="mb-3">
@@ -229,6 +269,7 @@ export default function ExpertApplyForm() {
             type="text"
             className="form-control"
             value={form.full_name}
+            maxLength={50}
             onChange={(e) => setField("full_name", e.target.value)}
           />
           {fieldErrors.full_name && (
@@ -294,6 +335,7 @@ export default function ExpertApplyForm() {
             className="form-control"
             rows={4}
             value={form.description}
+            maxLength={250}
             onChange={(e) => setField("description", e.target.value)}
           />
         </div>
@@ -307,7 +349,7 @@ export default function ExpertApplyForm() {
                 type="text"
                 className="form-control"
                 value={c}
-                placeholder="https://..."
+                placeholder="URL chứng chỉ hoặc mô tả"
                 onChange={(e) => handleCertChange(i, e.target.value)}
               />
               <button
@@ -359,14 +401,26 @@ export default function ExpertApplyForm() {
           )}
         </div>
 
-        <button
-          type="submit"
-          className="btn btn-success"
-          disabled={submitting}
-        >
-          {submitting ? "Đang gửi..." : "Nộp đơn"}
-        </button>
-      </form>
+        <div className="form-actions">
+          <button
+            type="submit"
+            className="agri-btn-primary"
+            disabled={submitting}
+          >
+            {submitting ? "Đang gửi..." : "✉️ Nộp đơn"}
+          </button>
+          <button
+            type="button"
+            className="agri-btn-secondary"
+            onClick={resetForm}
+            disabled={submitting}
+            style={{ marginLeft: 12 }}
+          >
+            Đặt lại
+          </button>
+        </div>
+        </form>
+      </div>
 
       {/* POPUP THÔNG BÁO SAU KHI NỘP ĐƠN */}
       {successModalOpen && (
