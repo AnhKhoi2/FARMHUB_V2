@@ -1,3 +1,4 @@
+// backend/server.js
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -48,6 +49,7 @@ import tilesRoute from "./routes/tiles.js";
 import plantRoute from "./routes/plant.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 import adminTransactionsRoute from "./routes/adminTransactions.js";
+
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -76,7 +78,10 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+
+// 🔧 TĂNG LIMIT JSON – tránh 413 khi có body lớn (ngoài upload file)
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 app.use(cookieParser());
 
 // app.use(express.json({ limit: "10mb" }));

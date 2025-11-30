@@ -32,7 +32,6 @@ const userSchema = new mongoose.Schema(
 
     isVerified: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
-    isBanned: { type: Boolean, default: false },
 
     refreshTokens: { type: [String], default: [] },
 

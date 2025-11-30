@@ -176,7 +176,7 @@ export default function Post() {
             marginBottom: 20,
           }}
         >
-          <h1 style={{ fontWeight: 700, fontSize: 26 }}>Chợ Nông Sản</h1>
+          <h1 style={{ fontWeight: 700, fontSize: 26 }}>Giao Lưu & Trao Đổi</h1>
           <Button
             type="primary"
             icon={<PlusOutlined />}

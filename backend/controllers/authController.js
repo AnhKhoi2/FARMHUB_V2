@@ -16,6 +16,7 @@ import {
 import { OAuth2Client } from "google-auth-library";
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 import Profile from "../models/Profile.js";
+
 // =========================
 // Email helpers (inlined)
 // =========================
@@ -89,7 +90,8 @@ export const authController = {
       const { message, statusCode } = ERROR_CODES.INVALID_EMAIL;
       throw new AppError(message, statusCode, "INVALID_EMAIL");
     }
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
+    const passwordRegex =
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
     if (!passwordRegex.test(password)) {
       const { message, statusCode } = ERROR_CODES.WEAK_PASSWORD;
       throw new AppError(message, statusCode, "WEAK_PASSWORD");
@@ -141,7 +143,8 @@ export const authController = {
       }
 
       // Tăng số lần gửi mail và cập nhật thời điểm gửi
-      existingUser.verifyEmailCount = (existingUser.verifyEmailCount || 0) + 1;
+      existingUser.verifyEmailCount =
+        (existingUser.verifyEmailCount || 0) + 1;
       existingUser.lastVerifyEmailAt = new Date(now);
 
       // Cập nhật username/password (nếu người dùng nhập lại)
@@ -240,9 +243,6 @@ export const authController = {
   }),
 
   // Xác thực email
-  // ... các import & phần trên giữ nguyên
-
-  // Xác thực email
   verifyEmail: asyncHandler(async (req, res) => {
     const { token } = req.params;
     if (!token) {
@@ -285,41 +285,6 @@ export const authController = {
     });
   }),
 
-  // ... phần dưới giữ nguyên y như file của bạn
-
-  // Gửi lại email xác thực
-  // resendVerifyEmail: asyncHandler(async (req, res) => {
-  //   const { email } = req.body;
-
-  //   if (!email) {
-  //     const { message, statusCode } = ERROR_CODES.MISSING_FIELDS;
-  //     throw new AppError(message, statusCode, "MISSING_FIELDS");
-  //   }
-
-  //   const user = await User.findOne({ email });
-  //   if (!user) {
-  //     const { message, statusCode } = ERROR_CODES.USER_NOT_FOUND;
-  //     throw new AppError(message, statusCode, "USER_NOT_FOUND");
-  //   }
-
-  //   if (user.isVerified) {
-  //     const { message, statusCode } = ERROR_CODES.EMAIL_ALREADY_VERIFIED;
-  //     throw new AppError(message, statusCode, "EMAIL_ALREADY_VERIFIED");
-  //   }
-
-  //   // Gửi lại email xác thực
-  //   const verifyLink = await sendVerificationEmail({
-  //     email: user.email,
-  //     username: user.username,
-  //   });
-
-  //   return ok(res, {
-  //     message: "Đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư của bạn.",
-  //     verifyLink
-  //   });
-  // }),
-
-  // Đăng nhập
   // Đăng nhập CHỈ bằng username
   login: asyncHandler(async (req, res) => {
     const { username, emailOrUsername, password } = req.body;
@@ -387,12 +352,10 @@ export const authController = {
   refresh: asyncHandler(async (req, res) => {
     const oldToken = req.cookies?.refreshToken;
     if (!oldToken) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "Không tìm thấy refresh token trong cookie",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "Không tìm thấy refresh token trong cookie",
+      });
     }
 
     // tìm user sở hữu token
@@ -456,7 +419,9 @@ export const authController = {
   me: asyncHandler(async (req, res) => {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized" });
     }
     const user = await User.findById(userId).select("-password");
     return res.status(200).json({ success: true, data: user });
@@ -477,10 +442,19 @@ export const authController = {
     }
 
     const user = await User.findOne({ email });
+
+    // 🔒 Không để lộ email có tồn tại hay không
     if (!user) {
-      // tránh lộ email
-      const { message, statusCode } = ERROR_CODES.USER_NOT_FOUND;
-      throw new AppError(message, statusCode, "USER_NOT_FOUND");
+      return ok(res, {
+        message:
+          "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi liên kết đặt lại mật khẩu.",
+      });
+    }
+
+    // 🔒 Không cho đặt lại mật khẩu nếu tài khoản chưa xác thực email
+    if (!user.isVerified) {
+      const { message, statusCode } = ERROR_CODES.ACCOUNT_NOT_VERIFIED;
+      throw new AppError(message, statusCode, "ACCOUNT_NOT_VERIFIED");
     }
 
     const resetToken = jwt.sign(
@@ -489,13 +463,13 @@ export const authController = {
       { expiresIn: "15m" }
     );
 
-    await sendPasswordResetEmail(email, resetToken);
+    await sendPasswordResetEmail(user.email, resetToken);
 
     return ok(res, {
       message:
         "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi liên kết đặt lại mật khẩu.",
-      // Có thể ẩn resetToken ở production
-      resetToken,
+      // ⚠️ Production nên bỏ resetToken khỏi response
+      // resetToken,
     });
   }),
 
@@ -509,7 +483,8 @@ export const authController = {
       throw new AppError(message, statusCode, "MISSING_FIELDS");
     }
 
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
+    const passwordRegex =
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
     if (!passwordRegex.test(newPassword)) {
       const { message, statusCode } = ERROR_CODES.WEAK_PASSWORD;
       throw new AppError(message, statusCode, "WEAK_PASSWORD");
@@ -535,7 +510,10 @@ export const authController = {
       throw new AppError(message, statusCode, "INVALID_TOKEN_PURPOSE");
     }
 
-    const user = await User.findOne({ _id: decoded.id, email: decoded.email });
+    const user = await User.findOne({
+      _id: decoded.id,
+      email: decoded.email,
+    });
     if (!user) {
       const { message, statusCode } = ERROR_CODES.USER_NOT_FOUND;
       throw new AppError(message, statusCode, "USER_NOT_FOUND");
@@ -548,12 +526,12 @@ export const authController = {
     await user.save();
 
     return ok(res, {
-      message: "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay.",
+      message:
+        "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay.",
     });
   }),
 
   // Đổi mật khẩu (yêu cầu đã đăng nhập)
-  // Đổi mật khẩu hoặc tạo mật khẩu lần đầu
   changePassword: asyncHandler(async (req, res) => {
     const userId = req.user.id;
     const { oldPassword, newPassword } = req.body;
@@ -561,7 +539,8 @@ export const authController = {
     if (!newPassword) {
       throw new AppError("Thiếu mật khẩu mới", 400, "MISSING_FIELDS");
     }
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
+    const passwordRegex =
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
     if (!passwordRegex.test(newPassword)) {
       throw new AppError(
         "Mật khẩu phải ≥8 ký tự, gồm chữ, số và ký tự đặc biệt",
@@ -572,7 +551,11 @@ export const authController = {
 
     const user = await User.findById(userId);
     if (!user) {
-      throw new AppError("Người dùng không tồn tại", 404, "USER_NOT_FOUND");
+      throw new AppError(
+        "Người dùng không tồn tại",
+        404,
+        "USER_NOT_FOUND"
+      );
     }
 
     // Nếu user CHƯA có password (đăng nhập Google lần đầu) → cho set thẳng
@@ -630,7 +613,8 @@ export const authController = {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload(); // sub, email, name, picture, email_verified...
-    const { sub: googleId, email, name, picture, email_verified } = payload;
+    const { sub: googleId, email, name, picture, email_verified } =
+      payload;
 
     if (!email || !googleId) {
       throw new AppError(
@@ -685,7 +669,8 @@ export const authController = {
       if (profileDoc) userInfo.profile = profileDoc;
       else userInfo.profile = { avatar: picture || "" };
     } catch (e) {
-      userInfo.profile = userInfo.profile || { avatar: picture || "" };
+      userInfo.profile =
+        userInfo.profile || { avatar: picture || "" };
     }
 
     res.cookie("refreshToken", refreshToken, {
@@ -706,7 +691,8 @@ export const authController = {
     if (!newPassword) {
       throw new AppError("Thiếu mật khẩu mới", 400, "MISSING_FIELDS");
     }
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
+    const passwordRegex =
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
     if (!passwordRegex.test(newPassword)) {
       throw new AppError(
         "Mật khẩu phải ≥8 ký tự, gồm chữ, số và ký tự đặc biệt",
@@ -717,7 +703,11 @@ export const authController = {
 
     const user = await User.findById(userId);
     if (!user) {
-      throw new AppError("Người dùng không tồn tại", 404, "USER_NOT_FOUND");
+      throw new AppError(
+        "Người dùng không tồn tại",
+        404,
+        "USER_NOT_FOUND"
+      );
     }
 
     // Chỉ cho phép "tạo mật khẩu" nếu trước đó chưa có
