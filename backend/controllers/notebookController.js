@@ -2613,7 +2613,9 @@ export const getOverdueDetail = asyncHandler(async (req, res) => {
   const allOverdueTasks = currentStageTracking?.overdue_tasks || [];
   // Return only tasks that are still in 'overdue' status. Completed/skipped
   // entries remain in the array for history but should not be counted as active overdue.
-  const activeOverdueTasks = allOverdueTasks.filter((t) => t.status === "overdue");
+  const activeOverdueTasks = allOverdueTasks.filter(
+    (t) => t.status === "overdue"
+  );
 
   console.log(
     `🔍 Overdue tasks for notebook=${id} stage=${notebook.current_stage}: persisted=${allOverdueTasks.length} active=${activeOverdueTasks.length}`
@@ -2627,7 +2629,9 @@ export const getOverdueDetail = asyncHandler(async (req, res) => {
   const groupsMap = {};
   activeOverdueTasks.forEach((t) => {
     // original_date may be stored as Date or string
-    const orig = t.original_date ? toVietnamMidnight(new Date(t.original_date)) : null;
+    const orig = t.original_date
+      ? toVietnamMidnight(new Date(t.original_date))
+      : null;
 
     // If original_date equals today, skip grouping (we will not include today's original_date tasks)
     if (orig && orig.getTime() === todayMid.getTime()) return;
