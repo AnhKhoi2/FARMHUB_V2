@@ -31,24 +31,73 @@ function ChangePasswordModal({
   pwSaving,
   handleChangePassword,
 }) {
+  // Hooks gọi luôn, nhưng effect chỉ thực hiện khi isOpen = true
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const d = document.body;
+    const current = Number(d.dataset.scrollLockCount || 0);
+    d.dataset.scrollLockCount = String(current + 1);
+    if (current === 0) d.style.overflow = "hidden";
+
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      const after = Math.max(0, Number(d.dataset.scrollLockCount || 1) - 1);
+      if (after === 0) {
+        d.style.overflow = "";
+        delete d.dataset.scrollLockCount;
+      } else {
+        d.dataset.scrollLockCount = String(after);
+      }
+    };
+  }, [isOpen, onClose]);
+
+  // nếu đóng thì vẫn an toàn trả về null (hooks đã được gọi)
   if (!isOpen) return null;
 
   const handlePwChange = (name, value) => {
     setPwForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const onKeyDown = (e) => {
+    if (e.key === "Escape") onClose();
+  };
+
   return (
     <div
-      className="fixed inset-0 z-[1000] bg-black bg-opacity-50 flex justify-center items-center p-4"
-      onClick={onClose}
+      className="pw-popup fixed inset-0 z-[2000] flex items-center justify-center"
+      onMouseDown={(e) => {
+        // click ngoài để đóng
+        if (e.target === e.currentTarget) onClose();
+      }}
+      role="presentation"
     >
       <div
-        className="agri-card w-full max-w-lg space-y-4"
-        onClick={(e) => e.stopPropagation()}
+        className="pw-popup-card agri-card w-full max-w-md p-6"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Đổi mật khẩu"
+        tabIndex={-1}
+        onKeyDown={onKeyDown}
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-semibold text-agri-primary border-b pb-2">
-          🔑 Đổi Mật Khẩu
-        </h2>
+        <button
+          type="button"
+          aria-label="Đóng"
+          className="pw-popup-close"
+          onClick={onClose}
+        >
+          &times;
+        </button>
+
+        <div className="mb-2">
+          <h2 className="text-xl font-semibold text-agri-primary">🔑 Đổi Mật Khẩu</h2>
+        </div>
 
         <div className="grid gap-4">
           {needsSetPassword ? (
@@ -82,15 +131,13 @@ function ChangePasswordModal({
             <input
               type="password"
               value={pwForm.confirmPassword}
-              onChange={(e) =>
-                handlePwChange("confirmPassword", e.target.value)
-              }
+              onChange={(e) => handlePwChange("confirmPassword", e.target.value)}
               className="agri-input"
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"
             onClick={onClose}
@@ -103,13 +150,9 @@ function ChangePasswordModal({
             type="button"
             onClick={handleChangePassword}
             disabled={pwSaving}
-            className="agri-btn-primary disabled:opacity-60"
+            className="agri-btn-primary"
           >
-            {pwSaving
-              ? "Đang xử lý…"
-              : needsSetPassword
-              ? "✨ Tạo mật khẩu"
-              : "🔄 Đổi mật khẩu"}
+            {pwSaving ? "Đang xử lý…" : needsSetPassword ? "✨ Tạo mật khẩu" : "🔄 Đổi mật khẩu"}
           </button>
         </div>
       </div>
@@ -939,31 +982,31 @@ export default function ProfilePage() {
 
                   <div>
                     <label className="agri-label">Ảnh đại diện</label>
-                    <div className="flex items-center gap-3">
-                      <div className="w-20 h-20 rounded overflow-hidden border bg-gray-50">
-                        {avatarPreview ? (
-                          <img
-                            src={avatarPreview}
-                            alt="avatar"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full grid place-items-center text-sm text-agri-gray">
-                            Chưa có
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex items-start gap-6">
+                      <div className="flex flex-col items-center">
+                        <div className="avatar-wrapper">
+                          {avatarPreview ? (
+                            <img
+                              src={avatarPreview}
+                              alt="avatar"
+                              className="avatar-img"
+                            />
+                          ) : (
+                            <div className="w-full h-full grid place-items-center text-sm text-agri-gray">
+                              Chưa có
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="flex flex-col gap-2">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleAvatarSelect}
-                          className="hidden"
-                        />
-                        <div className="flex gap-2">
-                          <button
+                        <div className="mt-3 flex gap-2">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarSelect}
+                            className="hidden"
+                          />
+                          {/* <button
                             type="button"
                             onClick={() =>
                               fileInputRef.current &&
@@ -972,7 +1015,7 @@ export default function ProfilePage() {
                             className="agri-btn-secondary"
                           >
                             Tải ảnh lên
-                          </button>
+                          </button> */}
                           <button
                             type="button"
                             onClick={clearAvatar}
@@ -982,10 +1025,13 @@ export default function ProfilePage() {
                           </button>
                         </div>
                         {fieldErrors.avatar && (
-                          <p className="text-sm text-red-600">
+                          <p className="text-sm text-red-600 mt-2">
                             {fieldErrors.avatar}
                           </p>
                         )}
+                      </div>
+                      <div className="flex-1">
+                        {/* giữ khoảng cho form inputs (không thay đổi) */}
                       </div>
                     </div>
                   </div>

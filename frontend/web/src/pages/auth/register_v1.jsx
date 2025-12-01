@@ -3,6 +3,58 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { registerThunk } from "../../redux/authThunks.js";
+import "../../css/auth/Register.css";
+
+const EyeIcon = ({ open }) =>
+  open ? (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="3"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ) : (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M3 3l18 18"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.58 10.58A3 3 0 0113.42 13.42"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 
 const Register = () => {
   const navigate = useNavigate();
@@ -24,126 +76,110 @@ const Register = () => {
     setLoading(true);
     setError(null);
     setSuccessMessage("");
-    // gọi API như cũ
-    const result = await dispatch(
-      registerThunk({ username, email, password, agreedToTerms: agree })
-    );
+    try {
+      const result = await dispatch(
+        registerThunk({ username, email, password, agreedToTerms: agree })
+      );
 
-    setLoading(false);
-
-    if (result?.success) {
-      const msg =
-        result.message ||
-        "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.";
-
-      setSuccessMessage(msg);
-      setError(null);
-
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
-    } else if (result?.message) {
-      setError(result.message);
-    } else {
-      setError("Đăng ký thất bại. Vui lòng thử lại.");
+      if (result?.success) {
+        const msg =
+          result.message || "Đăng ký thành công! Kiểm tra email để xác thực.";
+        setSuccessMessage(msg);
+        setError(null);
+        setTimeout(() => navigate("/login"), 1600);
+      } else {
+        setError(result?.message || "Đăng ký thất bại. Vui lòng thử lại.");
+      }
+    } catch (err) {
+      setError(err?.message || "Có lỗi. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="login-page">
-      <div className="wrapper">
-        <span className="icon-close">
-          <ion-icon name="close"></ion-icon>
-        </span>
+      <div className="register-card" role="main" aria-live="polite">
+        <h2 className="reg-title">Đăng ký</h2>
 
-        <div className="form-box register">
-          <h2>Registration</h2>
+        {successMessage && <div className="reg-success">{successMessage}</div>}
+        {error && <div className="reg-error">{error}</div>}
 
-          {/* Thông báo thành công */}
-          {successMessage && (
-            <div className="success-message">{successMessage}</div>
-          )}
+        <form className="reg-form" onSubmit={handleRegister} noValidate>
+          <label className="reg-label">Tên tài khoản</label>
+          <div className="input-box">
+            <input
+              type="text"
+              value={username}
+              placeholder="Tên tài khoản"
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              autoComplete="username"
+              className="reg-input"
+            />
+          </div>
 
-          {/* Thông báo lỗi */}
-          {error && <div className="error-message">{error}</div>}
+          <label className="reg-label">Email</label>
+          <div className="input-box">
+            <input
+              type="email"
+              value={email}
+              placeholder="Email"
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              className="reg-input"
+            />
+          </div>
 
-          <form onSubmit={handleRegister} noValidate>
-            <div className="input-box">
-              <span className="icon">
-                <ion-icon name="person"></ion-icon>
-              </span>
-              <input
-                type="text"
-                value={username}
-                placeholder=" "
-                onChange={(e) => setUsername(e.target.value)}
-              />
-              <label>Username</label>
-            </div>
+          <label className="reg-label">Mật khẩu</label>
+          <div className="input-box input-with-icon">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              placeholder="Mật khẩu"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+              className="reg-input"
+            />
 
-            <div className="input-box">
-              <span className="icon">
-                <ion-icon name="mail"></ion-icon>
-              </span>
-              <input
-                type="email"
-                value={email}
-                placeholder=" "
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <label>Email</label>
-            </div>
-
-            <div className="input-box" style={{ position: "relative" }}>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                placeholder=" "
-                onChange={(e) => setPassword(e.target.value)}
-              />
-
-              {/* Nút toggle show/hide password */}
-              <span
-                className="toggle-password"
-                onClick={() => setShowPassword((prev) => !prev)}
-                style={{
-                  position: "absolute",
-                  right: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                  fontSize: "20px",
-                  color: "#666",
-                }}
-              >
-                <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
-              </span>
-
-              <label>Password</label>
-            </div>
-
-            <div className="remember-forgot">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={agree}
-                  onChange={(e) => setAgree(e.target.checked)}
-                />
-                I agree to terms & conditions
-              </label>
-            </div>
-
-            <button className="btn" type="submit" disabled={loading}>
-              {loading ? "Registering..." : "Register"}
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setShowPassword((p) => !p)}
+              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            >
+              {showPassword ? (
+                <ion-icon name="eye-off-outline"></ion-icon>
+              ) : (
+                <ion-icon name="eye-outline"></ion-icon>
+              )}
             </button>
+          </div>
 
-            <div className="login-register">
-              <p>
-                Already have an account? <Link to="/login">Login</Link>
-              </p>
-            </div>
-          </form>
-        </div>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+              className="reg-checkbox"
+            />
+            Tôi đồng ý với điều khoản
+          </label>
+
+          <button className="reg-btn" type="submit" disabled={loading}>
+            {loading ? "Đang đăng ký..." : "Đăng ký"}
+          </button>
+
+          <div className="reg-bottom">
+            <span>Bạn đã có tài khoản? </span>
+            <Link to="/login" className="reg-link">
+              Đăng nhập
+            </Link>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -52,7 +52,7 @@ export const ERROR_CODES = {
   },
   INVALID_USERNAME: {
     message:
-      "Tên người dùng chỉ được chứa chữ, số, dấu gạch dưới và từ 3–20 ký tự.",
+      "Tên người dùng chỉ được chứa chữ không dấu, số, dấu gạch dưới và từ 3–20 ký tự.",
     statusCode: 400,
   },
 

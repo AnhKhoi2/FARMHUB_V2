@@ -164,15 +164,32 @@ export async function create(req, res) {
       expertise_area,
       experience_years = 0,
       description = "",
-      phone_number = "",
-      certificates = [],
+      phone_number,
+      certificates, // may be undefined / string / array
     } = req.body || {};
 
-    // --- Validate body ---
+    // --- Normalize certificates so it always becomes an array of non-empty strings.
+    // Accept uploaded file paths like "/uploads/..." and text links like "http://..."
+    let rawCertificates = certificates;
+    if (rawCertificates === null || rawCertificates === undefined || rawCertificates === "") {
+      rawCertificates = [];
+    } else if (!Array.isArray(rawCertificates)) {
+      // client may send single string
+      rawCertificates = [rawCertificates];
+    }
+
+    // Trim items and remove empties; accept any string (no URI validation)
+    const certs = rawCertificates
+      .map((x) => (typeof x === "string" ? x.trim() : ""))
+      .filter(Boolean);
+
+    // --- Validate other fields (keep minimal checks) ---
     const errors = {};
 
     if (!full_name || !String(full_name).trim()) {
       errors.full_name = "Họ tên là bắt buộc";
+    } else if (String(full_name).trim().length > 50) {
+      errors.full_name = "Họ tên tối đa 50 ký tự";
     }
 
     if (!expertise_area || !String(expertise_area).trim()) {
@@ -189,8 +206,8 @@ export async function create(req, res) {
       errors.phone_number = "Số điện thoại phải là chuỗi.";
     }
 
-    if (!Array.isArray(certificates)) {
-      errors.certificates = "Certificates phải là một mảng.";
+    if (description && String(description).trim().length > 250) {
+      errors.description = "Giới thiệu tối đa 250 ký tự";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -211,12 +228,6 @@ export async function create(req, res) {
         .status(409)
         .json({ message: "Bạn đã có đơn đang chờ duyệt." });
     }
-
-    const certs = Array.isArray(certificates)
-      ? certificates
-          .map((x) => (typeof x === "string" ? x.trim() : ""))
-          .filter(Boolean)
-      : [];
 
     // Tạo mới
     const app = await ExpertApplication.create({
