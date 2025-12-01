@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
 import { useNavigate } from "react-router-dom";
@@ -10,12 +11,14 @@ import NotebookCard from "../../components/farmer/NotebookCard";
 import { formatVietnamLocale } from "../../utils/timezone";
 const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
   const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
   const [notebooks, setNotebooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showDeleted, setShowDeleted] = useState(initialShowDeleted);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -184,7 +187,17 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
         <div className="action-buttons">
           <button
             className="btn-create"
-            onClick={() => navigate("/farmer/notebooks/create")}
+            onClick={() => {
+              // Respect subscriptionPlan (newer token) but fallback to plan
+              const plan = user?.subscriptionPlan || user?.plan || "basic";
+              // Only basic/free are limited to 3 notebooks
+              const isFree = plan === "basic" || plan === "free";
+              if (isFree && notebooks.length >= 3) {
+                setShowLimitModal(true);
+                return;
+              }
+              navigate("/farmer/notebooks/create");
+            }}
           >
             <span className="icon">＋</span> Thêm mới notebook
           </button>
@@ -250,6 +263,86 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
         {error && (
           <div className="alert alert-error">
             <span>⚠️</span> {error}
+          </div>
+        )}
+
+        {/* Limit modal (free-tier) */}
+        {showLimitModal && (
+          <div
+            className="nb-modal-overlay"
+            onClick={() => setShowLimitModal(false)}
+          >
+            <div className="nb-modal" onClick={(e) => e.stopPropagation()}>
+              <h3 className="mb-3">Giới hạn gói miễn phí</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Tài khoản miễn phí chỉ được tạo tối đa 3 nhật ký. Để thêm nhật
+                ký mới, bạn có thể xóa 1 trong 3 nhật ký hiện tại hoặc nâng cấp
+                lên gói Thông Minh để tạo không giới hạn.
+              </p>
+
+              <div className="mb-4">
+                <h4 className="mb-2">Nhật ký hiện tại</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {notebooks.slice(0, 3).map((nb) => (
+                    <div key={nb._id} className="nb-item">
+                      <div className="nb-meta">
+                        <div className="nb-title">
+                          {nb.notebook_name ||
+                            nb.title ||
+                            nb.name ||
+                            "Không tên"}
+                        </div>
+                        <div className="nb-sub">
+                          {formatDate(nb.createdAt || nb.planted_date)}
+                        </div>
+                      </div>
+                      <div className="nb-actions">
+                        <button
+                          className="nb-btn nb-btn-ghost"
+                          onClick={async () => {
+                            // Confirm deletion
+                            if (
+                              !window.confirm(
+                                "Bạn có chắc muốn xóa nhật ký này?"
+                              )
+                            )
+                              return;
+                            try {
+                              await handleDelete(nb._id);
+                              // refresh list
+                              await fetchNotebooks();
+                              if ((notebooks.length || 0) < 3) {
+                                setShowLimitModal(false);
+                                navigate("/farmer/notebooks/create");
+                              }
+                            } catch (err) {
+                              console.error("Delete from modal failed", err);
+                            }
+                          }}
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="nb-modal-actions">
+                <button
+                  className="nb-btn nb-btn-ghost"
+                  onClick={() => setShowLimitModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="nb-btn nb-btn-primary"
+                  onClick={() => navigate("/pricing")}
+                >
+                  Nâng cấp lên Thông Minh
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

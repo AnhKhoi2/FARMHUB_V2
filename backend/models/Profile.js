@@ -27,6 +27,12 @@ const ProfileSchema = new mongoose.Schema({
   gender: { type: String, enum: ["male", "female", "other"], default: "other" },
   address: { type: String, trim: true, maxlength: 255 },
   bio: { type: String, trim: true, maxlength: 1000 },
+  // preferences for model suggestion feature
+  modelSuggestion: {
+    selectedOptions: { type: mongoose.Schema.Types.Mixed, default: {} },
+    skipCount: { type: Number, default: 0 },
+    lastSkippedAt: { type: Date, default: null },
+  },
 }, { timestamps: true });
 
 export default mongoose.model("Profile", ProfileSchema);

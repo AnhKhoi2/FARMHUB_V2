@@ -50,7 +50,8 @@
     align-items: center;
     gap: 12px;
     padding: 24px;
-    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+    /* Match header theme (green gradient) */
+    background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 40%, #3a7c4f 100%);
     color: white;
     position: relative;
 }
@@ -112,7 +113,8 @@
 }
 
 .overdue-count {
-    color: #ff6b6b;
+    color: #ffd166;
+    /* header accent */
     font-size: 20px;
     font-weight: 700;
 }
@@ -146,13 +148,14 @@
 }
 
 .btn-view-detail {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #1b4332 0%, #2d6a4f 100%);
     color: white;
+    box-shadow: 0 8px 20px rgba(27, 67, 50, 0.18);
 }
 
 .btn-view-detail:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 10px 26px rgba(27, 67, 50, 0.24);
 }
 
 .btn-skip {

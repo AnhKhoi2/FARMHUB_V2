@@ -1,231 +1,345 @@
 /* File: Profile.css */
 
+/* Farmer-friendly profile UI
+   - Chữ lớn, khoảng cách rộng, avatar lớn
+   - Nút to rõ, thẻ (card) sáng, dễ đọc trên background
+*/
 .profile-page {
-  /* Nền trang: Màu kem nhạt/trắng ngà gợi cảm giác đất, cát, tự nhiên */
-  background-color: #fcfbf6;
-  padding: 1.5rem 0; 
+  padding: 24px;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  color: #0b3f20;
 }
 
+/* container */
 .agri-theme-container {
-  /* Định nghĩa biến màu theo chủ đề */
-  --agri-green-primary: #38a169; /* Xanh lá đậm, thân thiện (Primary) */
-  --agri-green-light: #f0fdf4; /* Xanh lá siêu nhạt cho nền */
-  --agri-yellow-accent: #fcd34d; /* Vàng nắng, đất đai (Accent) */
-  --agri-gray-text: #4b5563; /* Màu xám đậm cho chữ */
-  
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 12px;
 }
 
+/* Heading */
 .agri-theme-heading {
-  color: var(--agri-green-primary);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  border-bottom: 3px solid var(--agri-yellow-accent); /* Gạch chân vàng nắng */
-  padding-bottom: 0.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 28px;
+  line-height: 1.1;
+  color: #0c5b2e;
+  margin-bottom: 12px;
+  font-weight: 800;
 }
 
+/* Card */
 .agri-card {
-  background-color: #ffffff;
-  border-radius: 1.5rem; /* Bo góc lớn, mềm mại */
-  /* Hiệu ứng "Wow": Shadow nổi nhẹ */
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
-  padding: 1.5rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: rgba(255,255,255,0.96);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 28px rgba(6,40,12,0.06);
+  border: 1px solid rgba(6,40,12,0.06);
 }
 
-.agri-card:hover {
-  transform: translateY(-3px); /* Nâng lên một chút khi hover */
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
-}
-
-/* Style riêng cho Avatar */
+/* Avatar column */
 .avatar-section {
-  text-align: center;
-}
-
-.avatar-wrapper {
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  overflow: hidden;
-  margin: 0 auto 1rem;
-  width: 150px;
-  border: 4px solid var(--agri-yellow-accent);
-  box-shadow: 0 0 0 6px rgba(56, 161, 105, 0.2); /* Hiệu ứng glow xanh nhẹ */
-}
-
-.avatar-wrapper img {
-  object-fit: cover;
-  width: 100%;
-  height: 100%;
-}
-
-.agri-label {
-  color: var(--agri-green-primary);
-  font-weight: 600;
-  display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.9rem;
-}
-
-/* Nút bấm */
-.agri-btn-primary {
-  background-color: var(--agri-green-primary);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.agri-btn-primary:hover {
-  background-color: #2f855a;
-}
-
-.agri-btn-secondary {
-  background-color: transparent;
-  color: var(--agri-green-primary);
-  border: 1px solid var(--agri-green-primary);
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  transition: background-color 0.2s, background-color 0.2s;
-}
-
-.agri-btn-secondary:hover {
-  background-color: var(--agri-green-light);
-}
-
-/* Input/Select/Textarea */
-.agri-input {
-  border: 1px solid #d1d5db;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  width: 100%;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.agri-input:focus {
-  border-color: var(--agri-green-primary);
-  box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.3);
-  outline: none;
-}
-
-/* Trạng thái đơn đăng ký */
-.status-tag {
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.status-pending {
-  background-color: #fef3c7; /* Vàng nhạt */
-  color: #b45309; /* Cam đậm */
-}
-
-.status-approved {
-  background-color: #d1fae5; /* Xanh lá nhạt */
-  color: #065f46; /* Xanh lá đậm */
-}
-
-.status-rejected {
-  background-color: #fee2e2; /* Đỏ nhạt */
-  color: #991b1b; /* Đỏ đậm */
-}
-
-/* Table Style */
-.agri-table th, .agri-table td {
-    padding: 12px 16px;
-    text-align: left;
-}
-
-.agri-table thead {
-    background-color: var(--agri-green-light);
-    color: var(--agri-green-primary);
-    font-weight: 700;
-}
-
-.agri-table tbody tr:nth-child(even) {
-    background-color: #f9fafb;
-}
-
-.agri-table tbody tr:hover {
-    background-color: #f3f4f6;
-}
-
-.agri-table {
-    border-collapse: separate; 
-    border-spacing: 0;
-}
-
-/* Text màu sắc */
-.text-agri-primary { color: var(--agri-green-primary); }
-.text-agri-accent { color: var(--agri-yellow-accent); }
-.text-agri-gray { color: var(--agri-gray-text); }
-/*********************************************
- * LAYOUT PROFILE — MODERN + CLEAN
- *********************************************/
-
-/* ===========================
-   PROFILE HEADER (new)
-=========================== */
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(15,23,42,0.06);
-  margin-bottom: 1.5rem;
-}
-
-.profile-header .avatar-lg {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid var(--yellow-accent);
-  box-shadow: 0 0 0 6px rgba(56,161,105,0.2);
-}
-
-.profile-header .avatar-lg img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-header .info {
-  flex: 1;
-}
-
-.profile-header .info h2 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--green-primary);
-}
-
-.profile-header .info .muted {
-  color: var(--gray-text);
-  font-size: 0.9rem;
-  margin-top: 4px;
-}
-
-.profile-header .actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding-bottom: 8px;
+}
+.avatar-wrapper {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;       /* tròn */
+  overflow: hidden;
+  border: 2px solid rgba(11,63,32,0.08);
+  background: #f6fff6;
+  display: inline-grid;
+  place-items: center;
+  font-size: 42px;
+  /* Ngăn avatar bị phóng to do flex/transform mà không thay đổi kích thước gốc */
+  flex: 0 0 auto !important;
+  align-self: center !important;
+  transform: none !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+.avatar-wrapper img,
+.avatar-img {
+  transform: none !important;
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  object-fit: cover;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .profile-header {
-    flex-direction: column;
-    text-align: center;
-  }
-  .profile-header .actions {
-    width: 100%;
-  }
+/* Name label */
+.avatar-section .text-agri-primary,
+.avatar-section p {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0b4f26;
+}
+
+/* Buttons large */
+.agri-btn-primary,
+.agri-btn-secondary {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.agri-btn-primary {
+  background: linear-gradient(180deg,#15934f,#0b6e36);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 18px rgba(11,110,54,0.14);
+}
+.agri-btn-secondary {
+  background: #fff;
+  border: 2px solid rgba(11,110,54,0.12);
+  color: #0b4f26;
+}
+
+/* Labels & inputs */
+.agri-label {
+  font-weight: 800;
+  color: #114b2b;
+  margin-bottom: 6px;
+  display:block;
+}
+.agri-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,0.06);
+  background: #fff;
+  font-size: 15px;
+  color: #07391b;
+  box-sizing: border-box;
+}
+
+/* Read-only info */
+.text-agri-gray {
+  color: #4b5b4a;
+  font-size: 15px;
+}
+
+/* Form spacing */
+.profile-form > * { margin-bottom: 8px; }
+.grid > div { font-size: 15px; }
+
+/* Table */
+.agri-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.agri-table th, .agri-table td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(15,23,42,0.04);
+  text-align: left;
+}
+
+/* Status tags */
+.status-tag {
+  display:inline-block;
+  padding:6px 10px;
+  border-radius: 999px;
+  font-weight:800;
+  font-size:13px;
+  text-transform:capitalize;
+}
+.status-approved { background:#ecfdf5; color:#065f46; border:1px solid rgba(6,95,70,0.08); }
+.status-pending { background:#fff7ed; color:#92400e; border:1px solid rgba(146,64,14,0.08); }
+.status-rejected { background:#fff1f2; color:#9f1239; border:1px solid rgba(159,18,57,0.06); }
+
+/* Helper text & errors */
+.text-sm { font-size:13px; }
+.text-red-600 { color: #b91c1c; }
+
+/* Modal overrides (bigger, clear) */
+.fixed.inset-0 .agri-card {
+  max-width: 720px;
+  width: calc(100% - 32px);
+  padding: 18px;
+}
+.fixed .agri-card h2 { font-size: 20px; }
+
+/* popup modal (Change Password) - overlay + centered card + scale-in */
+.pw-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 99999 !important; /* ưu tiên hiển thị trên mọi thành phần */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5);
+  padding: 20px;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.pw-popup-card {
+  position: relative;
+  z-index: 100000 !important;
+  background: rgba(255,255,255,0.98);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(6,40,12,0.2);
+  max-width: 640px;
+  width: 100%;
+  max-height: calc(100vh - 64px);
+  overflow: auto;
+  animation: pw-popup-in 220ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* tạm debug outline nếu vẫn không thấy */
+.pw-popup-card.debug { outline: 3px dashed rgba(255,0,0,0.9); }
+
+/* close button top-right */
+.pw-popup-close {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #3b4b3a;
+  padding: 6px;
+  border-radius: 6px;
+}
+.pw-popup-close:hover { background: rgba(0,0,0,0.04); }
+
+/* animation */
+@keyframes pw-popup-in {
+  from { opacity: 0; transform: scale(.96) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Responsive: collapse to single column */
+@media (max-width: 1024px) {
+  .grid { grid-template-columns: 1fr !important; }
+  .avatar-wrapper { width: 160px; height: 160px; }
+  .agri-theme-heading { font-size: 24px; }
+}
+
+/* Mobile: comfortable tap targets */
+@media (max-width: 520px) {
+  .agri-card { padding: 14px; }
+  .avatar-wrapper { width: 140px; height: 140px; border-radius:12px; }
+  .agri-btn-primary, .agri-btn-secondary { padding: 12px; font-size: 16px; }
+  .agri-input { font-size: 16px; padding: 12px; }
+  .pw-popup { padding: 12px; }
+  .pw-popup-card { width: 100%; max-width: 520px; padding: 14px; border-radius: 10px; }
+  .pw-popup-close { top: 6px; right: 8px; font-size: 20px; }
+}
+
+/* Ảnh đại diện: hình tròn, kích thước lớn và responsive */
+.avatar-wrapper {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;       /* tròn */
+  overflow: hidden;
+  border: 2px solid rgba(11,63,32,0.08);
+  background: #f6fff6;
+  display: inline-grid;
+  place-items: center;
+  font-size: 42px;
+}
+
+/* Ảnh bên trong luôn che phủ và giữ tròn */
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+}
+
+/* Khi đang ở chế độ chỉnh sửa, phóng to avatar trong header/ảnh chính */
+.profile-edit .avatar-wrapper {
+  width: 180px; /* cùng kích thước như mặc định */
+  height: 180px;
+}
+
+/* chỉ phóng to preview avatar trong form chỉnh sửa (không ảnh hưởng tới avatar chính) */
+.profile-edit .edit-avatar-preview {
+  width: 140px;
+  height: 140px;
+}
+
+/* responsive */
+@media (max-width: 520px) {
+  .edit-avatar-preview { width: 96px; height: 96px; }
+  .profile-edit .edit-avatar-preview { width: 112px; height: 112px; }
+}
+
+/* Modal đổi mật khẩu: căn giữa, responsive và có scroll khi nội dung lớn */
+.pw-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* backdrop already semi-transparent; đảm bảo modal nội dung không quá rộng */
+.pw-modal .agri-card {
+  max-width: 560px; /* cân đối cho nội dung form */
+  width: 100%;
+  margin: auto;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(6,40,12,0.14);
+  background: rgba(255,255,255,0.98);
+}
+
+/* Header layout: tiêu đề + nút đóng */
+.pw-modal .agri-card > .flex.items-start {
+  align-items: flex-start;
+}
+
+/* Tối ưu input / button trong modal */
+.pw-modal .agri-input {
+  padding: 12px 14px;
+  font-size: 15px;
+}
+.pw-modal .agri-btn-primary,
+.pw-modal .agri-btn-secondary {
+  min-width: 120px;
+}
+
+/* Khi màn hình nhỏ: giảm padding và cho modal chiếm gần hết chiều ngang */
+@media (max-width: 520px) {
+  .pw-modal { padding: 12px; }
+  .pw-modal .agri-card { max-width: 96%; padding: 14px; }
+  .pw-modal .agri-btn-primary, .pw-modal .agri-btn-secondary { width: auto; padding: 10px; font-size: 14px; }
+}
+
+/* Đảm bảo chế độ chỉnh sửa không thay đổi kích thước avatar mặc định */
+.profile-edit .avatar-wrapper,
+.profile-edit .edit-avatar-preview {
+  width: unset !important;
+  height: unset !important;
+  /* Nếu cần khôi phục border-radius / object-fit theo lớp gốc */
+  border-radius: inherit !important;
+}
+  
+/* Nếu còn rule nào ép kích thước cụ thể, ưu tiên lớp gốc */
+.avatar-wrapper,
+.edit-avatar-preview {
+  /* giữ nguyên thuộc tính hiện tại (mặc định file) */
+  object-fit: cover;
 }

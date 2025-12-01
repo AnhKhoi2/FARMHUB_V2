@@ -1,196 +1,208 @@
+/* Toàn trang: giữ background image */
+.login-page,
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* giữ background ảnh gốc (không ghi đè) */
 .login-page {
   width: 100vw;
   height: 100vh;
-  background: url("/img/background1.jpg") no-repeat center center/cover;
+  background: url("../../../public/img/background1.jpg") no-repeat center center/cover;
   display: flex;
   justify-content: center;
   align-items: center;
 }
-.error-message {
-  color: red;
-  text-align: center;
-  font-size: 14px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  font-weight: 500;
-}
 
-/* ...existing code... */
+/* Container chính - bán trong suốt để ảnh nền vẫn thấy */
+.login-card-simple,
 .wrapper {
-    position: relative;
-    width: 400px;
-    /* thay height cố định bằng auto + min-height */
-    height: auto;
-    min-height: 440px; /* giá trị mặc định cho login */
-    background: transparent;
-    border: 2px solid rgba(255, 255, 255, .5);
-    border-radius: 20px;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 0 30px rgba(0, 0, 0, .5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color:#e9ecef;
-    overflow: hidden;
-    border-bottom-left-radius:20px;
-    cursor: pointer;
-    z-index: 1;
-    padding: 20px; /* thêm padding để wrapper mở rộng theo nội dung */
+  width: 420px;
+  max-width: 96%;
+  min-height: 440px;
+  background: rgba(255,255,255,0.90); /* bán trong suốt, cho thấy background */
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2;
 }
 
-/* modifier cho từng trang nếu cần kích thước khác */
-.wrapper.login { min-height: 440px; }
-.wrapper.register { min-height: 540px; }
-/* ...existing code... */
-
-.wrapper .form-box.register {
-    position: relative;
+/* Tiêu đề, mô tả */
+.login-title {
+  font-size: 22px;
+  color: #114b2b;
+  text-align: center;
+  margin: 0 0 6px 0;
+  font-weight: 800;
 }
 
+.login-sub {
+  font-size: 13px;
+  color: #2f6b44;
+  text-align: center;
+  margin: 0 0 14px 0;
+}
+
+/* Form và inputs */
+.login-form-simple,
 .wrapper .form-box {
-    width: 100%;
-    padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.wrapper .icon-close {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 45px;
-    height: 45px;
-    background: #162938;
-    font-size: 2em;
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.form-box h2 {
-    font-size: 2m;
-    color: #162938;
-    text-align: center;
-}
-
-.input-box {
-    position: relative;
-    width: 100%;
-    height: 50px;            /* thêm border-radius riêng */
-    margin: 30px 0;
-    border: none;
-    border-bottom: 2px solid #333;
-}
-
+.label-simple,
 .input-box label {
-    position: absolute;
-    top: 50%;
-    left: 5px;
-    transform: translateY(-50%);
-    font-size: 1em;
-    color: #162938;
-    font-weight: 500;
-    pointer-events: none;
-    transition: .5s;
+  font-weight: 700;
+  color: #114b2b;
+  font-size: 13px;
 }
 
-.input-box input:focus ~ label,
-.input-box input:valid ~ label {
-    top: -5px;
-}
-
+.input-simple,
 .input-box input {
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 1em;
-    color: #162938;
-    font-weight: 600;
-    padding: 0 35px 0 5px;
+  padding: 12px 14px;
+  padding-right: 56px; /* thêm khoảng trống bên phải cho nút mắt */
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,0.06);
+  background: rgba(255,255,255,0.95);
+  width: 100%;
+  box-sizing: border-box;
+  color: #0b3f20;
 }
 
-.input-box .icon{
-    position: absolute;
-    right: 8px;
-    font-size: 1.2em;
-    color: #162938;
-    line-height: 57px;
-}
-
-.remember-forgot {
-    font-size: .9em;
-    color: #162938;
-    font-weight: 500;
-    margin: -15px 0 15px;
-    display: flex;
-    justify-content: space-between;
-}
-
-
-.remember-forgot label input {
-    accent-color: #162938;
-    margin-right: 3px;
-}
-
-.remember-forgot a {
-    color: #162938;
-    text-decoration: none;
-}
-
-.remember-forgot a:hover {
-    text-decoration: underline;
-}
-
-
-.btn {
-    width: 100%;
-    height: 45px;
-    background: #162938;
-    border: none;
-    outline: none;
-    border-radius: 6px;
-    color: #fff;
-    font-size: 1em;
-    font-weight: 500;
-    cursor: pointer;
-    transition: .3s;
-}
-
-.login-register {
-    font-size: .9em;
-    color: #162938;
-    font-weight: 500;
-    text-align: center;
-    margin: 25px 0 10px;
-}
-
-.login-register p a {
-    color: #162938;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.login-register p a:hover {
-    text-decoration: underline;
-}
-
-.divider {
+/* Input with eye icon */
+.input-with-icon,
+.input-box {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;    /* 👈 Căn giữa toàn bộ */
-  gap: 10px;                  /* Khoảng cách 2 line và chữ */
-  margin: 20px 0;
+  overflow: visible; /* cho icon nằm ngoài input nếu cần */
 }
 
-.divider .line {
-  flex: 1;                    /* 👈 2 đường kẻ dài ra cân đối */
-  height: 1px;
-  background: #ccc;
+/* đảm bảo có chỗ cho icon, icon hiện lên trên input và có màu rõ */
+.input-simple,
+.input-box input {
+  padding: 12px 14px;
+  padding-right: 56px; /* thêm khoảng trống bên phải cho nút mắt */
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,0.06);
+  background: rgba(255,255,255,0.95);
+  width: 100%;
+  box-sizing: border-box;
+  color: #0b3f20;
 }
 
-.divider span {
-  white-space: nowrap;
-  font-size: 14px;
-  color: #666;
+/* wrapper cho input + icon */
+.input-with-icon,
+.input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: visible; /* cho icon nằm ngoài input nếu cần */
+}
+
+/* nút icon (mắt) */
+.icon-btn,
+.pw-toggle {
+  position: absolute;
+  right: 8px;
+  background: rgba(232,247,234,0.95);
+  border: 1px solid rgba(214,240,214,0.95);
+  height: 38px;
+  width: 38px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20; /* nổi lên trên input */
+  padding: 0;
+}
+
+/* ép màu stroke cho SVG nếu SVG dùng stroke inline hoặc currentColor */
+.icon-btn svg,
+.pw-toggle svg { width:20px; height:20px; display:block; }
+.icon-btn svg path,
+.icon-btn svg circle,
+.pw-toggle svg path,
+.pw-toggle svg circle {
+  stroke: #114b2b !important;
+  stroke-width: 1.6;
+  fill: none;
+}
+
+/* hover / focus để dễ thấy */
+.icon-btn:hover,
+.pw-toggle:hover {
+  background: rgba(214,240,214,1);
+  box-shadow: 0 4px 10px rgba(11,110,54,0.08);
+}
+
+/* Nút chính */
+.btn-primary-simple,
+.btn-large,
+.btn-primary-lg {
+  margin-top: 6px;
+  background: linear-gradient(180deg,#15934f,#0b6e36);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(11,110,54,0.18);
+}
+
+.btn-primary-simple[disabled],
+.btn-large[disabled],
+.btn-primary-lg[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Links, divider, google */
+.links-row { display:flex; justify-content:space-between; gap:8px; margin-top:6px; }
+.link-simple { color: #114b2b; font-weight:700; text-decoration:none; font-size:13px; }
+.link-simple:hover { text-decoration:underline; }
+
+.divider-simple {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:10px 0;
+  color:#6b7769;
+  font-weight:700;
+}
+.divider-simple::before,
+.divider-simple::after {
+  content: "";
+  flex:1;
+  height:1px;
+  background: rgba(14, 66, 33, 0.06);
+}
+
+/* Alert */
+.alert-simple { padding:10px; border-radius:8px; font-weight:700; text-align:center; }
+.alert-simple.error { background:#ffecec; color:#7a1b1b; }
+
+/* Small helpers */
+.muted { color:#6b7769; }
+
+/* Responsive */
+@media (max-width:460px) {
+  .login-card-simple,
+  .wrapper { padding:16px; width:92%; min-height:420px; }
+  .login-title { font-size:20px; }
+  .input-simple { font-size:15px; padding:10px; }
+  .btn-primary-simple { font-size:15px; padding:10px; }
 }

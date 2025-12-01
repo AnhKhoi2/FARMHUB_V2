@@ -2,6 +2,7 @@ import cron from "node-cron";
 import Notebook from "../models/Notebook.js";
 import Notification from "../models/Notification.js";
 import { sendDailyTasksGeneratedNotification } from "../controllers/notificationController.js";
+import { generateDailyChecklist } from "../controllers/notebookController.js";
 import { getVietnamToday, toVietnamMidnight } from "../utils/timezone.js";
 
 /**
@@ -10,12 +11,12 @@ import { getVietnamToday, toVietnamMidnight } from "../utils/timezone.js";
  * - Nếu chưa gửi notification `daily_tasks_generated` cho notebook đó trong ngày hôm nay thì gửi
  */
 export const startDailyTasksNotificationJob = () => {
-  // Run daily at 00:00 UTC (equivalent to 07:00 Asia/Ho_Chi_Minh)
+  // Run daily at 07:00 UTC
   cron.schedule(
-    "0 0 * * *",
+    "0 7 * * *",
     async () => {
       console.log(
-        "🕐 [CRON] Running daily tasks notification job at 00:00 UTC (07:00 VN)"
+        "🕐 [CRON] Running daily tasks notification job at 07:00 UTC"
       );
       try {
         const today = getVietnamToday();
@@ -35,12 +36,41 @@ export const startDailyTasksNotificationJob = () => {
 
         for (const nb of notebooks) {
           try {
-            if (!nb.last_checklist_generated) continue;
+            // Ensure today's checklist exists. If not, generate it now so
+            // overdue tasks and reminders are created even if user never
+            // opened the notebook UI.
+            const lastGen = nb.last_checklist_generated
+              ? toVietnamMidnight(new Date(nb.last_checklist_generated))
+              : null;
 
-            const lastGen = toVietnamMidnight(
-              new Date(nb.last_checklist_generated)
-            );
-            if (lastGen.getTime() !== todayStart.getTime()) continue;
+            if (!lastGen || lastGen.getTime() < todayStart.getTime()) {
+              try {
+                await generateDailyChecklist(nb._id);
+                // reload notebook to pick up updated last_checklist_generated
+                // (so subsequent notification logic sees the fresh state)
+                // eslint-disable-next-line no-await-in-loop
+                const fresh = await Notebook.findById(nb._id).populate(
+                  "template_id"
+                );
+                if (fresh) {
+                  // copy over last_checklist_generated for notification check
+                  nb.last_checklist_generated = fresh.last_checklist_generated;
+                }
+              } catch (e) {
+                console.error(
+                  `❌ Failed to generate checklist for notebook ${nb._id}:`,
+                  e
+                );
+                // continue to next notebook
+                continue;
+              }
+            }
+
+            const newLastGen = nb.last_checklist_generated
+              ? toVietnamMidnight(new Date(nb.last_checklist_generated))
+              : null;
+            if (!newLastGen || newLastGen.getTime() !== todayStart.getTime())
+              continue;
 
             // Kiểm tra đã gửi notification 'daily_tasks_generated' hôm nay chưa
             const existing = await Notification.findOne({
@@ -78,7 +108,7 @@ export const startDailyTasksNotificationJob = () => {
   );
 
   console.log(
-    "✅ Daily tasks notification cron job initialized (runs daily at 07:00 VN)"
+    "✅ Daily tasks notification cron job initialized (runs daily at 07:00 UTC)"
   );
 };
 

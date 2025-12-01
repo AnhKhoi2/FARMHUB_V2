@@ -129,4 +129,105 @@ export const modelController = {
     if (!m) throw NotFound('Not found');
     return ok(res, m);
   }),
+
+  // GET /models/suggestions - return models matching user's selected options
+  suggestions: asyncHandler(async (req, res) => {
+    // If user info available, try to read profile preferences
+    let selectedOptions = {};
+    try {
+      if (req.user && req.user.id) {
+        // lazy require to avoid circular import here
+        const Profile = (await import('../models/Profile.js')).default;
+        const p = await Profile.findOne({ userId: req.user.id }).lean();
+        console.log('User profile for suggestions:', p);
+        selectedOptions = (p && p.modelSuggestion && p.modelSuggestion.selectedOptions) || {};
+      }
+    } catch (e) {
+      selectedOptions = {};
+    }
+
+    // Build filter based on selectedOptions
+    const filter = { isDeleted: false };
+    if (selectedOptions && Object.keys(selectedOptions).length > 0) {
+      // helper to escape regex special chars
+      const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      for (const [k, vRaw] of Object.entries(selectedOptions)) {
+        const v = vRaw;
+        if (v === null || typeof v === 'undefined' || v === '') continue;
+
+        // boolean strings -> boolean
+        if (typeof v === 'string' && (v.toLowerCase() === 'true' || v.toLowerCase() === 'false')) {
+          filter[k] = v.toLowerCase() === 'true';
+          continue;
+        }
+
+        // if value is array -> $in (apply case-insensitive regex for strings)
+        if (Array.isArray(v)) {
+          filter[k] = { $in: v.map((x) => (typeof x === 'string' ? new RegExp(`^${escapeRegex(x)}$`, 'i') : x)) };
+          continue;
+        }
+
+        // for booleans / numbers keep as-is
+        if (typeof v === 'boolean' || typeof v === 'number') {
+          filter[k] = v;
+          continue;
+        }
+
+        // for strings, use case-insensitive exact-match regex (escape special chars)
+        if (typeof v === 'string') {
+          filter[k] = { $regex: new RegExp(`^${escapeRegex(v)}$`, 'i') };
+          continue;
+        }
+      }
+    } else {
+      // if no preferences, return empty list to avoid noise
+      return ok(res, []);
+    }
+
+    // optional debug: return filter instead of items
+    if (String(req.query.debug || '').toLowerCase() === 'true') {
+      return ok(res, { filter });
+    }
+
+    const items = await Model.find(filter).limit(50).sort({ createdAt: -1 }).lean();
+      // If no exact-match items found, try a relaxed scoring-based search
+      if ((!items || items.length === 0) && selectedOptions && Object.keys(selectedOptions).length > 0) {
+        // Build aggregation to compute how many fields match and return top matches
+        const aggMatch = { $match: { isDeleted: false } };
+
+        // Build addFields expression for matchCount
+        const addFields = { $addFields: {} };
+        const matchExprs = [];
+
+        const escapeForRegexString = (s) => String(s).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+
+        for (const [k, v] of Object.entries(selectedOptions)) {
+          if (v === null || typeof v === 'undefined' || v === '') continue;
+
+          // boolean/number -> equality
+          if (typeof v === 'boolean' || typeof v === 'number') {
+            matchExprs.push({ $cond: [{ $eq: [`$${k}`, v] }, 1, 0] });
+            continue;
+          }
+
+          // string: use case-insensitive regex match (contains or exact?) -> prefer exact-like match
+          if (typeof v === 'string') {
+            const pattern = escapeForRegexString(v);
+            matchExprs.push({ $cond: [{ $regexMatch: { input: `$${k}`, regex: pattern, options: 'i' } }, 1, 0] });
+            continue;
+          }
+        }
+
+        if (matchExprs.length > 0) {
+          addFields.$addFields.matchCount = { $add: matchExprs };
+
+          const pipeline = [aggMatch, addFields, { $match: { matchCount: { $gt: 0 } } }, { $sort: { matchCount: -1, createdAt: -1 } }, { $limit: 50 }];
+
+          const aggRes = await Model.aggregate(pipeline).allowDiskUse(true);
+          return ok(res, aggRes);
+        }
+      }
+
+      return ok(res, items);
+  }),
 };

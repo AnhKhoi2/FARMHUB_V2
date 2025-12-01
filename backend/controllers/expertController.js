@@ -4,6 +4,8 @@
 import mongoose from "mongoose";
 import Expert from "../models/Expert.js";
 import User from "../models/User.js";
+import Conversation from "../models/Conversation.js";
+import Message from "../models/Message.js";
 
 // ---------- Helpers ----------
 const ALLOWED_REVIEW = ["pending", "approved", "rejected", "banned", "inactive"];
@@ -104,37 +106,67 @@ export async function remove(req, res) {
       orConds.push({ _id: new mongoose.Types.ObjectId(rawId) });
     }
 
-    // 1) Tìm expert còn active
-    const expert = await Expert.findOne({ is_deleted: false, $or: orConds });
+    // 1) Tìm expert
+    const expert = await Expert.findOne({ $or: orConds });
     if (!expert) {
       return res.status(404).json({ error: "Expert not found to delete" });
     }
 
-    // 2) Soft delete expert
-    expert.is_deleted = true;
-    expert.deleted_at = new Date();
-    await expert.save();
+    const expertUserId = expert.user; // user gốc của expert
 
-    // 3) Soft delete luôn User tương ứng → tài khoản KHÔNG login được nữa
-    if (expert.user) {
+    // ================================
+    // 🔥 2) XÓA LỊCH SỬ CHAT LIÊN QUAN
+    // ================================
+    // Tìm conversation mà expert từng chat
+    const convs = await Conversation.find({
+      $or: [
+        { expert: expert._id },
+        { participants: expertUserId }
+      ]
+    }).lean();
+
+    const convIds = convs.map(c => c._id);
+
+    if (convIds.length > 0) {
+      // Xoá toàn bộ tin nhắn
+      await Message.deleteMany({ conversation: { $in: convIds } });
+
+      // Xoá conversation
+      await Conversation.deleteMany({ _id: { $in: convIds } });
+    }
+
+    // ================================
+    // 🔥 3) XÓA expert record
+    // ================================
+    await Expert.deleteOne({ _id: expert._id });
+
+    // ================================
+    // 🔥 4) HẠ ROLE USER về user
+    // ================================
+    if (expertUserId) {
       await User.findByIdAndUpdate(
-        expert.user,
+        expertUserId,
         {
-          isDeleted: true,
-          isBanned: true, // tùy, có thể bỏ nếu không dùng
+          role: "user",
+          isDeleted: false,
+          isBanned: false,
+          avatar: null,
         },
         { new: true }
       );
     }
 
     return res.status(200).json({
-      message: "Xóa mềm chuyên gia và vô hiệu hóa tài khoản thành công.",
+      message: "Đã xóa chuyên gia + toàn bộ lịch sử chat, và hạ người dùng về role user."
     });
+
   } catch (err) {
-    console.error("Soft delete expert error:", err);
+    console.error("Delete expert error:", err);
     return res.status(500).json({ error: "Failed to delete expert" });
   }
 }
+
+
 
 // -------- Disabled stubs (giữ để tránh 404 route cũ) --------
 export async function create(_req, res) {
@@ -160,36 +192,27 @@ export async function getMyBasic(req, res) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // 🔥 Log kiểm tra avatar đang có gì trong DB
-    console.log(">>> USER BASIC:", user);
-
-    const expert = await Expert.findOne({ user: userId, is_deleted: false })
-      .select("full_name phone_number expertise_area")
+    // Tìm expert KHÔNG filter is_deleted
+    const expert = await Expert.findOne({ user: userId })
+      .select("full_name phone_number expertise_area is_deleted")
       .lean();
 
+    console.log(">>> USER BASIC:", user);
     console.log(">>> EXPERT BASIC:", expert);
 
-    const name =
-      expert?.full_name ||
-      user.username ||
-      (user.email ? user.email.split("@")[0] : "Expert");
-
-    const roleDisplay = expert?.expertise_area || "Chuyên gia nông nghiệp";
-    const phone = expert?.phone_number || "";
-
-    // 🎯 Avatar: chỉ trả đúng chuỗi avatar trong DB
-    // ❗ KHÔNG return "" nếu avatar = null → FE sẽ tự xử lý.
-    const avatar = user.avatar ?? "";
+    // Nếu không tìm thấy expert -> user không phải expert -> trả lỗi
+    if (!expert || expert.is_deleted) {
+      return res.status(404).json({ error: "Expert not found" });
+    }
 
     return res.json({
       data: {
-        name,
-        email: user.email || "",
-        role: roleDisplay,
-        phone,
-        avatar,           // giữ nguyên avatar gốc từ DB
-        avatarSeed: "",   // bỏ seed
-        notifications: 0,
+        name: expert.full_name || user.username,
+        email: user.email,
+        role: "expert",                       // ⭐ role đúng
+        expertise_area: expert.expertise_area,
+        phone: expert.phone_number || "",
+        avatar: expert?.avatar || user.avatar || null
       },
     });
   } catch (err) {
@@ -197,6 +220,7 @@ export async function getMyBasic(req, res) {
     return res.status(500).json({ error: "Server error" });
   }
 }
+
 
 
 

@@ -12,16 +12,17 @@ function isAfter(a, b) {
 export const PLAN_LIMITS = {
   free: 1,
   vip: 3,
+  smart: Infinity, // Smart plan: no daily limit
   pro: Infinity,
 };
 
 export function getEffectivePlan(user) {
-  const plan = user?.subscriptionPlan || 'free';
+  const plan = user?.subscriptionPlan || "free";
   const exp = user?.subscriptionExpires;
   if (!exp) return plan; // free or lifetime
   const now = new Date();
   if (isAfter(now, exp)) {
-    return 'free';
+    return "free";
   }
   return plan;
 }
@@ -33,7 +34,9 @@ export function getDailyLimitFor(user) {
 
 export function resetOrIncrementUsage(user) {
   const today = startOfDay(new Date());
-  const usageDate = user.weatherUsage?.date ? startOfDay(new Date(user.weatherUsage.date)) : null;
+  const usageDate = user.weatherUsage?.date
+    ? startOfDay(new Date(user.weatherUsage.date))
+    : null;
   if (!usageDate || usageDate.getTime() !== today.getTime()) {
     user.weatherUsage = { date: today, count: 0 };
   }
@@ -43,7 +46,9 @@ export function resetOrIncrementUsage(user) {
 
 export function getTodayUsage(user) {
   const today = startOfDay(new Date());
-  const usageDate = user.weatherUsage?.date ? startOfDay(new Date(user.weatherUsage.date)) : null;
+  const usageDate = user.weatherUsage?.date
+    ? startOfDay(new Date(user.weatherUsage.date))
+    : null;
   if (!usageDate || usageDate.getTime() !== today.getTime()) return 0;
   return user.weatherUsage.count || 0;
 }

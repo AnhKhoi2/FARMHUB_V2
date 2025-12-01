@@ -103,6 +103,11 @@ const authSlice = createSlice({
 
       localStorage.removeItem("user");
       localStorage.removeItem("accessToken");
+      try {
+        sessionStorage.removeItem("modelSuggestionShownAtLogin");
+      } catch (e) {
+        // ignore
+      }
     },
   },
 

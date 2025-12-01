@@ -8,10 +8,11 @@ const NotificationSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    // `notebook_id` is optional for system-level notifications (e.g., subscription updates)
     notebook_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Notebook",
-      required: true,
+      required: false,
       index: true,
     },
     type: {
@@ -24,6 +25,7 @@ const NotificationSchema = new mongoose.Schema(
         "daily_reminder", // Nhắc nhở hàng ngày
         "daily_tasks_generated", // Thông báo khi daily tasks đã được sinh
         "observation_required", // Yêu cầu quan sát chưa hoàn thành
+        "subscription_upgrade", // Thông báo khi nâng gói
       ],
       required: true,
     },
@@ -36,11 +38,18 @@ const NotificationSchema = new mongoose.Schema(
       required: true,
     },
     metadata: {
+      // existing fields for notebook related notifications
       stage_number: { type: Number },
       stage_name: { type: String },
       missed_days: { type: Number }, // Số ngày đã trễ
       safe_delay_days: { type: Number }, // Giới hạn cho phép
       notebook_name: { type: String },
+      // fields for subscription notification
+      plan: { type: String },
+      plan_name: { type: String },
+      expires: { type: Date },
+      order_ref: { type: String },
+      amount: { type: Number },
     },
     is_read: {
       type: Boolean,

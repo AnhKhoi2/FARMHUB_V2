@@ -267,6 +267,45 @@ export const sendObservationRequiredNotification = async ({
 };
 
 /**
+ * Gửi thông báo khi user nâng cấp subscription thành công
+ */
+export const sendSubscriptionUpgradeNotification = async ({
+  userId,
+  plan,
+  planName,
+  expires,
+  orderRef,
+  amount,
+}) => {
+  const title = `🎉 Nâng cấp gói thành công: ${planName}`;
+  const expiresText = expires
+    ? new Date(expires).toLocaleString()
+    : "(không xác định)";
+  const message = `Bạn đã nâng cấp lên gói "${planName}" thành công. Hạn sử dụng đến ${expiresText}. Mã đơn: ${orderRef}. Số tiền: ${
+    amount ? amount.toLocaleString("vi-VN") + " VND" : "(không rõ)"
+  }.`;
+
+  const notification = await Notification.create({
+    user_id: userId,
+    type: "subscription_upgrade",
+    title,
+    message,
+    metadata: {
+      plan,
+      plan_name: planName,
+      expires,
+      order_ref: orderRef,
+      amount,
+    },
+  });
+
+  console.log(
+    `📣 Sent subscription_upgrade notification to user ${userId}: plan=${plan}, order=${orderRef}`
+  );
+  return notification;
+};
+
+/**
  * Lấy danh sách thông báo của user
  */
 const getUserNotifications = async (userId, options = {}) => {
@@ -443,5 +482,20 @@ export const cleanupOld = asyncHandler(async (req, res) => {
     { deleted_count: result.deletedCount },
     null,
     `Cleaned up notifications older than ${daysOld} days`
+  );
+});
+
+/**
+ * @route DELETE /api/notifications/clear
+ * @desc Xóa tất cả thông báo của user hiện tại
+ */
+export const clearNotifications = asyncHandler(async (req, res) => {
+  const result = await Notification.deleteMany({ user_id: req.user.id });
+
+  return ok(
+    res,
+    { deleted_count: result.deletedCount },
+    null,
+    `Cleared ${result.deletedCount} notifications for user`
   );
 });

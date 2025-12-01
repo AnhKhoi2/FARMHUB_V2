@@ -6,7 +6,7 @@ import "../../css/expert/ChatWidget.css";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 
 /* =========================
-   Helpers
+  Helpers
 ========================= */
 const isObjectId = (v) => typeof v === "string" && /^[0-9a-fA-F]{24}$/.test(v);
 const isUUID = (v) =>
@@ -83,7 +83,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   const [hasNew, setHasNew] = useState(false);
 
   /* =========================
-     Helpers cho "đã đọc"
+    Helpers cho "đã đọc"
   ========================= */
   function markAllSeen() {
     lastReadRef.current = Date.now();
@@ -91,7 +91,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   }
 
   /* =========================
-     Lấy user hiện tại
+    Lấy user hiện tại
   ========================= */
   useEffect(() => {
     try {
@@ -111,8 +111,8 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   }, []);
 
   /* =========================
-     Nạp danh sách hội thoại
-     isPoll = true khi gọi từ background
+    Nạp danh sách hội thoại
+    isPoll = true khi gọi từ background
   ========================= */
   async function loadConversations(isPoll = false) {
     try {
@@ -173,7 +173,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   }
 
   /* =========================
-     Nạp tin nhắn (initial / khi click conv)
+    Nạp tin nhắn (initial / khi click conv)
   ========================= */
   async function loadMessages(convId) {
     try {
@@ -205,7 +205,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   }
 
   /* =========================
-     Lấy tin mới (poll every 2.5s khi ĐANG mở 1 conv)
+    Lấy tin mới (poll every 2.5s khi ĐANG mở 1 conv)
   ========================= */
   async function fetchNewMessages() {
     if (!activeConv || !lastTsRef.current) return;
@@ -277,7 +277,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   }, [currentUser?._id]);
 
   /* =========================
-     Mở cuộc trò chuyện
+    Mở cuộc trò chuyện
   ========================= */
   async function openWith(payload) {
     if (!payload) return;
@@ -338,7 +338,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   }
 
   /* =========================
-     Gửi tin nhắn
+    Gửi tin nhắn
   ========================= */
   async function sendMessage() {
     const safe = text.trim();
@@ -384,7 +384,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
   }, [open, currentUser?._id, currentUser?.role, initialOpenPayload]);
 
   /* =========================
-     UI
+    UI
   ========================= */
 
   // Khi widget ĐANG ĐÓNG

@@ -1,6 +1,7 @@
 import express from "express";
 import { ok, created, noContent } from "../utils/ApiResponse.js";
 import { triggerDailyTasksNotification } from "../jobs/dailyTasksNotificationJob.js";
+import { triggerObservationNotificationManual } from "../jobs/observationNotificationJob.js";
 
 const router = express.Router();
 
@@ -15,6 +16,18 @@ router.post("/trigger-daily-tasks-notification", async (req, res) => {
   const result = await triggerDailyTasksNotification();
   if (result && result.success) {
     return ok(res, null, null, "Manual daily tasks notification triggered");
+  }
+  return res
+    .status(500)
+    .json({ success: false, message: result.error || "Failed" });
+});
+
+// Manual endpoint to trigger observation notification job (for testing)
+// POST /test/trigger-observation-notification
+router.post("/trigger-observation-notification", async (req, res) => {
+  const result = await triggerObservationNotificationManual();
+  if (result && result.success) {
+    return ok(res, null, null, "Manual observation notification triggered");
   }
   return res
     .status(500)

@@ -35,6 +35,9 @@ import AdminPost from "../pages/admin/AdminPost";
 import AdminGuides from "../pages/admin/AdminGuides";
 // lazy load để tránh require() trên browser
 const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
+const AdminTransactions = React.lazy(() =>
+  import("../pages/admin/AdminTransactions")
+);
 
 // Admin layout + nested
 import AdminLayout from "../components/AdminLayout.jsx";
@@ -47,7 +50,7 @@ import ModeratorProfile from "../pages/moderator/ModeratorProfile";
 
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
-import ApplyExpert from "../pages/expert/ApplyExpert";
+import ApplyExpert from "../pages/auth/ExpertApplyForm";
 import ExpertModels from "../pages/expert/Models";
 import ManagerGuides from "../pages/expert/ManagerGuides";
 import GuideDetail from "../pages/expert/GuideDetail";
@@ -169,6 +172,16 @@ export default function AppRoutes() {
             <AdminRoute>
               <React.Suspense fallback={<div>Loading...</div>}>
                 <AdminUsers />
+              </React.Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/transactions"
+          element={
+            <AdminRoute>
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <AdminTransactions />
               </React.Suspense>
             </AdminRoute>
           }
@@ -444,6 +457,14 @@ export default function AppRoutes() {
           element={
             <PrivateRoute>
               <NotebookDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/farmer/notebooks/:id/overdue"
+          element={
+            <PrivateRoute>
+              <OverdueDetail />
             </PrivateRoute>
           }
         />

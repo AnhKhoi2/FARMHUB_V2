@@ -1,0 +1,252 @@
+/* ==========================================
+   Expert Applications – Action Buttons
+========================================== */
+
+.btn-view-detail {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+  transition: 0.2s;
+}
+
+.btn-view-detail:hover {
+  background: #dbeafe;
+  border-color: #1d4ed8;
+  color: #1e40af;
+}
+
+/* Điều chỉnh group buttons */
+.btn-group-sm .btn {
+  padding: 3px 10px !important;
+  font-size: 0.75rem !important;
+  border-radius: 6px !important;
+}
+
+/* Nút duyệt */
+.btn-outline-success {
+  border-color: #16a34a !important;
+  color: #15803d !important;
+}
+
+.btn-outline-success:hover {
+  background: #dcfce7 !important;
+  color: #14532d !important;
+}
+
+/* Nút từ chối */
+.btn-outline-danger {
+  border-color: #dc2626 !important;
+  color: #b91c1c !important;
+}
+
+.btn-outline-danger:hover {
+  background: #fee2e2 !important;
+  color: #7f1d1d !important;
+}
+
+.table td, .table th {
+  vertical-align: middle;
+}
+
+/* ================================
+   ACTION BUTTON GROUP
+================================ */
+
+.ea-action-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ⭐ Nút nhỏ hơn – áp dụng chung cho 3 nút */
+.ea-btn {
+  padding: 4px 12px !important;     /* nhỏ gọn */
+  font-size: 0.72rem !important;    /* chữ nhỏ hơn xíu */
+  border-radius: 6px !important;
+
+  height: 28px !important;          /* ⭐ giảm chiều cao */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+  
+}
+
+/* VIEW */
+.ea-view {
+  background: #eef4ff;
+  color: #1e40af;
+  border-color: #94a3b8;
+}
+
+.ea-view:hover {
+  background: #dbeafe;
+  border-color: #1e3a8a;
+}
+
+/* APPROVE */
+.ea-approve {
+  background: #ecfdf5;
+  color: #15803d;
+  border-color: #16a34a;
+}
+
+.ea-approve:hover {
+  background: #d1fae5;
+  border-color: #15803d;
+}
+
+/* REJECT */
+.ea-reject {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #ef4444;
+}
+
+.ea-reject:hover {
+  background: #fee2e2;
+  border-color: #b91c1c;
+}
+
+/* Disable */
+.ea-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Overlay */
+.ea-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 5%;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* Wide Modal */
+.ea-modal-wide {
+  width: 75%;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 32px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  animation: fadeUp 0.25s ease;
+}
+
+/* Header */
+.ea-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+
+.ea-detail-header h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.ea-detail-close {
+  background: none;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  color: #444;
+}
+
+.ea-detail-close:hover {
+  color: #166534;
+}
+
+/* Grid */
+.ea-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 22px;
+  row-gap: 16px;
+}
+
+.ea-field.full {
+  grid-column: 1 / 3;
+}
+
+.ea-field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.ea-field p {
+  margin: 0;
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  color: #111;
+  font-size: 0.95rem;
+}
+
+/* Certificates */
+.ea-cert-list {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.ea-cert-list li a {
+  display: inline-block;
+  max-width: 450px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #166534;
+  text-decoration: underline;
+}
+
+/* Footer */
+.ea-detail-footer {
+  text-align: right;
+  margin-top: 24px;
+}
+
+.ea-btn-close {
+  padding: 7px 15px;
+  background: #166534;
+  border-radius: 8px;
+  border: none;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.ea-btn-close:hover {
+  background: #14532d;
+}
+
+/* Anim */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* ============================================
+   Tăng border cho badge trạng thái Application
+============================================ */
+
+.badge.bg-warning,
+.badge.bg-success,
+.badge.bg-danger {
+  border: 3px ; /* độ dày border */
+  padding: 6px 10px !important;
+}

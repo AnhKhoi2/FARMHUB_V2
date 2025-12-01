@@ -1,14 +1,21 @@
-﻿import React, { useEffect, useState, useCallback } from "react";
+﻿// =============================================
+// AdminExpertApplications.jsx (Đã thêm View Detail)
+// =============================================
+import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import AdminLayout from "../../components/AdminLayout";
 import axiosClient from "../../api/shared/axiosClient";
-
+import "../../css/admin/expertApplication.css";
 export default function AdminExpertApplications() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("pending");
   const [q, setQ] = useState("");
   const [error, setError] = useState(null);
+
+  // VIEW DETAIL ADDED
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailData, setDetailData] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,7 +69,7 @@ export default function AdminExpertApplications() {
       );
       toast.success(
         res.data?.message ||
-          "Duyệt đơn thành công, user đã được chuyển sang role expert."
+        "Duyệt đơn thành công, user đã được chuyển sang role expert."
       );
       load();
     } catch (err) {
@@ -92,43 +99,39 @@ export default function AdminExpertApplications() {
     const reason = window.prompt(
       "Nhập lý do từ chối (có thể để trống, bấm Cancel để hủy):"
     );
-  
-    // ⬇️ Admin bấm Cancel -> prompt trả về null -> KHÔNG gọi API
-    if (reason === null) {
-      return; // hủy quá trình từ chối, không đổi trạng thái đơn
-    }
-  
+
+    if (reason === null) return;
+
     try {
       const res = await axiosClient.patch(
         `/api/expert-applications/${id}/reject`,
-        { reason: reason ?? "" }   // vẫn cho phép để trống nếu admin bấm OK
+        { reason: reason ?? "" }
       );
-  
+
       toast.success(res.data?.message || "Đã từ chối đơn.");
       load();
     } catch (err) {
       console.error("Reject error:", err);
       const res = err.response;
-  
+
       if (!res) {
         toast.error("Không thể kết nối server.");
         return;
       }
-  
+
       if (res.status === 400) {
         toast.error(res.data?.error || "Đơn không hợp lệ.");
         return;
       }
-  
+
       if (res.status === 404) {
         toast.error("Không tìm thấy đơn đăng ký.");
         return;
       }
-  
+
       toast.error("Lỗi server khi từ chối đơn.");
     }
   };
-  
 
   const resetFilter = () => {
     setStatus("pending");
@@ -138,6 +141,7 @@ export default function AdminExpertApplications() {
   const renderStatusBadge = (st) => {
     let cls = "bg-secondary";
     let label = "Không xác định";
+
     if (st === "pending") {
       cls = "bg-warning text-dark";
       label = "Đang chờ";
@@ -152,6 +156,14 @@ export default function AdminExpertApplications() {
     return <span className={`badge ${cls}`}>{label}</span>;
   };
 
+  // ===============================
+  // VIEW DETAIL: MỞ MODAL
+  // ===============================
+  const openDetail = (item) => {
+    setDetailData(item);
+    setDetailOpen(true);
+  };
+
   return (
     <AdminLayout>
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -161,10 +173,10 @@ export default function AdminExpertApplications() {
           {status === "pending"
             ? "Đang chờ"
             : status === "approved"
-            ? "Đã duyệt"
-            : status === "rejected"
-            ? "Đã từ chối"
-            : "Tất cả"}
+              ? "Đã duyệt"
+              : status === "rejected"
+                ? "Đã từ chối"
+                : "Tất cả"}
         </div>
       </div>
 
@@ -186,19 +198,12 @@ export default function AdminExpertApplications() {
           <input
             type="text"
             className="form-control form-control-sm"
-            placeholder="Tìm theo tên / email / chuyên môn..."
+            placeholder="Tìm theo tên, lĩnh vực."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <div class="col-auto">
-          <button
-            type="button"
-            className="btn btn-outline-secondary btn-sm"
-            onClick={resetFilter}
-          >
-            Reset
-          </button>
+        <div className="col-auto">
         </div>
       </div>
 
@@ -211,13 +216,13 @@ export default function AdminExpertApplications() {
             <table className="table table-sm table-hover mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Full name</th>
+                  <th>Họ và Tên</th>
                   <th>Email</th>
-                  <th style={{ width: "12ch", maxWidth: "12ch" }}>Phone</th>
-                  <th>Expertise</th>
-                  <th>Experience</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>Số Điện Thoại</th>
+                  <th>Lĩnh Vực</th>
+                  <th>Kinh Nghiệm</th>
+                  <th>Trạng Thái</th>
+                  <th>Hành Động</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,25 +260,33 @@ export default function AdminExpertApplications() {
                       <td>{it.experience_years ?? 0} năm</td>
                       <td>{renderStatusBadge(it.status)}</td>
                       <td>
-                        {it.status === "pending" ? (
-                          <div className="btn-group btn-group-sm">
-                            <button
-                              className="btn btn-outline-success"
-                              onClick={() => approve(it._id)}
-                            >
-                              Duyệt
-                            </button>
-                            <button
-                              className="btn btn-outline-danger"
-                              onClick={() => reject(it._id)}
-                            >
-                              Từ chối
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-muted small">—</span>
-                        )}
+                        <div className="ea-action-group">
+
+                          <button
+                            className="ea-btn ea-view"
+                            onClick={() => openDetail(it)}
+                          >
+                            View
+                          </button>
+
+                          <button
+                            className="ea-btn ea-approve"
+                            onClick={() => approve(it._id)}
+                            disabled={it.status !== "pending"}
+                          >
+                            Duyệt
+                          </button>
+
+                          <button
+                            className="ea-btn ea-reject"
+                            onClick={() => reject(it._id)}
+                            disabled={it.status !== "pending"}
+                          >
+                            Từ chối
+                          </button>
+                        </div>
                       </td>
+
                     </tr>
                   ))
                 )}
@@ -282,6 +295,84 @@ export default function AdminExpertApplications() {
           </div>
         </div>
       </div>
+
+      {/* =======================================
+          VIEW DETAIL MODAL
+      ======================================= */}
+      {detailOpen && detailData && (
+        <div className="ea-overlay" onClick={() => setDetailOpen(false)}>
+          <div className="ea-modal-wide" onClick={(e) => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="ea-detail-header farmhub-header">
+              <h3>Thông tin ứng viên</h3>
+              <button className="ea-detail-close" onClick={() => setDetailOpen(false)}>×</button>
+            </div>
+
+
+            {/* Body */}
+            <div className="ea-detail-grid">
+
+              <div className="ea-field">
+                <label>Họ và tên</label>
+                <p>{detailData.full_name}</p>
+              </div>
+
+              <div className="ea-field">
+                <label>Email</label>
+                <p>{detailData.email}</p>
+              </div>
+
+              <div className="ea-field">
+                <label>Số điện thoại</label>
+                <p>{detailData.phone_number || "—"}</p>
+              </div>
+
+              <div className="ea-field">
+                <label>Lĩnh vực chuyên môn</label>
+                <p>{detailData.expertise_area}</p>
+              </div>
+
+              <div className="ea-field">
+                <label>Kinh nghiệm</label>
+                <p>{detailData.experience_years ?? 0} năm</p>
+              </div>
+
+              {/* FULL WIDTH ROW */}
+              <div className="ea-field full">
+                <label>Giới thiệu</label>
+                <p>{detailData.description || "—"}</p>
+              </div>
+
+              <div className="ea-field full">
+                <label>Chứng chỉ</label>
+                <ul className="ea-cert-list">
+                  {detailData.certificates?.length > 0 ? (
+                    detailData.certificates.map((c, i) => (
+                      <li key={i}>
+                        <a href={c} target="_blank" rel="noreferrer">{c}</a>
+                      </li>
+                    ))
+                  ) : (
+                    <li>—</li>
+                  )}
+                </ul>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="ea-detail-footer">
+              <button className="ea-btn-close" onClick={() => setDetailOpen(false)}>
+                Đóng
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+
     </AdminLayout>
   );
 }
