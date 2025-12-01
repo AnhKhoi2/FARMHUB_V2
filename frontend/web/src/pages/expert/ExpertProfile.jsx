@@ -88,7 +88,7 @@ export default function ExpertProfile() {
         const payload = {
           name: data.name || "Expert",
           email: data.email || "",
-          role: data.role || "Chuyên gia nông nghiệp",
+          role: data.expertise_area || "Chuyên gia nông nghiệp",
           phone: data.phone || "",
           avatarSeed: data.avatarSeed || "",
           avatar: data.avatar || "",
@@ -99,7 +99,8 @@ export default function ExpertProfile() {
         setForm({
           name: payload.name,
           email: payload.email,
-          role: payload.role,
+          role: payload.expertise_area || payload.role,
+
           phone: payload.phone,
           avatarSeed: payload.avatarSeed || "",
         });
@@ -199,41 +200,32 @@ export default function ExpertProfile() {
     try {
       let avatarUrlToSend = null;
 
-      // Upload ảnh nếu có file mới
-      if (photoFile) {
-        try {
-          const fd = new FormData();
-          fd.append("image", photoFile);
+// ⭐ Upload ảnh lên Cloudinary nếu có file mới
+if (photoFile) {
+  try {
+    const fd = new FormData();
+    fd.append("file", photoFile);    // 🔥 Cloudinary route cần key "file"
 
-          const upRes = await axiosClient.post("/api/upload", fd, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
+    const upRes = await axiosClient.post("/api/cloudinary-upload", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
 
-          let returnedUrl = upRes?.data?.data?.url;
-          if (returnedUrl) {
-            if (!/^https?:\/\//i.test(returnedUrl)) {
-              const base =
-                axiosClient.defaults?.baseURL ||
-                window.location.origin ||
-                "";
-              returnedUrl =
-                base.replace(/\/$/, "") +
-                (returnedUrl.startsWith("/")
-                  ? returnedUrl
-                  : "/" + returnedUrl);
-            }
-            avatarUrlToSend = returnedUrl;
-          } else {
-            toast.error("Upload ảnh thất bại: không có URL trả về");
-            setSaving(false);
-            return;
-          }
-        } catch {
-          toast.error("Không thể upload ảnh.");
-          setSaving(false);
-          return;
-        }
-      }
+    const returnedUrl = upRes?.data?.url;
+    if (!returnedUrl) {
+      toast.error("Upload ảnh thất bại: không có URL trả về từ Cloudinary");
+      setSaving(false);
+      return;
+    }
+
+    avatarUrlToSend = returnedUrl; // 🔥 Lưu URL Cloudinary vào body
+  } catch (err) {
+    console.error(err);
+    toast.error("Không thể upload ảnh lên Cloudinary.");
+    setSaving(false);
+    return;
+  }
+}
+
 
       const body = {
         name: form.name.trim(),

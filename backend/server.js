@@ -44,7 +44,7 @@ import ApiError, { NotFound } from "./utils/ApiError.js";
 import geocodeRoute from "./routes/geocode.js";
 import weatherRoute from "./routes/weather_v2.js";
 import airRoute from "./routes/air.js";
-
+import cloudinaryUploadRoutes from "./routes/cloudinaryUpload.js";
 import tilesRoute from "./routes/tiles.js";
 import plantRoute from "./routes/plant.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
@@ -111,7 +111,8 @@ app.use("/notebooks", notebooksRoute);
 app.use("/api/notebooks", notebooksRoute);
 app.use("/admin/users", usersRoute);
 // app.use("/api/expert-applications", expertApplicationRoutes);
-
+// ⭐ API upload dùng Cloudinary (mới tạo)
+app.use("/api/cloudinary-upload", cloudinaryUploadRoutes);
 app.use("/api/expert-applications", expertApplicationsRouter);
 app.use("/api/experts", expertRatingRoutes);
 app.use("/api/chat", chatRoutes);
