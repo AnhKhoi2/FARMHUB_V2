@@ -22,6 +22,20 @@ export default function AdminExperts() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detail, setDetail] = useState(null);
 
+  // ⭐ Map trạng thái duyệt sang tiếng Việt
+  const mapStatusToVietnamese = (status) => {
+    switch (status) {
+      case "pending":
+        return "Đang chờ";
+      case "approved":
+        return "Đã duyệt";
+      case "rejected":
+        return "Đã từ chối";
+      default:
+        return "Không xác định";
+    }
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -105,7 +119,7 @@ export default function AdminExperts() {
         <div className="col-auto">
           <input
             className="form-control form-control-sm"
-            placeholder="Tìm theo tên, lĩnh vực."
+            placeholder="Tìm kiếm tên,linh vực"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -162,7 +176,10 @@ export default function AdminExperts() {
                       <td>{it.full_name}</td>
                       <td>{it.expertise_area}</td>
                       <td>{it.experience_years}</td>
-                      <td>{it.review_status}</td>
+
+                      {/* ⭐ Dùng tiếng Việt cho trạng thái */}
+                      <td>{mapStatusToVietnamese(it.review_status)}</td>
+
                       <td>{it.is_public ? "Có" : "Không"}</td>
                       <td>{it.avg_score ?? 0}</td>
                       <td>{it.total_reviews ?? 0}</td>
@@ -233,13 +250,14 @@ export default function AdminExperts() {
 
                   <div className="field">
                     <label>Trạng thái duyệt</label>
-                    <p>{detail?.review_status}</p>
+                    {/* ⭐ Dùng map để hiển thị tiếng Việt */}
+                    <p>{mapStatusToVietnamese(detail?.review_status)}</p>
                   </div>
 
                   <div className="field">
-                    <label>Công khai</label>
-                    <p>{detail?.is_public ? "Có" : "Không"}</p>
-                  </div>
+  <label>Số điện thoại</label>
+  <p>{detail?.phone_number || detail?.user?.phone_number || "—"}</p>
+</div>
 
                   <div className="field full">
                     <label>Giới thiệu</label>
@@ -247,42 +265,37 @@ export default function AdminExperts() {
                   </div>
 
                   <div className="field full">
-  <label>Chứng chỉ</label>
-  <ul className="cert-list">
-    {detail?.certificates?.length > 0 ? (
-      detail.certificates.map((c, i) => {
-        
-        // ---- ⭐ CHUẨN HÓA GIÁ TRỊ URL ----
-        let url = "";
+                    <label>Chứng chỉ</label>
+                    <ul className="cert-list">
+                      {detail?.certificates?.length > 0 ? (
+                        detail.certificates.map((c, i) => {
+                          let url = "";
 
-        if (typeof c === "string") {
-          url = c.trim();
-        } else if (typeof c === "object" && c?.url) {
-          url = c.url.trim();
-        } else {
-          url = "";   // user nhập linh tinh → không crash
-        }
+                          if (typeof c === "string") {
+                            url = c.trim();
+                          } else if (typeof c === "object" && c?.url) {
+                            url = c.url.trim();
+                          } else {
+                            url = "";
+                          }
 
-        // ---- ⭐ NẾU URL KHÔNG HỢP LỆ → hiển thị gạch ngang ----
-        if (!url || url === "" || url === "null" || url === "undefined") {
-          return <li key={i}>—</li>;
-        }
+                          if (!url || url === "" || url === "null" || url === "undefined") {
+                            return <li key={i}>—</li>;
+                          }
 
-        return (
-          <li key={i}>
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              {url.length > 60 ? url.substring(0, 60) + "..." : url}
-            </a>
-          </li>
-        );
-      })
-    ) : (
-      <li>—</li>
-    )}
-  </ul>
-</div>
-
-
+                          return (
+                            <li key={i}>
+                              <a href={url} target="_blank" rel="noopener noreferrer">
+                                {url.length > 60 ? url.substring(0, 60) + "..." : url}
+                              </a>
+                            </li>
+                          );
+                        })
+                      ) : (
+                        <li>—</li>
+                      )}
+                    </ul>
+                  </div>
 
                 </div>
               )}
