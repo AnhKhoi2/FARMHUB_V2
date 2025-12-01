@@ -11,14 +11,42 @@ const VerifyEmail = () => {
     const verifyEmail = async () => {
       try {
         const res = await axiosClient.get(`/auth/verify/${token}`);
-        setMessage(res.data.message || "Xác thực thành công!");
-        setTimeout(() => navigate("/login"), 2000);
+
+        const msg =
+          res.data?.message ||
+          "Xác thực email thành công! Bạn có thể đăng nhập.";
+
+        setMessage(msg);
+
+        // ✅ Thành công → chờ 2s rồi về trang đăng nhập
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       } catch (err) {
-        setMessage(err.response?.data?.message || "Liên kết không hợp lệ hoặc đã hết hạn!");
+        const status = err.response?.status;
+        const data = err.response?.data || {};
+        const backendMsg = data.message;
+        const code = data.code || data.error?.code;
+
+        // ✅ Case: token xác thực đã hết hạn
+        if (status === 410 || code === "VERIFY_TOKEN_EXPIRED") {
+          setMessage("Phiên đăng kí đã hết hạn, vui lòng đăng kí lại.");
+
+          // Cho user đọc message rồi tự chuyển về /register
+          setTimeout(() => {
+            navigate("/register");
+          }, 3000);
+        } else {
+          // Các lỗi khác: token sai, user không tồn tại, đã xác thực rồi, v.v.
+          setMessage(
+            backendMsg || "Liên kết không hợp lệ hoặc đã hết hạn!"
+          );
+        }
       }
     };
+
     verifyEmail();
-  }, [token,navigate]);
+  }, [token, navigate]);
 
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>

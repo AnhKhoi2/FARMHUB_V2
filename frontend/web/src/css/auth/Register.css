@@ -1,0 +1,84 @@
+/* Giữ background /img/background1.jpg ở .login-page (global). Card bán trong suốt, chữ lớn, nút to */
+
+/* wrapper cụ thể cho register để tránh ghi đè global */
+.register-wrapper { display:flex; justify-content:center; align-items:center; width:100%; }
+
+/* card */
+.register-card {
+  width: 420px;
+  max-width: 95%;
+  background: rgba(255,255,255,0.92);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+  border: 1px solid rgba(255,255,255,0.45);
+  backdrop-filter: blur(6px);
+}
+
+/* headings */
+.reg-title { font-size: 22px; color: #114b2b; margin:0 0 6px; font-weight:800; text-align:center; }
+.reg-sub { font-size:13px; color:#2f6b44; text-align:center; margin:0 0 12px; }
+
+/* messages */
+.reg-success { background:#ecfdf3; color:#14532d; padding:10px; border-radius:8px; font-weight:700; margin-bottom:10px; text-align:center; }
+.reg-error { background:#fff1f2; color:#9f1239; padding:10px; border-radius:8px; font-weight:700; margin-bottom:10px; text-align:center; }
+
+/* form */
+.reg-form { display:flex; flex-direction:column; gap:12px; }
+.reg-label { font-weight:800; color:#114b2b; font-size:13px; }
+
+/* input box */
+.input-box { position:relative; display:flex; align-items:center; }
+.icon { position:absolute; left:10px; color:#6b7280; font-size:18px; display:flex; align-items:center; height:100%; pointer-events:none; }
+.reg-input { padding:12px 14px 12px 38px; width:100%; font-size:16px; border-radius:10px; border:1px solid rgba(15,23,42,0.06); background:rgba(255,255,255,0.95); color:#0b3f20; box-sizing:border-box; }
+
+/* eye icon button */
+.input-with-icon { overflow:visible; }
+.icon-btn {
+  position:absolute;
+  right:8px;
+  height:38px;
+  width:38px;
+  border-radius:8px;
+  background:rgba(232,247,234,0.95);
+  border:1px solid rgba(214,240,214,0.95);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  z-index:20;
+  padding:0;
+}
+.icon-btn svg { width:20px; height:20px; color:#114b2b; }
+.icon-btn:hover { background:rgba(214,240,214,1); box-shadow:0 6px 14px rgba(11,110,54,0.08); }
+
+/* checkbox */
+.checkbox-label { display:flex; align-items:center; gap:8px; color:#234; font-weight:700; font-size:14px; }
+.reg-checkbox { width:18px; height:18px; }
+
+/* button */
+.reg-btn {
+  background: linear-gradient(180deg,#15934f,#0b6e36);
+  color:#fff;
+  border:none;
+  padding:12px;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(11,110,54,0.18);
+}
+.reg-btn[disabled] { opacity:0.6; cursor:default; }
+
+/* bottom */
+.reg-bottom { display:flex; justify-content:center; gap:6px; color:#516a56; font-weight:700; margin-top:6px; }
+.reg-link { color:#114b2b; text-decoration:none; font-weight:900; }
+.reg-link:hover { text-decoration:underline; }
+
+/* responsive */
+@media (max-width: 520px) {
+  .register-card { padding:16px; width:92%; }
+  .reg-title { font-size:20px; }
+  .reg-input { font-size:15px; padding:10px 12px 10px 36px; }
+  .reg-btn { font-size:15px; padding:10px; }
+}

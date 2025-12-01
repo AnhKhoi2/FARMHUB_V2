@@ -181,27 +181,12 @@ export default function ManagerPost() {
         {
             title: "Điện thoại",
             dataIndex: "phone",
-            render: (phone) => {
-                const phoneStr = phone == null ? "" : String(phone);
-                // remove whitespace/newlines so numbers don't break into multiple lines
-                const phoneClean = phoneStr.replace(/\s+/g, "").trim();
-                const display = phoneClean || "—";
-                return (
-                    <Text
-                        style={{
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            maxWidth: "12ch",
-                            display: "inline-block",
-                            fontFamily: "monospace",
-                        }}
-                        ellipsis={{ tooltip: phoneClean || false }}
-                    >
-                        {display}
-                    </Text>
-                );
-            },
+            width: 140,
+            render: (phone) => (
+                <Text style={{ whiteSpace: "nowrap", display: "inline-block", maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {phone || "—"}
+                </Text>
+            ),
         },
         {
             title: "Địa điểm",
@@ -247,63 +232,63 @@ export default function ManagerPost() {
         },
         {
             title: "Hành động",
-            dataIndex: "actions",
-            width: 140,
-            align: "center",
+            width: 180,
             render: (_, it) => (
-                <Space size="small" style={{ whiteSpace: "nowrap" }}>
-                    <Tooltip title="Xem chi tiết">
-                        <Button
-                            size="small"
-                            icon={<EyeOutlined />}
-                            onClick={() => {
-                                setCurrent(it);
-                                setShowDetail(true);
-                            }}
-                        />
-                    </Tooltip>
+                <div style={{ whiteSpace: "nowrap" }}>
+                    <Space size="small">
+                        <Tooltip title="Xem chi tiết">
+                            <Button
+                                size="small"
+                                icon={<EyeOutlined />}
+                                onClick={() => {
+                                    setCurrent(it);
+                                    setShowDetail(true);
+                                }}
+                            />
+                        </Tooltip>
 
-                    {it.status !== "approved" && (
-                        <Tooltip title="Duyệt bài">
-                            <Button
-                                size="small"
-                                type="primary"
-                                icon={<CheckOutlined />}
-                                onClick={() => changeStatus(it._id, "approved")}
-                            />
-                        </Tooltip>
-                    )}
+                        {it.status !== "approved" && (
+                            <Tooltip title="Duyệt bài">
+                                <Button
+                                    size="small"
+                                    type="primary"
+                                    icon={<CheckOutlined />}
+                                    onClick={() => changeStatus(it._id, "approved")}
+                                />
+                            </Tooltip>
+                        )}
 
-                    {it.status !== "rejected" && (
-                        <Tooltip title="Từ chối">
-                            <Button
-                                size="small"
-                                danger
-                                icon={<CloseOutlined />}
-                                onClick={() => changeStatus(it._id, "rejected")}
-                            />
-                        </Tooltip>
-                    )}
+                        {it.status !== "rejected" && (
+                            <Tooltip title="Từ chối">
+                                <Button
+                                    size="small"
+                                    danger
+                                    icon={<CloseOutlined />}
+                                    onClick={() => changeStatus(it._id, "rejected")}
+                                />
+                            </Tooltip>
+                        )}
 
-                    {!it.isDeleted ? (
-                        <Tooltip title="Đưa vào thùng rác">
-                            <Button
-                                size="small"
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleHide(it._id)}
-                            />
-                        </Tooltip>
-                    ) : (
-                        <Tooltip title="Khôi phục">
-                            <Button
-                                size="small"
-                                icon={<UndoOutlined />}
-                                onClick={() => handleRestore(it._id)}
-                            />
-                        </Tooltip>
-                    )}
-                </Space>
+                        {!it.isDeleted ? (
+                            <Tooltip title="Đưa vào thùng rác">
+                                <Button
+                                    size="small"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => handleHide(it._id)}
+                                />
+                            </Tooltip>
+                        ) : (
+                            <Tooltip title="Khôi phục">
+                                <Button
+                                    size="small"
+                                    icon={<UndoOutlined />}
+                                    onClick={() => handleRestore(it._id)}
+                                />
+                            </Tooltip>
+                        )}
+                    </Space>
+                </div>
             ),
         },
     ];
@@ -535,25 +520,24 @@ function ReportsModal({ open, onClose, setCurrent, setShowDetail }) {
                                 >
                                     Xem
                                 </Button>,
-                                <Button
-                                    key="ban"
-                                    size="small"
-                                    type="primary"
-                                    danger
-                                    icon={<StopOutlined />}
-                                    onClick={async () => {
-                                        if (!window.confirm("Cấm user này?")) return;
-                                        try {
-                                            await axiosClient.patch(`/admin/managerpost/${p._id}/ban-user`);
-                                            message.success("User đã bị cấm");
-                                            fetch();
-                                        } catch {
-                                            message.error("Không thể cấm user");
-                                        }
-                                    }}
-                                >
-                                    Cấm user
-                                </Button>
+                                        <Button
+                                            key="delete"
+                                            size="small"
+                                            danger
+                                            icon={<DeleteOutlined />}
+                                            onClick={async () => {
+                                                if (!window.confirm("Xóa bài viết này?")) return;
+                                                try {
+                                                    await axiosClient.patch(`/admin/managerpost/${p._id}/hide`);
+                                                    message.success("Đã xóa bài viết");
+                                                    fetch();
+                                                } catch (err) {
+                                                    message.error("Không thể xóa bài viết");
+                                                }
+                                            }}
+                                        >
+                                            Xóa
+                                        </Button>,
                             ]}
                         >
                             <List.Item.Meta

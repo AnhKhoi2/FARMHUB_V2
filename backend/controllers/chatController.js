@@ -106,6 +106,14 @@ export async function open(req, res) {
         pairKey,
       });
     }
+    // ⭐ XÓA UNREAD khi mở chat (fix unread không mất sau reload)
+const meStr = String(me);
+if ((conv.unread_for || []).map(String).includes(meStr)) {
+  conv.unread_for = (conv.unread_for || []).filter(u => String(u) !== meStr);
+  await conv.save();
+}
+
+    
 
     // Populate đầy đủ cho FE (ưu tiên username > full_name)
     const populated = await Conversation.findById(conv._id)

@@ -1,0 +1,101 @@
+/* Card & page container */
+.expert-apply-page {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+.expert-card {
+  width: 100%;
+  max-width: 760px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 12px 36px rgba(6,40,12,0.06);
+  border: 1px solid rgba(6,40,12,0.04);
+}
+
+/* Headings and labels */
+.expert-card h3 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  color: #0c5b2e;
+  font-weight: 700;
+}
+.expert-card .form-label {
+  font-weight: 700;
+  color: #114b2b;
+  display:block;
+  margin-bottom: 6px;
+}
+
+/* Inputs */
+.expert-card .form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,0.06);
+  font-size: 14px;
+  margin-top: 4px;
+  box-sizing: border-box;
+}
+
+/* File list */
+.expert-card .small {
+  color: #51614f;
+}
+.expert-card ul { padding-left: 18px; margin-top: 6px; }
+
+/* Buttons (reusable small styles to match Profile theme) */
+.agri-btn-primary {
+  background: linear-gradient(180deg,#15934f,#0b6e36);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.agri-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.agri-btn-secondary {
+  background: #fff;
+  border: 2px solid rgba(11,110,54,0.12);
+  color: #0b4f26;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Actions row */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* Success modal (centered popup) */
+.expert-success-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.48);
+  z-index: 1050;
+}
+.expert-success-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 14px 40px rgba(6,40,12,0.12);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .expert-card { padding: 14px; }
+  .form-actions { flex-direction: column; gap: 8px; align-items: stretch; }
+  .form-actions .agri-btn-primary, .form-actions .agri-btn-secondary { width: 100%; }
+}

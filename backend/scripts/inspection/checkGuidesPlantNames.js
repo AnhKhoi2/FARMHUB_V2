@@ -18,7 +18,7 @@ async function checkGuidesPlantNames() {
     console.log("✅ Connected to MongoDB");
 
     const guides = await Guide.find({ deleted: { $ne: true } })
-      .select("guide_id title plant_name plant_group plantTags")
+      .select("_id title plant_name plant_group plantTags")
       .lean();
 
     console.log(`\n📊 Total guides: ${guides.length}`);
@@ -43,7 +43,7 @@ async function checkGuidesPlantNames() {
     if (withoutPlantName.length > 0) {
       console.log("\n⚠️  Guides without plant_name:");
       withoutPlantName.slice(0, 5).forEach((g) => {
-        console.log(`  - "${g.title}" (${g.guide_id})`);
+        console.log(`  - "${g.title}" (${g._id})`);
       });
       if (withoutPlantName.length > 5) {
         console.log(`  ... and ${withoutPlantName.length - 5} more`);

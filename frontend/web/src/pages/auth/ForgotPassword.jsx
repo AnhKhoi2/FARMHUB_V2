@@ -13,10 +13,28 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await authApi.requestPasswordReset(email);
-      toast.success('Vui lòng kiểm tra email của bạn để đặt lại mật khẩu');
+      // Gửi request lên backend
+      const res = await authApi.requestPasswordReset(email);
+
+      // Ưu tiên dùng message từ server (nếu có)
+      const serverMessage =
+        res?.data?.message ||
+        'Nếu email tồn tại trong hệ thống, chúng tôi đã gửi liên kết đặt lại mật khẩu.';
+
+      toast.success(serverMessage);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+      const apiError = error.response?.data;
+      const code = apiError?.code;
+
+      if (code === 'INVALID_EMAIL') {
+        toast.error('Email không hợp lệ. Vui lòng kiểm tra lại.');
+      } else if (code === 'ACCOUNT_NOT_VERIFIED') {
+        toast.error(
+          'Email này chưa được xác thực. Vui lòng kiểm tra hộp thư để xác thực tài khoản trước khi đặt lại mật khẩu.'
+        );
+      } else {
+        toast.error(apiError?.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.');
+      }
     } finally {
       setLoading(false);
     }
@@ -53,7 +71,10 @@ export default function ForgotPassword() {
 
             <div className="login-register" style={{ marginTop: 12 }}>
               <p>
-                Quay lại đăng nhập? <Link to="/login" className="register-link">Đăng nhập</Link>
+                Quay lại đăng nhập?{' '}
+                <Link to="/login" className="register-link">
+                  Đăng nhập
+                </Link>
               </p>
             </div>
           </form>

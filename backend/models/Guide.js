@@ -3,12 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const GuideSchema = new mongoose.Schema(
   {
-    guide_id: {
-      type: String,
-      default: () => uuidv4(),
-      index: true,
-      unique: true,
-    },
+
     expert_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     title: { type: String, required: true },
     description: { type: String },
@@ -42,6 +37,8 @@ const GuideSchema = new mongoose.Schema(
       default: "other",
       index: true,
     },
+    // Reference to PlantGroup document
+    plant_group_id: { type: mongoose.Schema.Types.ObjectId, ref: "PlantGroup" },
     // Tên cây cụ thể (ví dụ: "Xà lách", "Rau muống")
     plant_name: { type: String },
     // soft delete flag
