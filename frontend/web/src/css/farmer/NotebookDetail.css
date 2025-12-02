@@ -171,6 +171,28 @@
     background: linear-gradient(135deg, #fb8c00 0%, #ef6c00 100%);
 }
 
+/* Export Excel button - blue background */
+.btn-export-excel {
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 8px rgba(21, 101, 192, 0.25);
+}
+
+.btn-export-excel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(21, 101, 192, 0.45);
+    background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+}
+
 .btn-edit {
     background: white;
     color: #2e7d32;

@@ -21,10 +21,6 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     plant_examples: [],
     cover_image: null,
     stages: [],
-    rules: {
-      safe_delay_days: 1,
-      auto_skip: true,
-    },
     status: "draft",
     notes: "",
   });
@@ -53,7 +49,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     { number: 2, title: "Giai đoạn phát triển", icon: "🌱" },
     { number: 3, title: "Nhiệm vụ tự động", icon: "✅" },
     { number: 4, title: "Điều kiện quan sát", icon: "👁️" },
-    { number: 5, title: "Quy tắc & Xác nhận", icon: "⚙️" },
+    { number: 5, title: "Xác nhận", icon: "⚙️" },
   ];
 
   useEffect(() => {
@@ -156,7 +152,6 @@ const PlantTemplateForm = ({ mode = "create" }) => {
           plant_examples: template.plant_examples || [],
           cover_image: template.cover_image || null,
           stages: template.stages || [],
-          rules: template.rules || formData.rules,
           status: template.status || "draft",
           notes: template.notes || "",
         });
@@ -173,12 +168,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleRuleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      rules: { ...prev.rules, [field]: value },
-    }));
-  };
+  // rules were removed from template model; no rule-change handler required
 
   const handleCoverImageUpload = async (file) => {
     if (!file) return;
@@ -561,7 +551,6 @@ const PlantTemplateForm = ({ mode = "create" }) => {
           {currentStep === 5 && (
             <Step5Review
               formData={formData}
-              handleRuleChange={handleRuleChange}
               handleInputChange={handleInputChange}
             />
           )}
@@ -658,11 +647,11 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>Mô tả nhóm cây</label>
+      <label>Mô tả</label>
       <textarea
         className="form-textarea"
         rows="3"
-        placeholder="Mô tả về nhóm cây này..."
+        placeholder="Mô tả"
         value={formData.group_description}
         onChange={(e) => handleInputChange("group_description", e.target.value)}
       />
@@ -816,7 +805,7 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>📸 Ảnh bìa Template</label>
+      <label>📸 Ảnh bìa Bộ mẫu</label>
       <div className="upload-area">
         <label className="upload-label">
           {uploadingCover ? (
@@ -855,7 +844,7 @@ const Step1BasicInfo = ({
               <div className="upload-icon">🖼️</div>
               <div className="upload-text">
                 <strong>Click để chọn ảnh bìa</strong>
-                <span>Ảnh này sẽ hiển thị trong danh sách template</span>
+                <span>Ảnh này sẽ hiển thị trong danh sách bộ mẫu</span>
               </div>
               <div className="upload-hint">PNG, JPG, JPEG (tối đa 5MB)</div>
             </div>
@@ -1534,46 +1523,12 @@ const Step4Observations = ({
   </div>
 );
 
-// Step 5: Rules & Review
-const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
+// Step 5: Review (confirmation)
+const Step5Review = ({ formData, handleInputChange }) => (
   <div className="step-review">
     <div className="step-header">
-      <h2>⚙️ Quy tắc & Xác nhận</h2>
-      <p className="hint">
-        Cấu hình quy tắc xử lý và xem lại toàn bộ template trước khi lưu
-      </p>
-    </div>
-
-    <div className="section">
-      <h3>🕒 Quy tắc xử lý trễ hạn</h3>
-
-      <div className="form-group">
-        <label>🔒 Số ngày cho phép trễ (safe_delay_days)</label>
-        <input
-          type="number"
-          className="form-input"
-          min="0"
-          value={formData.rules.safe_delay_days}
-          onChange={(e) =>
-            handleRuleChange("safe_delay_days", parseInt(e.target.value))
-          }
-        />
-        <small className="hint">
-          Số ngày cho phép user trễ trước khi hệ thống tự động chuyển giai đoạn
-          hoặc đánh dấu quá hạn
-        </small>
-      </div>
-
-      <div className="form-group">
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={formData.rules.auto_skip}
-            onChange={(e) => handleRuleChange("auto_skip", e.target.checked)}
-          />
-          <span>Tự động chuyển giai đoạn khi quá trễ</span>
-        </label>
-      </div>
+      <h2>🔎 Xác nhận</h2>
+      <p className="hint">Xem lại toàn bộ mẫu trước khi lưu</p>
     </div>
 
     <div className="section">
@@ -1596,7 +1551,7 @@ const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
         <textarea
           className="form-textarea"
           rows="3"
-          placeholder="Ghi chú thêm về template này..."
+          placeholder="Ghi chú thêm về bộ mẫu này..."
           value={formData.notes}
           onChange={(e) => handleInputChange("notes", e.target.value)}
         />
@@ -1604,10 +1559,10 @@ const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
     </div>
 
     <div className="section">
-      <h3>📊 Tổng quan Template</h3>
+      <h3>📊 Tổng quan Bộ Mẫu</h3>
       <div className="summary-grid">
         <div className="summary-item">
-          <div className="summary-label">Tên template</div>
+          <div className="summary-label">Tên bộ mẫu</div>
           <div className="summary-value">{formData.template_name}</div>
         </div>
         <div className="summary-item">

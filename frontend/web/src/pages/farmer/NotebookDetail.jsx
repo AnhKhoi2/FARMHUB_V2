@@ -194,6 +194,134 @@ const NotebookDetail = () => {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      if (!notebook) {
+        alert("Không có dữ liệu để xuất Excel");
+        return;
+      }
+      // Build CSV with multiple sections to match PDF content
+      const escapeCSV = (val) => {
+        const s = val === null || val === undefined ? "" : String(val);
+        return `"${s.replace(/"/g, '""')}"`;
+      };
+
+      const rows = [];
+
+      // Header title
+      rows.push([escapeCSV("NHẬT KÝ TRỒNG TRỌT")]);
+      rows.push([""]); // empty line
+
+      // Notebook overview
+      rows.push([escapeCSV("Thông tin nhật ký")]);
+      rows.push([
+        escapeCSV("Tên nhật ký"),
+        escapeCSV(notebook.notebook_name || ""),
+      ]);
+      rows.push([escapeCSV("Loại cây"), escapeCSV(notebook.plant_type || "")]);
+      rows.push([
+        escapeCSV("Ngày trồng"),
+        escapeCSV(
+          notebook.planted_date
+            ? new Date(notebook.planted_date).toLocaleDateString("vi-VN")
+            : ""
+        ),
+      ]);
+      rows.push([
+        escapeCSV("Tiến độ tổng thể"),
+        escapeCSV(`${notebook.progress || 0}%`),
+      ]);
+      rows.push([
+        escapeCSV("Giai đoạn hiện tại"),
+        escapeCSV(notebook.current_stage || ""),
+      ]);
+      rows.push([
+        escapeCSV("Tiến độ giai đoạn"),
+        escapeCSV(`${notebook.stage_completion || 0}%`),
+      ]);
+      rows.push([""]);
+
+      // Current stage details (if template available)
+      if (template && template.stages && notebook.current_stage) {
+        const current = template.stages[notebook.current_stage - 1];
+        rows.push([escapeCSV("Giai đoạn hiện tại")]);
+        rows.push([escapeCSV("Tên giai đoạn"), escapeCSV(current?.name || "")]);
+        rows.push([
+          escapeCSV("Thời gian"),
+          escapeCSV(
+            `Ngày ${current?.day_start || ""}-${current?.day_end || ""}`
+          ),
+        ]);
+        if (current?.description) {
+          rows.push([escapeCSV("Mô tả"), escapeCSV(current.description)]);
+        }
+        rows.push([""]);
+      }
+
+      // All stages
+      rows.push([escapeCSV("TẤT CẢ CÁC GIAI ĐOẠN")]);
+      // Helper to compute status similar to PDF
+      const computeStatus = (stageIndex) => {
+        const current = Number(notebook.current_stage || 0);
+        const completion = Number(notebook.stage_completion || 0);
+        if (stageIndex < current) return "Hoàn thành";
+        if (stageIndex === current) {
+          if (completion >= 100) return "Hoàn thành";
+          if (completion > 0) return "Đang tiến hành";
+          return "Chưa bắt đầu";
+        }
+        return "Chưa bắt đầu";
+      };
+
+      template?.stages?.forEach((stage, index) => {
+        const idx = index + 1;
+        rows.push([
+          escapeCSV(`${idx}. ${stage.name}`),
+          escapeCSV(
+            `Thời gian: Ngày ${stage.day_start}-${stage.day_end} (${
+              stage.day_end - stage.day_start + 1
+            } ngày)`
+          ),
+          escapeCSV(computeStatus(idx)),
+        ]);
+      });
+
+      rows.push([""]);
+
+      // Personal journal
+      rows.push([escapeCSV("GHI CHÚ CÁ NHÂN")]);
+      rows.push([escapeCSV(notebook.description || "")]);
+      rows.push([""]);
+
+      // Images (list)
+      const images = notebook.images || notebook.images_list || [];
+      if (images && images.length > 0) {
+        rows.push([escapeCSV("Hình ảnh")]);
+        images.forEach((img) => rows.push([escapeCSV(img)]));
+        rows.push([""]);
+      }
+
+      // Build CSV string
+      const csvLines = rows.map((cols) => cols.join(","));
+      const csvContent = "\uFEFF" + csvLines.join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `notebook_${
+        notebook.notebook_name
+          ? notebook.notebook_name.replace(/\s+/g, "_")
+          : notebook._id || id
+      }.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      alert("✅ Đã xuất Excel (CSV) thành công");
+    } catch (err) {
+      console.error("Error exporting Excel:", err);
+      alert("Không thể xuất Excel");
+    }
+  };
+
   const handleDeleteNotebook = async () => {
     if (!window.confirm("Bạn có chắc muốn xóa nhật ký này?")) return;
 
@@ -320,6 +448,14 @@ const NotebookDetail = () => {
             📄 Xuất PDF
           </button>
           <button
+            className="btn-export-excel"
+            onClick={handleExportExcel}
+            title="Xuất nhật ký dưới dạng Excel (CSV)"
+            style={{ marginLeft: 8 }}
+          >
+            📥 Xuất Excel
+          </button>
+          <button
             className="btn-edit"
             onClick={() => {
               console.log(
@@ -410,6 +546,21 @@ const NotebookDetail = () => {
           <span className="tab-icon">📔</span>
           Nhật Ký & Hình Ảnh
         </button>
+        <button
+          className={`tab-btn overdue-tab ${
+            activeTab === "overdue" ? "active" : ""
+          }`}
+          onClick={() => navigate(`/farmer/notebooks/${id}/overdue`)}
+          title="Xem công việc quá hạn"
+        >
+          <span className="tab-icon">⌛</span>
+          Quá Hạn
+          {overdueSummary && overdueSummary.overdue_count > 0 && (
+            <span className="badge overdue-count">
+              {overdueSummary.overdue_count}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -467,16 +618,31 @@ const NotebookDetail = () => {
                       </span>
                     </div>
                     <div className="progress-detail-item">
-                      <span className="detail-label">✅ Tiến độ hôm nay:</span>
-                      <span className="detail-value">
-                        {notebook.daily_checklist
-                          ? `${
-                              notebook.daily_checklist.filter(
-                                (t) => t.is_completed
-                              ).length
-                            }/${notebook.daily_checklist.length} công việc`
-                          : "0/0"}
-                      </span>
+                      {!(
+                        notebook &&
+                        (notebook.progress === 100 ||
+                          notebook.progress === "100") &&
+                        Array.isArray(notebook.stages_tracking) &&
+                        notebook.stages_tracking.length > 0 &&
+                        notebook.stages_tracking.every(
+                          (s) => s.status === "completed"
+                        )
+                      ) && (
+                        <>
+                          <span className="detail-label">
+                            ✅ Tiến độ hôm nay:
+                          </span>
+                          <span className="detail-value">
+                            {notebook.daily_checklist
+                              ? `${
+                                  notebook.daily_checklist.filter(
+                                    (t) => t.is_completed
+                                  ).length
+                                }/${notebook.daily_checklist.length} công việc`
+                              : "0/0"}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
 

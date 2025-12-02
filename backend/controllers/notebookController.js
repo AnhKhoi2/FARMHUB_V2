@@ -5,11 +5,6 @@ import PlantTemplate from "../models/PlantTemplate.js";
 import { ok, created, noContent } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { AppError } from "../utils/AppError.js";
-import {
-  sendStageWarningNotification,
-  sendStageSkippedNotification,
-  sendStageOverdueNotification,
-} from "./notificationController.js";
 import { sendDailyReminderNotification } from "./notificationController.js";
 import {
   getDaysDifferenceVN,
@@ -645,220 +640,21 @@ export const checkNotebookStageStatus = async (notebook) => {
       } | Days After End: ${daysAfterEnd}`
     );
 
-    // 🔍 KIỂM TRA OBSERVATIONS QUÁ HẠN
-    // Nếu đang ở cuối giai đoạn và chưa hoàn thành observations
-    const currentDay = notebook.current_day || 1;
-    const isLastDayOfStage = currentDay === templateStage.day_end;
-
-    if (
-      isLastDayOfStage &&
-      templateStage.observation_required &&
-      templateStage.observation_required.length > 0
-    ) {
-      const completedObservations =
-        currentStageTracking.observations?.filter(
-          (obs) => obs.value === true
-        ) || [];
-
-      const allObservationsCompleted =
-        completedObservations.length >=
-        templateStage.observation_required.length;
-
-      if (!allObservationsCompleted) {
-        console.log(
-          `⚠️ Observations chưa hoàn thành (${completedObservations.length}/${templateStage.observation_required.length})`
-        );
-      }
-    }
-
-    if (daysAfterEnd <= 0) {
-      console.log(`✅ Stage ${notebook.current_stage} còn trong thời hạn`);
-      return;
-    }
-
-    const missedDays = daysAfterEnd;
-    const safeDelayDays = template.rules?.safe_delay_days || 2;
-    const autoSkip = template.rules?.auto_skip ?? true;
-
+    // NOTE: Missed-day processing has been disabled globally for notebooks.
+    // The application should no longer apply missed_days calculations,
+    // send overdue/exceeded notifications, or auto-skip stages based on
+    // how many days have passed since the planned stage end.
     console.log(
-      `⚠️ Stage ${notebook.current_stage} đã trễ ${missedDays} ngày (safe_delay: ${safeDelayDays})`
+      "ℹ️ Missed-day processing disabled for notebooks — skipping related actions."
     );
+    return;
 
-    currentStageTracking.missed_days = missedDays;
-
-    if (missedDays <= safeDelayDays) {
-      if (
-        !hasNotificationBeenSent(
-          currentStageTracking.notifications_sent,
-          "warning",
-          missedDays
-        )
-      ) {
-        await sendStageWarningNotification({
-          userId: notebook.user_id,
-          notebookId: notebook._id,
-          notebookName: notebook.notebook_name,
-          stageNumber: notebook.current_stage,
-          stageName: templateStage.name,
-          missedDays,
-          safeDelayDays,
-        });
-
-        if (!currentStageTracking.notifications_sent) {
-          currentStageTracking.notifications_sent = [];
-        }
-        currentStageTracking.notifications_sent.push({
-          type: "warning",
-          day: missedDays,
-          sent_at: new Date(),
-        });
-
-        if (currentStageTracking.status !== "overdue") {
-          currentStageTracking.status = "overdue";
-        }
-
-        await notebook.save();
-        console.log(
-          `📧 Đã gửi cảnh báo lần ${missedDays} cho stage ${notebook.current_stage}`
-        );
-      } else {
-        console.log(`⏭️ Đã gửi cảnh báo cho missedDay ${missedDays}, bỏ qua`);
-      }
-    } else {
-      if (
-        !hasNotificationBeenSent(
-          currentStageTracking.notifications_sent,
-          "exceeded",
-          missedDays
-        )
-      ) {
-        if (autoSkip) {
-          currentStageTracking.status = "completed"; // ✅ Đánh dấu completed thay vì skipped
-          // Mark completed_at using template-based stage end date
-          currentStageTracking.completed_at = getStageEndDate(
-            notebook.planted_date,
-            templateStage.day_end
-          );
-          currentStageTracking.is_current = false;
-
-          // ✅ TỰ ĐỘNG HOÀN THÀNH OBSERVATIONS NẾU CÓ
-          if (
-            templateStage.observation_required &&
-            templateStage.observation_required.length > 0
-          ) {
-            console.log(
-              `🤖 Auto-completing observations due to exceeded delay`
-            );
-
-            // Đánh dấu tất cả observations = true
-            templateStage.observation_required.forEach((obsReq) => {
-              const existing = currentStageTracking.observations?.find(
-                (o) => o.key === obsReq.key
-              );
-              if (existing) {
-                existing.value = true;
-                existing.observed_at = new Date();
-              } else {
-                if (!currentStageTracking.observations) {
-                  currentStageTracking.observations = [];
-                }
-                currentStageTracking.observations.push({
-                  key: obsReq.key,
-                  value: true,
-                  observed_at: new Date(),
-                });
-              }
-            });
-
-            // ✅ CẬP NHẬT PROGRESS vì đã hoàn thành stage
-            await notebook.updateProgress(template.stages);
-            console.log(`🌱 Plant progress updated: ${notebook.progress}%`);
-          }
-
-          await sendStageSkippedNotification({
-            userId: notebook.user_id,
-            notebookId: notebook._id,
-            notebookName: notebook.notebook_name,
-            stageNumber: notebook.current_stage,
-            stageName: templateStage.name,
-            missedDays,
-            safeDelayDays,
-          });
-
-          const nextStageNumber = notebook.current_stage + 1;
-          if (nextStageNumber <= template.stages.length) {
-            const nextStageTracking = notebook.stages_tracking.find(
-              (s) => s.stage_number === nextStageNumber
-            );
-            if (nextStageTracking) {
-              nextStageTracking.is_current = true;
-              // Activate stage using template-planned start date to keep persisted
-              // timeline consistent with template schedule for future notebooks.
-              const nextTemplateStage = template.stages.find(
-                (s) => s.stage_number === nextStageNumber
-              );
-              if (nextTemplateStage) {
-                nextStageTracking.started_at = getStageStartDate(
-                  notebook.planted_date,
-                  nextTemplateStage.day_start
-                );
-              } else {
-                nextStageTracking.started_at = getVietnamToday();
-              }
-              nextStageTracking.status = "active";
-            }
-            notebook.current_stage = nextStageNumber;
-
-            console.log(
-              `⏭️ Tự động hoàn thành observations và chuyển sang stage ${nextStageNumber}`
-            );
-          } else {
-            console.log(`🏁 Đã hết stage, không thể chuyển stage tiếp theo`);
-          }
-
-          if (!currentStageTracking.notifications_sent) {
-            currentStageTracking.notifications_sent = [];
-          }
-          currentStageTracking.notifications_sent.push({
-            type: "exceeded",
-            day: missedDays,
-            sent_at: new Date(),
-          });
-
-          await notebook.save();
-          // Generate checklist for the new stage immediately
-          await generateDailyChecklist(notebook._id);
-        } else {
-          currentStageTracking.status = "overdue";
-
-          await sendStageOverdueNotification({
-            userId: notebook.user_id,
-            notebookId: notebook._id,
-            notebookName: notebook.notebook_name,
-            stageNumber: notebook.current_stage,
-            stageName: templateStage.name,
-            missedDays,
-            safeDelayDays,
-          });
-
-          if (!currentStageTracking.notifications_sent) {
-            currentStageTracking.notifications_sent = [];
-          }
-          currentStageTracking.notifications_sent.push({
-            type: "exceeded",
-            day: missedDays,
-            sent_at: new Date(),
-          });
-
-          await notebook.save();
-          console.log(
-            `🚨 Stage ${notebook.current_stage} đã quá hạn, yêu cầu can thiệp thủ công`
-          );
-        }
-      } else {
-        console.log(`⏭️ Đã xử lý exceeded cho missedDay ${missedDays}, bỏ qua`);
-      }
-    }
+    // Missed-day / auto-skip logic has been removed per request.
+    // Previously the code here would compute missedDays, send warnings,
+    // and optionally auto-complete observations and advance stages.
+    // That behavior is intentionally deleted to avoid any auto-skip based on
+    // missed days. All remaining stage transitions must be performed
+    // manually via observations or explicit admin actions.
   } catch (error) {
     console.error(`❌ Lỗi khi check notebook ${notebook._id}:`, error);
   }
@@ -2071,7 +1867,6 @@ export const checkSingleNotebook = asyncHandler(async (req, res) => {
         stage_number: s.stage_number,
         stage_name: s.stage_name,
         status: s.status,
-        missed_days: s.missed_days,
         is_current: s.is_current,
       })),
     },

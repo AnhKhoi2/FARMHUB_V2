@@ -42,17 +42,7 @@ const migrateNotebooks = async () => {
           needsUpdate = true;
         }
 
-        // Thêm missed_days nếu chưa có
-        if (stageTracking.missed_days === undefined) {
-          stageTracking.missed_days = 0;
-          needsUpdate = true;
-        }
-
-        // Thêm notifications_sent nếu chưa có
-        if (!stageTracking.notifications_sent) {
-          stageTracking.notifications_sent = [];
-          needsUpdate = true;
-        }
+        // Note: missed_days/notifications_sent migration removed — no longer used
 
         // Thêm daily_logs nếu chưa có
         if (!stageTracking.daily_logs) {

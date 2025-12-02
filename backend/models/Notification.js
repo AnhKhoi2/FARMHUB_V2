@@ -41,8 +41,7 @@ const NotificationSchema = new mongoose.Schema(
       // existing fields for notebook related notifications
       stage_number: { type: Number },
       stage_name: { type: String },
-      missed_days: { type: Number }, // Số ngày đã trễ
-      safe_delay_days: { type: Number }, // Giới hạn cho phép
+      // NOTE: missed_days / safe_delay_days removed — no longer generated
       notebook_name: { type: String },
       // fields for subscription notification
       plan: { type: String },
