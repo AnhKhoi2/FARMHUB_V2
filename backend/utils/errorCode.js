@@ -21,6 +21,10 @@ export const ERROR_CODES = {
     message: "Tài khoản chưa được xác thực, vui lòng kiểm tra email.",
     statusCode: 403,
   },
+  ACCOUNT_DELETED: {
+    message: "Tài khoản của bạn đã bị xóa khỏi hệ thống. Nếu bạn nghĩ đây là một hiểu lầm, vui lòng liên hệ với quản trị viên.",
+    statusCode: 403,
+  },
 
   // TOKEN
   TOKEN_EXPIRED: {

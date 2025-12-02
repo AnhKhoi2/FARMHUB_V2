@@ -27,7 +27,7 @@ const Login = () => {
   const [redirectTo, setRedirectTo] = useState("/");
 
   const nextRouteByRole = (role) => {
-    if (role === "admin") return "/admin";
+    if (role === "admin") return "/admin/dashboard";
     if (role === "moderator") return "/moderator";
     if (role === "expert") return "/expert/home";
     return "/";
