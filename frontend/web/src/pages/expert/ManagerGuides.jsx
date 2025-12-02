@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
 import placeholderImg from "../../assets/placeholder.svg";
 
@@ -43,20 +43,28 @@ const { Option } = Select;
 
 export default function ManagerGuides() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // ====== STATE DANH SÁCH HƯỚNG DẪN ======
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => {
+    const p = parseInt(searchParams.get('page')) || location.state?.page || 1;
+    return Number.isNaN(p) ? 1 : p;
+  });
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState(0);
   const [plantSearch, setPlantSearch] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(() => {
+    return searchParams.get('category') || location.state?.category || "";
+  });
   // availablePlantTags: array of { value: slug, label: displayName }
   const [availablePlantTags, setAvailablePlantTags] = useState([]);
   // ====== STATE CHAT ======
   const [chatOpen, setChatOpen] = useState(false);
   const handleChatClick = () => setChatOpen(true);
+  const [showSavedAlert, setShowSavedAlert] = useState(false);
 
   // Fetch available plant groups/categories from backend
   const fetchPlantGroups = useCallback(async () => {
@@ -90,12 +98,123 @@ export default function ManagerGuides() {
     fetchPlantGroups();
   }, [fetchPlantGroups]);
 
+  // Prepare Select options and a display value.
+  // If the incoming `category` (often a slug) doesn't match any loaded option,
+  // create a temporary option with a friendly label so the Select shows the
+  // human-readable name instead of the raw slug from the DB.
+  const formatLabelFromSlug = (s) => {
+    if (!s) return "";
+    try {
+      // decode possible URI-encoding and replace underscores/hyphens with spaces
+      const dec = decodeURIComponent(String(s));
+      const cleaned = dec.replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim();
+      return cleaned
+        .toLowerCase()
+        .split(' ')
+        .map((w) => (w.length ? w[0].toUpperCase() + w.slice(1) : ''))
+        .join(' ');
+    } catch (err) {
+      return String(s);
+    }
+  };
+
+  const selectedOption =
+    Array.isArray(availablePlantTags) && availablePlantTags.length
+      ? availablePlantTags.find((a) => a.value === category) ||
+        availablePlantTags.find((a) => String(a.label).toLowerCase() === String(category).toLowerCase())
+      : null;
+
+  const computedOptions = Array.isArray(availablePlantTags) ? [...availablePlantTags] : [];
+  if (category && !selectedOption) {
+    // Prefer a Vietnamese label from any loaded guide's plantTags if present.
+    let friendly = null;
+    try {
+      if (Array.isArray(guides) && guides.length) {
+        const guideMatch = guides.find((g) => {
+          const vals = [g.category, g.category_slug, g.plant_group].map((v) => String(v || ""));
+          return vals.includes(String(category));
+        });
+        if (guideMatch && Array.isArray(guideMatch.plantTags) && guideMatch.plantTags[0]) {
+          friendly = guideMatch.plantTags[0];
+        }
+      }
+    } catch (err) {
+      // ignore and fallback
+    }
+
+    if (!friendly) friendly = formatLabelFromSlug(category);
+
+    // Add a temporary option so Select can render the friendly label while
+    // keeping the internal value (the slug) intact.
+    computedOptions.push({ value: category, label: friendly });
+  }
+
+  // If we're still hydrating an incoming category (from search params or location state),
+  // avoid showing the raw slug — show empty until we've loaded plant groups/guides.
+  const [initializingCategory, setInitializingCategory] = useState(() => {
+    return Boolean(searchParams.get('category') || location.state?.category);
+  });
+
+  const selectValue = initializingCategory ? "" : (selectedOption ? selectedOption.value : category || "");
+
+  // Keep URL in sync when page/category change (so state survives reload/new tab)
+  useEffect(() => {
+    const params = {};
+    if (page && page !== 1) params.page = String(page);
+    if (category) params.category = String(category);
+    setSearchParams(params, { replace: true });
+  }, [page, category]);
+
+  // If navigation brought a `state` with page/category, normalize and restore it
+  useEffect(() => {
+    // If navigation passed a state or query (category/page), load plant-groups and
+    // guides first so we can compute a friendly label before setting `category`.
+    (async () => {
+      const incomingCat = location.state?.category || searchParams.get('category');
+      const incomingPage = location.state?.page || Number(searchParams.get('page')) || undefined;
+      // show saved alert if navigation included a saved flag
+      if (location.state?.saved) {
+        setShowSavedAlert(true);
+        // clear the flag after a short time so it doesn't persist across reloads
+        setTimeout(() => setShowSavedAlert(false), 2000);
+      }
+      if (typeof incomingCat !== 'undefined' && incomingCat !== null && incomingCat !== '') {
+        try {
+          await fetchPlantGroups();
+          // fetch guides filtered by incomingCat so `guides` state contains entries
+          // that may have `plantTags[0]` (Vietnamese label) we can use
+          await fetchGuides(incomingPage || 1, limit, incomingCat);
+          if (category !== incomingCat) {
+            setCategory(incomingCat);
+          }
+        } catch (err) {
+          // fallback to previous behavior
+          if (category !== incomingCat) {
+            setCategory(incomingCat);
+            fetchGuides(incomingPage || 1, limit, incomingCat);
+          }
+        } finally {
+          setInitializingCategory(false);
+        }
+        return;
+      }
+
+      if (incomingPage && page !== incomingPage) {
+        setPage(incomingPage);
+        fetchGuides(incomingPage, limit);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, searchParams]);
+
   const fetchGuides = useCallback(
-    async (p = 1, l = limit, cat) => {
+    async (p = 1, l = limit, cat, search) => {
       setLoading(true);
       try {
         const params = { page: p, limit: l };
-        if (plantSearch) params.plant = plantSearch;
+        // prefer explicit `search` argument (from the Search control) over state
+        const plantToUse = typeof search !== "undefined" ? search : plantSearch;
+        if (plantToUse) params.plant = plantToUse;
         const catToUse = typeof cat !== "undefined" ? cat : category;
         if (catToUse) params.category = catToUse;
 
@@ -108,9 +227,11 @@ export default function ManagerGuides() {
         setTotal(meta.total || meta.count || docs.length || 0);
         setPage(meta.page || p);
         setLimit(meta.limit || l);
+        return docs;
       } catch (err) {
         console.error("fetchGuides", err);
         message.error("Không thể tải danh sách hướng dẫn");
+        return [];
       } finally {
         setLoading(false);
       }
@@ -119,8 +240,8 @@ export default function ManagerGuides() {
   );
 
   useEffect(() => {
-    fetchGuides(1, limit);
-  }, [fetchGuides, limit]);
+    fetchGuides(page, limit);
+  }, [fetchGuides, limit, page]);
 
   const onTableChange = (pagination, _filters, _sorter) => {
     const { current = 1, pageSize = limit } = pagination || {};
@@ -139,8 +260,16 @@ export default function ManagerGuides() {
   };
 
   const onCreate = () => navigate("/managerguides/create");
-  const onView = (id) => navigate(`/guides/${id}`);
-  const onEdit = (id) => navigate(`/managerguides/edit/${id}`);
+  // include current search params in the detail/edit URLs so browser history contains state
+  const currentSearch = () => {
+    const qs = [];
+    if (page && page !== 1) qs.push(`page=${page}`);
+    if (category) qs.push(`category=${encodeURIComponent(category)}`);
+    return qs.length ? `?${qs.join('&')}` : '';
+  };
+
+  const onView = (id) => navigate(`/guides/${id}${currentSearch()}`);
+  const onEdit = (id) => navigate(`/managerguides/edit/${id}${currentSearch()}`);
 
   const onDelete = async (id) => {
     try {
@@ -254,9 +383,15 @@ export default function ManagerGuides() {
         const bySlug = (record.category_slug && record.category_slug === value) || (record.plant_group && record.plant_group === value);
         return byTags || bySlug;
       },
-      render: (_cat, record) => (
-        <Tag color="green">{record.category || (Array.isArray(record.plantTags) && record.plantTags[0]) || "Không có"}</Tag>
-      ),
+      render: (_cat, record) => {
+        // Prefer the human-friendly label from computedOptions (which may include
+        // the backend-provided label or a temporary formatted label derived from
+        // the slug). Fall back to record.category or plantTags.
+        const val = record.category || record.category_slug || record.plant_group || "";
+        const opt = (computedOptions || []).find((a) => String(a.value) === String(val));
+        const display = (opt && opt.label) || record.category || (Array.isArray(record.plantTags) && record.plantTags[0]) || "Không có";
+        return <Tag color="green">{display}</Tag>;
+      },
     },
     {
       title: "Ngày tạo",
@@ -325,6 +460,7 @@ export default function ManagerGuides() {
                   >
                     Làm mới
                   </Button>
+                  
                   <Button
                     shape="round"
                     icon={<DeleteOutlined />}
@@ -345,6 +481,11 @@ export default function ManagerGuides() {
             </Row>
 
             <Divider />
+            {showSavedAlert && (
+              <div style={{ marginBottom: 12 }}>
+                <Alert message="Lưu hướng dẫn thành công" type="success" showIcon />
+              </div>
+            )}
 
             <Space
               style={{ marginBottom: 16, flexWrap: "wrap" }}
@@ -354,9 +495,9 @@ export default function ManagerGuides() {
                 placeholder="Tìm theo tên cây hoặc tiêu đề"
                 onSearch={(v) => {
                   setPlantSearch(v);
-                  // When searching via the main Search button, ignore current category
-                  // so the search is performed across all categories.
-                  fetchGuides(1, limit, "");
+                  // Call fetchGuides with the explicit search value so the request
+                  // uses the freshly typed value immediately (no need to wait for state)
+                  fetchGuides(1, limit, "", v);
                 }}
                 allowClear
                 enterButton={<SearchOutlined />}
@@ -364,7 +505,7 @@ export default function ManagerGuides() {
               />
 
               <Select
-                value={category}
+                value={selectValue}
                 onChange={(v) => {
                   setCategory(v);
                   fetchGuides(1, limit, v);
@@ -380,7 +521,7 @@ export default function ManagerGuides() {
                 dropdownStyle={{ maxHeight: 300, overflow: 'auto' }}
                 placeholder="-- Lọc theo loại cây --"
               >
-                {availablePlantTags.map(({ value, label }) => (
+                {computedOptions.map(({ value, label }) => (
                   <Option key={value} value={value}>
                     {label}
                   </Option>

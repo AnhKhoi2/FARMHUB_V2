@@ -1,0 +1,15 @@
+{
+  "ts": "2025-12-02T09:15:52.523Z",
+  "route": "updateGuide",
+  "id": "692ac4ec7d6ab8e6330c7024",
+  "files": [],
+  "bodyKeys": [
+    "title",
+    "description",
+    "steps",
+    "plantTags",
+    "plant_group",
+    "plant_name"
+  ],
+  "plant_group": "NHÓM CÂY GIA VỊ"
+}

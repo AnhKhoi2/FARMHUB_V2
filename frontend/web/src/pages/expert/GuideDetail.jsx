@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
 import {
   Card,
@@ -24,6 +24,8 @@ const { Title, Text } = Typography;
 export default function GuideDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -56,25 +58,45 @@ export default function GuideDetail() {
 
       {/* HEADER */}
       <Flex justify="space-between" align="center">
-        <Button
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(-1)}
-        >
-          Quay lại
-        </Button>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => {
+              // If current URL has search params, go back to manager list with those params
+              const qs = location.search || (searchParams.toString() ? `?${searchParams.toString()}` : '');
+              if (qs) {
+                navigate(`/managerguides${qs}`);
+                return;
+              }
+
+              // Prefer navigation state if present
+              if (location.state && (location.state.page || location.state.category)) {
+                navigate('/managerguides', { state: location.state });
+                return;
+              }
+
+              // Otherwise, infer category from guide and go to page 1
+              const inferredCategory = guide?.plant_group || (Array.isArray(guide?.plantTags) && guide.plantTags[0]) || '';
+              const params = [];
+              if (inferredCategory) params.push(`category=${encodeURIComponent(inferredCategory)}`);
+              params.push('page=1');
+              navigate(`/managerguides?${params.join('&')}`);
+            }}
+          >
+            Quay lại
+          </Button>
 
         <Flex gap={10}>
           <Button
             type="primary"
             icon={<EditOutlined />}
-            onClick={() => navigate(`/managerguides/edit/${guide._id}`)}
+            onClick={() => navigate(`/managerguides/edit/${guide._id}`, { state: location.state || {} })}
           >
             Chỉnh sửa
           </Button>
 
           <Button
             icon={<UnorderedListOutlined />}
-            onClick={() => navigate("/managerguides")}
+            onClick={() => navigate("/managerguides", { state: location.state || {} })}
           >
             Danh sách
           </Button>

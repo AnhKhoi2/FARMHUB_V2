@@ -25,6 +25,7 @@ import uploadRoutes from "./routes/upload.js";
 import plantGroupsRoute from "./routes/plantGroups.js";
 import collectionsRoute from "./routes/collections.js";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import modelsRoutes from "./routes/models.js";
 import layoutsRoutes from "./routes/layouts.js";
@@ -137,6 +138,48 @@ app.use("/api/subscription", subscriptionRoutes);
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Global error handlers to capture crashes that may cause connection resets
+try {
+  const tmpDir = path.join(__dirname, '..', 'tmp');
+  fs.mkdirSync(tmpDir, { recursive: true });
+} catch (e) {
+  // ignore
+}
+
+process.on('uncaughtException', (err) => {
+  try {
+    const out = {
+      ts: new Date().toISOString(),
+      type: 'uncaughtException',
+      message: err?.message,
+      stack: err?.stack,
+    };
+    const p = path.join(__dirname, '..', 'tmp', 'uncaught_error.json');
+    fs.writeFileSync(p, JSON.stringify(out, null, 2), 'utf8');
+    console.error('[uncaughtException] wrote', p);
+  } catch (e) {
+    console.error('Failed writing uncaughtException file', e);
+  }
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  try {
+    const out = {
+      ts: new Date().toISOString(),
+      type: 'unhandledRejection',
+      reason: typeof reason === 'object' ? (reason && reason.message) : String(reason),
+      details: typeof reason === 'object' ? (reason && reason.stack) : null,
+    };
+    const p = path.join(__dirname, '..', 'tmp', 'uncaught_error.json');
+    fs.writeFileSync(p, JSON.stringify(out, null, 2), 'utf8');
+    console.error('[unhandledRejection] wrote', p);
+  } catch (e) {
+    console.error('Failed writing unhandledRejection file', e);
+  }
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // 🔄 Khởi chạy cron jobs
