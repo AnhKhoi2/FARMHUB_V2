@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ModeratorLayout from "../../components/ModeratorLayout";
 import axiosClient from "../../api/shared/axiosClient";
+import Swal from "sweetalert2";
 
 import {
     Card,
@@ -23,7 +24,10 @@ import {
     StopOutlined,
     ReloadOutlined,
     DeleteOutlined,
+    ArrowLeftOutlined,
 } from "@ant-design/icons";
+import { toast } from "react-toastify";
+import { FiRotateCcw } from "react-icons/fi";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -34,6 +38,7 @@ export default function ManagerReport() {
     const [showDetail, setShowDetail] = useState(false);
     const [current, setCurrent] = useState(null);
     const [search, setSearch] = useState("");
+    const [lastDeleted, setLastDeleted] = useState(null); // { id, title, timeoutId }
 
     const fetchData = async (q) => {
         setLoading(true);
@@ -70,23 +75,68 @@ export default function ManagerReport() {
     };
 
     const onHidePost = async (postId) => {
-        Modal.confirm({
+        const result = await Swal.fire({
             title: "Xóa bài viết này?",
-            content: "Bài viết sẽ được đưa vào thùng rác.",
-            okText: "Xóa",
-            okType: "danger",
-            cancelText: "Hủy",
-            onOk: async () => {
-                try {
-                    await axiosClient.patch(`/admin/managerpost/${postId}/hide`);
-                    message.success("Đã xóa bài viết");
-                    setShowDetail(false);
-                    fetchData();
-                } catch (err) {
-                    message.error("Không thể xóa bài viết");
-                }
-            },
+            text: "Bài viết này sẽ không thể hiển thị.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Xóa",
+            cancelButtonText: "Hủy",
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
         });
+
+        if (result.isConfirmed) {
+            try {
+                await axiosClient.patch(`/admin/managerpost/${postId}/hide`);
+
+                toast.success("Đã xóa bài viết");
+
+                setShowDetail(false);
+                fetchData();
+
+                // Undo logic
+                const title = (current && current.title) || "Bài viết";
+                if (lastDeleted?.timeoutId) clearTimeout(lastDeleted.timeoutId);
+
+                const timeoutId = setTimeout(() => setLastDeleted(null), 8000);
+                setLastDeleted({ id: postId, title, timeoutId });
+
+            } catch (err) {
+                toast.error("Không thể xóa bài viết");
+            }
+        }
+    };
+
+    const onUndoDelete = async () => {
+        if (!lastDeleted || !lastDeleted.id) return;
+        try {
+            await axiosClient.patch(`/admin/managerpost/${lastDeleted.id}/restore`);
+            message.success('Hoàn tác xóa thành công');
+            fetchData();
+        } catch (err) {
+            console.error('restore post', err);
+            message.error('Hoàn tác thất bại');
+        } finally {
+            if (lastDeleted && lastDeleted.timeoutId) clearTimeout(lastDeleted.timeoutId);
+            setLastDeleted(null);
+        }
+    };
+
+    const onRestorePost = async (postId) => {
+        try {
+            await axiosClient.patch(`/admin/managerpost/${postId}/restore`);
+            message.success('Đã khôi phục bài viết');
+            // refresh list and close detail if open for that id
+            fetchData();
+            if (current && (current._id === postId || current._id === String(postId))) {
+                setShowDetail(false);
+                setCurrent(null);
+            }
+        } catch (err) {
+            console.error('restore post', err);
+            message.error('Không thể khôi phục bài viết');
+        }
     };
 
     const columns = [
@@ -129,14 +179,24 @@ export default function ManagerReport() {
                         Xem báo cáo
                     </Button>
 
-                    <Button
-                        size="small"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => onHidePost(item._id)}
-                    >
-                        Xóa
-                    </Button>
+                    {item && item.isDeleted ? (
+                        <Button
+                            size="small"
+                            icon={<FiRotateCcw size={16} />}
+                            onClick={() => onRestorePost(item._id)}
+                        >
+                            Khôi phục
+                        </Button>
+                    ) : (
+                        <Button
+                            size="small"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => onHidePost(item._id)}
+                        >
+                            Xóa
+                        </Button>
+                    )}
                 </Space>
             ),
         },
@@ -201,6 +261,32 @@ export default function ManagerReport() {
                     onDelete={onHidePost}
                 />
             )}
+
+            {/* Undo floating button after delete */}
+            {lastDeleted && (
+                <button
+                    title={`Hoàn tác: ${lastDeleted.title}`}
+                    onClick={onUndoDelete}
+                    style={{
+                        position: 'fixed',
+                        left: 16,
+                        bottom: 24,
+                        zIndex: 2000,
+                        background: '#fff',
+                        border: '1px solid rgba(0,0,0,0.12)',
+                        borderRadius: 28,
+                        width: 56,
+                        height: 56,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <ArrowLeftOutlined style={{ fontSize: 20, color: '#1890ff' }} />
+                </button>
+            )}
         </ModeratorLayout>
     );
 }
@@ -215,9 +301,16 @@ function DetailModal({ open, item, onClose, onDelete }) {
                 <Button key="close" onClick={onClose}>
                     Đóng
                 </Button>,
-                <Button danger icon={<DeleteOutlined />} onClick={() => onDelete && onDelete(item._id)}>
-                    Xóa bài
-                </Button>,
+                item && item.isDeleted ? (
+                    <Button key="restore" icon={
+                        <FiRotateCcw size={16} />} onClick={() => onDelete && onRestorePost && onRestorePost(item._id)}>
+                        Khôi phục
+                    </Button>
+                ) : (
+                    <Button danger icon={<DeleteOutlined />} onClick={() => onDelete && onDelete(item._id)}>
+                        Xóa bài
+                    </Button>
+                ),
             ]}
             width={700}
         >

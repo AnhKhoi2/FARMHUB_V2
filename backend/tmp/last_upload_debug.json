@@ -1,7 +1,7 @@
 {
-  "ts": "2025-12-02T09:15:52.523Z",
+  "ts": "2025-12-02T16:55:20.994Z",
   "route": "updateGuide",
-  "id": "692ac4ec7d6ab8e6330c7024",
+  "id": "692ea424bc72429a565e1885",
   "files": [],
   "bodyKeys": [
     "title",
@@ -11,5 +11,5 @@
     "plant_group",
     "plant_name"
   ],
-  "plant_group": "NHÓM CÂY GIA VỊ"
+  "plant_group": "Ngò rí"
 }

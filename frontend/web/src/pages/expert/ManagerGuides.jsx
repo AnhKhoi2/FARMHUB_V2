@@ -29,12 +29,14 @@ import {
   SearchOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 
 import HeaderExpert from "../../components/shared/HeaderExpert";
 
 // ⬇️ Thêm import cho chat
 import ChatWidget from "./ChatWidget";
 import { MessageCircle } from "lucide-react";
+import Alert from "antd/es/alert/Alert";
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -64,6 +66,7 @@ export default function ManagerGuides() {
   // ====== STATE CHAT ======
   const [chatOpen, setChatOpen] = useState(false);
   const handleChatClick = () => setChatOpen(true);
+  const [lastDeleted, setLastDeleted] = useState(null); // { id, title, timeoutId }
   const [showSavedAlert, setShowSavedAlert] = useState(false);
 
   // Fetch available plant groups/categories from backend
@@ -274,11 +277,38 @@ export default function ManagerGuides() {
   const onDelete = async (id) => {
     try {
       await axiosClient.delete(`/guides/${id}`);
-      message.success("Xóa thành công");
+      message.success("Đã xóa (có thể hoàn tác)");
+      // fetchGuides to update list immediately
       fetchGuides(page, limit);
+
+      // Show undo arrow: remember last deleted guide id and title
+      // Try to read the guide from current guides list to get title
+      const guide = guides.find((g) => (g._id || g.id) === id) || { _id: id, title: 'Hướng dẫn' };
+      // clear any existing pending undo
+      if (lastDeleted && lastDeleted.timeoutId) clearTimeout(lastDeleted.timeoutId);
+      const timeoutId = setTimeout(() => {
+        setLastDeleted(null);
+      }, 8000); // hide undo button after 8s
+      setLastDeleted({ id, title: guide.title || 'Hướng dẫn', timeoutId });
     } catch (err) {
       console.error("delete", err);
       message.error("Xóa không thành công");
+    }
+  };
+
+  const onUndoDelete = async () => {
+    if (!lastDeleted || !lastDeleted.id) return;
+    try {
+      await axiosClient.post(`/guides/${lastDeleted.id}/restore`);
+      message.success('Hoàn tác xóa thành công');
+      // refresh list
+      fetchGuides(page, limit);
+    } catch (e) {
+      console.error('restore', e);
+      message.error('Hoàn tác thất bại');
+    } finally {
+      if (lastDeleted && lastDeleted.timeoutId) clearTimeout(lastDeleted.timeoutId);
+      setLastDeleted(null);
     }
   };
 
@@ -485,7 +515,7 @@ export default function ManagerGuides() {
               <div style={{ marginBottom: 12 }}>
                 <Alert message="Lưu hướng dẫn thành công" type="success" showIcon />
               </div>
-            )}
+            )} 
 
             <Space
               style={{ marginBottom: 16, flexWrap: "wrap" }}
@@ -558,6 +588,32 @@ export default function ManagerGuides() {
           onClick={() => setChatOpen(true)}
         >
           <MessageCircle size={26} />
+        </button>
+      )}
+
+      {/* Undo floating button after delete */}
+      {lastDeleted && (
+        <button
+          title={`Hoàn tác: ${lastDeleted.title}`}
+          onClick={onUndoDelete}
+          style={{
+            position: 'fixed',
+            left: 16,
+            bottom: 24,
+            zIndex: 2000,
+            background: '#fff',
+            border: '1px solid rgba(0,0,0,0.12)',
+            borderRadius: 28,
+            width: 56,
+            height: 56,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            cursor: 'pointer'
+          }}
+        >
+          <ArrowLeftOutlined style={{ fontSize: 20, color: '#1890ff' }} />
         </button>
       )}
 

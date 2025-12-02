@@ -32,6 +32,8 @@ import {
   FileImageOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
+import { toast } from "react-toastify";
+import HeaderExpert from "../../components/shared/HeaderExpert";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -152,37 +154,37 @@ export default function GuideEdit() {
         // Các bước
         const loadedSteps = Array.isArray(g.steps)
           ? g.steps.map((s) => ({
-              id: Date.now() + Math.random(),
-              title: s.title || "",
-              text: s.text || "",
-              imagePreview: s.image || null,
-              file: null,
-              fileList: s.image
-                ? [
-                    {
-                      uid: "-1",
-                      name: "step-image.jpg",
-                      status: "done",
-                      url: s.image,
-                    },
-                  ]
-                : [],
-            }))
+            id: Date.now() + Math.random(),
+            title: s.title || "",
+            text: s.text || "",
+            imagePreview: s.image || null,
+            file: null,
+            fileList: s.image
+              ? [
+                {
+                  uid: "-1",
+                  name: "step-image.jpg",
+                  status: "done",
+                  url: s.image,
+                },
+              ]
+              : [],
+          }))
           : [];
 
         setSteps(
           loadedSteps.length > 0
             ? loadedSteps
             : [
-                {
-                  id: Date.now(),
-                  title: "",
-                  text: "",
-                  imagePreview: null,
-                  file: null,
-                  fileList: [],
-                },
-              ]
+              {
+                id: Date.now(),
+                title: "",
+                text: "",
+                imagePreview: null,
+                file: null,
+                fileList: [],
+              },
+            ]
         );
       } catch (err) {
         console.error(err);
@@ -361,7 +363,24 @@ export default function GuideEdit() {
       if (id) {
         // update
         await axiosClient.put(`/guides/${id}`, formData);
+
         savedGuideId = id;
+
+        toast.success("Lưu hướng dẫn thành công! Hướng dẫn đã được lưu.", {
+            autoClose: 1500, // tự tắt sau 1.5s
+          onClose: () => {
+            setSaved(false);
+            navigate("/managerguides", {
+              state: {
+                page: location.state?.page || 1,
+                category: "",
+                saved: true,
+              },
+            });
+          },
+        });
+
+
       } else {
         // create — capture returned id
         const res = await axiosClient.post("/guides", formData);
@@ -378,24 +397,11 @@ export default function GuideEdit() {
       await new Promise((res) => setTimeout(res, 50));
       try {
         window.scrollTo(0, 0);
-      } catch (e) {}
+      } catch (e) { }
       // Show a modal success dialog that the user must dismiss before
       // navigating. This guarantees the user sees confirmation even if
       // automatic toasts are missed.
-      Modal.success({
-        title: "Lưu hướng dẫn thành công",
-        content: "Hướng dẫn đã được lưu. Nhấn OK để quay về danh sách.",
-        onOk: () => {
-          setSaved(false);
-          navigate("/managerguides", {
-            state: {
-              page: location.state?.page || 1,
-              category: "",
-              saved: true,
-            },
-          });
-        },
-      });
+
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.message || "Lưu thất bại";
@@ -464,6 +470,8 @@ export default function GuideEdit() {
   }
 
   return (
+    <>
+      <HeaderExpert />
     <Card
       bordered={false}
       style={{
@@ -648,11 +656,11 @@ export default function GuideEdit() {
                             prev.map((s, i) =>
                               i === idx
                                 ? {
-                                    ...s,
-                                    file: null,
-                                    fileList: [],
-                                    imagePreview: null,
-                                  }
+                                  ...s,
+                                  file: null,
+                                  fileList: [],
+                                  imagePreview: null,
+                                }
                                 : s
                             )
                           );
@@ -752,5 +760,6 @@ export default function GuideEdit() {
         </Row>
       </Form>
     </Card>
+    </>
   );
 }

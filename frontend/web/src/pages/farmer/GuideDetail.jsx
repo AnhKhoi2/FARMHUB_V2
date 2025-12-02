@@ -4,6 +4,7 @@ import axiosClient from "../../api/shared/axiosClient";
 import { Card, Button, Tag, Typography, Spin, Divider, Row, Col } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import placeholderImg from "../../assets/placeholder.svg";
+import getColorForKey from "../../utils/colorUtils";
 import Header from "../../components/shared/Header";
 
 const { Title, Text } = Typography;
@@ -13,7 +14,9 @@ export default function FarmerGuideDetail() {
   const navigate = useNavigate();
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  // Deterministic color per plant group
+  // Use utility so each group has a consistent color across the app
+  // import below
   useEffect(() => {
     let mounted = true;
     axiosClient
@@ -69,7 +72,7 @@ export default function FarmerGuideDetail() {
           {guide.plantTags?.length > 0 && (
             <div style={{ marginBottom: 12 }}>
               {guide.plantTags.map((t) => (
-                <Tag color="green" key={t}>{t}</Tag>
+                <Tag color={getColorForKey(t)} key={t}>{t}</Tag>
               ))}
             </div>
           )}
