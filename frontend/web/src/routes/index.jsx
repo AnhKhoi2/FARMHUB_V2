@@ -93,6 +93,7 @@ import AdminDetailGuides from "../pages/admin/AdminDetailGuides.jsx";
 import PlantCarePricing from "../pages/Subscription/PlantCarePricing";
 import PaymentSuccess from "../pages/Subscription/PaymentSuccess";
 import PaymentFailed from "../pages/Subscription/PaymentFailed";
+import { ToastContainer } from "react-toastify";
 
 export default function AppRoutes() {
   function ChatWrapper() {
@@ -577,6 +578,8 @@ export default function AppRoutes() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+            <ToastContainer />
+
       {/* Global AI chat widget (floating) - hidden on /admin */}
       <ChatWrapper />
     </BrowserRouter>

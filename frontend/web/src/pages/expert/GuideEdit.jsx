@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
 import placeholderImg from "../../assets/placeholder.svg";
 import {
@@ -15,6 +15,8 @@ import {
   Alert,
   Spin,
   message,
+  notification,
+  Modal,
   Divider,
   Typography,
   Tag,
@@ -30,6 +32,8 @@ import {
   FileImageOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
+import { toast } from "react-toastify";
+import HeaderExpert from "../../components/shared/HeaderExpert";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -37,6 +41,7 @@ const { TextArea } = Input;
 export default function GuideEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,6 +52,7 @@ export default function GuideEdit() {
   const [steps, setSteps] = useState([]);
   const [plantTags, setPlantTags] = useState([]);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [saved, setSaved] = useState(false);
   const duplicateCheckRef = React.useRef({ timer: null });
   const [plantName, setPlantName] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
@@ -59,7 +65,6 @@ export default function GuideEdit() {
 
   // Load plant groups from backend and map to checkbox options (label/value both = display name)
   const fetchPlantGroups = async () => {
-    let mounted = true;
     try {
       const res = await axiosClient.get('/api/plant-groups');
       const data = res.data?.data || [];
@@ -74,15 +79,14 @@ export default function GuideEdit() {
         s2l[slug] = name;
         l2s[name] = slug;
       });
-      if (mounted) {
-        setAvailablePlantTags(opts);
-        setSlugToLabelMap(s2l);
-        setLabelToSlugMap(l2s);
-      }
+      setAvailablePlantTags(opts);
+      setSlugToLabelMap(s2l);
+      setLabelToSlugMap(l2s);
+      return { opts, s2l, l2s };
     } catch (e) {
       console.warn('Failed to load plant groups', e?.message || e);
+      return { opts: [], s2l: {}, l2s: {} };
     }
-    return () => (mounted = false);
   };
 
   useEffect(() => {
@@ -94,6 +98,12 @@ export default function GuideEdit() {
     let mounted = true;
 
     const fetchGuide = async () => {
+      // Ensure plant groups are loaded first so label<->slug mapping is available
+      try {
+        await fetchPlantGroups();
+      } catch (e) {
+        // ignore — fetchPlantGroups already logs
+      }
       if (!id) {
         setTitle("");
         setDescription("");
@@ -144,37 +154,37 @@ export default function GuideEdit() {
         // Các bước
         const loadedSteps = Array.isArray(g.steps)
           ? g.steps.map((s) => ({
-              id: Date.now() + Math.random(),
-              title: s.title || "",
-              text: s.text || "",
-              imagePreview: s.image || null,
-              file: null,
-              fileList: s.image
-                ? [
-                    {
-                      uid: "-1",
-                      name: "step-image.jpg",
-                      status: "done",
-                      url: s.image,
-                    },
-                  ]
-                : [],
-            }))
+            id: Date.now() + Math.random(),
+            title: s.title || "",
+            text: s.text || "",
+            imagePreview: s.image || null,
+            file: null,
+            fileList: s.image
+              ? [
+                {
+                  uid: "-1",
+                  name: "step-image.jpg",
+                  status: "done",
+                  url: s.image,
+                },
+              ]
+              : [],
+          }))
           : [];
 
         setSteps(
           loadedSteps.length > 0
             ? loadedSteps
             : [
-                {
-                  id: Date.now(),
-                  title: "",
-                  text: "",
-                  imagePreview: null,
-                  file: null,
-                  fileList: [],
-                },
-              ]
+              {
+                id: Date.now(),
+                title: "",
+                text: "",
+                imagePreview: null,
+                file: null,
+                fileList: [],
+              },
+            ]
         );
       } catch (err) {
         console.error(err);
@@ -280,12 +290,54 @@ export default function GuideEdit() {
         }
       });
 
-      // plantTags state stores slugs now; send display labels as plantTags to backend
+      // plantTags state stores slugs OR labels depending on timing; send display labels as plantTags to backend
       const labelsToSend = (plantTags || []).map((s) => slugToLabelMap[s] || s);
       formData.append("plantTags", JSON.stringify(labelsToSend));
+
       // also append primary plant_group (slug) if any
       if (plantTags && plantTags.length) {
-        formData.append("plant_group", plantTags[0]);
+        const first = plantTags[0];
+        let plantGroupSlug = null;
+
+        // 1) If `first` is a known slug (exists in available map), use it
+        if (slugToLabelMap[first]) {
+          plantGroupSlug = first;
+        }
+
+        // 2) If `first` looks like a label, try to map via labelToSlugMap
+        if (!plantGroupSlug && labelToSlugMap[first]) {
+          plantGroupSlug = labelToSlugMap[first];
+        }
+
+        // 2b) If labelToSlugMap key isn't found due to diacritics/case differences,
+        // try a normalized lookup (remove diacritics + lowercase).
+        if (!plantGroupSlug) {
+          const normalizeLabel = (s) =>
+            String(s || '')
+              .normalize('NFD')
+              .replace(/\p{M}/gu, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .toLowerCase();
+          const normFirst = normalizeLabel(first);
+          for (const [label, slug] of Object.entries(labelToSlugMap)) {
+            if (normalizeLabel(label) === normFirst) {
+              plantGroupSlug = slug;
+              break;
+            }
+          }
+        }
+
+        // 3) As a last resort, scan availablePlantTags for a matching label (case-insensitive)
+        if (!plantGroupSlug && Array.isArray(availablePlantTags) && availablePlantTags.length) {
+          const found = availablePlantTags.find(a => String(a.label).toLowerCase() === String(first).toLowerCase());
+          if (found) plantGroupSlug = found.value;
+        }
+
+        // 4) fallback to original value if mapping not found (server-side validation may reject)
+        if (!plantGroupSlug) plantGroupSlug = first;
+
+        formData.append("plant_group", plantGroupSlug);
       }
 
       // include plant_name if available (use title as fallback)
@@ -306,14 +358,50 @@ export default function GuideEdit() {
         }
       }
 
+      let savedGuideId = id || null;
+
       if (id) {
+        // update
         await axiosClient.put(`/guides/${id}`, formData);
+
+        savedGuideId = id;
+
+        toast.success("Lưu hướng dẫn thành công! Hướng dẫn đã được lưu.", {
+            autoClose: 1500, // tự tắt sau 1.5s
+          onClose: () => {
+            setSaved(false);
+            navigate("/managerguides", {
+              state: {
+                page: location.state?.page || 1,
+                category: "",
+                saved: true,
+              },
+            });
+          },
+        });
+
+
       } else {
-        await axiosClient.post("/guides", formData);
+        // create — capture returned id
+        const res = await axiosClient.post("/guides", formData);
+        const created = res.data?.data || res.data;
+        savedGuideId = created?._id || created?.id || savedGuideId;
       }
 
-      message.success("Lưu hướng dẫn thành công!");
-      navigate("/managerguides");
+      // Show a popup notification (AntD notification) instead of an inline
+      // Alert so the user sees a more visible confirmation. Keep a short
+      // delay so the notification is visible before navigation.
+      setSaved(true);
+      console.debug('[GuideEdit] saved flag set -> showing notification');
+      // allow a very short tick so state/render updates complete
+      await new Promise((res) => setTimeout(res, 50));
+      try {
+        window.scrollTo(0, 0);
+      } catch (e) { }
+      // Show a modal success dialog that the user must dismiss before
+      // navigating. This guarantees the user sees confirmation even if
+      // automatic toasts are missed.
+
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.message || "Lưu thất bại";
@@ -327,6 +415,12 @@ export default function GuideEdit() {
   // Warn the user as soon as they type a plant name/title — search across all categories
   // if no category is selected, otherwise limit to the primary selected category.
   useEffect(() => {
+    // If we're editing an existing guide (have an id), skip duplicate-name warning
+    if (id) {
+      setDuplicateWarning(null);
+      return;
+    }
+
     // debounce check when title, plantName or plantTags change
     if (duplicateCheckRef.current.timer) clearTimeout(duplicateCheckRef.current.timer);
     duplicateCheckRef.current.timer = setTimeout(async () => {
@@ -376,6 +470,8 @@ export default function GuideEdit() {
   }
 
   return (
+    <>
+      <HeaderExpert />
     <Card
       bordered={false}
       style={{
@@ -404,6 +500,7 @@ export default function GuideEdit() {
           </Button>
         </Col>
       </Row>
+
 
       <Divider />
 
@@ -559,11 +656,11 @@ export default function GuideEdit() {
                             prev.map((s, i) =>
                               i === idx
                                 ? {
-                                    ...s,
-                                    file: null,
-                                    fileList: [],
-                                    imagePreview: null,
-                                  }
+                                  ...s,
+                                  file: null,
+                                  fileList: [],
+                                  imagePreview: null,
+                                }
                                 : s
                             )
                           );
@@ -654,7 +751,7 @@ export default function GuideEdit() {
                 >
                   {saving ? "Đang lưu..." : "Lưu hướng dẫn"}
                 </Button>
-                <Button onClick={() => navigate("/managerguides")} size="large">
+                <Button onClick={() => navigate("/managerguides", { state: location.state || {} })} size="large">
                   Hủy
                 </Button>
               </Space>
@@ -663,5 +760,6 @@ export default function GuideEdit() {
         </Row>
       </Form>
     </Card>
+    </>
   );
 }

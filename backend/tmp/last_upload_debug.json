@@ -1,0 +1,15 @@
+{
+  "ts": "2025-12-02T16:55:20.994Z",
+  "route": "updateGuide",
+  "id": "692ea424bc72429a565e1885",
+  "files": [],
+  "bodyKeys": [
+    "title",
+    "description",
+    "steps",
+    "plantTags",
+    "plant_group",
+    "plant_name"
+  ],
+  "plant_group": "Ngò rí"
+}

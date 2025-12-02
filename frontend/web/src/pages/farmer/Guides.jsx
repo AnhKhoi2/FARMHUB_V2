@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import guidesApi from "../../api/shared/guidesApi";
 import axiosClient from "../../api/shared/axiosClient";
-import { Card, Row, Col, Typography, Spin, message, Input, Pagination, Select, Button } from "antd";
+import { Card, Row, Col, Typography, Spin, message, Input, Pagination, Select, Button, Tag } from "antd";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
+import getColorForKey from "../../utils/colorUtils";
 
 const { Title } = Typography;
 
@@ -45,6 +46,7 @@ export default function Guides() {
       const totalCount = Number(meta.total || payload.totalDocs || payload.total || items.length) || 0;
 
       setGuides(items);
+
       setTotal(totalCount);
       setPage(Number(pageParam));
 
@@ -77,6 +79,7 @@ export default function Guides() {
     try {
       const res = await axiosClient.get("/api/plant-groups");
       const data = res.data?.data || [];
+
       const items = (data || [])
         .map((d) => {
           if (!d) return null;
@@ -114,53 +117,53 @@ export default function Guides() {
     fetchGuides(q, 1, pageSize, val);
   };
 
-    return (
-      <>
-        <Header />
-        <div className="container-fluid" style={{ padding: 24 }}>
-          {/* Header & Search */}
-          <div
-            style={{
-              marginBottom: 24,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-            }}
-          >
-            <div>
-              <Title level={3} style={{ margin: 0 }}>
-                Hướng dẫn trồng trọt
-              </Title>
-            </div>
-            <div style={{ flexGrow: 1, maxWidth: 520, marginTop: 8, display: 'flex', gap: 8 }}>
-              <Select
-                value={selectedCategory}
-                onChange={onCategoryChange}
-                placeholder="Tất cả danh mục"
-                style={{ minWidth: 160 }}
-                options={availablePlantTags.length ? availablePlantTags : [{ label: 'TẤT CẢ', value: '' }]}
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                dropdownMatchSelectWidth={false}
-                dropdownStyle={{ maxHeight: 400, overflow: 'auto', zIndex: 2000 }}
-                getPopupContainer={(trigger) => document.body}
-                onDropdownVisibleChange={(open) => {
-                  if (open) fetchPlantGroups();
-                }}
-              />
-              <Input.Search
-                placeholder="Tìm rau/cây trồng..."
-                allowClear
-                enterButton
-                onSearch={onSearch}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                style={{ flex: 1 }}
-              />
-            </div>
+  return (
+    <>
+      <Header />
+      <div className="container-fluid" style={{ padding: 24 }}>
+        {/* Header & Search */}
+        <div
+          style={{
+            marginBottom: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <Title level={3} style={{ margin: 0 }}>
+              Hướng dẫn trồng trọt
+            </Title>
           </div>
+          <div style={{ flexGrow: 1, maxWidth: 520, marginTop: 8, display: 'flex', gap: 8 }}>
+            <Select
+              value={selectedCategory}
+              onChange={onCategoryChange}
+              placeholder="Tất cả danh mục"
+              style={{ minWidth: 160 }}
+              options={availablePlantTags.length ? availablePlantTags : [{ label: 'TẤT CẢ', value: '' }]}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              dropdownMatchSelectWidth={false}
+              dropdownStyle={{ maxHeight: 400, overflow: 'auto', zIndex: 2000 }}
+              getPopupContainer={(trigger) => document.body}
+              onDropdownVisibleChange={(open) => {
+                if (open) fetchPlantGroups();
+              }}
+            />
+            <Input.Search
+              placeholder="Tìm rau/cây trồng..."
+              allowClear
+              enterButton
+              onSearch={onSearch}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              style={{ flex: 1 }}
+            />
+          </div>
+        </div>
 
         {/* Content */}
         {loading ? (
@@ -184,11 +187,12 @@ export default function Guides() {
                       />
                     }
                     style={{ borderRadius: 8, overflow: "hidden", textAlign: "center" }}
-                    bodyStyle={{ padding: "12px 8px" }}
+                    bodyStyle={{ padding: "12px 8px", minHeight: 100 }}
                   >
                     <Title level={5} style={{ margin: 0 }}>
                       {g.title}
                     </Title>
+                    <Tag style={{ margin: 0, fontSize: 12, color: getColorForKey(g.plantTags) }}>{g.plantTags}</Tag>
                   </Card>
                 </Link>
               </Col>
@@ -208,7 +212,7 @@ export default function Guides() {
           </Row>
         )}
       </div>
-      <Footer /> 
+      <Footer />
     </>
   );
 }
