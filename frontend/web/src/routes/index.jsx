@@ -38,6 +38,9 @@ const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
 const AdminTransactions = React.lazy(() =>
   import("../pages/admin/AdminTransactions")
 );
+const TrashUsers = React.lazy(() => import("../pages/admin/TrashUsers"));
+const TrashDiseases = React.lazy(() => import("../pages/admin/TrashDiseases"));
+const TrashDiseaseCategories = React.lazy(() => import("../pages/admin/TrashDiseaseCategories"));
 
 // Admin layout + nested
 import AdminLayout from "../components/AdminLayout.jsx";
@@ -172,6 +175,44 @@ export default function AppRoutes() {
             <AdminRoute>
               <React.Suspense fallback={<div>Loading...</div>}>
                 <AdminUsers />
+              </React.Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/users/trash"
+          element={
+            <AdminRoute>
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <TrashUsers />
+              </React.Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/diseases"
+          element={
+            <AdminRoute>
+              <AdminDiseases />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/diseases/trash"
+          element={
+            <AdminRoute>
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <TrashDiseases />
+              </React.Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/disease-categories/trash"
+          element={
+            <AdminRoute>
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <TrashDiseaseCategories />
               </React.Suspense>
             </AdminRoute>
           }

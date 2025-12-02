@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../components/AdminLayout";
 import PortalModal from "../../components/shared/PortalModal";
 import axiosClient from "../../api/shared/axiosClient";
@@ -10,6 +11,7 @@ import { PlusOutlined, InboxOutlined } from '@ant-design/icons';
 import { Button, Space } from 'antd';
 
 export default function AdminDiseases() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,6 @@ export default function AdminDiseases() {
   const [showEdit, setShowEdit] = useState(false);
   const [current, setCurrent] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showTrash, setShowTrash] = useState(false);
 
   const fetchItems = async (p = page) => {
     setLoading(true);
@@ -121,7 +122,7 @@ export default function AdminDiseases() {
               </Button>
               <Button
                 icon={<InboxOutlined />}
-                onClick={() => setShowTrash(true)}
+                onClick={() => navigate("/admin/diseases/trash")}
                 style={{ color: '#2E7D32', borderColor: '#E0E0E0', background: '#fff' }}
               >
                 Thùng rác
@@ -250,12 +251,6 @@ export default function AdminDiseases() {
               <ConfirmModal title="Xóa bệnh" message={`Bạn có chắc muốn xóa "${current.name}" không?`} onCancel={() => { setShowConfirm(false); setCurrent(null); }} onConfirm={() => handleDelete(current._id)} />
             </PortalModal>
           )}
-
-          {showTrash && (
-            <PortalModal onClose={() => setShowTrash(false)}>
-              <DiseaseTrashModal onClose={() => setShowTrash(false)} />
-            </PortalModal>
-          )}
         </div>
       </div>
     </AdminLayout>
@@ -353,68 +348,6 @@ function ConfirmModal({ title, message, onCancel, onConfirm }) {
         <button className="btn btn-cancel" onClick={onCancel}>Hủy</button>
         <button className="btn btn-confirm" onClick={onConfirm}>Xóa</button>
       </div>
-    </div>
-  );
-}
-
-function DiseaseTrashModal({ onClose }) {
-  const [trash, setTrash] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchTrash = async () => {
-    setLoading(true);
-    try {
-      // backend exposes deleted items via list with includeDeleted=true
-      const res = await axiosClient.get('/admin/diseases?includeDeleted=true&limit=200');
-      const items = res.data?.data?.items || [];
-      // filter only deleted items
-      const deleted = (items || []).filter((it) => it.isDeleted === true || it.isDeleted === 'true');
-      setTrash(deleted);
-    } catch (err) {
-      console.error('Failed to load disease trash', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchTrash(); }, []);
-
-  const handleRestore = async (id) => {
-    try {
-      await axiosClient.patch(`/admin/diseases/${id}/restore`);
-      fetchTrash();
-    } catch (err) {
-      console.error('Restore failed', err);
-    }
-  };
-
-  return (
-    <div style={{ width: 700, maxWidth: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h5 className="mb-0">Thùng rác - Bệnh</h5>
-        <Button onClick={onClose} type="text">Đóng</Button>
-      </div>
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 40 }}>Đang tải...</div>
-      ) : (
-        <div>
-          {trash.length === 0 ? (
-            <div className="text-muted">Không có bệnh đã xóa</div>
-          ) : (
-            trash.map(t => (
-              <div key={t._id} style={{ display: 'flex', justifyContent: 'space-between', padding: 12, borderBottom: '1px solid #eee' }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{t.name}</div>
-                  <div className="small text-muted">{t.description || 'Không có mô tả'}</div>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <Button onClick={() => handleRestore(t._id)} style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50', color: '#fff' }}>Hoàn tác</Button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
     </div>
   );
 }

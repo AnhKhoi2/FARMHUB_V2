@@ -325,6 +325,11 @@ export const authController = {
       throw new AppError(message, statusCode, "ACCOUNT_NOT_VERIFIED");
     }
 
+    if (user.isDeleted) {
+      const { message, statusCode } = ERROR_CODES.ACCOUNT_DELETED;
+      throw new AppError(message, statusCode, "ACCOUNT_DELETED");
+    }
+
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
@@ -652,6 +657,12 @@ export const authController = {
         user.provider = "google";
         await user.save();
       }
+    }
+
+    // Kiểm tra tài khoản đã bị xóa
+    if (user.isDeleted) {
+      const { message, statusCode } = ERROR_CODES.ACCOUNT_DELETED;
+      throw new AppError(message, statusCode, "ACCOUNT_DELETED");
     }
 
     // 3) Cấp token như login thường

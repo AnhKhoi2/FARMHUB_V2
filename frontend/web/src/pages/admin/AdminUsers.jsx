@@ -1,29 +1,39 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../components/AdminLayout.jsx"; // Layout wrapper
 import usersApi from "../../api/usersApi.js";
 import { FiTrash2, FiRotateCcw, FiX } from 'react-icons/fi';
+import { InboxOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import PortalModal from "../../components/shared/PortalModal";
+import { toast, Toaster } from 'react-hot-toast';
+import { showError, showSuccess } from '../../utils/notify';
+import "../../css/admin/AdminDiseases.css";
 
 const ROLE_OPTIONS = ["user", "expert", "moderator", "admin"];
 const ROLE_LABELS = { user: 'Người dùng', expert: 'Chuyên gia', moderator: 'Điều phối', admin: 'Quản trị' };
 
 export default function AdminUsers() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [q, setQ] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [includeDeleted, setIncludeDeleted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null); // detail modal data
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showConfirmRestore, setShowConfirmRestore] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await usersApi.list({ q: q || undefined, role: roleFilter || undefined, page, limit, includeDeleted });
+      const data = await usersApi.list({ q: q || undefined, role: roleFilter || undefined, page, limit });
       if (data?.items) {
         setItems(data.items);
         setTotal(data.total || 0);
@@ -33,7 +43,7 @@ export default function AdminUsers() {
     } finally {
       setLoading(false);
     }
-  }, [q, roleFilter, page, limit, includeDeleted]);
+  }, [q, roleFilter, page, limit]);
 
   useEffect(() => {
     fetchData();
@@ -60,26 +70,31 @@ export default function AdminUsers() {
       fetchData();
     } catch (e) {
       setItems(prev);
-      alert(e.response?.data?.message || e.message || "Đổi role thất bại");
+      showError(e, { duration: 6000 });
     }
   };
 
   const softDelete = async (id) => {
-    if (!window.confirm("Xác nhận xoá mềm người dùng này?")) return;
     try {
       await usersApi.softDelete(id);
+      showSuccess('Xóa người dùng thành công');
+      setShowConfirmDelete(false);
+      setCurrentUser(null);
       fetchData();
     } catch (e) {
-      alert(e.response?.data?.message || e.message || "Xoá thất bại");
+      showError(e, { duration: 6000 });
     }
   };
 
   const restore = async (id) => {
     try {
       await usersApi.restore(id);
+      showSuccess('Khôi phục người dùng thành công');
+      setShowConfirmRestore(false);
+      setCurrentUser(null);
       fetchData();
     } catch (e) {
-      alert(e.response?.data?.message || e.message || "Khôi phục thất bại");
+      showError(e, { duration: 6000 });
     }
   };
 
@@ -87,12 +102,21 @@ export default function AdminUsers() {
 
   return (
     <AdminLayout>
+      <Toaster position="top-right" />
       <div className="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <h2 className="h5 mb-0">Người dùng</h2>
           <small className="text-muted">Quản lý danh sách người dùng hệ thống</small>
         </div>
-        <div className="text-muted small">Tổng: <strong>{total}</strong></div>
+        <div>
+          <Button
+            icon={<InboxOutlined />}
+            onClick={() => navigate("/admin/users/trash")}
+            style={{ color: '#2E7D32', borderColor: '#E0E0E0', background: '#fff' }}
+          >
+            Thùng rác
+          </Button>
+        </div>
       </div>
 
       <div className="d-flex align-items-center mb-3" style={{ gap: 12, flexWrap: 'wrap' }}>
@@ -131,21 +155,9 @@ export default function AdminUsers() {
           onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
           style={{ width: 160, minWidth: 140 }}
         >
-          <option value="">-- Role --</option>
-          {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          <option value="">-- Vai trò --</option>
+          {ROLE_OPTIONS.map(r => <option key={r} value={r}>{ROLE_LABELS[r] || r}</option>)}
         </select>
-
-        <label className="d-flex align-items-center gap-1 small" style={{ margin: 0 }}>
-          <input
-            id="includeDeleted"
-            className="form-check-input"
-            type="checkbox"
-            checked={includeDeleted}
-            onChange={(e) => { setIncludeDeleted(e.target.checked); setPage(1); }}
-            style={{ width: 16, height: 16 }}
-          />
-          <span>Hiển thị đã xóa</span>
-        </label>
       </div>
 
       {error && <div className="alert alert-danger py-1 small mb-2">{error}</div>}
@@ -195,7 +207,7 @@ export default function AdminUsers() {
                       <button
                         className="btn btn-sm btn-link"
                         title="Xóa"
-                        onClick={() => softDelete(u._id)}
+                        onClick={() => { setCurrentUser(u); setShowConfirmDelete(true); }}
                         aria-label={`delete-${u._id}`}
                         style={{ color: '#FF4D4F', padding: 4, margin: 0, lineHeight: 1 }}
                       >
@@ -205,7 +217,7 @@ export default function AdminUsers() {
                       <button
                         className="btn btn-sm btn-link"
                         title="Khôi phục"
-                        onClick={() => restore(u._id)}
+                        onClick={() => { setCurrentUser(u); setShowConfirmRestore(true); }}
                         aria-label={`restore-${u._id}`}
                         style={{ color: '#1890ff', padding: 4, margin: 0, lineHeight: 1 }}
                       >
@@ -291,6 +303,49 @@ export default function AdminUsers() {
           </div>
         </div>
       )}
+
+      {/* Confirm Delete Modal */}
+      {showConfirmDelete && currentUser && (
+        <PortalModal onClose={() => { setShowConfirmDelete(false); setCurrentUser(null); }}>
+          <ConfirmModal 
+            title="Xóa người dùng" 
+            message={`Bạn có chắc muốn xóa người dùng "${currentUser.username}" không? Người dùng sẽ không thể đăng nhập cho đến khi được khôi phục.`} 
+            onCancel={() => { setShowConfirmDelete(false); setCurrentUser(null); }} 
+            onConfirm={() => softDelete(currentUser._id)} 
+          />
+        </PortalModal>
+      )}
+
+      {/* Confirm Restore Modal */}
+      {showConfirmRestore && currentUser && (
+        <PortalModal onClose={() => { setShowConfirmRestore(false); setCurrentUser(null); }}>
+          <ConfirmModal 
+            title="Khôi phục người dùng" 
+            message={`Bạn có chắc muốn khôi phục người dùng "${currentUser.username}" không?`} 
+            onCancel={() => { setShowConfirmRestore(false); setCurrentUser(null); }} 
+            onConfirm={() => restore(currentUser._id)}
+            confirmText="Khôi phục"
+          />
+        </PortalModal>
+      )}
     </AdminLayout>
+  );
+}
+
+function ConfirmModal({ title, message, onCancel, onConfirm, confirmText = "Xóa" }) {
+  return (
+    <div className="confirm-modal">
+      <div className="modal-header">
+        <h5 className="modal-title">{title}</h5>
+        <button type="button" className="btn-close" aria-label="Close" onClick={onCancel}></button>
+      </div>
+      <div className="modal-body">
+        <p>{message}</p>
+      </div>
+      <div className="modal-footer">
+        <button className="btn btn-cancel" onClick={onCancel}>Hủy</button>
+        <button className="btn btn-confirm" onClick={onConfirm}>{confirmText}</button>
+      </div>
+    </div>
   );
 }

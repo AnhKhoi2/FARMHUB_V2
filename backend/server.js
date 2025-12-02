@@ -49,6 +49,7 @@ import tilesRoute from "./routes/tiles.js";
 import plantRoute from "./routes/plant.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 import adminTransactionsRoute from "./routes/adminTransactions.js";
+import dashboardRoute from "./routes/dashboard.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -113,7 +114,7 @@ app.use("/admin/users", usersRoute);
 // app.use("/api/expert-applications", expertApplicationRoutes);
 
 app.use("/api/expert-applications", expertApplicationsRouter);
-app.use("/api/experts", expertRatingRoutes);
+app.use("/api/experts", expertRatingRoutes); 
 app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/api/plant-templates", plantTemplateRoutes);
@@ -128,6 +129,7 @@ app.use("/layouts", layoutsRoutes);
 app.use("/admin/managerpost", postRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/admin/transactions", adminTransactionsRoute);
+app.use("/admin/dashboard", dashboardRoute);
 
 // (legacy alias removed) '/admin/managerpost' is the canonical path for post management
 app.use("/api/notifications", notificationRoutes);
