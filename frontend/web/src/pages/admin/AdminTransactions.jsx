@@ -58,9 +58,9 @@ export default function AdminTransactions() {
   // Export CSV
   const exportCSV = async () => {
     try {
-      const res = await axiosClient.get(`/admin/transactions`, {
-        params: buildParams(1),
-      });
+      // Request all rows for the current filters. Use `total` as limit if available
+      const params = { ...buildParams(1), limit: total || 1000000, page: 1 };
+      const res = await axiosClient.get(`/admin/transactions`, { params });
       const rows = res.data.orders || [];
       if (rows.length === 0) return alert("Không có dữ liệu để xuất");
 
@@ -73,24 +73,30 @@ export default function AdminTransactions() {
         "Số tiền",
         "Trạng thái",
       ];
+
       const csv = [header.join(",")];
+      const escapeCSV = (val) => {
+        const s = val === null || val === undefined ? "" : String(val);
+        return `"${s.replace(/"/g, '""')}"`;
+      };
+
       rows.forEach((r) => {
-        const items = (r.items || [])
-          .map((it) => `"${(it.name || "").replace(/"/g, '""')}"`)
-          .join("|");
+        const items = (r.items || []).map((it) => it.name || "").join(" | ");
         const line = [
-          `"${r.orderRef || ""}")`.replace(/\)/g, ""),
-          `"${r._id || ""}",`,
-          `"${new Date(r.createdAt).toLocaleString()}",`,
-          `"${items}",`,
-          `"${r.userId?.username || r.userId?.email || ""}",`,
-          `"${r.totalAmount || 0} ${r.currency || ""}",`,
-          `"${r.paymentStatus || ""}"`,
+          escapeCSV(r.orderRef || ""),
+          escapeCSV(r._id || ""),
+          escapeCSV(new Date(r.createdAt).toLocaleString()),
+          escapeCSV(items),
+          escapeCSV(r.userId?.username || r.userId?.email || ""),
+          escapeCSV(`${r.totalAmount || 0} ${r.currency || ""}`),
+          escapeCSV(r.paymentStatus || ""),
         ];
         csv.push(line.join(","));
       });
 
-      const blob = new Blob([csv.join("\n")], {
+      // Add BOM so Excel (Windows) recognizes UTF-8 properly
+      const csvContent = "\uFEFF" + csv.join("\n");
+      const blob = new Blob([csvContent], {
         type: "text/csv;charset=utf-8;",
       });
       const url = URL.createObjectURL(blob);

@@ -42,15 +42,8 @@ const StageTrackingSchema = new mongoose.Schema(
       default: "active",
     },
     // Track số ngày đã trễ so với stage end day
-    missed_days: { type: Number, default: 0 },
-    // Track các lần đã gửi notification
-    notifications_sent: [
-      {
-        type: { type: String }, // 'warning', 'overdue', 'skipped'
-        day: { type: Number }, // missed_day tại thời điểm gửi
-        sent_at: { type: Date },
-      },
-    ],
+    // NOTE: 'missed_days' and 'notifications_sent' removed —
+    // auto-skip / missed-day based notification logic has been deprecated.
     // Track tất cả tasks đã hoàn thành trong stage này
     completed_tasks: [
       {

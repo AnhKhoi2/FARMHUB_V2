@@ -21,10 +21,6 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     plant_examples: [],
     cover_image: null,
     stages: [],
-    rules: {
-      safe_delay_days: 1,
-      auto_skip: true,
-    },
     status: "draft",
     notes: "",
   });
@@ -32,10 +28,11 @@ const PlantTemplateForm = ({ mode = "create" }) => {
   const [tempInput, setTempInput] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
   const [availableGuides, setAvailableGuides] = useState([]);
+  const [availablePlants, setAvailablePlants] = useState([]);
   const [loadingGuides, setLoadingGuides] = useState(false);
   const [showPlantDropdown, setShowPlantDropdown] = useState(false);
 
-  const plantGroups = [
+  const [plantGroups, setPlantGroups] = useState([
     { value: "leaf_vegetable", label: "Rau ăn lá", icon: "🥬" },
     { value: "root_vegetable", label: "Cây củ", icon: "🥕" },
     { value: "fruit_short_term", label: "Rau/quả ngắn ngày", icon: "🥒" },
@@ -44,14 +41,15 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     { value: "herb", label: "Cây gia vị", icon: "🌿" },
     { value: "flower_vegetable", label: "Rau ăn hoa", icon: "🥦" },
     { value: "other", label: "Khác", icon: "🌱" },
-  ];
+  ]);
+  const [loadingPlantGroups, setLoadingPlantGroups] = useState(false);
 
   const steps = [
     { number: 1, title: "Thông tin cơ bản", icon: "📝" },
     { number: 2, title: "Giai đoạn phát triển", icon: "🌱" },
     { number: 3, title: "Nhiệm vụ tự động", icon: "✅" },
     { number: 4, title: "Điều kiện quan sát", icon: "👁️" },
-    { number: 5, title: "Quy tắc & Xác nhận", icon: "⚙️" },
+    { number: 5, title: "Xác nhận", icon: "⚙️" },
   ];
 
   useEffect(() => {
@@ -59,33 +57,83 @@ const PlantTemplateForm = ({ mode = "create" }) => {
       loadTemplate();
     }
     fetchAvailableGuides();
+    fetchPlantGroupsFromApi();
   }, [mode, id]);
 
+  const fetchPlantGroupsFromApi = async () => {
+    try {
+      setLoadingPlantGroups(true);
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+      // Build endpoint robustly: allow API_URL to be either with or without trailing '/api'
+      let base = API_URL || "http://localhost:5000";
+      base = base.replace(/\/+$/, "");
+      const apiBase = base.endsWith("/api") ? base : `${base}/api`;
+      const endpoint = `${apiBase}/plant-groups`;
+
+      const res = await axios.get(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      const items = res.data?.data || [];
+
+      // Map API objects { _id, name, slug } to expected { value, label, icon }
+      const iconMap = {
+        leaf_vegetable: "🥬",
+        root_vegetable: "🥕",
+        fruit_short_term: "🥒",
+        fruit_long_term: "🍊",
+        bean_family: "🫘",
+        herb: "🌿",
+        flower_vegetable: "🥦",
+      };
+
+      if (items.length > 0) {
+        const mapped = items.map((it) => ({
+          value: it.slug || it._id,
+          label: it.name || it.slug || it._id,
+          icon: iconMap[it.slug] || "🌱",
+          plants: Array.isArray(it.plants) ? it.plants : [],
+        }));
+        setPlantGroups(mapped);
+      }
+    } catch (err) {
+      console.warn(
+        "Could not fetch plant groups, using defaults:",
+        err?.message || err
+      );
+    } finally {
+      setLoadingPlantGroups(false);
+    }
+  };
+
   const fetchAvailableGuides = async () => {
+    // We now source plant examples from the plants collection via /api/plants
     try {
       setLoadingGuides(true);
-      console.log("🔍 Fetching guides from API...");
-      const response = await guidesApi.getAllGuides({ limit: 1000 });
-      console.log("📦 API Response:", response);
 
-      // API trả về { success: true, data: [...], meta: {...} }
-      const guides = response.data?.data || [];
-      console.log("📋 Guides array:", guides);
-      console.log("📊 Total guides:", guides.length);
+      let base = API_URL || "http://localhost:5000";
+      base = base.replace(/\/+$/, "");
+      const apiBase = base.endsWith("/api") ? base : `${base}/api`;
+      const endpoint = `${apiBase}/plants?limit=1000`;
 
-      // Extract unique plant names from guides
-      const plantNames = guides
-        .map((guide) => guide.plant_name)
-        .filter((name) => name && name.trim())
-        .filter((name, index, self) => self.indexOf(name) === index)
+      console.log("🔍 Fetching plants from API...", endpoint);
+      const res = await axios.get(endpoint);
+      const plants = res.data?.data || [];
+      console.log("📦 Plants response count:", plants.length);
+
+      // keep full plant objects for filtering by group
+      setAvailablePlants(Array.isArray(plants) ? plants : []);
+
+      const plantNames = (Array.isArray(plants) ? plants : [])
+        .map((p) => p.name)
+        .filter((n) => n && n.toString().trim())
+        .filter((v, i, a) => a.indexOf(v) === i)
         .sort();
-
-      console.log("🌱 Plant names extracted:", plantNames);
-      console.log("✅ Total unique plants:", plantNames.length);
 
       setAvailableGuides(plantNames);
     } catch (err) {
-      console.error("❌ Error fetching guides:", err);
+      console.error("❌ Error fetching plants:", err);
     } finally {
       setLoadingGuides(false);
     }
@@ -104,7 +152,6 @@ const PlantTemplateForm = ({ mode = "create" }) => {
           plant_examples: template.plant_examples || [],
           cover_image: template.cover_image || null,
           stages: template.stages || [],
-          rules: template.rules || formData.rules,
           status: template.status || "draft",
           notes: template.notes || "",
         });
@@ -121,12 +168,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleRuleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      rules: { ...prev.rules, [field]: value },
-    }));
-  };
+  // rules were removed from template model; no rule-change handler required
 
   const handleCoverImageUpload = async (file) => {
     if (!file) return;
@@ -509,7 +551,6 @@ const PlantTemplateForm = ({ mode = "create" }) => {
           {currentStep === 5 && (
             <Step5Review
               formData={formData}
-              handleRuleChange={handleRuleChange}
               handleInputChange={handleInputChange}
             />
           )}
@@ -606,11 +647,11 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>Mô tả nhóm cây</label>
+      <label>Mô tả</label>
       <textarea
         className="form-textarea"
         rows="3"
-        placeholder="Mô tả về nhóm cây này..."
+        placeholder="Mô tả"
         value={formData.group_description}
         onChange={(e) => handleInputChange("group_description", e.target.value)}
       />
@@ -618,7 +659,7 @@ const Step1BasicInfo = ({
 
     <div className="form-group">
       <label>🌱 Các loại cây phù hợp</label>
-      <p className="hint">Chọn các loại cây từ danh sách guides có sẵn</p>
+      <p className="hint">Chọn các loại cây từ danh sách có sẵn</p>
 
       <div className="plant-selector">
         <button
@@ -652,32 +693,94 @@ const Step1BasicInfo = ({
               </button>
             </div>
             <div className="plant-dropdown-list">
-              {availableGuides.length === 0 ? (
-                <div className="plant-dropdown-empty">
-                  Không có dữ liệu cây từ guides
-                </div>
-              ) : (
-                availableGuides
-                  .filter((plant) =>
-                    plant.toLowerCase().includes(tempInput.toLowerCase())
+              {(() => {
+                // If current plant group provides embedded plants, use them
+                if (formData.plant_group) {
+                  const group = plantGroups.find(
+                    (g) => String(g.value) === String(formData.plant_group)
+                  );
+                  if (
+                    group &&
+                    Array.isArray(group.plants) &&
+                    group.plants.length
+                  ) {
+                    const filtered = group.plants
+                      .map((pp) => pp.name)
+                      .filter(
+                        (n) =>
+                          n &&
+                          n
+                            .toString()
+                            .toLowerCase()
+                            .includes(tempInput.toLowerCase())
+                      );
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="plant-dropdown-empty">
+                          Không có cây thuộc nhóm này
+                        </div>
+                      );
+                    }
+                    return filtered.map((plant, index) => (
+                      <div
+                        key={index}
+                        className={`plant-dropdown-item ${
+                          formData.plant_examples.includes(plant)
+                            ? "selected"
+                            : ""
+                        }`}
+                        onClick={() => addPlantExampleFromDropdown(plant)}
+                      >
+                        <span>{plant}</span>
+                        {formData.plant_examples.includes(plant) && (
+                          <span className="check-icon">✓</span>
+                        )}
+                      </div>
+                    ));
+                  }
+                }
+
+                // Fallback: use global availablePlants filtered by group (if any)
+                const pool =
+                  Array.isArray(availablePlants) && availablePlants.length
+                    ? availablePlants
+                    : [];
+                const poolFiltered = pool
+                  .filter((p) =>
+                    tempInput && tempInput.trim()
+                      ? p.name.toLowerCase().includes(tempInput.toLowerCase())
+                      : true
                   )
-                  .map((plant, index) => (
-                    <div
-                      key={index}
-                      className={`plant-dropdown-item ${
-                        formData.plant_examples.includes(plant)
-                          ? "selected"
-                          : ""
-                      }`}
-                      onClick={() => addPlantExampleFromDropdown(plant)}
-                    >
-                      <span>{plant}</span>
-                      {formData.plant_examples.includes(plant) && (
-                        <span className="check-icon">✓</span>
-                      )}
+                  .filter((p) =>
+                    formData.plant_group
+                      ? (p.plant_group_slug || p.plant_group) ===
+                        formData.plant_group
+                      : true
+                  );
+
+                if (poolFiltered.length === 0) {
+                  return (
+                    <div className="plant-dropdown-empty">
+                      Không có dữ liệu cây từ guides
                     </div>
-                  ))
-              )}
+                  );
+                }
+
+                return poolFiltered.map((p, index) => (
+                  <div
+                    key={p._id || index}
+                    className={`plant-dropdown-item ${
+                      formData.plant_examples.includes(p.name) ? "selected" : ""
+                    }`}
+                    onClick={() => addPlantExampleFromDropdown(p.name)}
+                  >
+                    <span>{p.name}</span>
+                    {formData.plant_examples.includes(p.name) && (
+                      <span className="check-icon">✓</span>
+                    )}
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         )}
@@ -702,7 +805,7 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>📸 Ảnh bìa Template</label>
+      <label>📸 Ảnh bìa Bộ mẫu</label>
       <div className="upload-area">
         <label className="upload-label">
           {uploadingCover ? (
@@ -741,7 +844,7 @@ const Step1BasicInfo = ({
               <div className="upload-icon">🖼️</div>
               <div className="upload-text">
                 <strong>Click để chọn ảnh bìa</strong>
-                <span>Ảnh này sẽ hiển thị trong danh sách template</span>
+                <span>Ảnh này sẽ hiển thị trong danh sách bộ mẫu</span>
               </div>
               <div className="upload-hint">PNG, JPG, JPEG (tối đa 5MB)</div>
             </div>
@@ -1420,46 +1523,12 @@ const Step4Observations = ({
   </div>
 );
 
-// Step 5: Rules & Review
-const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
+// Step 5: Review (confirmation)
+const Step5Review = ({ formData, handleInputChange }) => (
   <div className="step-review">
     <div className="step-header">
-      <h2>⚙️ Quy tắc & Xác nhận</h2>
-      <p className="hint">
-        Cấu hình quy tắc xử lý và xem lại toàn bộ template trước khi lưu
-      </p>
-    </div>
-
-    <div className="section">
-      <h3>🕒 Quy tắc xử lý trễ hạn</h3>
-
-      <div className="form-group">
-        <label>🔒 Số ngày cho phép trễ (safe_delay_days)</label>
-        <input
-          type="number"
-          className="form-input"
-          min="0"
-          value={formData.rules.safe_delay_days}
-          onChange={(e) =>
-            handleRuleChange("safe_delay_days", parseInt(e.target.value))
-          }
-        />
-        <small className="hint">
-          Số ngày cho phép user trễ trước khi hệ thống tự động chuyển giai đoạn
-          hoặc đánh dấu quá hạn
-        </small>
-      </div>
-
-      <div className="form-group">
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={formData.rules.auto_skip}
-            onChange={(e) => handleRuleChange("auto_skip", e.target.checked)}
-          />
-          <span>Tự động chuyển giai đoạn khi quá trễ</span>
-        </label>
-      </div>
+      <h2>🔎 Xác nhận</h2>
+      <p className="hint">Xem lại toàn bộ mẫu trước khi lưu</p>
     </div>
 
     <div className="section">
@@ -1482,7 +1551,7 @@ const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
         <textarea
           className="form-textarea"
           rows="3"
-          placeholder="Ghi chú thêm về template này..."
+          placeholder="Ghi chú thêm về bộ mẫu này..."
           value={formData.notes}
           onChange={(e) => handleInputChange("notes", e.target.value)}
         />
@@ -1490,10 +1559,10 @@ const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
     </div>
 
     <div className="section">
-      <h3>📊 Tổng quan Template</h3>
+      <h3>📊 Tổng quan Bộ Mẫu</h3>
       <div className="summary-grid">
         <div className="summary-item">
-          <div className="summary-label">Tên template</div>
+          <div className="summary-label">Tên bộ mẫu</div>
           <div className="summary-value">{formData.template_name}</div>
         </div>
         <div className="summary-item">
