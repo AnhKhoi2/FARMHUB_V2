@@ -8,103 +8,91 @@ const Footer = () => {
     <footer className="footer">
       <div className="container-fluid px-4">
         <div className="row headfooter">
-          <div className="col-md-4 mb-3">
-            <h5>GỌI CHO CHÚNG TÔI 24/7</h5>
-            <p className="fs-4 fw-bold text-warning">(1800)-88-66-991</p>
-            <h6>THEO DÕI CHÚNG TÔI</h6>
+          {/* Về FarmHub */}
+          <div className="col-md-3 mb-3">
+            <h5 className="text-warning fw-bold">VỀ FARMHUB</h5>
+            <p className="text-white small">
+              Nền tảng công nghệ hỗ trợ nông dân trong việc quản lý cây trồng, 
+              theo dõi sức khỏe cây, và kết nối với chuyên gia nông nghiệp.
+            </p>
+            <p className="text-white small mt-2">
+              <strong> Nông nghiệp thông minh</strong>
+              <br />
+              Áp dụng AI và công nghệ hiện đại vào sản xuất nông nghiệp.
+            </p>
+          </div>
+
+          {/* Tính năng */}
+          <div className="col-md-3 mb-3">
+            <h5 className="text-warning fw-bold">TÍNH NĂNG NỔI BẬT</h5>
+            <ul className="list-unstyled text-white small">
+              <li className="mb-2"> Sổ tay điện tử theo dõi cây trồng</li>
+              <li className="mb-2"> AI phát hiện bệnh cây trồng</li>
+              <li className="mb-2"> Kết nối với chuyên gia</li>
+              <li className="mb-2"> Thống kê và phân tích dữ liệu</li>
+              <li className="mb-2"> Kho kiến thức nông nghiệp</li>
+            </ul>
+          </div>
+
+          {/* Hỗ trợ */}
+          <div className="col-md-3 mb-3">
+            <h5 className="text-warning fw-bold">HỖ TRỢ & HƯỚNG DẪN</h5>
+            <ul className="list-unstyled">
+              <li className="mb-2">
+                <Link to="/guides" className="text-white text-decoration-none small">
+                  Hướng dẫn sử dụng
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link to="/guides" className="text-white text-decoration-none small">
+                  Mẹo canh tác
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link to="/diseases" className="text-white text-decoration-none small">
+                  Bệnh cây trồng phổ biến
+                </Link>
+              </li>
+              <li className="mb-2">
+                <span className="text-white small" style={{cursor: 'pointer'}}>
+                  Điều khoản sử dụng
+                </span>
+              </li>
+              <li className="mb-2">
+                <span className="text-white small" style={{cursor: 'pointer'}}>
+                  Chính sách bảo mật
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Liên hệ */}
+          <div className="col-md-3 mb-3">
+            <h5 className="text-warning fw-bold">LIÊN HỆ VỚI CHÚNG TÔI</h5>
+            <p className="fs-4 fw-bold text-warning">(HOTLINE) 0763 479 964</p>
+            <h6 className="text-warning fw-bold">THEO DÕI CHÚNG TÔI</h6>
             <div className="d-flex gap-3 mt-3 iconfooter">
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/people/FarmHub/61577586672365/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="social-icon"
               >
                 <FaFacebookF size={20} />
               </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="social-icon"
-              >
-                <FaYoutube size={20} />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="social-icon"
-              >
-                <FaInstagram size={20} />
-              </a>
             </div>
-          </div>
-
-          <div className="col-md-2 mb-3">
-            <h6>VỊ TRÍ CỬA HÀNG</h6>
-            <p>9066 600 NGUYỄN VĂN CỪ, P.AN BÌNH, TP.CẦN THƠ</p>
-            <p className="text-warning">contact@farmhub.com</p>
-          </div>
-
-          <div className="col-md-2 mb-3">
-            <h6>THÔNG TIN</h6>
-            <ul>
-              <li>
-                <Link to="/about">Về chúng tôi</Link>
-              </li>
-              <li>
-                <Link to="/news">Blog</Link>
-              </li>
-              <li>
-                <Link to="/shop">Kiểm tra</Link>
-              </li>
-              <li>
-                <Link to="/contact">Liên hệ</Link>
-              </li>
-              <li>
-                <Link to="/services">Dịch vụ</Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="col-md-2 mb-3">
-            <h6>TÀI KHOẢN CỦA TÔI</h6>
-            <ul>
-              <li>
-                <Link to="/profile">Tài khoản của tôi</Link>
-              </li>
-              <li>
-                <Link to="/contact">Liên hệ</Link>
-              </li>
-              <li>
-                <Link to="/cart">Giỏ hàng</Link>
-              </li>
-              <li>
-                <Link to="/shop">Cửa hàng</Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="col-md-2 mb-3">
-            <h6>DANH MỤC</h6>
-            <ul>
-              <li>
-                <Link to="/shop?category=fruits">Trái cây và rau củ</Link>
-              </li>
-              <li>
-                <Link to="/shop?category=seeds">Hạt giống</Link>
-              </li>
-              <li>
-                <Link to="/shop?category=tools">Dụng cụ làm vườn</Link>
-              </li>
-            </ul>
+            <p className="text-white small mt-3">
+              📧 Email: support@farmhub.vn
+              <br />
+              📍 TP.Cần Thơ, Việt Nam
+            </p>
           </div>
         </div>
 
         <hr className="my-2" />
 
         <div className="text-center mt-3">
-          <p className="mb-0">
+          <p className="mb-0 text-white">
             © 2025 <span className="text-warning fw-bold">FarmHub</span>. All
             rights reserved.
           </p>
