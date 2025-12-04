@@ -9,9 +9,9 @@ import {
   Input,
   Checkbox,
   Spin,
-  message,
   Typography,
 } from "antd";
+import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
 import {
   PlusOutlined,
@@ -56,7 +56,7 @@ export default function ExpertModels() {
       setItems(data);
     } catch (err) {
       console.error(err);
-      message.error("Không thể tải dữ liệu mô hình.");
+      toast.error("Không thể tải dữ liệu mô hình.");
     } finally {
       setLoading(false);
     }
@@ -96,15 +96,15 @@ export default function ExpertModels() {
     try {
       if (isDeleted) {
         await axiosClient.patch(`/admin/models/${id}/restore`);
-        message.success("Mô hình đã được hoàn tác");
+        toast.success("Mô hình đã được hoàn tác");
       } else {
         await axiosClient.patch(`/admin/models/${id}/hide`);
-        message.success("Mô hình đã xóa");
+        toast.success("Mô hình đã xóa");
       }
       fetchItems();
     } catch (err) {
       console.error(err);
-      message.error("Thao tác thất bại");
+      toast.error("Thao tác thất bại");
     }
   };
 
@@ -116,16 +116,16 @@ export default function ExpertModels() {
       };
       if (drawerType === "create") {
         await axiosClient.post("/admin/models", payload);
-        message.success("Tạo mô hình thành công");
+        toast.success("Tạo mô hình thành công");
       } else if (drawerType === "edit" && currentItem) {
         await axiosClient.put(`/admin/models/${currentItem._id}`, payload);
-        message.success("Cập nhật mô hình thành công");
+        toast.success("Cập nhật mô hình thành công");
       }
       setDrawerVisible(false);
       fetchItems();
     } catch (err) {
       console.error(err);
-      message.error("Lưu thất bại");
+      toast.error("Lưu thất bại");
     }
   };
 

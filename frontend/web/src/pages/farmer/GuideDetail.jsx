@@ -52,7 +52,24 @@ export default function FarmerGuideDetail() {
     <Header/>
     <div style={{ padding: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => {
+            // Prefer navigating to the guides list filtered by this guide's plant_group
+            // so the user returns to the group view instead of the global list.
+            try {
+              const group = guide?.plant_group || (Array.isArray(guide?.plantTags) && guide.plantTags[0]);
+              if (group) {
+                const qs = `?category=${encodeURIComponent(group)}&page=1`;
+                navigate(`/guides${qs}`);
+                return;
+              }
+            } catch (e) {
+              // fall through to history back if any issue
+            }
+            navigate(-1);
+          }}
+        >
           Quay lại
         </Button>
       </div>

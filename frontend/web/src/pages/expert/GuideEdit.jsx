@@ -14,7 +14,6 @@ import {
   Checkbox,
   Alert,
   Spin,
-  message,
   notification,
   Modal,
   Divider,
@@ -405,7 +404,7 @@ export default function GuideEdit() {
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.message || "Lưu thất bại";
-      message.error(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }

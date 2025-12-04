@@ -569,6 +569,34 @@ export const updateGuide = async (req, res) => {
       }
     }
 
+    // === PERSIST STEP IMAGES EARLY ===
+    // If there are per-step files uploaded (stepImage_0, stepImage_1, ...),
+    // persist their image paths immediately on the document so that the
+    // uploaded files are not lost even if the later full update fails.
+    try {
+      if (Array.isArray(req.files) && req.files.length) {
+        const stepFiles = req.files.filter(f => /^stepImage_\d+$/.test(f.fieldname));
+        for (const sf of stepFiles) {
+          const m = sf.fieldname.match(/^stepImage_(\d+)$/);
+          if (!m) continue;
+          const idx = Number(m[1]);
+          const relPath = `/uploads/guides/${sf.filename}`;
+          try {
+            // set the specific array element's image property
+            const setObj = {};
+            setObj[`steps.${idx}.image`] = relPath;
+            await Guide.findByIdAndUpdate(req.params.id, { $set: setObj });
+            if (process.env.NODE_ENV !== 'production') console.log('[update-guide] persisted step image early:', req.params.id, idx, relPath);
+          } catch (e) {
+            console.warn('[update-guide] failed to persist step image early for', req.params.id, idx, e?.message || e);
+          }
+        }
+      }
+    } catch (e) {
+      // ignore errors in early persistence; continue
+      console.warn('[update-guide] error while persisting step images early:', e?.message || e);
+    }
+
     // === CÁC BƯỚC HƯỚNG DẪN ===
     if (req.body.steps) {
       let stepsRaw = req.body.steps;
@@ -599,7 +627,33 @@ export const updateGuide = async (req, res) => {
         };
       });
 
-      updates.steps = mappedSteps;
+      // Merge with existing guide steps to avoid accidentally wiping previously
+      // persisted step images (early persistence writes `steps.<i>.image`).
+      // This preserves images/titles/text for steps not provided by the client.
+      try {
+        const existing = await Guide.findById(req.params.id).lean();
+        if (existing && Array.isArray(existing.steps)) {
+          const maxLen = Math.max(existing.steps.length, mappedSteps.length);
+          const merged = [];
+          for (let i = 0; i < maxLen; i++) {
+            const newStep = mappedSteps[i] || null;
+            const oldStep = existing.steps[i] || null;
+            const mergedStep = {
+              title: newStep && newStep.title !== undefined ? newStep.title : (oldStep ? oldStep.title : ""),
+              text: newStep && newStep.text !== undefined ? newStep.text : (oldStep ? oldStep.text : ""),
+              image: (newStep && newStep.image) ? newStep.image : (oldStep ? oldStep.image : null),
+            };
+            merged.push(mergedStep);
+          }
+          updates.steps = merged;
+        } else {
+          updates.steps = mappedSteps;
+        }
+      } catch (e) {
+        // On error, fall back to the mapped steps (do not abort the request)
+        console.warn('[update-guide] failed merging existing steps, falling back:', e?.message || e);
+        updates.steps = mappedSteps;
+      }
     }
 
     // === Normalize plant_group slug server-side to avoid Mongoose enum errors ===
