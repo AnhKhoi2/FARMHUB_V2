@@ -13,7 +13,6 @@ import publicDiseases from "./routes/publicDiseases.js";
 import publicDiseaseCategories from "./routes/publicDiseaseCategories.js";
 import streakRoutes from "./routes/streaks.js";
 import aiRoutes from "./routes/ai.js";
-import weatherRoutes from "./routes/weather.js";
 import testRoute from "./routes/test.js";
 import guidesRoute from "./routes/guides.js";
 import notebooksRoute from "./routes/notebooks.js";
@@ -27,7 +26,7 @@ import collectionsRoute from "./routes/collections.js";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import modelsRoutes from "./routes/models.js";
+
 import layoutsRoutes from "./routes/layouts.js";
 import postRoutes from "./routes/post.js";
 import expertApplicationsRouter from "./routes/expertApplications.js";
@@ -51,7 +50,7 @@ import plantRoute from "./routes/plant.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 import adminTransactionsRoute from "./routes/adminTransactions.js";
 import dashboardRoute from "./routes/dashboard.js";
-
+import urbanFarmingRoutes from "./routes/urbanFarmingRoutes.js";
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -105,7 +104,6 @@ app.use("/diseases", publicDiseases);
 app.use("/disease-categories", publicDiseaseCategories);
 app.use("/admin/streaks", streakRoutes);
 app.use("/ai", aiRoutes);
-app.use("/admin/weather", weatherRoutes);
 app.use("/test", testRoute);
 app.use("/guides", guidesRoute);
 app.use("/notebooks", notebooksRoute);
@@ -125,7 +123,6 @@ app.use("/api/plant-groups", plantGroupsRoute);
 // Legacy/compatibility: some frontends post to /upload (no /api prefix)
 app.use("/upload", uploadRoutes);
 app.use("/api/collections", collectionsRoute);
-app.use("/admin/models", modelsRoutes);
 app.use("/layouts", layoutsRoutes);
 // new primary path
 app.use("/admin/managerpost", postRoutes);
@@ -137,6 +134,8 @@ app.use("/admin/dashboard", dashboardRoute);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/subscription", subscriptionRoutes);
+
+app.use("/api/urban-farming", urbanFarmingRoutes);
 
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);

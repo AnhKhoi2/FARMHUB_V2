@@ -6,7 +6,12 @@
 
 /* Thêm màu nền tổng thể dịu mắt hơn */
 body {
-    background-color: #FAFAFA; /* Off-white background to reduce strain */
+  /* Gradient nền cho toàn trang + fallback màu */
+  background: linear-gradient(90deg, rgb(232, 245, 233), rgb(227, 242, 253));
+  background-color: #FAFAFA; /* fallback */
+  min-height: 100vh; /* đảm bảo phủ toàn chiều cao trình duyệt */
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 /* Hiệu ứng chuyển động cơ bản cho các card khi tải */
@@ -21,6 +26,21 @@ body {
   }
 }
 
+/* Áp gradient cho toàn bộ tài liệu + #root để tránh bị "chia làm 2" bởi phần tử gốc có nền trắng */
+html, body, #root {
+  height: 100%;
+  min-height: 100vh;
+  background: linear-gradient(90deg, rgb(232, 245, 233), rgb(227, 242, 253));
+  background-color: #FAFAFA; /* fallback */
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Nếu app có container gốc đặt nền trắng, đảm bảo nó trong suốt */
+.App, .app-root, #app, .main-container {
+  background: transparent !important;
+}
+
 /* Áp dụng styling chung cho tất cả các card */
 .card {
   animation: fade-in-slide 0.5s ease-out;
@@ -33,7 +53,6 @@ body {
 .card-title {
   color: #3A8C3A; /* Xanh lá chủ đạo */
   font-weight: 700;
-  border-bottom: 2px solid #E8F5E9; /* Đường kẻ dưới nhạt */
   padding-bottom: 8px;
   margin-bottom: 16px !important;
 }
@@ -66,7 +85,6 @@ body {
   font-size: 4rem; /* Nhiệt độ lớn hơn */
   font-weight: 700;
   color: #3A8C3A; 
-  text-shadow: 1px 1px 2px rgba(58, 140, 58, 0.2); /* Thêm shadow nhẹ */
   transition: color 0.3s;
 }
 

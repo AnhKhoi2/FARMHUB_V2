@@ -96,11 +96,12 @@ export const authController = {
       const { message, statusCode } = ERROR_CODES.WEAK_PASSWORD;
       throw new AppError(message, statusCode, "WEAK_PASSWORD");
     }
-    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-    if (!usernameRegex.test(username)) {
-      const { message, statusCode } = ERROR_CODES.INVALID_USERNAME;
-      throw new AppError(message, statusCode, "INVALID_USERNAME");
-    }
+    const usernameRegex = /^[\p{L}\p{N}_ ]{3,20}$/u;
+if (!usernameRegex.test(username)) {
+  const { message, statusCode } = ERROR_CODES.INVALID_USERNAME;
+  throw new AppError(message, statusCode, "INVALID_USERNAME");
+}
+
     if (!agreedToTerms) {
       const { message, statusCode } = ERROR_CODES.TERMS_NOT_ACCEPTED;
       throw new AppError(message, statusCode, "TERMS_NOT_ACCEPTED");
@@ -286,72 +287,76 @@ export const authController = {
   }),
 
   // Đăng nhập CHỈ bằng username
-  login: asyncHandler(async (req, res) => {
-    const { username, emailOrUsername, password } = req.body;
+  // Đăng nhập bằng username hoặc email
+login: asyncHandler(async (req, res) => {
+  const { username, emailOrUsername, password } = req.body;
 
-    // Chỉ dùng username; emailOrUsername chỉ là alias cho username (nếu FE cũ còn gửi)
-    const identifier = (username || emailOrUsername || "").trim();
+  // Cho phép dùng username hoặc email
+  const identifier = (username || emailOrUsername || "").trim();
 
-    if (!identifier || !password) {
-      throw new AppError(
-        ERROR_CODES.MISSING_FIELDS.message,
-        ERROR_CODES.MISSING_FIELDS.statusCode,
-        "MISSING_FIELDS"
-      );
+  if (!identifier || !password) {
+    throw new AppError(
+      ERROR_CODES.MISSING_FIELDS.message,
+      ERROR_CODES.MISSING_FIELDS.statusCode,
+      "MISSING_FIELDS"
+    );
+  }
+
+  // ✅ Tìm theo username HOẶC email
+  const user = await User.findOne({
+    $or: [{ username: identifier }, { email: identifier }],
+  });
+
+  if (!user) {
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new AppError(
+      ERROR_CODES.INVALID_CREDENTIALS.message,
+      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
+      "INVALID_CREDENTIALS"
+    );
+  }
+
+  if (!user.isVerified) {
+    const { message, statusCode } = ERROR_CODES.ACCOUNT_NOT_VERIFIED;
+    throw new AppError(message, statusCode, "ACCOUNT_NOT_VERIFIED");
+  }
+
+  if (user.isDeleted) {
+    const { message, statusCode } = ERROR_CODES.ACCOUNT_DELETED;
+    throw new AppError(message, statusCode, "ACCOUNT_DELETED");
+  }
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  // Ẩn password cho sạch dữ liệu trả về
+  const userSafe = user.toObject ? user.toObject() : { ...user._doc };
+  delete userSafe.password;
+
+  // Attach profile (avatar, fullName, etc.) so FE sees avatar immediately after login
+  try {
+    const profileDoc = await Profile.findOne({ userId: user._id }).lean();
+    if (profileDoc) {
+      userSafe.profile = profileDoc;
+    } else {
+      userSafe.profile = { avatar: "" };
     }
+  } catch (e) {
+    // non-fatal: continue without profile
+    userSafe.profile = userSafe.profile || { avatar: "" };
+  }
 
-    // ❗ Chỉ tìm theo username
-    const user = await User.findOne({ username: identifier });
+  return ok(res, { user: userSafe, accessToken, refreshToken });
+}),
 
-    if (!user) {
-      throw new AppError(
-        ERROR_CODES.INVALID_CREDENTIALS.message,
-        ERROR_CODES.INVALID_CREDENTIALS.statusCode,
-        "INVALID_CREDENTIALS"
-      );
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new AppError(
-        ERROR_CODES.INVALID_CREDENTIALS.message,
-        ERROR_CODES.INVALID_CREDENTIALS.statusCode,
-        "INVALID_CREDENTIALS"
-      );
-    }
-
-    if (!user.isVerified) {
-      const { message, statusCode } = ERROR_CODES.ACCOUNT_NOT_VERIFIED;
-      throw new AppError(message, statusCode, "ACCOUNT_NOT_VERIFIED");
-    }
-
-    if (user.isDeleted) {
-      const { message, statusCode } = ERROR_CODES.ACCOUNT_DELETED;
-      throw new AppError(message, statusCode, "ACCOUNT_DELETED");
-    }
-
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    // Ẩn password cho sạch dữ liệu trả về
-    const userSafe = user.toObject ? user.toObject() : { ...user._doc };
-    delete userSafe.password;
-
-    // Attach profile (avatar, fullName, etc.) so FE sees avatar immediately after login
-    try {
-      const profileDoc = await Profile.findOne({ userId: user._id }).lean();
-      if (profileDoc) {
-        userSafe.profile = profileDoc;
-      } else {
-        userSafe.profile = { avatar: "" };
-      }
-    } catch (e) {
-      // non-fatal: continue without profile
-      userSafe.profile = userSafe.profile || { avatar: "" };
-    }
-
-    return ok(res, { user: userSafe, accessToken, refreshToken });
-  }),
 
   // Refresh token
   refresh: asyncHandler(async (req, res) => {

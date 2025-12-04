@@ -185,7 +185,9 @@ Loại cây: ${plantType || "Không rõ"}
   }
 }
 
-
+/**
+ * 3) Dịch wiki_description sang tiếng Việt
+ */
 export async function translateWikiDescriptionToVi(description) {
   if (!description) return null;
 
@@ -198,4 +200,164 @@ KHÔNG dùng Markdown, KHÔNG giải thích, chỉ trả về văn bản thuần
 
   const response = await safeGenerateContent(prompt);
   return response.response.text().trim();
+}
+
+/**
+ * 4) Gợi ý mô hình trồng trọt đô thị dựa trên form điều kiện trồng trọt
+ *    (ban công, sân thượng, hộ dân đô thị, diện tích hạn chế,...)
+ *
+ * Input (ví dụ):
+ * {
+ *   "space_type": "balcony",
+ *   "area_m2": 1.8,
+ *   "shape": "long-narrow",
+ *   "height_guardrail_cm": 110,
+ *   "has_roof": true,
+ *   "wind_exposure": "med",
+ *   "sun_hours_summer": 4.5,
+ *   "sun_hours_winter": 2.5,
+ *   "sun_orientation": "SE",
+ *   "water_access": "bucket",
+ *   "drainage_ok": true,
+ *   "power_outlet": false,
+ *   "time_budget_hours_per_week": 1,
+ *   "maintenance_style": "low",
+ *   "budget_vnd": 1500000,
+ *   "ongoing_budget_vnd_per_month": 150000,
+ *   "goals": ["leafy","herbs","microgreens"],
+ *   "yield_priority": 4,
+ *   "aesthetic_priority": 3,
+ *   "learning_priority": 2,
+ *   "organic_pref": true,
+ *   "water_saving_pref": true,
+ *   "locality": "Ho Chi Minh City",
+ *   "season_start_month": 12,
+ *   "experience_level": "newbie"
+ * }
+ *
+ * Output EXPECTED (schema):
+ * {
+ *   "climate_zone_vn": "south",
+ *   "estimated_DLI": 10.2,
+ *   "risks": [ "....", "...." ],
+ *   "top_models": [
+ *     { "model_id": "self-watering-container", "fit_score": 86, "reason_vi": "" }
+ *   ],
+ *   "crop_suggestions": [
+ *     {
+ *       "crop": "",
+ *       "season": "cool|warm|any",
+ *       "light_need_DLI": 10,
+ *       "container_size_l": 8,
+ *       "days_to_harvest": 35,
+ *       "reason_vi": ""
+ *     }
+ *   ],
+ *   "calendar": [
+ *     { "week": 0, "milestone": "" }
+ *   ],
+ *   "upgrades_after_3m": [
+ *     ""
+ *   ]
+ * }
+ */
+export async function suggestUrbanFarmingPlan(formInput) {
+  const jsonInput = JSON.stringify(formInput, null, 2);
+
+  const prompt = `
+Bạn là chuyên gia nông nghiệp đô thị tại Việt Nam.
+Người dùng là cư dân đô thị, diện tích nhỏ (ban công / sân thượng / hiên nhà), ưu tiên mô hình dễ triển khai và dễ chăm.
+
+NHIỆM VỤ:
+1) Phân tích điều kiện trồng trọt dựa trên JSON đầu vào.
+2) Xác định vùng khí hậu Việt Nam tương ứng ("north", "central", "south", "highland").
+3) Ước lượng DLI (Daily Light Integral) trung bình khả dụng trên không gian đó, dựa trên số giờ nắng, hướng nắng, có mái che hay không, v.v.
+4) Gợi ý các mô hình trồng trọt phù hợp nhất với mục tiêu và ràng buộc của người dùng
+   (đặc biệt chú ý: experience_level, maintenance_style, time_budget_hours_per_week, budget_vnd).
+5) Gợi ý danh sách cây trồng (lá, rau gia vị, microgreens...) phù hợp điều kiện ánh sáng, mùa vụ Việt Nam, diện tích và kinh nghiệm.
+6) Lập lịch khung 6 tuần đầu (calendar) bằng tiếng Việt, thực tế, đơn giản.
+7) Đề xuất một vài nâng cấp sau 3 tháng nếu người dùng thấy phù hợp.
+
+TRẢ VỀ DUY NHẤT JSON, KHÔNG GIẢI THÍCH THÊM, KHÔNG DÙNG MARKDOWN, KHÔNG DÙNG \`\`\`.
+TẤT CẢ text (risks, reason_vi, milestone, upgrades_after_3m) VIẾT BẰNG TIẾNG VIỆT, NGẮN GỌN, THỰC TẾ.
+
+BẮT BUỘC THEO ĐÚNG SCHEMA SAU (có thể thêm field phụ nếu cần, nhưng KHÔNG ĐƯỢC THIẾU bất kỳ field nào dưới đây):
+
+{
+  "climate_zone_vn": "north|central|south|highland",
+  "estimated_DLI": 0,
+  "risks": [
+    "Chuỗi mô tả rủi ro ngắn bằng tiếng Việt"
+  ],
+  "top_models": [
+    {
+      "model_id": "self-watering-container | kratky-microgreens | railing-planter | vertical-rack | grow-bag-floor | hanging-baskets | other",
+      "fit_score": 0,
+      "reason_vi": "Giải thích ngắn gọn vì sao mô hình này phù hợp",
+      "notes_layout_vi": "Gợi ý bố trí sơ bộ cho không gian cụ thể (ví dụ: kệ dài sát lan can...)"
+    }
+  ],
+  "crop_suggestions": [
+    {
+      "crop": "tên cây trồng (tiếng Việt, ưu tiên giống phổ biến ở Việt Nam)",
+      "season": "cool|warm|any",
+      "light_need_DLI": 0,
+      "container_size_l": 0,
+      "days_to_harvest": 0,
+      "reason_vi": "Vì sao cây này phù hợp với ánh sáng, không gian và mục tiêu người dùng"
+    }
+  ],
+  "calendar": [
+    {
+      "week": 0,
+      "milestone": "Mốc việc cần làm tuần này, viết ngắn gọn tiếng Việt"
+    }
+  ],
+  "upgrades_after_3m": [
+    "Đề xuất nâng cấp sau 3 tháng (VD: thêm 1 chậu tự tưới 20L, lưới che nắng 30%, giàn dưa leo lùn...)"
+  ]
+}
+
+DỮ LIỆU ĐẦU VÀO (FORM NGƯỜI DÙNG):
+
+${jsonInput}
+  `;
+
+  try {
+    const response = await safeGenerateContent(prompt);
+    const text = response.response.text();
+
+    try {
+      // Ưu tiên parse JSON chuẩn theo schema yêu cầu
+      return parseJSON(text);
+    } catch (parseErr) {
+      console.error(
+        "[Gemini] suggestUrbanFarmingPlan JSON parse failed, using fallback object"
+      );
+
+      // Fallback: trả rawText để FE vẫn hiển thị được gì đó, không crash
+      return {
+        climate_zone_vn: null,
+        estimated_DLI: null,
+        risks: [],
+        top_models: [],
+        crop_suggestions: [],
+        calendar: [],
+        upgrades_after_3m: [],
+        rawText: text || "Không đọc được kết quả từ AI.",
+        warning:
+          "Không thể phân tích JSON từ AI, đây là phản hồi gốc. Vui lòng thử lại sau hoặc điều chỉnh thông tin đầu vào.",
+      };
+    }
+  } catch (err) {
+    console.error("[Gemini] suggestUrbanFarmingPlan error:", err);
+
+    if (err.status === 429) {
+      throw new Error(
+        "AI đang quá tải hoặc vượt hạn mức. Vui lòng thử lại sau vài phút."
+      );
+    }
+
+    throw new Error("AI gợi ý mô hình trồng trọt đang gặp sự cố.");
+  }
 }

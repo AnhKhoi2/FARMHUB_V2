@@ -4,7 +4,7 @@ import authApi from "../api/shared/authApi.js";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 // =========================
-// LOGIN – chỉ dùng username
+// LOGIN – username hoặc email
 // =========================
 export const loginThunk = (credentials) => async (dispatch) => {
   try {
@@ -32,20 +32,21 @@ export const loginThunk = (credentials) => async (dispatch) => {
 
     return { success: true, role: user.role };
   } catch (err) {
-    console.error("Login error:", err?.response?.data || err);
+  console.error("Login error:", err?.response?.data || err);
 
-    const data = err?.response?.data;
-    const backendMessage =
-      data?.message ||
-      data?.error?.message ||
-      data?.errorMessage ||
-      data?.errors?.[0]?.msg ||
-      err.message ||
-      "Đăng nhập thất bại. Vui lòng thử lại.";
+  const data = err?.response?.data;
 
-    dispatch(loginFailure(backendMessage));
-    return { success: false };
-  }
+  const backendMessage =
+    data?.message ||               // BE dùng message
+    data?.error?.message ||        // fallback (nếu BE trả kiểu khác)
+    data?.errors?.[0]?.msg ||      // Joi style
+    "Đăng nhập thất bại. Vui lòng thử lại.";
+
+  dispatch(loginFailure(backendMessage));
+
+  return { success: false, message: backendMessage };
+}
+
 };
 
 // =========================
