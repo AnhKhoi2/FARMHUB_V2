@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import guidesApi from "../../api/shared/guidesApi";
 import axiosClient from "../../api/shared/axiosClient";
-import { Card, Row, Col, Typography, Spin, message, Input, Pagination, Select, Button, Tag } from "antd";
+import { Card, Row, Col, Typography, Spin, Input, Pagination, Select, Button, Tag } from "antd";
+import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
@@ -63,16 +65,26 @@ export default function Guides() {
       }
     } catch (err) {
       console.error("Failed to load guides", err);
-      message.error("Không thể tải hướng dẫn");
+      toast.error("Không thể tải hướng dẫn");
     } finally {
       setLoading(false);
     }
   };
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
   useEffect(() => {
-    fetchGuides(q, 1, pageSize, selectedCategory);
+    // Read `category` and `page` from query params on mount so
+    // visiting `/guides?category=leaf_vegetable&page=1` loads filtered results.
+    const params = new URLSearchParams(location.search);
+    const initialCategory = params.get("category") || "";
+    const initialPage = Number(params.get("page") || 1);
+    setSelectedCategory(initialCategory);
+    setPage(initialPage);
+    fetchGuides(q, initialPage, pageSize, initialCategory);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.search]);
 
   // fetch plant groups from backend API and normalize to { label, value }
   const fetchPlantGroups = async () => {
@@ -115,6 +127,16 @@ export default function Guides() {
     setSelectedCategory(val);
     // when category changes, fetch page 1
     fetchGuides(q, 1, pageSize, val);
+    // update url so the back button / direct links preserve the selected category
+    try {
+      const search = new URLSearchParams(location.search);
+      if (val) search.set("category", val);
+      else search.delete("category");
+      search.set("page", "1");
+      navigate(`/guides?${search.toString()}`, { replace: true });
+    } catch (e) {
+      // ignore
+    }
   };
 
   return (
@@ -205,6 +227,7 @@ export default function Guides() {
                   pageSize={pageSize}
                   total={total}
                   onChange={onPageChange}
+                  showSizeChanger={false}
                   style={{ display: 'inline-block' }}
                 />
               </Col>

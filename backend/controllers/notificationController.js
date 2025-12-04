@@ -9,123 +9,18 @@ import { ok } from "../utils/ApiResponse.js";
 /**
  * Gửi thông báo cảnh báo stage trễ (warning)
  */
-export const sendStageWarningNotification = async ({
-  userId,
-  notebookId,
-  notebookName,
-  stageNumber,
-  stageName,
-  missedDays,
-  safeDelayDays,
-}) => {
-  const title = `⚠️ Trễ hạn: ${notebookName}`;
-  let message = "";
-
-  if (missedDays === 1) {
-    message = `Bạn đã trễ ${missedDays} ngày so với giai đoạn "${stageName}". Vui lòng hoàn thành checklist để cây phát triển đúng tiến độ.`;
-  } else if (missedDays < safeDelayDays) {
-    message = `⚠️ Bạn đã trễ ${missedDays} ngày so với giai đoạn "${stageName}". Còn ${
-      safeDelayDays - missedDays
-    } ngày trước khi quá hạn.`;
-  } else {
-    message = `⚠️⚠️ Bạn đã trễ ${missedDays} ngày — đang gần quá hạn cho giai đoạn "${stageName}".`;
-  }
-
-  const notification = await Notification.create({
-    user_id: userId,
-    notebook_id: notebookId,
-    type: "stage_warning",
-    title,
-    message,
-    metadata: {
-      stage_number: stageNumber,
-      stage_name: stageName,
-      missed_days: missedDays,
-      safe_delay_days: safeDelayDays,
-      notebook_name: notebookName,
-    },
-  });
-
-  console.log(
-    `📧 Sent stage_warning notification to user ${userId} for notebook ${notebookId}, stage ${stageNumber}, missedDay ${missedDays}`
-  );
-
-  return notification;
-};
 
 /**
  * Gửi thông báo stage bị skip tự động
  */
-export const sendStageSkippedNotification = async ({
-  userId,
-  notebookId,
-  notebookName,
-  stageNumber,
-  stageName,
-  missedDays,
-  safeDelayDays,
-}) => {
-  const title = `⏭️ Giai đoạn bị bỏ qua: ${notebookName}`;
-  const message = `Giai đoạn "${stageName}" đã bị bỏ qua tự động do quá thời gian cho phép (${missedDays} ngày > ${safeDelayDays} ngày). Hệ thống đã chuyển sang giai đoạn tiếp theo.`;
-
-  const notification = await Notification.create({
-    user_id: userId,
-    notebook_id: notebookId,
-    type: "stage_skipped",
-    title,
-    message,
-    metadata: {
-      stage_number: stageNumber,
-      stage_name: stageName,
-      missed_days: missedDays,
-      safe_delay_days: safeDelayDays,
-      notebook_name: notebookName,
-    },
-  });
-
-  console.log(
-    `📧 Sent stage_skipped notification to user ${userId} for notebook ${notebookId}, stage ${stageNumber}`
-  );
-
-  return notification;
-};
 
 /**
  * Gửi thông báo stage quá hạn (không auto_skip)
  */
-export const sendStageOverdueNotification = async ({
-  userId,
-  notebookId,
-  notebookName,
-  stageNumber,
-  stageName,
-  missedDays,
-  safeDelayDays,
-}) => {
-  const title = `🚨 Quá hạn: ${notebookName}`;
-  const message = `Giai đoạn "${stageName}" đã quá hạn (${missedDays} ngày > ${safeDelayDays} ngày). Vui lòng hoàn thành hoặc chuyển giai đoạn thủ công.`;
-
-  const notification = await Notification.create({
-    user_id: userId,
-    notebook_id: notebookId,
-    type: "stage_overdue",
-    title,
-    message,
-    metadata: {
-      stage_number: stageNumber,
-      stage_name: stageName,
-      missed_days: missedDays,
-      safe_delay_days: safeDelayDays,
-      notebook_name: notebookName,
-    },
-  });
-
-  console.log(
-    `📧 Sent stage_overdue notification to user ${userId} for notebook ${notebookId}, stage ${stageNumber}`
-  );
-
-  return notification;
-};
+// NOTE: Deprecated functions removed: stage-warning/overdue/skipped notifications
+// These notification helpers were specific to missed-day / auto-skip logic and
+// have been removed because the application no longer auto-skips stages based
+// on missed days. Other notification helpers remain below.
 
 /**
  * Gửi thông báo stage hoàn thành

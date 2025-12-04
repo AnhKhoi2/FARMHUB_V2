@@ -891,7 +891,7 @@ export default function ProfilePage() {
       setPwForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
       setPwOpen(false);
     } catch (err) {
-      toast.error(
+      message.error(
         err?.response?.data?.message || "Không thể đổi mật khẩu"
       );
     } finally {

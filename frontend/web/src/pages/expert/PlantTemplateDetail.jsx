@@ -223,12 +223,7 @@ const PlantTemplateDetail = () => {
           >
             👁️ Quan sát
           </button>
-          <button
-            className={`tab-btn ${activeTab === "rules" ? "active" : ""}`}
-            onClick={() => setActiveTab("rules")}
-          >
-            ⚙️ Quy tắc
-          </button>
+          {/* Rules tab removed */}
         </div>
 
         <div className="tabs-content">
@@ -371,9 +366,7 @@ const PlantTemplateDetail = () => {
                           <div key={obsIdx} className="observation-card">
                             <h4>{obs.label}</h4>
                             {obs.description && <p>{obs.description}</p>}
-                            <div className="observation-key">
-                              Key: <code>{obs.key}</code>
-                            </div>
+                            <div className="observation-key"></div>
                           </div>
                         ))}
                       </div>
@@ -388,63 +381,7 @@ const PlantTemplateDetail = () => {
             </div>
           )}
 
-          {/* Rules Tab */}
-          {activeTab === "rules" && (
-            <div className="rules-tab">
-              <div className="rules-section">
-                <h3>⚙️ Quy tắc chung</h3>
-                <div className="rules-cards">
-                  <div className="rule-card">
-                    <div className="rule-icon">⏰</div>
-                    <div className="rule-content">
-                      <h4>Cho phép trễ hạn</h4>
-                      <p className="rule-value">
-                        {template.rules?.safe_delay_days || 0} ngày
-                      </p>
-                      <p className="rule-desc">
-                        Nông dân được phép hoàn thành task muộn trong khoảng
-                        thời gian này
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rule-card">
-                    <div className="rule-icon">🔄</div>
-                    <div className="rule-content">
-                      <h4>Tự động chuyển giai đoạn</h4>
-                      <p className="rule-value">
-                        {template.rules?.auto_skip ? "BẬT ✅" : "TẮT ❌"}
-                      </p>
-                      <p className="rule-desc">
-                        Tự động chuyển sang giai đoạn tiếp theo khi quá thời
-                        gian cho phép
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* <div className="rule-card">
-                    <div className="rule-icon">⚠️</div>
-                    <div className="rule-content">
-                      <h4>Cảnh báo trước</h4>
-                      <p className="rule-value">
-                        {template.rules?.warning_days || 0} ngày
-                      </p>
-                      <p className="rule-desc">
-                        Hệ thống sẽ cảnh báo trước khi task sắp hết hạn
-                      </p>
-                    </div>
-                  </div> */}
-                </div>
-              </div>
-
-              {template.notes && (
-                <div className="rules-section">
-                  <h3>📝 Ghi chú bổ sung</h3>
-                  <div className="notes-content">{template.notes}</div>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Rules Tab removed: rules (safe_delay_days / auto_skip) deprecated */}
         </div>
       </div>
     </div>

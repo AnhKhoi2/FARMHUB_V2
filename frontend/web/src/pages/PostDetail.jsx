@@ -299,14 +299,14 @@ export default function PostDetail() {
                         borderRadius: 8,
                         fontWeight: 600,
                       }}
-                      href={`tel:${post.phone || ""}`}
-                      disabled={!post.phone}
+                      href={`tel:${post.posterPhone || post.phone || ""}`}
+                      disabled={!post.posterPhone && !post.phone}
                     >
                       <span role="img" aria-label="call">
                         📞
                       </span>{" "}
-                      {post.phone
-                        ? `Gọi ${post.phone.slice(0, 6)}****`
+                      {post.posterPhone || post.phone
+                        ? `Gọi ${post.posterPhone || post.phone}`
                         : "Không có SĐT"}
                     </Button>
                   </Col>

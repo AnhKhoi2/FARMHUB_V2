@@ -13,10 +13,10 @@ import {
   Spin,
   Typography,
   Image,
-  message,
   Table,
   Space,
 } from "antd";
+import { toast } from "react-toastify";
 
 import {
   RollbackOutlined,
@@ -52,7 +52,7 @@ export default function TrashGuides() {
         setGuides(docs);
         setTotalPages(meta.pages || 1);
       } catch (e) {
-        message.error("Không thể tải thùng rác.");
+        toast.error("Không thể tải thùng rác.");
       } finally {
         setLoading(false);
       }
@@ -67,17 +67,17 @@ export default function TrashGuides() {
   const onRestore = async (id) => {
     try {
       await axiosClient.post(`/guides/${id}/restore`);
-      message.success("Đã khôi phục.");
+      toast.success("Đã khôi phục.");
       fetchTrash(page);
     } catch (e) {
-      message.error("Khôi phục thất bại");
+      toast.error("Khôi phục thất bại");
     }
   };
 
   const onPermanentDelete = async (id) => {
     try {
       await axiosClient.delete(`/guides/${id}/permanent`);
-      message.success("Đã xóa vĩnh viễn");
+      toast.success("Đã xóa vĩnh viễn");
 
       const remaining = guides.length - 1;
       if (remaining <= 0 && page > 1) {
@@ -86,7 +86,7 @@ export default function TrashGuides() {
         fetchTrash(page);
       }
     } catch (e) {
-      message.error("Xóa vĩnh viễn thất bại");
+      toast.error("Xóa vĩnh viễn thất bại");
     }
   };
 

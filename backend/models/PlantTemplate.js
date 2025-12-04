@@ -139,17 +139,10 @@ const PlantTemplateSchema = new mongoose.Schema(
         message: "Template phải có từ 3 đến 6 giai đoạn",
       },
     },
-    // Rules xử lý chậm trễ
-    rules: {
-      safe_delay_days: {
-        type: Number,
-        default: 2, // Cho phép trễ 2 ngày (sẽ cảnh báo ngày 1, 2; quá hạn ngày 3)
-      },
-      auto_skip: {
-        type: Boolean,
-        default: true, // Tự động skip stage nếu quá safe_delay_days
-      },
-    },
+    // NOTE: The previous 'rules' (safe_delay_days / auto_skip) were removed
+    // because missed-day based auto-skip and related notifications are
+    // deprecated. Any behavior for stage transitions must be triggered by
+    // explicit observations or admin actions.
     // Trạng thái template
     status: {
       type: String,
