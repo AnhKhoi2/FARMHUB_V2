@@ -261,7 +261,7 @@ export async function updateMyBasic(req, res) {
     // =====================
     if (name && String(name).trim()) {
       const cleaned = String(name).trim();
-      user.username = cleaned;
+      
       expert.full_name = cleaned;
     }
 

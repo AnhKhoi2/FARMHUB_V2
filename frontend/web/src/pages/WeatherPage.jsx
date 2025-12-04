@@ -275,7 +275,9 @@ const WeatherPage = () => {
     <>
       <Header />
       <div className="container py-4">
-        <h1 className="mb-4 text-success fw-bold app-header">🌾 Thời tiết & Nông nghiệp</h1>
+        <h2 className="mb-2 fw-bold">
+                Thời Tiết & Nông Nghiệp
+              </h2>
 
       {/* Search */}
       <form className="row g-2 mb-4" onSubmit={handleSearch}>
@@ -362,7 +364,7 @@ const WeatherPage = () => {
             <div className="col-md-6 mb-3">
               <div className="card shadow-sm h-100">
                 <div className="card-body">
-                  <h5 className="card-title">☀️ Điều kiện hiện tại</h5>
+                  <h5 className="mb-2 fw-bold">☀️ Điều kiện hiện tại</h5>
                   <p className="mb-1 fw-bold fs-5 text-success">{cityName}</p>
 
                   {currentWeather ? (
@@ -434,7 +436,7 @@ const WeatherPage = () => {
             <div className="col-md-6 mb-3">
               <div className="card shadow-sm h-100">
                 <div className="card-body">
-                  <h5 className="card-title">💨 Chất lượng không khí (AQI)</h5>
+                  <h5 className="mb-2 fw-bold">💨 Chất lượng không khí (AQI)</h5>
 
                   {aqiValue ? (
                     <>
@@ -497,7 +499,7 @@ const WeatherPage = () => {
           {/* Gợi ý chăm sóc cây theo thời tiết - Card nổi bật */}
           <div className="card shadow-lg mt-4 plant-advice-card-wow">
             <div className="card-body">
-              <h5 className="card-title">🌱 Gợi ý chăm sóc cây trồng</h5>
+              <h5 className="mb-2 fw-bold">🌱 Gợi ý chăm sóc cây trồng</h5>
 
               {adviceLoading && <p className="text-success">Đang phân tích thời tiết và đưa ra gợi ý...</p>}
 
@@ -516,7 +518,7 @@ const WeatherPage = () => {
           {/* Forecast 3h – dạng thẻ */}
           <div className="card shadow-sm mt-4">
             <div className="card-body">
-              <h5 className="card-title">⏰ Dự báo 24 giờ tới (Mỗi 3h)</h5>
+              <h5 className="mb-2 fw-bold">⏰ Dự báo 24 giờ tới (Mỗi 3h)</h5>
               {forecast.length > 0 ? (
                 <div className="d-flex flex-wrap gap-3 forecast-cards">
                   {forecast.map((item, index) => {
@@ -586,7 +588,7 @@ const WeatherPage = () => {
           {/* Lịch sử thời tiết */}
           <div className="card shadow-sm mt-4">
             <div className="card-body">
-              <h5 className="card-title">📊 Lịch sử nhiệt độ (Theo giờ)</h5>
+              <h5 className="mb-2 fw-bold">📊 Lịch sử nhiệt độ (Theo giờ)</h5>
 
               {/* Chọn khoảng ngày */}
               <div className="row g-2 mb-3">
