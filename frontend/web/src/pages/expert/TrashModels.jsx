@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Tag, Space, Spin, message, Typography, Popconfirm, Pagination } from "antd";
+import { Table, Button, Tag, Space, Spin, Typography, Popconfirm, Pagination } from "antd";
+import { toast } from "react-toastify";
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from "../../api/shared/axiosClient";
@@ -37,7 +38,7 @@ export default function TrashModels() {
       setMeta({ page: data.page || page, pages: data.pages || 1, total: data.total || items.length, limit: data.limit || limit });
     } catch (err) {
       console.error("Không thể tải thùng rác mô hình", err);
-      message.error("Không thể tải thùng rác");
+      toast.error("Không thể tải thùng rác");
     } finally {
       setLoading(false);
     }
@@ -52,22 +53,22 @@ export default function TrashModels() {
   const handleRestore = async (id) => {
     try {
       await axiosClient.patch(`/admin/models/${id}/restore`);
-      message.success("Đã phục hồi mô hình");
+      toast.success("Đã phục hồi mô hình");
       fetchTrash(meta.page, meta.limit);
     } catch (err) {
       console.error(err);
-      message.error("Phục hồi thất bại");
+      toast.error("Phục hồi thất bại");
     }
   };
 
   const handlePermanentDelete = async (id) => {
     try {
       await axiosClient.delete(`/admin/models/${id}`);
-      message.success("Đã xóa vĩnh viễn");
+      toast.success("Đã xóa vĩnh viễn");
       fetchTrash(meta.page, meta.limit);
     } catch (err) {
       console.error(err);
-      message.error("Xóa thất bại");
+      toast.error("Xóa thất bại");
     }
   };
 
