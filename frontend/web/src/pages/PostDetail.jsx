@@ -147,7 +147,7 @@ export default function PostDetail() {
                   }}
                 >
                   <Image
-                    src={post.images}
+                    src={Array.isArray(post.images) ? post.images[0] : post.images}
                     alt={`Hình chính của ${post.title}`}
                     style={{
                       width: "100%",
@@ -194,7 +194,7 @@ export default function PostDetail() {
                     }}
                   >
                     <Image
-                      src={post.images}
+                      src={Array.isArray(post.images) ? post.images[0] : post.images}
                       alt={`Hình ${post.images}`}
                       style={{
                         width: "100%",
