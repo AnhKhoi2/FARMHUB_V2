@@ -4,6 +4,30 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ok, noContent } from "../utils/ApiResponse.js";
 import { AppError } from "../utils/AppError.js";
 
+// Helper: ensure images are usable by frontend
+const BASE_URL = (process.env.BASE_URL || process.env.VNP_BASE_URL || '').replace(/\/$/, '');
+const normalizeImageSrc = (img) => {
+  try {
+    if (!img) return img;
+    if (typeof img !== 'string') return img;
+    let s = img.trim();
+    if (!s) return s;
+    // normalize backslashes to forward slashes (some records have Windows style paths)
+    s = s.replace(/\\/g, '/');
+    // Already a full URL or data URI
+    if (s.startsWith('http') || s.startsWith('data:')) return s;
+    // If it's an absolute path (starts with '/'), prefix BASE_URL when available
+    if (s.startsWith('/')) {
+      return BASE_URL ? `${BASE_URL}${s}` : s;
+    }
+    // Otherwise assume it's a filename stored under /uploads
+    const path = `/${s.startsWith('uploads') ? s : `uploads/${s}`}`;
+    return BASE_URL ? `${BASE_URL}${path}` : path;
+  } catch (e) {
+    return img;
+  }
+};
+
 export const postController = {
   list: asyncHandler(async (req, res) => {
     const { page = 1, limit = 50, q } = req.query;
@@ -18,10 +42,21 @@ export const postController = {
       ];
     }
 
-    const [items, total] = await Promise.all([
-      MarketPost.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).populate({ path: 'userId', select: 'username email' }),
+    const [rawItems, total] = await Promise.all([
+      MarketPost.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).populate({ path: 'userId', select: 'username email phone' }),
       MarketPost.countDocuments(filter),
     ]);
+
+    const items = rawItems.map((it) => {
+      const obj = it.toObject ? it.toObject() : it;
+      obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
+      if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+      // Normalize image paths so frontend always receives a usable src string
+      if (obj.images && Array.isArray(obj.images)) {
+        obj.images = obj.images.map((img) => normalizeImageSrc(img));
+      }
+      return obj;
+    });
 
     return ok(res, { items, meta: { total, page: Number(page), limit: Number(limit) } });
   }),
@@ -39,32 +74,70 @@ export const postController = {
       ];
     }
 
-    const [items, total] = await Promise.all([
-      MarketPost.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).populate({ path: 'userId', select: 'username' }),
+    // Prioritize 'Trao đổi' and 'Cho tặng' posts first, then sort by createdAt desc.
+    const match = filter;
+    const aggPipeline = [
+      { $match: match },
+      { $addFields: { __priority: { $cond: [{ $in: ["$category", ["Trao đổi", "Cho tặng"]] }, 0, 1] } } },
+      { $sort: { __priority: 1, createdAt: -1 } },
+      { $skip: skip },
+      { $limit: Number(limit) },
+      { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      { $addFields: { userId: { _id: '$user._id', username: '$user.username', email: '$user.email', phone: '$phone' }, posterPhone: { $ifNull: ['$phone', '$user.phone'] } } },
+      { $project: { user: 0, __priority: 0 } },
+    ];
+
+    const [rawItemsAgg, total] = await Promise.all([
+      MarketPost.aggregate(aggPipeline),
       MarketPost.countDocuments(filter),
     ]);
+
+    // normalize images for aggregated results
+    const items = (rawItemsAgg || []).map((obj) => {
+      if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+      return obj;
+    });
 
     return ok(res, { items, meta: { total, page: Number(page), limit: Number(limit) } });
   }),
 
   trash: asyncHandler(async (req, res) => {
-    const items = await MarketPost.find({ isDeleted: true }).sort({ updatedAt: -1 }).populate({ path: 'userId', select: 'username email' });
+    const rawItems = await MarketPost.find({ isDeleted: true }).sort({ updatedAt: -1 }).populate({ path: 'userId', select: 'username email phone' });
+    const items = rawItems.map((it) => {
+      const obj = it.toObject ? it.toObject() : it;
+      obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
+      if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+      if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+      return obj;
+    });
     return ok(res, items);
   }),
 
   // List reported posts (admin)
   reported: asyncHandler(async (req, res) => {
     // return posts that have at least one report
-    const posts = await MarketPost.find({ 'reports.0': { $exists: true } }).sort({ updatedAt: -1 }).populate({ path: 'userId', select: 'username email' });
+    const rawPosts = await MarketPost.find({ 'reports.0': { $exists: true } }).sort({ updatedAt: -1 }).populate({ path: 'reports.userId', select: 'username email phone' }).populate({ path: 'userId', select: 'username email phone' });
+    const posts = rawPosts.map((it) => {
+      const obj = it.toObject ? it.toObject() : it;
+      obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
+      if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+      if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+      return obj;
+    });
     return ok(res, posts);
   }),
 
   // View reports for a single post (admin)
   reportsForPost: asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const post = await MarketPost.findById(id).populate({ path: 'reports.userId', select: 'username email' }).populate({ path: 'userId', select: 'username email' });
+    const post = await MarketPost.findById(id).populate({ path: 'reports.userId', select: 'username email phone' }).populate({ path: 'userId', select: 'username email phone' });
     if (!post) throw new AppError('Post not found', 404, 'NOT_FOUND');
-    return ok(res, { postId: post._id, reports: post.reports || [], postOwner: post.userId });
+    const obj = post.toObject ? post.toObject() : post;
+    obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
+    if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+    if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+    return ok(res, { postId: obj._id, reports: obj.reports || [], postOwner: obj.userId, post: obj });
   }),
 
   // Add a report to a post (authenticated users)
@@ -96,9 +169,13 @@ export const postController = {
 
   detail: asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const item = await MarketPost.findById(id).populate({ path: 'userId', select: 'username email' });
+    const item = await MarketPost.findById(id).populate({ path: 'userId', select: 'username email phone' });
     if (!item) throw new AppError('Post not found', 404, 'NOT_FOUND');
-    return ok(res, item);
+    const obj = item.toObject ? item.toObject() : item;
+    obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
+    if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+    if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+    return ok(res, obj);
   }),
 
   // Public detail view (no auth) used by marketplace front-end
@@ -106,7 +183,13 @@ export const postController = {
     const { id } = req.params;
     const item = await MarketPost.findById(id).populate({ path: 'userId', select: 'username' });
     if (!item) throw new AppError('Post not found', 404, 'NOT_FOUND');
-    return ok(res, item);
+    // Attach posterPhone so front-end can display the full phone number stored on the post
+    const obj = item.toObject ? item.toObject() : item;
+    obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
+    // also ensure userId.phone is set to the post phone if user record doesn't have phone
+    if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+    if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+    return ok(res, obj);
   }),
 
   create: asyncHandler(async (req, res) => {
@@ -134,8 +217,10 @@ export const postController = {
       category: category || "Khác",
       price: price || "",
     });
-  
-    return ok(res, post);
+
+    const obj = post.toObject ? post.toObject() : post;
+    if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+    return ok(res, obj);
   }),
   
   

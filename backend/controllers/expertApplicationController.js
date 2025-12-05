@@ -158,7 +158,7 @@ export async function create(req, res) {
     if (!user) {
       return res.status(404).json({ error: "Không tìm thấy user" });
     }
-
+    
     const {
       full_name,
       expertise_area,
@@ -167,7 +167,8 @@ export async function create(req, res) {
       phone_number,
       certificates, // may be undefined / string / array
     } = req.body || {};
-
+const expertiseStr = expertise_area ? String(expertise_area).trim() : "";
+    const phoneStr = phone_number ? String(phone_number).trim() : "";
     // --- Normalize certificates so it always becomes an array of non-empty strings.
     // Accept uploaded file paths like "/uploads/..." and text links like "http://..."
     let rawCertificates = certificates;
@@ -192,18 +193,28 @@ export async function create(req, res) {
       errors.full_name = "Họ tên tối đa 50 ký tự";
     }
 
-    if (!expertise_area || !String(expertise_area).trim()) {
+      // LĨNH VỰC CHUYÊN MÔN (giới hạn 50 ký tự)
+    if (!expertiseStr) {
       errors.expertise_area = "Lĩnh vực là bắt buộc";
+    } else if (expertiseStr.length > 50) {
+      errors.expertise_area = "Lĩnh vực tối đa 50 ký tự";
     }
 
     const expNum = Number(experience_years);
-    if (Number.isNaN(expNum) || expNum < 0) {
+    if (Number.isNaN(expNum) || expNum <= 0) {
       errors.experience_years =
-        "Số năm kinh nghiệm phải là số không âm (>= 0).";
+        "Số năm kinh nghiệm phải là số không âm (> 0).";
     }
 
-    if (phone_number && typeof phone_number !== "string") {
-      errors.phone_number = "Số điện thoại phải là chuỗi.";
+   if (!phoneStr) {
+      errors.phone_number = "Số điện thoại là bắt buộc.";
+    } else {
+      // 0 + 9 số  HOẶC  +84/84 + 9 số
+      const vnPhoneRegex = /^(0\d{9}|(\+84|84)\d{9})$/;
+      if (!vnPhoneRegex.test(phoneStr)) {
+        errors.phone_number =
+          "Số điện thoại không đúng định dạng Việt Nam (10 số, bắt đầu bằng 0 hoặc +84/84).";
+      }
     }
 
     if (description && String(description).trim().length > 250) {
@@ -216,6 +227,22 @@ export async function create(req, res) {
         errors,
       });
     }
+    // =======================
+// Kiểm tra trùng số điện thoại
+// =======================
+if (phone_number && String(phone_number).trim()) {
+  const existPhone = await ExpertApplication.findOne({
+    phone_number: phone_number.trim(),
+    status: { $in: ["pending", "approved"] }, // approved rồi thì cũng không cho người khác dùng số này
+  });
+
+  if (existPhone) {
+    return res.status(409).json({
+      message: "Số điện thoại này đã được sử dụng cho một hồ sơ Expert khác.",
+      field: "phone_number",
+    });
+  }
+}
 
     // Kiểm tra pending theo field user
     const existing = await ExpertApplication.findOne({
@@ -279,9 +306,6 @@ export async function create(req, res) {
   }
 }
 
-// ===============================
-// Approve: PATCH /api/expert-applications/:id/approve
-// ===============================
 // ===============================
 // Approve: PATCH /api/expert-applications/:id/approve
 // ===============================

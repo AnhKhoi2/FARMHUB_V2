@@ -99,3 +99,32 @@
   .form-actions { flex-direction: column; gap: 8px; align-items: stretch; }
   .form-actions .agri-btn-primary, .form-actions .agri-btn-secondary { width: 100%; }
 }
+/* Header trong CARD đăng ký expert */
+.expert-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  background: #ffffff;
+}
+
+/* Bỏ margin mặc định của h3 để khỏi đẩy X xuống */
+.expert-card-header .expert-title {
+  margin: 0;
+}
+
+/* Nút X */
+.apply-close-x {
+  all: unset;        /* xoá sạch style thừa (nếu có bootstrap) */
+  font-size: 22px;
+  font-weight: 700;
+  color: #444;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+
+.apply-close-x:hover {
+  color: #0b6e36;
+  transform: scale(1.12);
+}

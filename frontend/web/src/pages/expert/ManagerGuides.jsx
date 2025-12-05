@@ -21,6 +21,7 @@ import {
   Divider,
   Tag,
 } from "antd";
+import { toast } from "react-toastify";
 import {
   EyeOutlined,
   EditOutlined,
@@ -233,7 +234,7 @@ export default function ManagerGuides() {
         return docs;
       } catch (err) {
         console.error("fetchGuides", err);
-        message.error("Không thể tải danh sách hướng dẫn");
+        toast.error("Không thể tải danh sách hướng dẫn");
         return [];
       } finally {
         setLoading(false);
@@ -277,7 +278,7 @@ export default function ManagerGuides() {
   const onDelete = async (id) => {
     try {
       await axiosClient.delete(`/guides/${id}`);
-      message.success("Đã xóa (có thể hoàn tác)");
+      toast.success("Đã xóa (có thể hoàn tác)");
       // fetchGuides to update list immediately
       fetchGuides(page, limit);
 
@@ -292,7 +293,7 @@ export default function ManagerGuides() {
       setLastDeleted({ id, title: guide.title || 'Hướng dẫn', timeoutId });
     } catch (err) {
       console.error("delete", err);
-      message.error("Xóa không thành công");
+      toast.error("Xóa không thành công");
     }
   };
 
@@ -300,12 +301,12 @@ export default function ManagerGuides() {
     if (!lastDeleted || !lastDeleted.id) return;
     try {
       await axiosClient.post(`/guides/${lastDeleted.id}/restore`);
-      message.success('Hoàn tác xóa thành công');
+      toast.success('Hoàn tác xóa thành công');
       // refresh list
       fetchGuides(page, limit);
     } catch (e) {
       console.error('restore', e);
-      message.error('Hoàn tác thất bại');
+      toast.error('Hoàn tác thất bại');
     } finally {
       if (lastDeleted && lastDeleted.timeoutId) clearTimeout(lastDeleted.timeoutId);
       setLastDeleted(null);

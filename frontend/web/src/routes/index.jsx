@@ -10,7 +10,7 @@ import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword"; // <- thêm từ code 2
 import WeatherPage from "../pages/WeatherPage.jsx";
 import PlantDiagnosisPage from "../pages/PlantDiagnosisPage";
-
+import UrbanFarmingPlansPage from "../pages/UrbanFarmingPlansPage";
 // Guards
 import PrivateRoute from "./shared/PrivateRoute"; // dùng path kiểu code 1
 import AdminRoute from "./admin/AdminRoute";
@@ -54,14 +54,12 @@ import ModeratorProfile from "../pages/moderator/ModeratorProfile";
 // Expert area
 import ExpertHome from "../pages/expert/ExpertHome";
 import ApplyExpert from "../pages/auth/ExpertApplyForm";
-import ExpertModels from "../pages/expert/Models";
 import ManagerGuides from "../pages/expert/ManagerGuides";
 import GuideDetail from "../pages/expert/GuideDetail";
 import FarmerGuideDetail from "../pages/farmer/GuideDetail";
 import Guides from "../pages/farmer/Guides";
 import GuideEdit from "../pages/expert/GuideEdit";
 import TrashGuides from "../pages/expert/TrashGuides";
-import TrashModels from "../pages/expert/TrashModels";
 import PostDetail from "../pages/PostDetail";
 
 // Farmer Pages - Notebook
@@ -117,7 +115,12 @@ export default function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
         <Route path="/weather" element={<WeatherPage />} />
-        <Route path="/plant-diagnosis" element={<PlantDiagnosisPage />} />
+        <Route path="/plant-diagnosis" element={
+            <PrivateRoute>
+              <PlantDiagnosisPage />
+            </PrivateRoute>
+          } />
+        <Route path="/urban-farming" element={<UrbanFarmingPlansPage />} />
         {/* <- từ code 2 */}
         {/* ===== Protected app (từ code 2) ===== */}
         <Route
@@ -430,15 +433,6 @@ export default function AppRoutes() {
         <Route path="/expert/*" element={<ExpertRoutes />} />
         {/* Direct expert home route for quick access/testing */}
         <Route path="/experthome" element={<ExpertHome />} />
-        <Route path="/experthome/models" element={<ExpertModels />} />
-        <Route
-          path="/experthome/models/trash"
-          element={
-            <PrivateRoute>
-              <TrashModels />
-            </PrivateRoute>
-          }
-        />
         <Route path="/experts" element={<ExpertsList />} />
         <Route path="/pricing" element={<PlantCarePricing />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
