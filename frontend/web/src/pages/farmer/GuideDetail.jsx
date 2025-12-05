@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
-import { Card, Button, Tag, Typography, Spin, Divider, Row, Col } from "antd";
+import { Card, Button, Tag, Typography, Spin, Divider, Row, Col, Modal } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import placeholderImg from "../../assets/placeholder.svg";
 import getColorForKey from "../../utils/colorUtils";
 import Header from "../../components/shared/Header";
+import Footer from "../../components/shared/Footer";
 
 const { Title, Text } = Typography;
 
 export default function FarmerGuideDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stepModalVisible, setStepModalVisible] = useState(false);
+  const [activeStep, setActiveStep] = useState(null);
   // Deterministic color per plant group
   // Use utility so each group has a consistent color across the app
   // import below
@@ -55,9 +59,14 @@ export default function FarmerGuideDetail() {
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => {
-            // Prefer navigating to the guides list filtered by this guide's plant_group
-            // so the user returns to the group view instead of the global list.
             try {
+              // If user came from Home (we set state.fromHome when linking), navigate back to Home and ask Home to scroll to guides
+              if (location?.state?.fromHome) {
+                navigate("/", { state: { scrollTo: "guides" } });
+                return;
+              }
+
+              // Prefer navigating to the guides list filtered by this guide's plant_group
               const group = guide?.plant_group || (Array.isArray(guide?.plantTags) && guide.plantTags[0]);
               if (group) {
                 const qs = `?category=${encodeURIComponent(group)}&page=1`;
@@ -107,13 +116,20 @@ export default function FarmerGuideDetail() {
               <Title level={3}>Các bước thực hiện</Title>
               <Row gutter={[16, 16]}>
                 {guide.steps.map((s, idx) => (
-                  <Col xs={24} sm={12} md={8} key={idx}>
-                    <Card hoverable>
-                      <div>
+                  <Col xs={24} sm={12} md={8} key={idx} style={{ display: "flex" }}>
+                    <Card hoverable style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div style={{ flex: 1 }}>
                         <Title level={5}>Bước {idx + 1}</Title>
                         <img src={s.image || placeholderImg} alt="step" style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 8 }} />
                         <Text strong>{s.title || `Bước ${idx + 1}`}</Text>
-                        <div dangerouslySetInnerHTML={{ __html: s.text || "" }} />
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => { setActiveStep(s); setStepModalVisible(true); }}
+                          onKeyPress={(e) => { if (e.key === 'Enter') { setActiveStep(s); setStepModalVisible(true); } }}
+                          style={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis", cursor: "pointer", marginTop: 8 }}
+                          dangerouslySetInnerHTML={{ __html: s.text || "" }}
+                        />
                       </div>
                     </Card>
                   </Col>
@@ -123,6 +139,30 @@ export default function FarmerGuideDetail() {
           )}
         </div>
       </Card>
-    </div></>
+      <Modal
+        title={activeStep ? (activeStep.title || `Bước`) : "Chi tiết bước"}
+        open={stepModalVisible}
+        onCancel={() => setStepModalVisible(false)}
+        footer={null}
+        width={720}
+      >
+        {activeStep ? (
+          <div>
+            {activeStep.image && (
+              <div style={{ marginBottom: 12 }}>
+                <img src={activeStep.image} alt={activeStep.title} style={{ width: "100%", borderRadius: 6 }} />
+              </div>
+            )}
+            <div dangerouslySetInnerHTML={{ __html: activeStep.text || activeStep.description || "" }} />
+          </div>
+        ) : (
+          <p>Không có nội dung</p>
+        )}
+      </Modal>
+    </div>
+    <Footer />
+  </>
   );
 }
+
+

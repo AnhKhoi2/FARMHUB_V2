@@ -45,10 +45,12 @@ export default function ModeratorHome() {
                     0;
 
                 const rTotal =
+                    // If backend returns paginated object with meta.total
                     rRes?.data?.data?.meta?.total ||
                     rRes?.data?.data?.total ||
                     rRes?.data?.meta?.total ||
-                    0;
+                    // If backend returns a plain array (older endpoint), count its length
+                    (Array.isArray(rRes?.data?.data) ? rRes.data.data.length : 0);
 
                 setPostCount(pTotal);
                 setReportCount(rTotal);
