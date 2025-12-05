@@ -63,10 +63,14 @@ export const postController = {
 
   // Public listing (no auth) for browsing marketplace
   listPublic: asyncHandler(async (req, res) => {
-    const { page = 1, limit = 50, q } = req.query;
+    const { page = 1, limit = 50, q, category } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     const filter = { isDeleted: false };
+    if (category) {
+      // Allow frontend to request posts filtered by category (exact match)
+      filter.category = category;
+    }
     if (q) {
       filter.$or = [
         { title: { $regex: q, $options: "i" } },

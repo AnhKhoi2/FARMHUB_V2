@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   FaCloudSun,
@@ -21,6 +21,9 @@ const API_LATEST_POSTS = "/api/posts/public";
 
 const Home = () => {
   const user = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const guidesRef = useRef(null);
 
   const [recentVisited, setRecentVisited] = useState([]);
 
@@ -120,27 +123,52 @@ const Home = () => {
 
   // ⭐ Lấy 3 bài post từ PostController
   useEffect(() => {
-    const fetchLatestPosts = async () => {
+    const fetchOnePerCategory = async () => {
+      // Use actual category labels used across the app. "Bán" posts are labeled
+      // under "Nông sản" in the category list, so request that label.
+      const groups = ["Trao đổi", "Cho tặng", "Nông sản"];
+
       try {
         setPostsLoading(true);
         setPostsError(null);
 
-        const res = await axiosClient.get(API_LATEST_POSTS, {
-          params: { page: 1, limit: 3 },
-          headers: { Authorization: "" }, // ép public, tránh verifyToken
-        });
+        const promises = groups.map((label) =>
+          axiosClient
+            .get(API_LATEST_POSTS, {
+              params: { page: 1, limit: 1, category: label },
+              headers: { Authorization: "" },
+            })
+            .then((res) => {
+              const raw = res.data;
+              const items = raw?.data?.items ?? raw?.items ?? raw?.data ?? [];
+              const first = Array.isArray(items) && items.length ? items[0] : null;
+              if (first && !first.category) first.category = label;
+              return first;
+            })
+            .catch((e) => {
+              // Return null on failure for this category
+              console.warn(`Failed fetching post for category ${label}:`, e?.message || e);
+              return null;
+            })
+        );
 
-        const raw = res.data;
+        const results = await Promise.all(promises);
+        const items = results.filter(Boolean);
 
-        let items =
-          raw?.data?.items ??
-          raw?.items ??
-          raw?.data ??
-          [];
-
-        setLatestPosts(Array.isArray(items) ? items.slice(0, 3) : []);
+        if (items.length === 0) {
+          // fallback to latest 3 posts if none found for the categories
+          const res = await axiosClient.get(API_LATEST_POSTS, {
+            params: { page: 1, limit: 3 },
+            headers: { Authorization: "" },
+          });
+          const raw = res.data;
+          const fallback = raw?.data?.items ?? raw?.items ?? raw?.data ?? [];
+          setLatestPosts(Array.isArray(fallback) ? fallback.slice(0, 3) : []);
+        } else {
+          setLatestPosts(items);
+        }
       } catch (err) {
-        console.error("Latest posts error:", err?.response || err);
+        console.error("Error fetching posts by category:", err?.response || err);
         setPostsError("Không tải được bài đăng.");
         setLatestPosts([]);
       } finally {
@@ -148,10 +176,20 @@ const Home = () => {
       }
     };
 
-    fetchLatestPosts();
+    fetchOnePerCategory();
   }, []);
   // 3 bài hướng dẫn
   useEffect(() => {
+    // If navigated here with a request to scroll to guides, do it.
+    try {
+      const s = location?.state?.scrollTo || (location?.state?.fromHome ? 'guides' : null);
+      if (s === 'guides' && guidesRef.current) {
+        setTimeout(() => {
+          guidesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+      }
+    } catch (e) {}
+
     const fetchGuides = async () => {
       try {
         setGuidesLoading(true);
@@ -351,8 +389,15 @@ const Home = () => {
                   const imgUrl = getFirstImage(post.images);
                   const locationText = getLocationText(post.location);
                   return (
-                    <div className="col-md-4" key={post._id}>
-                      <div className="card h-100 shadow-sm market-card">
+                      <div className="col-md-4" key={post._id}>
+                        <div
+                          className="card h-100 shadow-sm market-card"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => navigate(`/posts/${post._id}`)}
+                          onKeyPress={(e) => { if (e.key === 'Enter') navigate(`/posts/${post._id}`); }}
+                          style={{ cursor: 'pointer' }}
+                        >
                         {imgUrl && (
                           <div className="market-image-wrapper">
                             <img src={imgUrl} className="market-image" alt={post.title} />
@@ -368,7 +413,7 @@ const Home = () => {
                             </div>
                           )}
 
-                          <p className="text-muted mb-3">
+                          <p className="market-desc text-muted mb-3">
                             {getShortDescription(post.description, 110)}
                           </p>
 
@@ -396,13 +441,13 @@ const Home = () => {
               <h2 className="h3 fw-bold mb-0">Hướng dẫn trồng trọt</h2>
             </div>
           </div>
-
+          
           {guidesLoading ? (
             <p>Đang tải...</p>
           ) : guidesError ? (
             <p className="text-danger">{guidesError}</p>
           ) : (
-            <div className="row g-4">
+            <div className="row g-4" ref={guidesRef}>
               {latestGuides.map((g) => (
                 <div className="col-md-4" key={g._id}>
                   <div className="guide-card">
@@ -427,6 +472,7 @@ const Home = () => {
 
                       <Link
                         to={`/guides/${g._id}`}
+                        state={{ fromHome: true }}
                         className="btn btn-success guide-btn"
                       >
                         Xem chi tiết

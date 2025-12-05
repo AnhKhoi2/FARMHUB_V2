@@ -21,6 +21,7 @@ import {
   Tag,
   Tooltip,
   Image,
+  message,
 } from "antd";
 import {
   UploadOutlined,
@@ -61,6 +62,10 @@ export default function GuideEdit() {
   const [availablePlantTags, setAvailablePlantTags] = useState([]);
   const [slugToLabelMap, setSlugToLabelMap] = useState({});
   const [labelToSlugMap, setLabelToSlugMap] = useState({});
+  // create group modal state
+  const [createGroupVisible, setCreateGroupVisible] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [creatingGroup, setCreatingGroup] = useState(false);
 
   // Load plant groups from backend and map to checkbox options (label/value both = display name)
   const fetchPlantGroups = async () => {
@@ -91,6 +96,38 @@ export default function GuideEdit() {
   useEffect(() => {
     fetchPlantGroups();
   }, []);
+
+  const openCreateGroup = () => {
+    setNewGroupName("");
+    setCreateGroupVisible(true);
+  };
+
+  const createPlantGroup = async () => {
+    if (!newGroupName || !newGroupName.trim()) {
+      message.error('Vui lòng nhập tên nhóm cây');
+      return;
+    }
+    try {
+      setCreatingGroup(true);
+      const payload = { name: newGroupName.trim() };
+      const res = await axiosClient.post('/api/plant-groups', payload);
+      toast.success('Đã tạo nhóm cây mới');
+      setCreateGroupVisible(false);
+      // refresh available groups and select the created one if slug returned
+      const created = res.data?.data || res.data || null;
+      await fetchPlantGroups();
+      const slug = created?.slug || created?._id || created?.id || payload.slug;
+      if (slug) {
+        // include the new slug in plantTags selection
+        setPlantTags((prev) => Array.from(new Set([slug, ...(prev || [])])));
+      }
+    } catch (err) {
+      console.error('createPlantGroup', err);
+      toast.error('Tạo nhóm cây thất bại');
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
 
   // ==================== LOAD DỮ LIỆU ====================
   useEffect(() => {
@@ -554,6 +591,13 @@ export default function GuideEdit() {
                       icon={<ReloadOutlined />}
                       onClick={() => fetchPlantGroups()}
                     />
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<PlusOutlined />}
+                      onClick={() => setCreateGroupVisible(true)}
+                      title="Tạo nhóm cây mới"
+                    />
                   </span>
                 }
               >
@@ -759,6 +803,23 @@ export default function GuideEdit() {
         </Row>
       </Form>
     </Card>
+    {/* Create group modal */}
+    <Modal
+      title="Tạo nhóm cây mới"
+      open={createGroupVisible}
+      onCancel={() => setCreateGroupVisible(false)}
+      onOk={createPlantGroup}
+      okText="Tạo"
+      confirmLoading={creatingGroup}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Input
+          placeholder="Tên nhóm (ví dụ: Rau gia vị)"
+          value={newGroupName}
+          onChange={(e) => setNewGroupName(e.target.value)}
+        />
+      </div>
+    </Modal>
     </>
   );
 }
