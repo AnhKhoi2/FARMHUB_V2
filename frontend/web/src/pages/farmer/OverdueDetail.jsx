@@ -214,7 +214,7 @@ const OverdueDetail = () => {
               ? overdueData.overdue_groups.map((group, gIdx) => (
                   <div key={gIdx} className="overdue-group">
                     <div className="overdue-group-header">
-                      <h4>Ngày gốc: {formatDate(group.date)}</h4>
+                      <h4>Ngày: {formatDate(group.date)}</h4>
                       <span className="group-count">
                         {group.tasks.length} công việc
                       </span>

@@ -125,10 +125,10 @@ const DailyChecklist = ({ notebookId, onTaskComplete }) => {
   return (
     <div className="daily-checklist">
       <div className="checklist-header">
-        <h3>✅ Công việc hôm nay</h3>
+        <h3>✅ CÔNG VIỆC HÔM NAY</h3>
         <div className="checklist-progress">
           <span>
-            {completedCount}/{totalCount} hoàn thành
+            {completedCount}/{totalCount} HOÀN THÀNH
           </span>
           <div className="progress-bar-mini">
             <div
@@ -177,7 +177,7 @@ const DailyChecklist = ({ notebookId, onTaskComplete }) => {
                 <div className="task-header">
                   <h4>
                     {isOverdue() && <span className="overdue-icon">⏰ </span>}
-                    {task.task_name}
+                    {(task.task_name || "").toUpperCase()}
                   </h4>
                   <div className="task-badges">
                     {task.priority === "high" && (

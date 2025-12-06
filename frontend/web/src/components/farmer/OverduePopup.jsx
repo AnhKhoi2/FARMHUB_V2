@@ -2,7 +2,13 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/farmer/OverduePopup.css";
 
-const OverduePopup = ({ overdueSummary, notebookId, onSkip, onClose }) => {
+const OverduePopup = ({
+  overdueSummary,
+  notebookId,
+  onSkip,
+  onClose,
+  onViewDetail,
+}) => {
   const navigate = useNavigate();
 
   if (!overdueSummary || overdueSummary.overdue_count === 0) {
@@ -20,7 +26,12 @@ const OverduePopup = ({ overdueSummary, notebookId, onSkip, onClose }) => {
 
   const handleViewDetail = () => {
     onClose();
-    navigate(`/farmer/notebooks/${notebookId}/overdue`);
+    if (onViewDetail) {
+      onViewDetail();
+    } else {
+      // Fallback to navigate if onViewDetail not provided
+      navigate(`/farmer/notebooks/${notebookId}/overdue`);
+    }
   };
 
   const handleSkip = async () => {

@@ -258,7 +258,7 @@ const CollectionDetail = () => {
                 </p>
               )}
               <div className="collection-stats">
-                <span>📓 {collection.notebook_count} nhật ký</span>
+                <span>📓 {collection.notebook_count} NHẬT KÝ</span>
                 <span>
                   📅{" "}
                   {new Date(collection.createdAt).toLocaleDateString("vi-VN")}
@@ -270,30 +270,30 @@ const CollectionDetail = () => {
 
         {/* Sort Controls */}
         <div className="sort-controls">
-          <label>Sắp xếp theo:</label>
+          <label>SẮP XẾP THEO:</label>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="created">Ngày tạo</option>
-            <option value="updated">Ngày cập nhật</option>
-            <option value="name">Tên</option>
-            <option value="progress">Tiến độ</option>
+            <option value="created">NGÀY TẠO</option>
+            <option value="updated">NGÀY CẬP NHẬT</option>
+            <option value="name">TÊN</option>
+            <option value="progress">TIẾN ĐỘ</option>
           </select>
 
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
           >
-            <option value="desc">Giảm dần</option>
-            <option value="asc">Tăng dần</option>
+            <option value="desc">GIẢM DẦN</option>
+            <option value="asc">TĂNG DẦN</option>
           </select>
         </div>
 
         {/* Move action buttons here - below the sort/search controls */}
         <div className="header-actions-outside">
           <button className="btn-edit" onClick={openEditModal}>
-            ✏️ Chỉnh sửa
+            ✏️ CHỈNH SỮA
           </button>
           <button className="btn-add-notebook" onClick={openAddModal}>
-            + Thêm nhật ký
+            + THÊM SỔ TAY
           </button>
         </div>
 
@@ -301,9 +301,9 @@ const CollectionDetail = () => {
         <div className="notebooks-grid">
           {notebooks.length === 0 ? (
             <div className="empty-state">
-              <p>📭 Chưa có nhật ký nào trong bộ sưu tập</p>
+              <p>📭 CHƯA CÓ SỔ TAY NÀO TRONG BỘ SƯU TẬP</p>
               <button className="btn-add-first" onClick={openAddModal}>
-                + Thêm nhật ký đầu tiên
+                + THÊM SỔ TAY ĐẦU TIÊN
               </button>
             </div>
           ) : (
@@ -324,11 +324,11 @@ const CollectionDetail = () => {
         {showAddModal && (
           <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h2>Thêm nhật ký vào bộ sưu tập</h2>
+              <h2>THÊM SỔ TAY VÀO BỘ SƯU TẬP</h2>
 
               <div className="notebooks-list">
                 {allNotebooks.length === 0 ? (
-                  <p className="empty-message">Không có nhật ký nào để thêm</p>
+                  <p className="empty-message">KHÔNG CÓ SỔ TAY NÀO ĐỂ THÊM</p>
                 ) : (
                   allNotebooks.map((notebook) => (
                     <div key={notebook._id} className="notebook-item">
@@ -340,7 +340,7 @@ const CollectionDetail = () => {
                         className="btn-add-single"
                         onClick={() => handleAddNotebook(notebook._id)}
                       >
-                        + Thêm
+                        + THÊM
                       </button>
                     </div>
                   ))
@@ -351,7 +351,7 @@ const CollectionDetail = () => {
                 className="btn-close-modal"
                 onClick={() => setShowAddModal(false)}
               >
-                Đóng
+                ĐÓNG
               </button>
             </div>
           </div>
@@ -364,10 +364,10 @@ const CollectionDetail = () => {
             onClick={() => setShowEditModal(false)}
           >
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h2>Chỉnh sửa bộ sưu tập</h2>
+              <h2>CHỈNH SỮA BỘ SƯU TẬP</h2>
               <form onSubmit={handleUpdateCollection}>
                 <div className="form-group">
-                  <label>Tên bộ sưu tập *</label>
+                  <label>TÊN BỘ SƯU TẬP *</label>
                   <input
                     type="text"
                     value={editForm.collection_name}
@@ -383,7 +383,7 @@ const CollectionDetail = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Mô tả</label>
+                  <label>MÔ TẢ</label>
                   <textarea
                     value={editForm.description}
                     onChange={(e) =>
@@ -398,7 +398,7 @@ const CollectionDetail = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Ảnh bìa (tải từ máy)</label>
+                  <label>ẢNH BÌA (TẢI TỪ MÁY)</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -414,7 +414,7 @@ const CollectionDetail = () => {
                           className="btn-remove-image"
                           onClick={handleRemoveImage}
                         >
-                          Xóa ảnh
+                          XÓA ẢNH
                         </button>
                       </div>
                     </div>
@@ -427,7 +427,7 @@ const CollectionDetail = () => {
                           className="btn-remove-image"
                           onClick={handleRemoveImage}
                         >
-                          Xóa ảnh
+                          XÓA ẢNH
                         </button>
                       </div>
                     </div>
@@ -440,10 +440,10 @@ const CollectionDetail = () => {
                     className="btn-cancel"
                     onClick={() => setShowEditModal(false)}
                   >
-                    Hủy
+                    HỦY
                   </button>
                   <button type="submit" className="btn-submit">
-                    Cập nhật
+                    CẬP NHẬT
                   </button>
                 </div>
               </form>

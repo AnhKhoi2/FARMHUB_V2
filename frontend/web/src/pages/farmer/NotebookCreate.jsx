@@ -440,7 +440,6 @@ const NotebookCreate = () => {
         <h3>💡 Gợi Ý</h3>
         <ul>
           <li>Nhập tên dễ nhớ để quản lý nhiều nhật ký</li>
-          <li>Ngày trồng giúp hệ thống tính toán giai đoạn tự động</li>
           <li>Bạn có thể thêm hình ảnh và ghi chú sau khi tạo</li>
         </ul>
       </div>
