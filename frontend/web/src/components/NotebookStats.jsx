@@ -79,14 +79,14 @@ const NotebookStats = () => {
               {stats.progressAvg || 0}%
             </div>
             <div style={{ fontSize: 12, color: "#6b7280" }}>
-              Progress trung bình
+              TIẾN ĐỘ TRUNG BÌNH
             </div>
           </div>
         </div>
       </div>
 
       <div style={{ flex: 1 }}>
-        <h3>Thống kê theo loại cây</h3>
+        <h3>THỐNG KÊ THEO LOẠI CÂY</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {segments.map((s) => (
             <div
@@ -113,7 +113,7 @@ const NotebookStats = () => {
 
         <hr style={{ margin: "16px 0" }} />
 
-        <h4>Phân nhóm</h4>
+        <h4>PHÂN NHÓM</h4>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {Object.entries(stats.byGroup || {}).map(([g, c]) => (
             <div
@@ -133,7 +133,7 @@ const NotebookStats = () => {
 
         <hr style={{ margin: "16px 0" }} />
 
-        <h4>Phân phối tiến độ</h4>
+        <h4>PHÂN PHỐI TIẾN ĐỘ</h4>
         <div style={{ display: "flex", gap: 12 }}>
           {Object.entries(stats.progressDistribution || {}).map(
             ([range, c], i) => {
@@ -169,7 +169,7 @@ const NotebookStats = () => {
 
         <hr style={{ margin: "16px 0" }} />
 
-        <h4>Thời gian trồng trung bình</h4>
+        <h4>THỜI GIAN TRỒNG TRUNG BÌNH</h4>
         <div style={{ fontSize: 16, fontWeight: 700 }}>
           {stats.avgGrowDays ? `${stats.avgGrowDays} ngày` : "Chưa có dữ liệu"}
         </div>
@@ -177,7 +177,7 @@ const NotebookStats = () => {
         <hr style={{ margin: "16px 0" }} />
 
         <div>
-          <strong>Loại cây phổ biến nhất:</strong>{" "}
+          <strong>LOẠI CÂY PHỔ BIẾN NHẤT:</strong>{" "}
           {stats.mostPopularType || "Không xác định"}
         </div>
       </div>

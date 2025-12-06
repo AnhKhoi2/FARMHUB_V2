@@ -16,7 +16,6 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [showDeleted, setShowDeleted] = useState(initialShowDeleted);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const location = useLocation();
@@ -84,23 +83,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
     }
   };
 
-  const handleFilter = async () => {
-    try {
-      setLoading(true);
-      const filters = {};
-      if (filterStatus !== "all") filters.status = filterStatus;
-
-      const response = await notebookApi.filterNotebooks(filters);
-      const notebooksData = response.data?.data || response.data || [];
-      setNotebooks(Array.isArray(notebooksData) ? notebooksData : []);
-      setError(null);
-    } catch (err) {
-      console.error("Error filtering notebooks:", err);
-      setError("Không thể lọc");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Note: status filtering removed — filtering kept to search and deleted view
 
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa nhật ký này?")) return;
@@ -124,7 +107,16 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
       alert("Khôi phục nhật ký thành công!");
     } catch (err) {
       console.error("Error restoring notebook:", err);
-      alert("Không thể khôi phục nhật ký");
+
+      // Kiểm tra lỗi vượt quá giới hạn
+      if (err?.response?.data?.code === "NOTEBOOK_LIMIT_EXCEEDED") {
+        const message =
+          err.response.data.message ||
+          "Không thể khôi phục. Gói miễn phí chỉ được có tối đa 3 nhật ký. Vui lòng xóa một nhật ký khác hoặc nâng cấp lên gói Thông Minh.";
+        alert(message);
+      } else {
+        alert(err?.response?.data?.message || "Không thể khôi phục nhật ký");
+      }
     }
   };
 
@@ -199,7 +191,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
               navigate("/farmer/notebooks/create");
             }}
           >
-            <span className="icon">＋</span> Thêm mới notebook
+            <span className="icon">＋</span> Thêm mới sổ tay
           </button>
           {!showDeleted ? (
             <button
@@ -209,7 +201,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
                 navigate("/farmer/notebooks/deleted");
               }}
             >
-              🗑️ Xem notebook đã xóa
+              🗑️ Xem sổ tay đã xóa
             </button>
           ) : (
             <button
@@ -219,7 +211,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
                 navigate("/farmer/notebooks");
               }}
             >
-              ↩️ Quay lại notebook
+              ↩️ Quay lại sổ tay
             </button>
           )}
         </div>
@@ -229,33 +221,20 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
           <div className="search-box">
             <input
               type="text"
-              placeholder="Tìm kiếm nhật ký..."
+              placeholder="Tìm kiếm sổ tay..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
             />
             <button className="btn-search" onClick={handleSearch}>
-              🔍 Tìm kiếm
+              🔍 TÌM KIẾM
             </button>
           </div>
 
-          <div className="filter-group">
-            <label>Trạng thái:</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value);
-                handleFilter();
-              }}
-            >
-              <option value="all">Tất cả</option>
-              <option value="active">Đang trồng</option>
-              <option value="archived">Đã lưu trữ</option>
-            </select>
-          </div>
+          {/* Trạng thái filter removed per request */}
 
           <div className="summary">
-            <strong>{notebooks.length}</strong> nhật ký
+            <strong>{notebooks.length}</strong> SỔ TAY
           </div>
         </div>
 
@@ -273,7 +252,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
             onClick={() => setShowLimitModal(false)}
           >
             <div className="nb-modal" onClick={(e) => e.stopPropagation()}>
-              <h3 className="mb-3">Giới hạn gói miễn phí</h3>
+              <h3 className="mb-3">GIỚI HẠN GÓI MIỄN PHÍ</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Tài khoản miễn phí chỉ được tạo tối đa 3 nhật ký. Để thêm nhật
                 ký mới, bạn có thể xóa 1 trong 3 nhật ký hiện tại hoặc nâng cấp
@@ -281,9 +260,9 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
               </p>
 
               <div className="mb-4">
-                <h4 className="mb-2">Nhật ký hiện tại</h4>
-                <div className="grid grid-cols-1 gap-2">
-                  {notebooks.slice(0, 3).map((nb) => (
+                <h4 className="mb-2">NHẬT KÝ HIỆN TẠI</h4>
+                <div className="grid grid-cols-1 gap-2 nb-current-list">
+                  {notebooks.map((nb) => (
                     <div key={nb._id} className="nb-item">
                       <div className="nb-meta">
                         <div className="nb-title">
@@ -320,7 +299,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
                             }
                           }}
                         >
-                          Xóa
+                          XÓA
                         </button>
                       </div>
                     </div>
@@ -333,13 +312,13 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
                   className="nb-btn nb-btn-ghost"
                   onClick={() => setShowLimitModal(false)}
                 >
-                  Hủy
+                  HỦY
                 </button>
                 <button
                   className="nb-btn nb-btn-primary"
                   onClick={() => navigate("/pricing")}
                 >
-                  Nâng cấp lên Thông Minh
+                  NÂNG CẤP LÊN THÔNG MINH
                 </button>
               </div>
             </div>
