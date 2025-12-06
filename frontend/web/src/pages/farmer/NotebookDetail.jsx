@@ -22,11 +22,16 @@ const NotebookDetail = () => {
   const [journalText, setJournalText] = useState("");
   const [overdueSummary, setOverdueSummary] = useState(null);
   const [showOverduePopup, setShowOverduePopup] = useState(false);
+  const [overdueData, setOverdueData] = useState(null);
+  const [processingTask, setProcessingTask] = useState(null);
 
   useEffect(() => {
     if (id && id !== "undefined") {
-      fetchNotebookData();
-      checkDailyStatus();
+      fetchNotebookData().then(() => {
+        // Check daily status after notebook data is loaded
+        // so we can check if notebook is completed
+        checkDailyStatus();
+      });
 
       // If URL contains ?tab=observations (or other tab), set active tab accordingly
       try {
@@ -97,9 +102,11 @@ const NotebookDetail = () => {
       }
 
       setError(null);
+      return notebookData;
     } catch (err) {
       console.error("Error fetching notebook data:", err);
       setError("Không thể tải dữ liệu nhật ký");
+      return null;
     } finally {
       setLoading(false);
     }
@@ -110,13 +117,73 @@ const NotebookDetail = () => {
       const response = await notebookApi.getDailyStatus(id);
       const data = response.data?.data || response.data;
 
-      // Hiển thị popup nếu có overdue
+      // Hiển thị popup nếu có overdue VÀ notebook chưa hoàn thành 100%
+      // Không hiển thị popup khi notebook đã hoàn thành (progress = 100%)
       if (data.overdue_summary && data.overdue_summary.overdue_count > 0) {
-        setOverdueSummary(data.overdue_summary);
-        setShowOverduePopup(true);
+        // Check if notebook is completed (progress 100% and all stages completed)
+        const notebookCompleted =
+          notebook &&
+          (notebook.progress === 100 || notebook.progress === "100") &&
+          Array.isArray(notebook.stages_tracking) &&
+          notebook.stages_tracking.length > 0 &&
+          notebook.stages_tracking.every((s) => s.status === "completed");
+
+        if (!notebookCompleted) {
+          setOverdueSummary(data.overdue_summary);
+          setShowOverduePopup(true);
+        }
       }
     } catch (err) {
       console.error("Error checking daily status:", err);
+    }
+  };
+
+  const fetchOverdueDetail = async () => {
+    try {
+      const response = await notebookApi.getOverdueDetail(id);
+      const data = response.data?.data || response.data;
+      setOverdueData(data);
+      return data;
+    } catch (err) {
+      console.error("Error fetching overdue detail:", err);
+      return null;
+    }
+  };
+
+  const handleCompleteOverdueTask = async (taskName) => {
+    try {
+      setProcessingTask(taskName);
+      await notebookApi.completeOverdueTask(id, taskName);
+      const refreshed = await fetchOverdueDetail();
+      setProcessingTask(null);
+      await fetchNotebookData();
+      if (!refreshed || refreshed.overdue_count === 0) {
+        setActiveTab("progress");
+      }
+    } catch (err) {
+      console.error("Error completing task:", err);
+      alert("Không thể hoàn thành công việc");
+      setProcessingTask(null);
+    }
+  };
+
+  const handleSkipAllOverdue = async () => {
+    if (
+      !window.confirm(
+        "Bạn có chắc muốn bỏ qua tất cả các công việc quá hạn này?"
+      )
+    ) {
+      return;
+    }
+    try {
+      await notebookApi.skipOverdueTasks(id);
+      alert("Đã bỏ qua tất cả công việc quá hạn");
+      setActiveTab("progress");
+      await fetchNotebookData();
+      await fetchOverdueDetail();
+    } catch (err) {
+      console.error("Error skipping overdue tasks:", err);
+      alert("Không thể bỏ qua công việc");
     }
   };
 
@@ -445,7 +512,7 @@ const NotebookDetail = () => {
             onClick={handleExportPDF}
             title="Xuất nhật ký dưới dạng PDF"
           >
-            📄 Xuất PDF
+            📄 XUẤT PDF
           </button>
           <button
             className="btn-export-excel"
@@ -453,7 +520,7 @@ const NotebookDetail = () => {
             title="Xuất nhật ký dưới dạng Excel (CSV)"
             style={{ marginLeft: 8 }}
           >
-            📥 Xuất Excel
+            📥 XUẤT EXCEL
           </button>
           <button
             className="btn-edit"
@@ -465,14 +532,14 @@ const NotebookDetail = () => {
               navigate(`/farmer/notebooks/${id}/edit`);
             }}
           >
-            ✏️ Chỉnh sửa
+            ✏️ CHỈNH SỬA
           </button>
           <button
             className="btn-delete"
             onClick={() => handleDeleteNotebook()}
             title="Xóa nhật ký"
           >
-            🗑️ Xóa
+            🗑️ XÓA
           </button>
         </div>
       </div>
@@ -550,7 +617,10 @@ const NotebookDetail = () => {
           className={`tab-btn overdue-tab ${
             activeTab === "overdue" ? "active" : ""
           }`}
-          onClick={() => navigate(`/farmer/notebooks/${id}/overdue`)}
+          onClick={() => {
+            setActiveTab("overdue");
+            fetchOverdueDetail();
+          }}
           title="Xem công việc quá hạn"
         >
           <span className="tab-icon">⌛</span>
@@ -569,7 +639,7 @@ const NotebookDetail = () => {
         {activeTab === "progress" && (
           <div className="progress-tab">
             <div className="progress-overview">
-              <h2>Tổng Quan Tiến Độ</h2>
+              <h2>TỔNG QUAN TIẾN ĐỘ</h2>
               <div className="progress-bar-large">
                 <div
                   className="progress-fill"
@@ -584,12 +654,12 @@ const NotebookDetail = () => {
 
             {currentStage && (
               <div className="current-stage-card">
-                <h3>🌱 Giai Đoạn Hiện Tại: {currentStage.name}</h3>
+                <h3>🌱 GIAI ĐOẠN HIỆN TẠI: {currentStage.name}</h3>
 
                 {/* Stage completion progress */}
                 <div className="stage-completion-section">
                   <div className="stage-completion-header">
-                    <span>Tiến độ giai đoạn</span>
+                    <span>TIẾN ĐỘ GIAI ĐOẠN</span>
                     <span className="completion-percent">
                       {notebook.stage_completion || 0}%
                     </span>
@@ -605,13 +675,13 @@ const NotebookDetail = () => {
                   <div className="stage-progress-details">
                     <div className="progress-detail-item">
                       <span className="detail-label">
-                        📅 Thời gian giai đoạn:
+                        📅 THỜI GIAN GIAI ĐOẠN:
                       </span>
                       <span className="detail-value">
                         {currentStage
                           ? `${
                               currentStage.day_end - currentStage.day_start + 1
-                            } ngày (Ngày ${currentStage.day_start}-${
+                            } NGÀY (NGÀY ${currentStage.day_start}-${
                               currentStage.day_end
                             })`
                           : "N/A"}
@@ -630,7 +700,7 @@ const NotebookDetail = () => {
                       ) && (
                         <>
                           <span className="detail-label">
-                            ✅ Tiến độ hôm nay:
+                            ✅ TIẾN ĐỘ HÔM NAY:
                           </span>
                           <span className="detail-value">
                             {notebook.daily_checklist
@@ -638,7 +708,7 @@ const NotebookDetail = () => {
                                   notebook.daily_checklist.filter(
                                     (t) => t.is_completed
                                   ).length
-                                }/${notebook.daily_checklist.length} công việc`
+                                }/${notebook.daily_checklist.length} CÔNG VIỆC`
                               : "0/0"}
                           </span>
                         </>
@@ -648,25 +718,32 @@ const NotebookDetail = () => {
 
                   {currentStageTracking?.pending_transition === true && (
                     <p className="completion-note">
-                      🎉 Xuất sắc! Bạn đã hoàn thành giai đoạn này.
+                      🎉 XUẤT SẮC! BẠN ĐÃ HOÀN THÀNH GIAI ĐOẠN NÀY.
                     </p>
                   )}
                 </div>
 
                 <div className="stage-info">
                   <p>
-                    <strong>Số ngày:</strong> Ngày {currentStage.day_start} -{" "}
+                    <strong>NGÀY TRỒNG:</strong>{" "}
+                    {notebook?.planted_date
+                      ? formatVietnamLocale(notebook.planted_date)
+                      : "N/A"}
+                  </p>
+
+                  <p>
+                    <strong>SỐ NGÀY:</strong> NGÀY {currentStage.day_start} -{" "}
                     {currentStage.day_end}
                   </p>
                   <p>
-                    <strong>Dự kiến kết thúc:</strong> {getNextStageDate()}
+                    <strong>DỰ KIẾN KẾT THÚC:</strong> {getNextStageDate()}
                   </p>
                   <p className="stage-desc">{currentStage.description}</p>
                 </div>
 
                 {currentStage.stage_image && (
                   <div className="reference-image">
-                    <h4>Hình Ảnh Tham Khảo</h4>
+                    <h4>HÌNH ẢNH THAM KHẢO</h4>
                     <img
                       src={currentStage.stage_image}
                       alt={currentStage.name}
@@ -677,7 +754,7 @@ const NotebookDetail = () => {
             )}
 
             <div className="timeline-section">
-              <h3>Dòng Thời Gian</h3>
+              <h3>DÒNG THỜI GIAN</h3>
               <NotebookTimeline notebookId={id} />
             </div>
           </div>
@@ -687,7 +764,7 @@ const NotebookDetail = () => {
         {activeTab === "checklist" && (
           <div className="checklist-tab">
             <div className="checklist-header">
-              <h2>Công Việc Hàng Ngày</h2>
+              <h2>CÔNG VIỆC HÀNG NGÀY</h2>
               <p className="checklist-description">
                 Hoàn thành tất cả công việc để chuyển sang giai đoạn tiếp theo
               </p>
@@ -704,10 +781,10 @@ const NotebookDetail = () => {
         {activeTab === "observations" && (
           <div className="observations-tab">
             <div className="observations-header">
-              <h2>Quan Sát Giai Đoạn</h2>
+              <h2>QUAN SÁT GIAI ĐOẠN</h2>
               <p className="observations-description">
-                Ghi nhận các quan sát về cây trồng. Quan sát không ảnh hưởng đến
-                tiến độ.
+                Ghi nhận các quan sát về cây trồng trong từng giai đoạn phát
+                triển.
               </p>
             </div>
 
@@ -719,7 +796,7 @@ const NotebookDetail = () => {
         {activeTab === "journal" && (
           <div className="journal-tab">
             <div className="journal-section">
-              <h2>📝 Ghi Chú Cá Nhân</h2>
+              <h2>📝 GHI CHÚ CÂY TRỒNG</h2>
               <textarea
                 className="journal-textarea"
                 value={journalText}
@@ -728,16 +805,16 @@ const NotebookDetail = () => {
                 rows={8}
               />
               <button className="btn btn-save" onClick={handleSaveJournal}>
-                💾 Lưu Ghi Chú
+                💾 LƯU GHI CHÚ
               </button>
             </div>
 
             <div className="images-section">
-              <h2>📷 Hình Ảnh</h2>
+              <h2>📷 HÌNH ẢNH</h2>
 
               <div className="image-upload">
                 <ImageUploader
-                  label="Thêm hình ảnh mới"
+                  label="THÊM HÌNH ẢNH MỚI"
                   onImageSelect={handleAddImage}
                 />
               </div>
@@ -762,6 +839,208 @@ const NotebookDetail = () => {
             </div>
           </div>
         )}
+
+        {/* TAB 5: Overdue */}
+        {activeTab === "overdue" && (
+          <div className="overdue-tab">
+            <div className="overdue-header">
+              <h2>⌛ CÔNG VIỆC QUÁ HẠN</h2>
+              {overdueData && overdueData.overdue_count > 0 && (
+                <div className="overdue-actions">
+                  <button
+                    onClick={handleSkipAllOverdue}
+                    className="btn-skip-all"
+                  >
+                    <span className="btn-icon">✓</span>
+                    BỎ QUA TẤT CẢ
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {!overdueData ? (
+              <div className="loading">ĐANG TẢI...</div>
+            ) : overdueData.overdue_count === 0 ? (
+              <div className="empty-state">
+                <span className="empty-icon">✓</span>
+                <h3>KHÔNG CÓ CÔNG VIỆC QUÁ HẠN</h3>
+                <p>TẤT CẢ CÔNG VIỆC ĐÃ ĐƯỢC HOÀN THÀNH HOẶC BỎ QUA</p>
+              </div>
+            ) : (
+              <div className="overdue-tasks-list">
+                {overdueData.overdue_groups &&
+                overdueData.overdue_groups.length > 0
+                  ? overdueData.overdue_groups.map((group, gIdx) => (
+                      <div key={gIdx} className="overdue-group">
+                        <div className="overdue-group-header">
+                          <h4>NGÀY: {formatVietnamLocale(group.date)}</h4>
+                          <span
+                            className="group-count"
+                            style={{
+                              backgroundColor: "#ff6b6b",
+                              color: "white",
+                              padding: "6px 16px",
+                              borderRadius: "20px",
+                              fontWeight: "bold",
+                              fontSize: "14px",
+                              display: "inline-block",
+                              boxShadow: "0 2px 8px rgba(255, 107, 107, 0.3)",
+                            }}
+                          >
+                            {group.tasks.length} CÔNG VIỆC
+                          </span>
+                        </div>
+
+                        {group.tasks.map((task, index) => (
+                          <div key={index} className="overdue-task-card">
+                            <div className="task-header">
+                              <div className="task-info">
+                                <h3 className="task-name">
+                                  {(task.task_name || "").toUpperCase()}
+                                </h3>
+                                <span
+                                  className={`task-priority priority-${task.priority}`}
+                                >
+                                  {task.priority === "high"
+                                    ? "CAO"
+                                    : task.priority === "medium"
+                                    ? "TRUNG BÌNH"
+                                    : "THẤP"}
+                                </span>
+                              </div>
+                              <span className="task-status overdue">
+                                QUÁ HẠN
+                              </span>
+                            </div>
+
+                            {task.description && (
+                              <p className="task-description">
+                                {task.description}
+                              </p>
+                            )}
+
+                            <div className="task-meta">
+                              <span className="task-frequency">
+                                📅{" "}
+                                {task.frequency === "daily"
+                                  ? "HÀNG NGÀY"
+                                  : (task.frequency || "").toUpperCase()}
+                              </span>
+                              {task.overdue_at && (
+                                <span className="task-overdue-date">
+                                  ⏰ QUÁ HẠN TỪ:{" "}
+                                  {formatVietnamLocale(task.overdue_at)}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="task-actions">
+                              <button
+                                onClick={() =>
+                                  handleCompleteOverdueTask(task.task_name)
+                                }
+                                className="btn-complete-task"
+                                disabled={
+                                  task.is_completed ||
+                                  processingTask === task.task_name
+                                }
+                              >
+                                {task.is_completed ? (
+                                  <>
+                                    <span className="btn-icon">✓</span>
+                                    ĐÃ HOÀN THÀNH
+                                  </>
+                                ) : processingTask === task.task_name ? (
+                                  <>
+                                    <span className="btn-icon">⏳</span>
+                                    ĐANG XỬ LÝ...
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="btn-icon">✓</span>
+                                    HOÀN THÀNH BÙ
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))
+                  : overdueData.overdue_tasks?.map((task, index) => (
+                      <div key={index} className="overdue-task-card">
+                        <div className="task-header">
+                          <div className="task-info">
+                            <h3 className="task-name">
+                              {(task.task_name || "").toUpperCase()}
+                            </h3>
+                            <span
+                              className={`task-priority priority-${task.priority}`}
+                            >
+                              {task.priority === "high"
+                                ? "CAO"
+                                : task.priority === "medium"
+                                ? "TRUNG BÌNH"
+                                : "THẤP"}
+                            </span>
+                          </div>
+                          <span className="task-status overdue">QUÁ HẠN</span>
+                        </div>
+
+                        {task.description && (
+                          <p className="task-description">{task.description}</p>
+                        )}
+
+                        <div className="task-meta">
+                          <span className="task-frequency">
+                            📅{" "}
+                            {task.frequency === "daily"
+                              ? "HÀNG NGÀY"
+                              : (task.frequency || "").toUpperCase()}
+                          </span>
+                          {task.overdue_at && (
+                            <span className="task-overdue-date">
+                              ⏰ QUÁ HẠN TỪ:{" "}
+                              {formatVietnamLocale(task.overdue_at)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="task-actions">
+                          <button
+                            onClick={() =>
+                              handleCompleteOverdueTask(task.task_name)
+                            }
+                            className="btn-complete-task"
+                            disabled={
+                              task.is_completed ||
+                              processingTask === task.task_name
+                            }
+                          >
+                            {task.is_completed ? (
+                              <>
+                                <span className="btn-icon">✓</span>
+                                ĐÃ HOÀN THÀNH
+                              </>
+                            ) : processingTask === task.task_name ? (
+                              <>
+                                <span className="btn-icon">⏳</span>
+                                ĐANG XỬ LÝ...
+                              </>
+                            ) : (
+                              <>
+                                <span className="btn-icon">✓</span>
+                                HOÀN THÀNH BÙ
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Overdue Popup */}
@@ -771,6 +1050,10 @@ const NotebookDetail = () => {
           notebookId={id}
           onSkip={handleSkipOverdue}
           onClose={() => setShowOverduePopup(false)}
+          onViewDetail={() => {
+            setActiveTab("overdue");
+            fetchOverdueDetail();
+          }}
         />
       )}
     </div>

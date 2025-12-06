@@ -526,12 +526,10 @@ const PlantDiagnosisPage = () => {
           {/* Tiêu đề & mô tả ngắn */}
           <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4">
             <div className="mb-3 mb-md-0">
-              <h2 className="mb-2 fw-bold">
-                Chẩn Đoán Sức Khỏe Cây Trồng
-              </h2>
+              <h2 className="mb-2 fw-bold">CHẨN ĐOÁN SỨC KHỎE CÂY TRỒNG</h2>
               <p className="text-muted mb-0">
-                Tải ảnh lá/thân cây hoặc mô tả triệu chứng để FarmHub AI hỗ trợ
-                nhận diện bệnh và gợi ý cách xử lý cụ thể.
+                TẢI ẢNH LÁ/THÂN CÂY HOẶC MÔ TẢ TRIỆU CHỨNG ĐỂ FARMHUB AI HỖ TRỢ
+                NHẬN DIỆN BỆNH VÀ GỢI Ý CÁCH XỬ LÝ CỤ THỂ.
               </p>
             </div>
             <div className="text-md-end small text-muted">
@@ -560,7 +558,7 @@ const PlantDiagnosisPage = () => {
                         }
                         onClick={() => setMode("image")}
                       >
-                        <i className="bi bi-image me-1"></i> Chẩn đoán bằng ảnh
+                        <i className="bi bi-image me-1"></i> CHẨN ĐOÁN BẰNG ẢNH
                       </button>
                     </li>
                     <li className="nav-item">
@@ -572,7 +570,7 @@ const PlantDiagnosisPage = () => {
                         }
                         onClick={() => setMode("text")}
                       >
-                        <i className="bi bi-chat-text me-1"></i> Mô tả bằng chữ
+                        <i className="bi bi-chat-text me-1"></i> MÔ TẢ BẰNG CHỮ
                       </button>
                     </li>
                   </ul>
@@ -599,7 +597,7 @@ const PlantDiagnosisPage = () => {
                       <form onSubmit={handleSubmit}>
                         <div className="mb-3">
                           <label className="form-label fw-semibold text-success">
-                            1. Chọn ảnh cây trồng
+                            1. CHỌỌN ẢNH CÂY TRỒNG
                           </label>
                           <input
                             type="file"
@@ -691,7 +689,7 @@ const PlantDiagnosisPage = () => {
                       <form onSubmit={handleTextDiagnose}>
                         <div className="mb-3">
                           <label className="form-label fw-semibold text-primary">
-                            Mô tả triệu chứng
+                            MÔ TẢ TRIỆU CHỨNG
                           </label>
                           <textarea
                             className="form-control"
@@ -773,7 +771,7 @@ const PlantDiagnosisPage = () => {
                   <div className="d-flex align-items-center justify-content-between mb-3">
                     <h4 className="mb-0 text-primary">
                       <i className="bi bi-bar-chart-line-fill me-2"></i>
-                      Kết quả chẩn đoán
+                      KẾT QUẢ CHẨN ĐOÁN
                     </h4>
                     <span className="badge bg-light text-secondary small">
                       Real-time từ Plant.id &amp; FarmHub AI
@@ -785,13 +783,14 @@ const PlantDiagnosisPage = () => {
                     <div className="text-center text-muted py-4">
                       <i className="bi bi-search-heart fs-1 mb-2 d-block"></i>
                       <p className="mb-1">
-                        Hãy chọn 1 trong 2 chế độ bên trái để bắt đầu chẩn đoán.
+                        HÃY CHỌỌN 1 TRONG 2 CHẾ ĐỘ BÊN TRÁI ĐỂ BẮT ĐẦU CHẨN
+                        ĐOÁN.
                       </p>
                       <small>
-                        • Ảnh: phù hợp khi bạn muốn AI nhận diện bệnh theo hình
-                        ảnh.
-                        <br />• Mô tả: dùng khi bạn chưa kịp chụp ảnh hoặc cần
-                        hỏi nhanh.
+                        • ẢNH: PHÙ HỢP KHI BẠN MUỐN AI NHẬN DIỆN BỆNH THEO HÌNH
+                        ẢNH.
+                        <br />• MÔ TẢ: DÙNG KHI BẠN CHƯA KỊP CHỤP ẢNH HOẶC CẦN
+                        HỊI NHANH.
                       </small>
                     </div>
                   )}
@@ -817,7 +816,7 @@ const PlantDiagnosisPage = () => {
                           <section className="mb-3">
                             <h5 className="border-bottom pb-2 text-info d-flex align-items-center">
                               <i className="bi bi-flower1 me-2"></i>
-                              Nhận diện cây
+                              NHẬN DIỆN CÂY
                             </h5>
 
                             {suggestions.length === 0 && (
@@ -907,7 +906,7 @@ const PlantDiagnosisPage = () => {
                           <section className="mt-3">
                             <h5 className="border-bottom pb-2 text-danger d-flex align-items-center">
                               <i className="bi bi-virus me-2"></i>
-                              Đánh giá sức khỏe & bệnh hại
+                              ĐÁNH GIÁ SỨC KHỎE & BỆNH HẠI
                             </h5>
                             {renderHealthIssues()}
                           </section>
@@ -921,7 +920,7 @@ const PlantDiagnosisPage = () => {
                     <section className="mt-4">
                       <h5 className="border-bottom pb-2 text-secondary d-flex align-items-center">
                         <i className="bi bi-chat-square-text me-2"></i>
-                        Kết quả từ mô tả bằng chữ (AI)
+                        KẾT QUẢ TỪ MÔ TẢ BẰNG CHỮ (AI)
                       </h5>
 
                       {!textResult && (
@@ -947,7 +946,7 @@ const PlantDiagnosisPage = () => {
                               <div className="mb-2">
                                 <h6 className="fw-bold text-danger mb-1">
                                   <i className="bi bi-bug me-1"></i>
-                                  Các khả năng bệnh:
+                                  CÁC KHẢ NĂNG BỆNH:
                                 </h6>
                                 <ul className="small mb-1">
                                   {textResult.aiAdvice.possibleDiseases.map(
@@ -969,24 +968,24 @@ const PlantDiagnosisPage = () => {
                             <div className="mb-2">
                               <h6 className="fw-bold text-success mb-1">
                                 <i className="bi bi-list-check me-1"></i>
-                                Việc nên làm:
+                                VIỆC NÊN LÀM:
                               </h6>
                               <ul className="small mb-1">
                                 {textResult.aiAdvice.actions.today && (
                                   <li>
-                                    <strong>Hôm nay:</strong>{" "}
+                                    <strong>HÔM NAY:</strong>{" "}
                                     {textResult.aiAdvice.actions.today}
                                   </li>
                                 )}
                                 {textResult.aiAdvice.actions.next_3_7_days && (
                                   <li>
-                                    <strong>3–7 ngày tới:</strong>{" "}
+                                    <strong>3–7 NGÀY TỚI:</strong>{" "}
                                     {textResult.aiAdvice.actions.next_3_7_days}
                                   </li>
                                 )}
                                 {textResult.aiAdvice.actions.monitor && (
                                   <li>
-                                    <strong>Cần theo dõi:</strong>{" "}
+                                    <strong>CẦN THEO DÕI:</strong>{" "}
                                     {textResult.aiAdvice.actions.monitor}
                                   </li>
                                 )}
