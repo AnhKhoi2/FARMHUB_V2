@@ -76,6 +76,7 @@ import CollectionDetail from "../pages/farmer/CollectionDetail";
 
 // Farmer Pages - Diseases
 import Diseases from "../pages/farmer/Diseases";
+import DiseaseDetail from "../pages/farmer/DiseaseDetail";
 
 // Expert nested routes
 import ExpertRoutes from "./expert/ExpertRoutes.jsx";
@@ -542,6 +543,14 @@ export default function AppRoutes() {
           element={
             <PrivateRoute>
               <Diseases />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/diseases/:id"
+          element={
+            <PrivateRoute>
+              <DiseaseDetail />
             </PrivateRoute>
           }
         />

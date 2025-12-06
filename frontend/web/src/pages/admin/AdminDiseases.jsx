@@ -6,7 +6,7 @@ import axiosClient from "../../api/shared/axiosClient";
 import "../../css/admin/AdminDiseases.css";
 import { toast, Toaster } from 'react-hot-toast';
 import { showError, showSuccess, extractErrorMessage } from '../../utils/notify';
-import { FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiX } from 'react-icons/fi';
 import { PlusOutlined, InboxOutlined } from '@ant-design/icons';
 import { Button, Space } from 'antd';
 
@@ -22,22 +22,49 @@ export default function AdminDiseases() {
   const [showEdit, setShowEdit] = useState(false);
   const [current, setCurrent] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSeverity, setSelectedSeverity] = useState("");
 
   const fetchItems = async (p = page) => {
     setLoading(true);
     try {
       console.log("Fetching diseases...");
-      const res = await axiosClient.get(`/admin/diseases?limit=${limit}&page=${p}`);
+      // Fetch all items first, then filter on frontend
+      let query = `limit=1000`; // Get all items
+      if (searchTerm) query += `&q=${encodeURIComponent(searchTerm)}`;
+      
+      const res = await axiosClient.get(`/admin/diseases?${query}`);
       console.log("Diseases response:", res.data);
       
       // Response structure: { success: true, data: { items: [...], total: ..., page: ..., limit: ... } }
-      const items = res.data?.data?.items || [];
-      const tot = res.data?.data?.total || 0;
-      const currentPage = res.data?.data?.page || p;
-      console.log("Diseases items:", items, { tot, currentPage });
-      setItems(items);
+      let allItems = res.data?.data?.items || [];
+      
+      // Filter by category
+      if (selectedCategory) {
+        allItems = allItems.filter(item => {
+          if (!item.category) return false;
+          return String(item.category).toLowerCase() === String(selectedCategory).toLowerCase() ||
+                 String(item.category) === String(selectedCategory);
+        });
+      }
+      
+      // Filter by severity
+      if (selectedSeverity) {
+        allItems = allItems.filter(item => item.severity === selectedSeverity);
+      }
+      
+      // Pagination on filtered items
+      const tot = allItems.length;
+      const skip = (p - 1) * limit;
+      const paginatedItems = allItems.slice(skip, skip + limit);
+      
+      console.log("Filtered items:", { total: tot, page: p, showing: paginatedItems.length });
+      setItems(paginatedItems);
       setTotal(tot);
-      setPage(Number(currentPage));
+      setPage(Number(p));
     } catch (err) {
       console.error("Error fetching diseases:", err);
       console.error("Error response:", err.response?.data);
@@ -59,7 +86,14 @@ export default function AdminDiseases() {
   };
 
   useEffect(() => { fetchCategories(); }, []);
-  useEffect(() => { fetchItems(page); }, [page]);
+  
+  useEffect(() => { 
+    setPage(1); // Reset to page 1 when filters change
+  }, [searchTerm, selectedCategory, selectedSeverity]);
+  
+  useEffect(() => {
+    fetchItems(page);
+  }, [page, searchTerm, selectedCategory, selectedSeverity]);
 
   const handleCreate = async (payload) => {
     try {
@@ -129,6 +163,77 @@ export default function AdminDiseases() {
               </Button>
             </Space>
           </div>
+        </div>
+
+        {/* Search and Filter Bar */}
+        <div className="d-flex align-items-center mb-3" style={{ gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <input
+              className="form-control form-control-sm"
+              placeholder="Tìm kiếm theo tên bệnh..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: 240, minWidth: 180 }}
+            />
+            <button
+              className="btn btn-sm"
+              title="Xóa tìm kiếm"
+              onClick={() => setSearchTerm("")}
+              style={{
+                padding: 0,
+                width: 28,
+                height: 28,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 4,
+                border: '1px solid #ced4da',
+                background: '#fff'
+              }}
+              aria-label="clear-search"
+            >
+              <FiX size={14} />
+            </button>
+          </div>
+          
+          <select
+            className="form-select form-select-sm"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            style={{ width: 180, minWidth: 160 }}
+          >
+            <option value="">-- Danh mục --</option>
+            {categories.map(cat => (
+              <option key={cat._id} value={cat.slug || cat.name}>{cat.name}</option>
+            ))}
+          </select>
+          
+          <select
+            className="form-select form-select-sm"
+            value={selectedSeverity}
+            onChange={(e) => setSelectedSeverity(e.target.value)}
+            style={{ width: 140, minWidth: 120 }}
+          >
+            <option value="">-- Mức độ --</option>
+            <option value="low">Nhẹ</option>
+            <option value="medium">Trung bình</option>
+            <option value="high">Cao</option>
+          </select>
+          
+          {(searchTerm || selectedCategory || selectedSeverity) && (
+            <button
+              className="btn btn-outline-secondary btn-sm"
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedCategory("");
+                setSelectedSeverity("");
+              }}
+              title="Xóa tất cả bộ lọc"
+              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+            >
+              Xóa lọc
+            </button>
+          )}
         </div>
 
         <div className="table-responsive bg-white shadow-sm rounded border">
@@ -327,8 +432,34 @@ function DiseaseModal({ title, initial = {}, onClose, onSubmit, categories = [] 
         </div>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-sm btn-secondary" onClick={onClose}>Hủy</button>
-        <button className="btn btn-sm btn-primary" onClick={submit}>Lưu</button>
+        <button 
+          className="btn btn-sm" 
+          onClick={onClose}
+          style={{ 
+            backgroundColor: '#6c757d', 
+            border: 'none', 
+            color: 'white',
+            padding: '0.5rem 1.5rem',
+            borderRadius: '8px',
+            fontWeight: '500'
+          }}
+        >
+          Hủy
+        </button>
+        <button 
+          className="btn btn-sm" 
+          onClick={submit}
+          style={{ 
+            background: 'linear-gradient(135deg, #2ecc71, #27ae60)', 
+            border: 'none', 
+            color: 'white',
+            padding: '0.5rem 1.5rem',
+            borderRadius: '8px',
+            fontWeight: '500'
+          }}
+        >
+          Lưu
+        </button>
       </div>
     </div>
   );

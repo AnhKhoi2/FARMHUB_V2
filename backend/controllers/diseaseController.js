@@ -72,6 +72,13 @@ export const diseaseController = {
     return ok(res, d);
   }),
 
+  // Public get by ID (no admin required)
+  publicGetById: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const d = await Disease.findOne({ _id: id, isDeleted: false });
+    return ok(res, d);
+  }),
+
   update: asyncHandler(async (req, res) => {
     const { id } = req.params;
     const data = { ...req.body };
