@@ -1,0 +1,259 @@
+.disease-detail-page {
+  min-height: calc(100vh - 200px);
+  background: linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 100%);
+  padding-bottom: 2rem;
+  position: relative;
+}
+
+/* Back button */
+.btn-back {
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(102, 187, 106, 0.6);
+  color: #43a047 !important;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-back span {
+  color: inherit;
+  display: inline-block;
+  line-height: 1;
+}
+
+.btn-back svg {
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.btn-back:hover {
+  background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
+  border-color: transparent;
+  color: #ffffff !important;
+  transform: translateX(-5px);
+  box-shadow: 0 6px 20px rgba(102, 187, 106, 0.4);
+}
+
+.btn-back:hover span,
+.btn-back:hover svg {
+  color: #ffffff;
+}
+
+.btn-back:active {
+  transform: translateX(-5px) scale(0.95);
+}
+
+.disease-detail-page .card {
+  border-radius: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+  overflow: hidden;
+}
+
+.disease-detail-page .card:hover {
+  transform: translateY(-4px);
+}
+
+.disease-detail-page .shadow-sm {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+.disease-detail-page .card:hover.shadow-sm {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Disease Icon Circle */
+.disease-icon-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(102, 187, 106, 0.4);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.disease-icon-circle::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
+  top: 0;
+  left: 0;
+}
+
+/* Typography */
+.disease-detail-page h1,
+.disease-detail-page h3,
+.disease-detail-page h5,
+.disease-detail-page h6 {
+  color: #212529;
+  font-weight: 600;
+}
+
+.disease-detail-page h1 {
+  font-size: 1.75rem;
+  line-height: 1.3;
+}
+
+/* Badges */
+.disease-detail-page .badge {
+  font-weight: 500;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.disease-detail-page .badge:hover {
+  transform: scale(1.05);
+}
+
+.disease-detail-page .badge.border {
+  border: 2px solid #dee2e6 !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.disease-detail-page .badge.bg-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* Description Section */
+.description-section {
+  background: linear-gradient(135deg, rgba(102, 187, 106, 0.08) 0%, rgba(129, 199, 132, 0.08) 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  border-left: 5px solid #66bb6a;
+  position: relative;
+  overflow: hidden;
+}
+
+.description-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(102, 187, 106, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+}
+
+.description-section h5 {
+  font-size: 1.15rem;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Quick Stats */
+.quick-stats {
+  font-size: 0.95rem;
+}
+
+.quick-stats .stat-item {
+  transition: all 0.2s ease;
+  padding: 0.75rem 0;
+}
+
+.quick-stats .stat-item:hover {
+  padding-left: 0.5rem;
+  background: linear-gradient(90deg, rgba(102, 187, 106, 0.08) 0%, transparent 100%);
+  border-radius: 6px;
+}
+
+.quick-stats .stat-item:last-child {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Buttons */
+.disease-detail-page .btn-outline-success {
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 2px solid #28a745;
+  transition: all 0.2s ease;
+}
+
+.disease-detail-page .btn-outline-success:hover {
+  background-color: #28a745;
+  border-color: #28a745;
+  transform: translateX(-3px);
+}
+
+.disease-detail-page .btn-success {
+  padding: 0.75rem 2.5rem;
+  font-weight: 500;
+  border: none;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.disease-detail-page .btn-success:hover {
+  background: linear-gradient(135deg, #218838 0%, #1fa886 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+}
+
+/* Plant Types Section */
+.disease-detail-page .card-body h6 {
+  font-size: 1rem;
+  color: #495057;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .disease-detail-page .col-lg-4 .card:first-child {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .disease-icon-circle {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .disease-icon-circle svg {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .disease-detail-page h1 {
+    font-size: 1.5rem;
+  }
+  
+  .disease-detail-page .btn-success {
+    padding: 0.65rem 2rem;
+    font-size: 0.95rem;
+  }
+  
+  .description-section {
+    padding: 1rem;
+  }
+  
+  .disease-detail-page .card-body {
+    padding: 1.5rem !important;
+  }
+}

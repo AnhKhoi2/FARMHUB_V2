@@ -76,6 +76,7 @@ import CollectionDetail from "../pages/farmer/CollectionDetail";
 
 // Farmer Pages - Diseases
 import Diseases from "../pages/farmer/Diseases";
+import DiseaseDetail from "../pages/farmer/DiseaseDetail";
 
 // Expert nested routes
 import ExpertRoutes from "./expert/ExpertRoutes.jsx";
@@ -91,7 +92,6 @@ import AdminDetailGuides from "../pages/admin/AdminDetailGuides.jsx";
 import PlantCarePricing from "../pages/Subscription/PlantCarePricing";
 import PaymentSuccess from "../pages/Subscription/PaymentSuccess";
 import PaymentFailed from "../pages/Subscription/PaymentFailed";
-import { ToastContainer } from "react-toastify";
 
 export default function AppRoutes() {
   function ChatWrapper() {
@@ -547,6 +547,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/diseases/:id"
+          element={
+            <PrivateRoute>
+              <DiseaseDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/farmer/streak"
           element={
             <PrivateRoute>
@@ -572,8 +580,6 @@ export default function AppRoutes() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-            <ToastContainer />
-
       {/* Global AI chat widget (floating) - hidden on /admin */}
       <ChatWrapper />
     </BrowserRouter>
