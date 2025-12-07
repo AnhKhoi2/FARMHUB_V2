@@ -162,6 +162,40 @@ export const sendObservationRequiredNotification = async ({
 };
 
 /**
+ * Gửi thông báo khi notebook hoàn thành 100%
+ */
+export const sendNotebookCompletedNotification = async ({
+  userId,
+  notebookId,
+  notebookName,
+  plantType,
+  totalDays,
+}) => {
+  const title = `🎉 Chúc mừng! Hoàn thành nhật ký: ${notebookName}`;
+  const message = `Xuất sắc! Bạn đã hoàn thành toàn bộ quá trình trồng ${plantType} sau ${totalDays} ngày chăm sóc. Hãy xem lại kết quả và chia sẻ kinh nghiệm nhé!`;
+
+  const notification = await Notification.create({
+    user_id: userId,
+    notebook_id: notebookId,
+    type: "notebook_completed",
+    title,
+    message,
+    metadata: {
+      notebook_name: notebookName,
+      plant_type: plantType,
+      total_days: totalDays,
+      completed_at: new Date(),
+    },
+  });
+
+  console.log(
+    `🎊 Sent notebook_completed notification to user ${userId} for notebook ${notebookId}`
+  );
+
+  return notification;
+};
+
+/**
  * Gửi thông báo khi user nâng cấp subscription thành công
  */
 export const sendSubscriptionUpgradeNotification = async ({

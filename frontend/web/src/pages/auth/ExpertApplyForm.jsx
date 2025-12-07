@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import expertApplicationApi from "../../api/shared/expertApplicationApi.js";
 import axiosClient from "../../api/shared/axiosClient.js";
+import { profileApi } from "../../api/shared/profileApi.js"; // dùng để sync profile
 
 // add CSS import
 import "../../css/auth/ExpertApplyForm.css";
@@ -88,24 +89,29 @@ export default function ExpertApplyForm() {
     // Họ tên bắt buộc + max length 50
     if (!form.full_name || !form.full_name.trim()) {
       errors.full_name = "Họ và tên là bắt buộc.";
-    } else if (form.full_name.trim().length > 50) {
-      errors.full_name = "Họ và tên tối đa 50 ký tự.";
+    } else if (form.full_name.trim().length > 20) {
+      errors.full_name = "Họ và tên tối đa 20 ký tự.";
     }
 
-    // Lĩnh vực chuyên môn bắt buộc
+    // Lĩnh vực chuyên môn: BẮT BUỘC + tối đa 50 ký tự
     if (!form.expertise_area || !form.expertise_area.trim()) {
       errors.expertise_area = "Lĩnh vực chuyên môn là bắt buộc.";
+    } else if (form.expertise_area.trim().length > 50) {
+      errors.expertise_area = "Lĩnh vực chuyên môn tối đa 50 ký tự.";
     }
 
     // Số năm kinh nghiệm >= 0
     const exp = Number(form.experience_years);
-    if (Number.isNaN(exp) || exp < 0) {
-      errors.experience_years = "Số năm kinh nghiệm phải ≥ 0.";
+    if (Number.isNaN(exp) || exp <= 0) {
+      errors.experience_years = "Số năm kinh nghiệm phải > 0.";
     }
 
-    // Số điện thoại: nếu có thì phải đúng pattern VN
-    if (form.phone_number && form.phone_number.trim()) {
+    // Số điện thoại: BẮT BUỘC + đúng pattern VN
+    if (!form.phone_number || !form.phone_number.trim()) {
+      errors.phone_number = "Số điện thoại là bắt buộc.";
+    } else {
       const phone = form.phone_number.trim();
+      // 0 + 9 số hoặc +84 + 9 số
       const phoneRegex = /^((0\d{9})|(\+84\d{9}))$/;
       if (!phoneRegex.test(phone)) {
         errors.phone_number =
@@ -118,8 +124,7 @@ export default function ExpertApplyForm() {
       errors.description = "Giới thiệu tối đa 250 ký tự.";
     }
 
-    // Certificates: no per-item length validation (removed as requested)
-    // keep basic structure check
+    // Certificates: no per-item length validation
     if (!Array.isArray(form.certificates)) {
       errors.certificates = "Chứng chỉ phải là một mảng.";
     }
@@ -205,6 +210,23 @@ export default function ExpertApplyForm() {
         data?.message || "Đã gửi đơn đăng ký chuyên gia thành công!"
       );
 
+      // ✅ 3.1) Sync số điện thoại + fullName sang Profile
+      const profileUpdate = {};
+      if (body.phone_number && body.phone_number.trim()) {
+        profileUpdate.phone = body.phone_number.trim();
+      }
+      if (body.full_name && body.full_name.trim()) {
+        profileUpdate.fullName = body.full_name.trim();
+      }
+      if (Object.keys(profileUpdate).length > 0) {
+        try {
+          await profileApi.updateProfile(profileUpdate);
+        } catch (syncErr) {
+          console.error("Sync profile (phone/fullName) failed:", syncErr);
+          // không toast lỗi để tránh làm người dùng rối
+        }
+      }
+
       // 4) Reset form + mở popup thông báo
       resetForm();
       setSuccessModalOpen(true);
@@ -218,25 +240,24 @@ export default function ExpertApplyForm() {
       if (status === 422) {
         const errs = data?.errors || {};
         setFieldErrors(errs);
-        toast.error(
-          data?.message || "Vui lòng kiểm tra lại các thông tin."
-        );
+        toast.error(data?.message || "Vui lòng kiểm tra lại các thông tin.");
         return;
       }
 
       // 409: đã có đơn pending
       if (status === 409) {
-        toast.error(
-          data?.message || "Bạn đã có đơn đăng ký đang chờ duyệt."
-        );
+        if (data?.field === "phone_number") {
+          setFieldErrors({ phone_number: data.message });
+          toast.error(data.message);
+        } else {
+          toast.error(data?.message || "Bạn đã có đơn đăng ký đang chờ duyệt.");
+        }
         return;
       }
 
       // 400 | 404: request sai / không tìm thấy
       if (status === 400 || status === 404) {
-        toast.error(
-          data?.error || data?.message || "Yêu cầu không hợp lệ."
-        );
+        toast.error(data?.error || data?.message || "Yêu cầu không hợp lệ.");
         return;
       }
 
@@ -247,9 +268,7 @@ export default function ExpertApplyForm() {
       }
 
       // fallback
-      toast.error(
-        data?.error || data?.message || "Gửi đơn thất bại."
-      );
+      toast.error(data?.error || data?.message || "Gửi đơn thất bại.");
     } finally {
       setSubmitting(false);
     }
@@ -363,20 +382,29 @@ export default function ExpertApplyForm() {
               {i === form.certificates.length - 1 && (
                 <button
                   type="button"
-                  className="btn btn-outline-primary"
-                  onClick={addCertField}
+                  className="btn btn-outline-danger"
+                  onClick={() => removeCertField(i)}
+                  disabled={form.certificates.length === 1}
                 >
-                  +
+                  −
                 </button>
-              )}
-            </div>
-          ))}
-          {fieldErrors.certificates && (
-            <div className="text-danger small mt-1">
-              {fieldErrors.certificates}
-            </div>
-          )}
-        </div>
+                {i === form.certificates.length - 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary"
+                    onClick={addCertField}
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+            ))}
+            {fieldErrors.certificates && (
+              <div className="text-danger small mt-1">
+                {fieldErrors.certificates}
+              </div>
+            )}
+          </div>
 
         {/* Upload chứng chỉ (file) */}
         <div className="mb-3">
@@ -392,14 +420,6 @@ export default function ExpertApplyForm() {
             Bạn có thể chọn nhiều file (PDF, ảnh...). Hệ thống sẽ tự tải lên và
             lưu liên kết chứng chỉ.
           </div>
-          {certFiles.length > 0 && (
-            <ul className="mt-2 small">
-              {certFiles.map((f, idx) => (
-                <li key={idx}>{f.name}</li>
-              ))}
-            </ul>
-          )}
-        </div>
 
         <div className="form-actions">
           <button

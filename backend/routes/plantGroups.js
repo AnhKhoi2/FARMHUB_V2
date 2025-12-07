@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import PlantGroup from "../models/PlantGroup.js";
-import { verifyToken, requireAdmin } from "../middlewares/authMiddleware.js";
+import { verifyToken, requireAdmin, requireRoles } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -55,24 +55,39 @@ router.get("/", async (req, res) => {
 });
 
 // Admin: create a plant group
-router.post("/", verifyToken, requireAdmin, async (req, res) => {
+router.post("/", verifyToken, requireRoles(["admin","expert"]), async (req, res) => {
   try {
     const { name, slug, description, plants } = req.body;
-    if (!name || !slug)
+    if (!name)
       return res
         .status(400)
-        .json({ success: false, message: "Missing name or slug" });
-    const existing = await PlantGroup.findOne({ slug });
-    if (existing)
-      return res
-        .status(409)
-        .json({ success: false, message: "Slug already exists" });
-    const pg = await PlantGroup.create({
-      name,
-      slug,
-      description,
-      plants: plants || [],
-    });
+        .json({ success: false, message: "Missing name" });
+
+    // If client provided a slug, check for conflicts early to give a clear error.
+    if (slug) {
+      const existing = await PlantGroup.findOne({ slug });
+      if (existing)
+        return res
+          .status(409)
+          .json({ success: false, message: "Slug already exists" });
+    }
+
+    // Let the model handle slug generation/normalization when slug is absent.
+    let pg;
+    try {
+      pg = await PlantGroup.create({
+        name,
+        slug,
+        description,
+        plants: plants || [],
+      });
+    } catch (e) {
+      // Handle duplicate key errors that may race or come from unique index
+      if (e && e.code === 11000) {
+        return res.status(409).json({ success: false, message: 'Slug already exists' });
+      }
+      throw e;
+    }
     return res.json({ success: true, data: pg });
   } catch (err) {
     console.error("POST /api/plant-groups error", err);

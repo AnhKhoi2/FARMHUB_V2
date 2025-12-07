@@ -53,3 +53,18 @@
   background-color: #FFFFFF;
   border: 1px solid #E0E0E0; /* Neutral Gray */
 }
+.glass-box {
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: 0.3s;
+  border-radius: 16px;
+  background: "red";
+}
+
+.glass-box:hover {
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(14px);
+}

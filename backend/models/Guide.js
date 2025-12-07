@@ -24,16 +24,7 @@ const GuideSchema = new mongoose.Schema(
     // Plant group for mapping with PlantTemplate
     plant_group: {
       type: String,
-      enum: [
-        "leaf_vegetable",
-        "root_vegetable",
-        "fruit_short_term",
-        "fruit_long_term",
-        "bean_family",
-        "herb",
-        "flower_vegetable",
-        "other",
-      ],
+
       default: "other",
       index: true,
     },

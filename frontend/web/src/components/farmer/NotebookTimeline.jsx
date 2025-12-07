@@ -51,7 +51,7 @@ const NotebookTimeline = ({ notebookId }) => {
   return (
     <div className="notebook-timeline">
       <div className="timeline-header">
-        <h3>🌱 Tiến trình trồng trọt</h3>
+        <h3>🌱 TIẾN TRÌNH TRỒNG TRỌT</h3>
         <div className="timeline-stats">
           <span>
             Ngày {timeline.current_day} / {timeline.total_days}
@@ -80,16 +80,16 @@ const NotebookTimeline = ({ notebookId }) => {
 
             <div className="stage-content">
               <div className="stage-header">
-                <h4>{stage.stage_name}</h4>
+                <h4>{(stage.stage_name || "").toUpperCase()}</h4>
                 <span className="stage-duration">
-                  {stage.duration_days} ngày (Ngày {stage.start_day} -{" "}
+                  {stage.duration_days} NGÀY (NGÀY {stage.start_day} -{" "}
                   {stage.end_day})
                 </span>
               </div>
 
               <div className="stage-dates">
                 <p>
-                  <strong>📅 Bắt đầu:</strong>{" "}
+                  <strong>📅 BẮT ĐẦU:</strong>{" "}
                   {stage.stage_start_date
                     ? // backend provides YYYY-MM-DD string already normalized to VN timezone
                       formatVietnamLocale(stage.stage_start_date)
@@ -98,7 +98,7 @@ const NotebookTimeline = ({ notebookId }) => {
                     : "-"}
                 </p>
                 <p>
-                  <strong>✅ Hoàn thành:</strong>{" "}
+                  <strong>✅ HOÀN THÀNH:</strong>{" "}
                   {stage.stage_end_date
                     ? formatVietnamLocale(stage.stage_end_date)
                     : stage.completed_at
@@ -117,12 +117,12 @@ const NotebookTimeline = ({ notebookId }) => {
         ))}
       </div>
 
-      <div className="timeline-footer">
+      {/* <div className="timeline-footer">
         <p>
           <strong>Ngày trồng:</strong>{" "}
           {formatVietnamLocale(timeline.planted_date)}
         </p>
-      </div>
+      </div> */}
     </div>
   );
 };

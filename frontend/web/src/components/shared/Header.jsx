@@ -110,13 +110,18 @@ const Header = () => {
   };
 
   // compute a safe avatar src once so header uses same source everywhere
-  const DEFAULT_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="%23f8faf5"/><circle cx="40" cy="30" r="20" fill="%23e6f4ea"/><circle cx="40" cy="30" r="14" fill="%23ffffff"/><rect x="12" y="54" width="56" height="8" rx="4" fill="%23ffffff"/></svg>';
+  const DEFAULT_AVATAR =
+    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="%23f8faf5"/><circle cx="40" cy="30" r="20" fill="%23e6f4ea"/><circle cx="40" cy="30" r="14" fill="%23ffffff"/><rect x="12" y="54" width="56" height="8" rx="4" fill="%23ffffff"/></svg>';
   let avatarSrcComputed = null;
   try {
-    const raw = (user && user.profile && user.profile.avatar) || user?.avatar || null;
+    const raw =
+      (user && user.profile && user.profile.avatar) || user?.avatar || null;
     let avatarSrc = raw;
     if (avatarSrc && avatarSrc.startsWith("/")) {
-      const base = (axiosClient && axiosClient.defaults && axiosClient.defaults.baseURL) || window.location.origin || "";
+      const base =
+        (axiosClient && axiosClient.defaults && axiosClient.defaults.baseURL) ||
+        window.location.origin ||
+        "";
       avatarSrc = base.replace(/\/$/, "") + avatarSrc;
     }
     if (avatarSrc && avatarSrc.startsWith("//")) {
@@ -182,7 +187,7 @@ const Header = () => {
                   className="dropdown-toggle"
                   onClick={() => window.innerWidth < 992 && toggleSubmenu()}
                 >
-                  Nhật Ký
+                  Sổ tay
                 </span>
 
                 <ul
@@ -191,10 +196,10 @@ const Header = () => {
                   }`}
                 >
                   <li>
-                    <Link to="/farmer/notebooks">Nhật ký cơ bản</Link>
+                    <Link to="/farmer/notebooks">Sổ tay cơ bản</Link>
                   </li>
                   <li>
-                    <Link to="/farmer/notebooks/stats">Thống kê nhật ký</Link>
+                    <Link to="/farmer/notebooks/stats">Thống kê sổ tay</Link>
                   </li>
                   <li>
                     <Link to="/farmer/collections">Bộ sưu tập</Link>
@@ -246,31 +251,31 @@ const Header = () => {
               <li className="user-menu">
                 {user ? (
                   <div className="user-dropdown">
-                        <div
-                          className="user-info"
-                          onClick={handleToggleUserDropdown}
-                          title={user?.username || user?.email}
-                        >
-                          <img
-                            src={avatarSrcComputed || DEFAULT_AVATAR}
-                            alt="Avatar"
-                            className="avatar"
-                            onError={(e) => {
-                              try {
-                                const el = e.currentTarget;
-                                if (!el.dataset.retry) {
-                                  el.dataset.retry = "1";
-                                  const src = el.src || "";
-                                  el.src = src.split("?")[0] + "?v=" + Date.now();
-                                } else {
-                                  el.src = DEFAULT_AVATAR;
-                                }
-                              } catch (err) {
-                                e.currentTarget.src = DEFAULT_AVATAR;
-                              }
-                            }}
-                          />
-                        </div>
+                    <div
+                      className="user-info"
+                      onClick={handleToggleUserDropdown}
+                      title={user?.username || user?.email}
+                    >
+                      <img
+                        src={avatarSrcComputed || DEFAULT_AVATAR}
+                        alt="Avatar"
+                        className="avatar"
+                        onError={(e) => {
+                          try {
+                            const el = e.currentTarget;
+                            if (!el.dataset.retry) {
+                              el.dataset.retry = "1";
+                              const src = el.src || "";
+                              el.src = src.split("?")[0] + "?v=" + Date.now();
+                            } else {
+                              el.src = DEFAULT_AVATAR;
+                            }
+                          } catch (err) {
+                            e.currentTarget.src = DEFAULT_AVATAR;
+                          }
+                        }}
+                      />
+                    </div>
 
                     <ul
                       className={`user-dropdown-menu ${
@@ -294,7 +299,12 @@ const Header = () => {
                           <img
                             src={avatarSrcComputed || DEFAULT_AVATAR}
                             alt="avatar"
-                            style={{ width: 36, height: 36, borderRadius: 18, objectFit: 'cover' }}
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 18,
+                              objectFit: "cover",
+                            }}
                           />
                           <div>
                             <div style={{ fontWeight: 700 }}>
@@ -315,24 +325,32 @@ const Header = () => {
                         </Link>
                       </li>
 
-                        <li>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              // open suggestion modal overlay and close dropdown
-                              setSuggestionMode("view");
-                              setSuggestionOpen(true);
-                              setDropdownOpen(false);
-                            }}
-                            style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, cursor: "pointer", color: "inherit" }}
+                      <li>
+                        <Link
+                          to="/urban-farming"
+                          onClick={() => setDropdownOpen(false)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: 0,
+                            textDecoration: "none",
+                            color: "inherit",
+                          }}
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
                           >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M12 2L15 8H9L12 2Z" fill="#0f7a3b" />
-                              <circle cx="12" cy="14" r="6" fill="#0f7a3b" />
-                            </svg>
-                            Gợi ý Model
-                          </button>
-                        </li>
+                            <path d="M12 2L15 8H9L12 2Z" fill="#0f7a3b" />
+                            <circle cx="12" cy="14" r="6" fill="#0f7a3b" />
+                          </svg>
+                          Gợi ý trồng trọt (AI)
+                        </Link>
+                      </li>
 
                       <li>
                         <button
@@ -368,7 +386,11 @@ const Header = () => {
           onClick={() => setMenuOpen(false)}
         />
       )}
-      <SuggestionModal open={suggestionOpen} mode={suggestionMode} onClose={() => setSuggestionOpen(false)} />
+      <SuggestionModal
+        open={suggestionOpen}
+        mode={suggestionMode}
+        onClose={() => setSuggestionOpen(false)}
+      />
     </>
   );
 };

@@ -4,6 +4,9 @@ import { toast } from 'react-toastify';
 import authApi from "../../api/shared/authApi.js";
 import "../../css/Auth.css";
 
+// ⬇️ Import Ionicons
+import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+
 export default function ResetPassword() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -13,7 +16,6 @@ export default function ResetPassword() {
   const { token } = useParams();
   const navigate = useNavigate();
 
-  // Regex giống backend: ≥8 ký tự, có chữ, số, ký tự đặc biệt
   const passwordRegex =
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
 
@@ -24,7 +26,7 @@ export default function ResetPassword() {
     if (/[A-Z]/.test(pw)) score++;
     if (/[0-9]/.test(pw)) score++;
     if (/[@$!%*#?&]/.test(pw)) score++;
-    return score; // 0..4
+    return score;
   };
 
   const handleSubmit = async (e) => {
@@ -56,22 +58,13 @@ export default function ResetPassword() {
         toast.error(
           'Liên kết đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu gửi lại email đặt lại mật khẩu.'
         );
-        setTimeout(() => {
-          navigate('/forgot-password');
-        }, 2500);
+        setTimeout(() => navigate('/forgot-password'), 2500);
       } else if (code === 'INVALID_TOKEN' || code === 'INVALID_TOKEN_PURPOSE') {
-        toast.error(
-          'Liên kết đặt lại mật khẩu không hợp lệ. Vui lòng yêu cầu gửi lại email mới.'
-        );
+        toast.error('Liên kết đặt lại mật khẩu không hợp lệ. Vui lòng yêu cầu email mới.');
       } else if (code === 'WEAK_PASSWORD') {
-        toast.error(
-          apiError?.message ||
-          'Mật khẩu không đáp ứng yêu cầu bảo mật. Vui lòng thử lại.'
-        );
+        toast.error(apiError?.message || 'Mật khẩu không đủ mạnh.');
       } else {
-        toast.error(
-          apiError?.message || 'Có lỗi xảy ra khi đặt lại mật khẩu. Vui lòng thử lại sau.'
-        );
+        toast.error(apiError?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
       }
     } finally {
       setLoading(false);
@@ -88,6 +81,8 @@ export default function ResetPassword() {
         <p className="reset-sub">Nhập mật khẩu mới — tối thiểu 8 ký tự, gồm chữ, số và ký tự đặc biệt.</p>
 
         <form onSubmit={handleSubmit} className="reset-form">
+          
+          {/* --- New password --- */}
           <label className="field-label" htmlFor="newPassword">Mật khẩu mới</label>
           <div className="field-row">
             <input
@@ -100,30 +95,21 @@ export default function ResetPassword() {
               minLength={8}
               aria-describedby="pw-help pw-strength"
             />
+
+            {/* ⬇️ ICON ĐÃ ĐỔI SANG IONICON */}
             <button
               type="button"
               className="pw-toggle"
               onClick={() => setShowNew(!showNew)}
-              aria-label={showNew ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              title={showNew ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
             >
               {showNew ? (
-                // eye-off
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M3 3l18 18" stroke="#114b2b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M10.58 10.58A3 3 0 0113.42 13.42" stroke="#114b2b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2.05 12.56C3.93 7.94 8.36 5 12 5c1.75 0 3.41.52 4.85 1.43" stroke="#114b2b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <IoEyeOffOutline size={22} color="#114b2b" />
               ) : (
-                // eye
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" stroke="#114b2b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="12" r="3" stroke="#114b2b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <IoEyeOutline size={22} color="#114b2b" />
               )}
-              <span className="visually-hidden">{showNew ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}</span>
             </button>
           </div>
+
           <div id="pw-help" className="hint">Ví dụ: Abc@1234</div>
 
           <div id="pw-strength" className="pw-strength">
@@ -131,6 +117,7 @@ export default function ResetPassword() {
             <div className="strength-label">Độ mạnh: {newPassword ? strengthLabel : '—'}</div>
           </div>
 
+          {/* --- Confirm password --- */}
           <label className="field-label" htmlFor="confirmPassword">Xác nhận mật khẩu</label>
           <div className="field-row">
             <input
@@ -142,33 +129,22 @@ export default function ResetPassword() {
               className="input-lg"
               minLength={8}
             />
+
+            {/* ⬇️ ICON ĐÃ ĐỔI SANG IONICON */}
             <button
               type="button"
               className="pw-toggle"
               onClick={() => setShowConfirm(!showConfirm)}
-              aria-label={showConfirm ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
-              title={showConfirm ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
             >
               {showConfirm ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M3 3l18 18" stroke="#114b2b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M10.58 10.58A3 3 0 0113.42 13.42" stroke="#114b2b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <IoEyeOffOutline size={22} color="#114b2b" />
               ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" stroke="#114b2b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="12" r="3" stroke="#114b2b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <IoEyeOutline size={22} color="#114b2b" />
               )}
-              <span className="visually-hidden">{showConfirm ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}</span>
             </button>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary-lg"
-          >
+          <button type="submit" disabled={loading} className="btn-primary-lg">
             {loading ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
           </button>
 
@@ -176,6 +152,7 @@ export default function ResetPassword() {
             <Link to="/forgot-password" className="link-help">Gửi lại yêu cầu đặt lại mật khẩu</Link>
             <Link to="/login" className="link-help">Quay lại đăng nhập</Link>
           </div>
+
         </form>
       </div>
     </div>

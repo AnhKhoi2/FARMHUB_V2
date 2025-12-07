@@ -348,13 +348,13 @@ const NotificationBell = () => {
                   notif.notebook_id &&
                   (notif.notebook_id._id || notif.notebook_id);
                 if (nid) {
-                  // Navigate to overdue detail for overdue and reminder types
+                  // Navigate to overdue tab for overdue and reminder types
                   if (
                     notif.type === "stage_overdue" ||
                     notif.type === "daily_reminder" ||
                     notif.type === "stage_reminder"
                   ) {
-                    link = `/farmer/notebooks/${nid}/overdue`;
+                    link = `/farmer/notebooks/${nid}?tab=overdue`;
                   } else if (notif.type === "observation_required") {
                     // Open notebook and switch to Observations tab
                     link = `/farmer/notebooks/${nid}?tab=observations`;

@@ -48,7 +48,7 @@ const CreateCollectionModal = ({ show, onClose, onSubmit }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h2>📚 Tạo bộ sưu tập mới</h2>
+          <h2>📚 TẠO BỘ SƯU TẬP MỚI</h2>
           <button className="btn-close-icon" onClick={onClose}>
             ×
           </button>
@@ -57,7 +57,7 @@ const CreateCollectionModal = ({ show, onClose, onSubmit }) => {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>
-              Tên bộ sưu tập <span className="required">*</span>
+              TÊN BỘ SƯU TẬP <span className="required">*</span>
             </label>
             <input
               type="text"
@@ -68,18 +68,18 @@ const CreateCollectionModal = ({ show, onClose, onSubmit }) => {
                   collection_name: e.target.value,
                 })
               }
-              placeholder="VD: Vườn rau nhà tôi"
+              placeholder="VD: VƯỜN RAU NHÀ TÔI"
               required
               maxLength={100}
               autoFocus
             />
             <small className="form-hint">
-              {formData.collection_name.length}/100 ký tự
+              {formData.collection_name.length}/100 KÝ TỰ
             </small>
           </div>
 
           <div className="form-group">
-            <label>Mô tả</label>
+            <label>MÔ TẢ</label>
             <textarea
               value={formData.description}
               onChange={(e) =>
@@ -88,19 +88,19 @@ const CreateCollectionModal = ({ show, onClose, onSubmit }) => {
                   description: e.target.value,
                 })
               }
-              placeholder="Mô tả về bộ sưu tập này..."
+              placeholder="MÔ TẢ VỀ BỘ SƯU TẬP NÀY..."
               maxLength={500}
               rows={4}
             />
             <small className="form-hint">
-              {formData.description.length}/500 ký tự
+              {formData.description.length}/500 KÝ TỰ
             </small>
           </div>
 
           {/* cover image URL and tags fields removed per request */}
 
           <div className="form-group">
-            <label>Ảnh bìa (tải từ máy)</label>
+            <label>ẢNH BÌA (TẢI TỪ MÁY)</label>
             <input type="file" accept="image/*" onChange={handleFileChange} />
             {previewUrl && (
               <div className="image-preview">
@@ -111,7 +111,7 @@ const CreateCollectionModal = ({ show, onClose, onSubmit }) => {
                     className="btn-remove-image"
                     onClick={handleRemoveImage}
                   >
-                    Xóa ảnh
+                    XÓA ẢNH
                   </button>
                 </div>
               </div>
@@ -120,10 +120,10 @@ const CreateCollectionModal = ({ show, onClose, onSubmit }) => {
 
           <div className="modal-actions">
             <button type="button" className="btn-cancel" onClick={onClose}>
-              Hủy
+              HỦY
             </button>
             <button type="submit" className="btn-submit">
-              Tạo bộ sưu tập
+              TẠO BỘ SƯU TẬP
             </button>
           </div>
         </form>

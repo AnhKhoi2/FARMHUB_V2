@@ -50,6 +50,18 @@ const userSchema = new mongoose.Schema(
       default: "free",
     },
     subscriptionExpires: { type: Date, default: null },
+
+    // giới hạn dùng aiTextDiagnose theo gói
+    aiTextDiagnoseUsage: {
+      monthKey: { type: String, default: null }, // dạng '2025-12'
+      count: { type: Number, default: 0 }, // số lần đã dùng trong tháng đó
+    },
+
+    // 🆕 giới hạn dùng chẩn đoán bằng ảnh theo gói
+    aiImageDiagnoseUsage: {
+      monthKey: { type: String, default: null }, // dạng '2025-12'
+      count: { type: Number, default: 0 }, // số lần đã dùng trong tháng đó
+    },
   },
   { timestamps: true }
 );

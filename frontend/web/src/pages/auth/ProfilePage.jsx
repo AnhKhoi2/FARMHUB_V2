@@ -96,7 +96,9 @@ function ChangePasswordModal({
         </button>
 
         <div className="mb-2">
-          <h2 className="text-xl font-semibold text-agri-primary">🔑 Đổi Mật Khẩu</h2>
+          <h2 className="text-xl font-semibold text-agri-primary">
+            🔑 Đổi Mật Khẩu
+          </h2>
         </div>
 
         <div className="grid gap-4">
@@ -131,7 +133,9 @@ function ChangePasswordModal({
             <input
               type="password"
               value={pwForm.confirmPassword}
-              onChange={(e) => handlePwChange("confirmPassword", e.target.value)}
+              onChange={(e) =>
+                handlePwChange("confirmPassword", e.target.value)
+              }
               className="agri-input"
             />
           </div>
@@ -152,7 +156,11 @@ function ChangePasswordModal({
             disabled={pwSaving}
             className="agri-btn-primary"
           >
-            {pwSaving ? "Đang xử lý…" : needsSetPassword ? "✨ Tạo mật khẩu" : "🔄 Đổi mật khẩu"}
+            {pwSaving
+              ? "Đang xử lý…"
+              : needsSetPassword
+              ? "✨ Tạo mật khẩu"
+              : "🔄 Đổi mật khẩu"}
           </button>
         </div>
       </div>
@@ -204,6 +212,17 @@ function ExpertApplicationModal({
     );
   }
 
+  const getApplyError = (path, applyFieldErrorsLocal) => {
+    if (!applyFieldErrorsLocal) return undefined;
+    if (applyFieldErrorsLocal[path]) return applyFieldErrorsLocal[path];
+    const dotKey = path.replace(/\[(\d+)\]/g, ".$1");
+    if (applyFieldErrorsLocal[dotKey]) return applyFieldErrorsLocal[dotKey];
+    const bracketKey = path.replace(/\.(\d+)/g, "[$1]");
+    if (applyFieldErrorsLocal[bracketKey])
+      return applyFieldErrorsLocal[bracketKey];
+    return undefined;
+  };
+
   return (
     <div
       className="fixed inset-0 z-[1000] bg-black bg-opacity-50 flex justify-center items-center p-4 overflow-y-auto"
@@ -232,6 +251,11 @@ function ExpertApplicationModal({
                 onChange={(e) => onApplyChange("full_name", e.target.value)}
                 className="agri-input"
               />
+              {getApplyError("full_name", applyFieldErrors) && (
+                <p className="text-sm text-red-600 mt-1">
+                  {getApplyError("full_name", applyFieldErrors)}
+                </p>
+              )}
             </div>
 
             <div>
@@ -239,9 +263,16 @@ function ExpertApplicationModal({
               <input
                 type="text"
                 value={applyForm.phone_number}
-                onChange={(e) => onApplyChange("phone_number", e.target.value)}
+                onChange={(e) =>
+                  onApplyChange("phone_number", e.target.value)
+                }
                 className="agri-input"
               />
+              {getApplyError("phone_number", applyFieldErrors) && (
+                <p className="text-sm text-red-600 mt-1">
+                  {getApplyError("phone_number", applyFieldErrors)}
+                </p>
+              )}
             </div>
           </div>
 
@@ -255,6 +286,11 @@ function ExpertApplicationModal({
               }
               className="agri-input"
             />
+            {getApplyError("expertise_area", applyFieldErrors) && (
+              <p className="text-sm text-red-600 mt-1">
+                {getApplyError("expertise_area", applyFieldErrors)}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -272,6 +308,11 @@ function ExpertApplicationModal({
                 }
                 className="agri-input"
               />
+              {getApplyError("experience_years", applyFieldErrors) && (
+                <p className="text-sm text-red-600 mt-1">
+                  {getApplyError("experience_years", applyFieldErrors)}
+                </p>
+              )}
             </div>
           </div>
 
@@ -280,27 +321,23 @@ function ExpertApplicationModal({
             <textarea
               rows={4}
               value={applyForm.description}
-              onChange={(e) =>
-                onApplyChange("description", e.target.value)
-              }
+              onChange={(e) => onApplyChange("description", e.target.value)}
               className="agri-input"
             />
+            {getApplyError("description", applyFieldErrors) && (
+              <p className="text-sm text-red-600 mt-1">
+                {getApplyError("description", applyFieldErrors)}
+              </p>
+            )}
           </div>
 
           <div>
             <label className="agri-label">Chứng chỉ / Portfolio (URL)</label>
             <div className="space-y-2">
               {applyForm.certificates.map((url, i) => {
-                const getErr = (p) => {
-                  if (!applyFieldErrors) return undefined;
-                  if (applyFieldErrors[p]) return applyFieldErrors[p];
-                  const dotKey = p.replace(/\[(\d+)\]/g, ".$1");
-                  if (applyFieldErrors[dotKey]) return applyFieldErrors[dotKey];
-                  const bracketKey = p.replace(/\.(\d+)/g, "[$1]");
-                  if (applyFieldErrors[bracketKey])
-                    return applyFieldErrors[bracketKey];
-                  return undefined;
-                };
+                const err =
+                  getApplyError(`certificates.${i}`, applyFieldErrors) ||
+                  getApplyError(`certificates[${i}]`, applyFieldErrors);
 
                 return (
                   <div key={i} className="flex gap-2">
@@ -319,12 +356,8 @@ function ExpertApplicationModal({
                         +
                       </button>
                     )}
-                    {getErr(`certificates.${i}`) ||
-                    getErr(`certificates[${i}]`) ? (
-                      <p className="text-sm text-red-600 w-full mt-1">
-                        {getErr(`certificates.${i}`) ||
-                          getErr(`certificates[${i}]`)}
-                      </p>
+                    {err ? (
+                      <p className="text-sm text-red-600 w-full mt-1">{err}</p>
                     ) : null}
                   </div>
                 );
@@ -399,15 +432,6 @@ export default function ProfilePage() {
     certificates: [""],
   });
   const [applyFieldErrors, setApplyFieldErrors] = useState({});
-  const getApplyError = (path) => {
-    if (!applyFieldErrors) return undefined;
-    if (applyFieldErrors[path]) return applyFieldErrors[path];
-    const dotKey = path.replace(/\[(\d+)\]/g, ".$1");
-    if (applyFieldErrors[dotKey]) return applyFieldErrors[dotKey];
-    const bracketKey = path.replace(/\.(\d+)/g, "[$1]");
-    if (applyFieldErrors[bracketKey]) return applyFieldErrors[bracketKey];
-    return undefined;
-  };
 
   const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -417,7 +441,6 @@ export default function ProfilePage() {
 
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
-  
 
   const handleAvatarSelect = (e) => {
     const f = e?.target?.files?.[0];
@@ -453,13 +476,11 @@ export default function ProfilePage() {
   const isDirty = useMemo(() => {
     try {
       if (pendingAvatarFile) return true; // chọn avatar => coi là dirty
-      return (
-        JSON.stringify(form || {}) !== JSON.stringify(snapshot || {})
-      );
+      return JSON.stringify(form || {}) !== JSON.stringify(snapshot || {});
     } catch {
       return true;
     }
-  }, [form, snapshot, pendingAvatarFile]); // ⚠️ thêm pendingAvatarFile vào đây
+  }, [form, snapshot, pendingAvatarFile]);
 
   const BADGE_META = {
     "hat-giong": { label: "Hạt Giống", emoji: "🌱" },
@@ -491,8 +512,13 @@ export default function ProfilePage() {
         setTotalPoints(payload.total_points || 0);
         setHasPassword(Boolean(payload.hasPassword));
 
+        // 🔹 fullName ưu tiên: profile.fullName → user.profile.name → user.username
         const profileData = {
-          fullName: payload.fullName || "",
+          fullName:
+            payload.fullName ||
+            payload.user?.profile?.name ||
+            payload.user?.username ||
+            "",
           avatar: payload.avatar || "",
           phone: payload.phone || "",
           dob: payload.dob || "",
@@ -528,8 +554,6 @@ export default function ProfilePage() {
     })();
   }, []);
 
-  
-
   /* =====================================================
      HANDLER PROFILE
   ===================================================== */
@@ -546,42 +570,157 @@ export default function ProfilePage() {
 
   function handleCancel() {
     if (snapshot) setForm(snapshot);
-    // reset file input and avatar preview when cancelling
     try {
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch {
       // ignore
     }
+    setPendingAvatarFile(null); // bỏ file tạm đi
     setEditMode(false);
   }
 
   async function handleSave() {
     setSaving(true);
     try {
-      // If user selected a new avatar file, upload it first
+      // =========================
+      // 1. VALIDATE CLIENT-SIDE
+      // =========================
+      const errors = {};
+
+      // SỐ ĐIỆN THOẠI: 10 số, bắt đầu bằng 0
+      const phoneValue = (form.phone || "").trim();
+      if (phoneValue) {
+        const phoneRegex = /^0\d{9}$/;
+        if (!phoneRegex.test(phoneValue)) {
+          errors.phone =
+            "Số điện thoại không đúng định dạng (phải gồm 10 số và bắt đầu bằng 0).";
+        }
+      }
+
+      // NGÀY SINH: không được hôm nay / tương lai, không được trong 9 năm đổ lại (tuổi < 10)
+      if (form.dob) {
+        const dt = new Date(form.dob);
+        if (Number.isNaN(dt.getTime())) {
+          errors.dob = "Ngày sinh không hợp lệ.";
+        } else {
+          const today = new Date();
+          const todayDateOnly = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate()
+          );
+          const dobDateOnly = new Date(
+            dt.getFullYear(),
+            dt.getMonth(),
+            dt.getDate()
+          );
+
+          if (dobDateOnly >= todayDateOnly) {
+            errors.dob = "Ngày sinh không được là ngày hiện tại hoặc tương lai.";
+          } else {
+            // hôm nay trừ 9 năm -> nếu dob > mốc này thì là trong 9 năm đổ lại
+            const nineYearsAgo = new Date(
+              todayDateOnly.getFullYear() - 9,
+              todayDateOnly.getMonth(),
+              todayDateOnly.getDate()
+            );
+            if (dobDateOnly > nineYearsAgo) {
+              errors.dob =
+                "Ngày sinh không được trong 9 năm đổ lại (người dùng phải từ 10 tuổi trở lên).";
+            }
+          }
+        }
+      }
+
+      // ĐỊA CHỈ: tối đa 150 ký tự
+      const addressVal = (form.address || "").trim();
+      if (addressVal.length > 150) {
+        errors.address = "Địa chỉ tối đa 150 ký tự.";
+      }
+
+      // GIỚI THIỆU: tối đa 150 ký tự
+      const bioVal = (form.bio || "").trim();
+      if (bioVal.length > 150) {
+        errors.bio = "Giới thiệu tối đa 150 ký tự.";
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        setSaving(false);
+        toast.error("Vui lòng kiểm tra lại các trường đã nhập.");
+        return;
+      }
+
+      // =========================
+      // 2. GỬI LÊN SERVER
+      // =========================
       const payload = { ...form };
       if (form.dob) payload.dob = new Date(form.dob).toISOString();
 
+      // ⭐ Nếu có chọn avatar mới → upload Cloudinary trước
       if (pendingAvatarFile) {
-        const fd = new FormData();
-        fd.append("image", pendingAvatarFile);
-        // Let axios set the Content-Type including boundary
-        const res = await axiosClient.post("/api/upload", fd);
-        const url = res?.data?.data?.url || res?.data?.url;
-        if (!url) throw new Error("Upload avatar thất bại");
-        // make absolute if needed
-        let full = url;
         try {
-          if (
-            typeof axiosClient.defaults?.baseURL === "string" &&
-            url.startsWith("/")
-          ) {
-            full = new URL(url, axiosClient.defaults.baseURL).toString();
+          const fd = new FormData();
+          // Dùng key "file" và route cloudinary-upload
+          fd.append("file", pendingAvatarFile);
+
+          const upRes = await axiosClient.post("/api/cloudinary-upload", fd, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+
+          const returnedUrl = upRes?.data?.url;
+          if (!returnedUrl) {
+            toast.error(
+              "Upload avatar thất bại: không có URL trả về từ Cloudinary"
+            );
+            setSaving(false);
+            return;
           }
-        } catch {
-          full = url;
+
+          // Cloudinary trả URL absolute → gán thẳng vào payload
+          payload.avatar = returnedUrl;
+
+          // 🔥 Cập nhật ngay form + snapshot để UI đổi ảnh liền
+          setForm((prev) => ({ ...prev, avatar: returnedUrl }));
+          setSnapshot((prev) =>
+            prev ? { ...prev, avatar: returnedUrl } : prev
+          );
+
+          // 🔥 Cập nhật ngay Redux user để Header đổi avatar không cần F5
+          try {
+            const cacheBusted = returnedUrl + "?v=" + Date.now();
+            const currentUser =
+              reduxUser || JSON.parse(localStorage.getItem("user")) || {};
+            const mergedUser = {
+              ...currentUser,
+              profile: {
+                ...(currentUser.profile || {}),
+                avatar: cacheBusted,
+              },
+            };
+            dispatch(setUser(mergedUser));
+
+            // DOM fallback: cập nhật trực tiếp các thẻ img.avatar nếu có
+            try {
+              const domImages = document.querySelectorAll("img.avatar");
+              domImages.forEach((el) => {
+                el.src = cacheBusted;
+                el.dataset.retry = "1";
+              });
+              const headerImg = document.querySelector(".user-menu-header img");
+              if (headerImg) headerImg.src = cacheBusted;
+            } catch (e) {
+              // ignore
+            }
+          } catch (e) {
+            console.log("Redux update avatar error:", e);
+          }
+        } catch (err) {
+          console.error(err);
+          toast.error("Không thể upload avatar lên Cloudinary.");
+          setSaving(false);
+          return;
         }
-        payload.avatar = full;
       }
 
       const { data } = await profileApi.updateProfile(payload);
@@ -599,6 +738,7 @@ export default function ProfilePage() {
       if (raw.user)
         setServerUser((prev) => ({ ...(prev || {}), ...raw.user }));
       setSnapshot(normalized);
+
       // If backend returned full user object, set it into Redux so Header updates immediately.
       try {
         if (raw.user) {
@@ -625,9 +765,7 @@ export default function ProfilePage() {
                   void e;
                 }
               });
-              const headerImg = document.querySelector(
-                ".user-menu-header img"
-              );
+              const headerImg = document.querySelector(".user-menu-header img");
               if (headerImg) headerImg.src = newAvatar;
             }
           } catch (e) {
@@ -637,10 +775,8 @@ export default function ProfilePage() {
         } else {
           const profileUpdate = {};
           if (normalized.avatar)
-            profileUpdate.avatar =
-              normalized.avatar + "?v=" + Date.now();
-          if (normalized.fullName)
-            profileUpdate.name = normalized.fullName;
+            profileUpdate.avatar = normalized.avatar + "?v=" + Date.now();
+          if (normalized.fullName) profileUpdate.name = normalized.fullName;
 
           if (Object.keys(profileUpdate).length) {
             console.log(
@@ -702,7 +838,9 @@ export default function ProfilePage() {
         // ignore
         console.log(e);
       }
+
       setEditMode(false);
+      setPendingAvatarFile(null); // clear file sau khi lưu
       toast.success("Đã lưu hồ sơ thành công");
     } catch (err) {
       const status = err?.response?.status;
@@ -753,7 +891,7 @@ export default function ProfilePage() {
       setPwForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
       setPwOpen(false);
     } catch (err) {
-      toast.error(
+      message.error(
         err?.response?.data?.message || "Không thể đổi mật khẩu"
       );
     } finally {
@@ -807,6 +945,35 @@ export default function ProfilePage() {
 
       await expertApplicationApi.create(payload);
       toast.success("Đã gửi đơn đăng ký Chuyên Gia!");
+
+      // ✅ Sync phone + fullName sang profile nếu user có nhập
+      const profileUpdate = {};
+      if (payload.phone_number && payload.phone_number.trim()) {
+        profileUpdate.phone = payload.phone_number.trim();
+      }
+      if (payload.full_name && payload.full_name.trim()) {
+        profileUpdate.fullName = payload.full_name.trim();
+      }
+
+      if (Object.keys(profileUpdate).length > 0) {
+        try {
+          await profileApi.updateProfile(profileUpdate);
+
+          // Cập nhật ngay UI profile
+          setForm((prev) => ({
+            ...prev,
+            ...profileUpdate,
+          }));
+          setSnapshot((prev) =>
+            prev ? { ...prev, ...profileUpdate } : prev
+          );
+        } catch (syncErr) {
+          console.log(
+            "Sync phone/fullName to profile from modal failed:",
+            syncErr
+          );
+        }
+      }
 
       setAppModalOpen(false);
 
@@ -866,12 +1033,6 @@ export default function ProfilePage() {
           <h1 className="text-3xl font-bold mb-4 agri-theme-heading">
             🌿 HỒ SƠ CÁ NHÂN
           </h1>
-          {/* Suggestion panel removed from profile — opened via header's Model button */}
-          {getApplyError("full_name") && (
-            <p className="text-sm text-red-600 mt-1">
-              {getApplyError("full_name")}
-            </p>
-          )}
 
           {serverUser && (
             <p className="text-sm text-agri-gray mb-6">
@@ -892,11 +1053,6 @@ export default function ProfilePage() {
             GRID 3 CỘT
         =============================== */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {getApplyError("expertise_area") && (
-              <p className="text-sm text-red-600 mt-1">
-                {getApplyError("expertise_area")}
-              </p>
-            )}
             {/* ========== CỘT 1: AVATAR =========== */}
             <div className="agri-card avatar-section">
               <div className="avatar-wrapper">
@@ -914,7 +1070,10 @@ export default function ProfilePage() {
               </div>
 
               <p className="text-center text-lg mt-3 font-semibold text-agri-primary">
-                {form.fullName || "Người dùng"}
+                {form.fullName ||
+                  serverUser?.profile?.name ||
+                  serverUser?.username ||
+                  "Người dùng"}
               </p>
 
               <button
@@ -989,7 +1148,7 @@ export default function ProfilePage() {
                             <img
                               src={avatarPreview}
                               alt="avatar"
-                              className="avatar-img"
+                              className="w-full h-full object-cover"
                             />
                           ) : (
                             <div className="w-full h-full grid place-items-center text-sm text-agri-gray">
@@ -1006,6 +1165,7 @@ export default function ProfilePage() {
                             onChange={handleAvatarSelect}
                             className="hidden"
                           />
+                          {/* Nếu muốn cho phép upload từ đây thì bỏ comment nút dưới */}
                           {/* <button
                             type="button"
                             onClick={() =>
@@ -1030,9 +1190,7 @@ export default function ProfilePage() {
                           </p>
                         )}
                       </div>
-                      <div className="flex-1">
-                        {/* giữ khoảng cho form inputs (không thay đổi) */}
-                      </div>
+                      <div className="flex-1">{/* chừa chỗ cho inputs */}</div>
                     </div>
                   </div>
 
@@ -1045,6 +1203,11 @@ export default function ProfilePage() {
                       onChange={handleChange}
                       className="agri-input"
                     />
+                    {fieldErrors.fullName && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {fieldErrors.fullName}
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1057,6 +1220,11 @@ export default function ProfilePage() {
                         onChange={handleChange}
                         className="agri-input"
                       />
+                      {fieldErrors.phone && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {fieldErrors.phone}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -1068,6 +1236,11 @@ export default function ProfilePage() {
                         onChange={handleChange}
                         className="agri-input"
                       />
+                      {fieldErrors.dob && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {fieldErrors.dob}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1095,6 +1268,11 @@ export default function ProfilePage() {
                         onChange={handleChange}
                         className="agri-input"
                       />
+                      {fieldErrors.address && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {fieldErrors.address}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1107,6 +1285,11 @@ export default function ProfilePage() {
                       onChange={handleChange}
                       className="agri-input"
                     />
+                    {fieldErrors.bio && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {fieldErrors.bio}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex gap-3 pt-2">
