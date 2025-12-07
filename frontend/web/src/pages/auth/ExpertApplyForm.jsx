@@ -156,7 +156,7 @@ export default function ExpertApplyForm() {
               headers: { "Content-Type": "multipart/form-data" },
             });
             const url = resUpload?.data?.data?.url || resUpload?.data?.url;
-            if (!url) throw new Error("Upload chứng chỉ thất bại (no url)");
+            if (!url) throw new Error("Tải lên chứng chỉ thất bại (no url)");
             uploadedUrls.push(url);
           } catch (errUpload) {
             // Nếu server trả 400 vì field name, thử lại với field 'file'
@@ -167,7 +167,7 @@ export default function ExpertApplyForm() {
                 headers: { "Content-Type": "multipart/form-data" },
               });
               const url2 = res2?.data?.data?.url || res2?.data?.url;
-              if (!url2) throw new Error("Upload chứng chỉ thất bại (no url, fallback)");
+              if (!url2) throw new Error("Tải lên chứng chỉ thất bại (no url, fallback)");
               uploadedUrls.push(url2);
               continue;
             } catch (err2) {
@@ -177,7 +177,7 @@ export default function ExpertApplyForm() {
                 errUpload?.response?.data?.message ||
                 err2?.message ||
                 errUpload?.message ||
-                "Upload chứng chỉ thất bại";
+                "Tải lên chứng chỉ thất bại";
               console.error("Upload error detail:", err2 || errUpload);
               throw new Error(msg);
             }
@@ -260,11 +260,11 @@ export default function ExpertApplyForm() {
       {/* FORM ĐĂNG KÝ EXPERT */}
       <div className="expert-apply-page">
         <form className="expert-card" onSubmit={handleSubmit}>
-         <h3 className="mb-3">Đăng ký trở thành chuyên gia</h3>
+         <h3 className="mb-3">ĐĂNG KÝ TRỞ THÀNH CHUYÊN GIA</h3>
 
         {/* Họ tên */}
         <div className="mb-3">
-          <label className="form-label">Họ và tên *</label>
+          <label className="form-label">1. HỌ VÀ TÊN *</label>
           <input
             type="text"
             className="form-control"
@@ -281,7 +281,7 @@ export default function ExpertApplyForm() {
 
         {/* Lĩnh vực */}
         <div className="mb-3">
-          <label className="form-label">Lĩnh vực chuyên môn *</label>
+          <label className="form-label">2. LĨNH VỰC CHUYÊN MÔN *</label>
           <input
             type="text"
             className="form-control"
@@ -297,7 +297,7 @@ export default function ExpertApplyForm() {
 
         {/* Số năm kinh nghiệm */}
         <div className="mb-3">
-          <label className="form-label">Số năm kinh nghiệm</label>
+          <label className="form-label">3. SỐ NĂM KINH NGHIỆM</label>
           <input
             type="number"
             min="0"
@@ -314,7 +314,7 @@ export default function ExpertApplyForm() {
 
         {/* Số điện thoại */}
         <div className="mb-3">
-          <label className="form-label">Số điện thoại</label>
+          <label className="form-label">4. SỐ ĐIỆN THOẠI</label>
           <input
             type="text"
             className="form-control"
@@ -330,7 +330,7 @@ export default function ExpertApplyForm() {
 
         {/* Mô tả */}
         <div className="mb-3">
-          <label className="form-label">Giới thiệu / mô tả</label>
+          <label className="form-label">5. GIỚI THIỆU / MÔ TẢ</label>
           <textarea
             className="form-control"
             rows={4}
@@ -342,7 +342,7 @@ export default function ExpertApplyForm() {
 
         {/* Certificates (URL) */}
         <div className="mb-3">
-          <label className="form-label">Chứng chỉ (URL)</label>
+          <label className="form-label">6. CHỨNG CHỈ (URL)</label>
           {form.certificates.map((c, i) => (
             <div key={i} className="d-flex gap-2 mb-2">
               <input
@@ -380,7 +380,7 @@ export default function ExpertApplyForm() {
 
         {/* Upload chứng chỉ (file) */}
         <div className="mb-3">
-          <label className="form-label">Upload chứng chỉ (file)</label>
+          <label className="form-label">7. TẢI LÊN CHỨNG CHỈ (TỆP)</label>
           <input
             ref={fileInputRef}
             type="file"
@@ -389,8 +389,8 @@ export default function ExpertApplyForm() {
             onChange={handleCertFileChange}
           />
           <div className="form-text">
-            Bạn có thể chọn nhiều file (PDF, ảnh...). Hệ thống sẽ tự upload và
-            lưu link chứng chỉ.
+            Bạn có thể chọn nhiều file (PDF, ảnh...). Hệ thống sẽ tự tải lên và
+            lưu liên kết chứng chỉ.
           </div>
           {certFiles.length > 0 && (
             <ul className="mt-2 small">
@@ -407,7 +407,7 @@ export default function ExpertApplyForm() {
             className="agri-btn-primary"
             disabled={submitting}
           >
-            {submitting ? "Đang gửi..." : "✉️ Nộp đơn"}
+            {submitting ? "Đang gửi..." : "✉️ NỘP ĐƠN"}
           </button>
           <button
             type="button"
@@ -416,7 +416,7 @@ export default function ExpertApplyForm() {
             disabled={submitting}
             style={{ marginLeft: 12 }}
           >
-            Đặt lại
+            ĐẶT LẠI
           </button>
         </div>
         </form>
@@ -432,15 +432,15 @@ export default function ExpertApplyForm() {
             className="bg-white rounded shadow p-4"
             style={{ maxWidth: "480px", width: "100%" }}
           >
-            <h4 className="mb-3">🎉 Đã gửi đơn đăng ký Expert</h4>
+            <h4 className="mb-3">🎉 Đã gửi đơn đăng ký Chuyên Gia</h4>
             <p className="mb-3">
               Đơn đăng ký của bạn đã được gửi thành công và đang ở trạng thái{" "}
-              <strong>pending</strong>. Admin sẽ xem xét và duyệt trong thời
+              <strong>Đang Chờ Duyệt</strong>. Quản Trị Viên sẽ xem xét và Duyệt trong thời
               gian sớm nhất.
             </p>
             <p className="mb-3">
               Bạn có thể kiểm tra lịch sử đơn trong mục{" "}
-              <strong>Hồ sơ cá nhân / Đăng ký Expert</strong>.
+              <strong>Hồ Sơ Cá Nhân / Lịch Sử Đơn Đã Nộp</strong>.
             </p>
 
             <div className="d-flex justify-content-end gap-2">

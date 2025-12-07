@@ -193,7 +193,7 @@ function ExpertApplicationModal({
           </h2>
           <p className="text-agri-gray">
             {hasApproved
-              ? "Bạn đã là Expert. Không cần nộp đơn."
+              ? "Bạn đã là Chuyên Gia. Không cần nộp đơn."
               : "Bạn đã có đơn đang chờ duyệt."}
           </p>
           <button onClick={onClose} className="mt-4 agri-btn-primary">
@@ -787,7 +787,7 @@ export default function ProfilePage() {
   async function submitApplication(e) {
     e.preventDefault();
 
-    if (hasApproved) return toast.info("Bạn đã là Expert.");
+    if (hasApproved) return toast.info("Bạn đã là Chuyên Gia.");
     if (hasPending) return toast.info("Bạn đã có đơn đang chờ duyệt.");
 
     if (
@@ -806,7 +806,7 @@ export default function ProfilePage() {
       };
 
       await expertApplicationApi.create(payload);
-      toast.success("Đã gửi đơn đăng ký Expert!");
+      toast.success("Đã gửi đơn đăng ký Chuyên Gia!");
 
       setAppModalOpen(false);
 
@@ -851,7 +851,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-[60vh] grid place-items-center">
         <div className="animate-pulse text-agri-gray">
-          Đang tải hồ sơ…
+          Đang Tải Hồ Sơ…
         </div>
       </div>
     );
@@ -864,7 +864,7 @@ export default function ProfilePage() {
       <div className="profile-page">
         <div className="agri-theme-container">
           <h1 className="text-3xl font-bold mb-4 agri-theme-heading">
-            🌿 Hồ sơ cá nhân
+            🌿 HỒ SƠ CÁ NHÂN
           </h1>
           {/* Suggestion panel removed from profile — opened via header's Model button */}
           {getApplyError("full_name") && (
@@ -922,43 +922,43 @@ export default function ProfilePage() {
                 onClick={() => setPwOpen(true)}
                 className="w-full agri-btn-secondary mt-4 flex items-center justify-center gap-2"
               >
-                🔑 Đổi mật khẩu
+                🔑 ĐỔI MẬT KHẨU
               </button>
             </div>
 
             {/* ========== CỘT 2 + 3: THÔNG TIN CƠ BẢN =========== */}
             <div className="agri-card lg:col-span-2 space-y-4">
               <h2 className="text-xl font-semibold text-agri-primary">
-                Thông tin cơ bản
+                THÔNG TIN CƠ BẢN
               </h2>
 
               {!editMode ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
                     <div>
-                      <span className="agri-label">Số điện thoại:</span>{" "}
+                      <span className="agri-label">SỐ ĐIỆN THOẠI:</span>{" "}
                       {form.phone || "-"}
                     </div>
                     <div>
-                      <span className="agri-label">Ngày sinh:</span>{" "}
+                      <span className="agri-label">NGÀY SINH:</span>{" "}
                       {toDateDisplay(form.dob)}
                     </div>
                     <div>
-                      <span className="agri-label">Giới tính:</span>{" "}
+                      <span className="agri-label">GIỚI TÍNH:</span>{" "}
                       {form.gender === "male"
-                        ? "Nam 👨"
+                        ? "NAM 👨"
                         : form.gender === "female"
-                        ? "Nữ 👩"
-                        : "Khác ❓"}
+                        ? "NỮ 👩"
+                        : "KHÁC ❓"}
                     </div>
                     <div>
-                      <span className="agri-label">Địa chỉ:</span>{" "}
+                      <span className="agri-label">ĐỊA CHỈ:</span>{" "}
                       {form.address || "-"}
                     </div>
                   </div>
 
                   <div>
-                    <span className="agri-label">Giới thiệu:</span>
+                    <span className="agri-label">GIỚI THIỆU:</span>
                     <p className="whitespace-pre-wrap text-agri-gray mt-1">
                       {form.bio || "(Chưa có nội dung)"}
                     </p>
@@ -969,7 +969,7 @@ export default function ProfilePage() {
                     onClick={handleStartEdit}
                     className="agri-btn-primary mt-4"
                   >
-                    📝 Chỉnh sửa hồ sơ
+                    📝 CHỈNH SỬA HỒ SƠ
                   </button>
                 </>
               ) : (
@@ -981,7 +981,7 @@ export default function ProfilePage() {
                   )}
 
                   <div>
-                    <label className="agri-label">Ảnh đại diện</label>
+                    <label className="agri-label">ẢNH ĐẠI DIỆN</label>
                     <div className="flex items-start gap-6">
                       <div className="flex flex-col items-center">
                         <div className="avatar-wrapper">
@@ -1021,7 +1021,7 @@ export default function ProfilePage() {
                             onClick={clearAvatar}
                             className="agri-btn-secondary"
                           >
-                            Xóa
+                            XÓA
                           </button>
                         </div>
                         {fieldErrors.avatar && (
@@ -1037,7 +1037,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label className="agri-label">Họ và tên</label>
+                    <label className="agri-label">HỌ VÀ TÊN</label>
                     <input
                       type="text"
                       name="fullName"
@@ -1049,7 +1049,7 @@ export default function ProfilePage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="agri-label">Số điện thoại</label>
+                      <label className="agri-label">SỐ ĐIỆN THOẠI</label>
                       <input
                         type="text"
                         name="phone"
@@ -1060,7 +1060,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div>
-                      <label className="agri-label">Ngày sinh</label>
+                      <label className="agri-label">NGÀY SINH</label>
                       <input
                         type="date"
                         name="dob"
@@ -1073,21 +1073,21 @@ export default function ProfilePage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="agri-label">Giới tính</label>
+                      <label className="agri-label">GIỚI TÍNH</label>
                       <select
                         name="gender"
                         value={form.gender}
                         onChange={handleChange}
                         className="agri-input"
                       >
-                        <option value="male">Nam</option>
-                        <option value="female">Nữ</option>
-                        <option value="other">Khác</option>
+                        <option value="male">NAM</option>
+                        <option value="female">NỮ</option>
+                        <option value="other">KHÁC</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="agri-label">Địa chỉ</label>
+                      <label className="agri-label">ĐỊA CHỈ</label>
                       <input
                         type="text"
                         name="address"
@@ -1099,7 +1099,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label className="agri-label">Giới thiệu</label>
+                    <label className="agri-label">GIỚI THIỆU</label>
                     <textarea
                       name="bio"
                       rows={4}
@@ -1116,7 +1116,7 @@ export default function ProfilePage() {
                       disabled={saving || !isDirty}
                       className="agri-btn-primary disabled:opacity-60"
                     >
-                      {saving ? "Đang lưu…" : "💾 Lưu thay đổi"}
+                      {saving ? "Đang Lưu…" : "💾 LƯU THAY ĐỔI"}
                     </button>
 
                     <button
@@ -1125,7 +1125,7 @@ export default function ProfilePage() {
                       className="agri-btn-secondary"
                       disabled={saving}
                     >
-                      Hủy
+                      HỦY
                     </button>
                   </div>
                 </>
@@ -1136,19 +1136,19 @@ export default function ProfilePage() {
             <div className="agri-card lg:col-span-3 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-agri-primary">
-                  🧑‍🌾 Đăng ký trở thành Expert
+                  🧑‍🌾 ĐĂNG KÝ TRỞ THÀNH CHUYÊN GIA
                 </h2>
 
                 <div className="flex items-center gap-3">
                   {hasApproved && (
                     <span className="status-tag status-approved">
-                      Đã là Expert ✅
+                      Đã Là Chuyên Gia ✅
                     </span>
                   )}
 
                   {!hasApproved && hasPending && (
                     <span className="status-tag status-pending">
-                      Đơn đang chờ duyệt…
+                      Đơn Đang Chờ Duyệt…
                     </span>
                   )}
 
@@ -1158,7 +1158,7 @@ export default function ProfilePage() {
                       onClick={() => navigate("/expert/apply")}
                       className="agri-btn-primary"
                     >
-                      ✉️ Nộp đơn Expert
+                      ✉️ NỘP ĐƠN CHUYÊN GIA
                     </button>
                   )}
                 </div>
@@ -1167,18 +1167,18 @@ export default function ProfilePage() {
               {/* Lịch sử đơn */}
               <div className="pt-4 border-t">
                 <h3 className="font-semibold mb-2 text-agri-primary">
-                  Lịch sử Đơn đã nộp
+                  LỊCH SỬ ĐƠN ĐÃ NỘP
                 </h3>
 
                 <div className="overflow-x-auto rounded-xl border">
                   <table className="min-w-full text-sm agri-table">
                     <thead>
                       <tr>
-                        <th>Họ tên</th>
+                        <th>Họ Tên</th>
                         <th>Email</th>
-                        <th>Lĩnh vực</th>
-                        <th>Kinh nghiệm</th>
-                        <th>Trạng thái</th>
+                        <th>Lĩnh Vực</th>
+                        <th>Kinh Nghiệm</th>
+                        <th>Trạng Thái</th>
                       </tr>
                     </thead>
 
@@ -1189,7 +1189,7 @@ export default function ProfilePage() {
                             colSpan="5"
                             className="p-3 text-center text-agri-gray"
                           >
-                            Đang tải…
+                            Đang Tải…
                           </td>
                         </tr>
                       ) : myApps.length ? (
@@ -1198,7 +1198,7 @@ export default function ProfilePage() {
                             <td>{it.full_name}</td>
                             <td>{it.email}</td>
                             <td>{it.expertise_area}</td>
-                            <td>{it.experience_years} năm</td>
+                            <td>{it.experience_years} Năm</td>
                             <td>
                               <span
                                 className={
@@ -1232,7 +1232,7 @@ export default function ProfilePage() {
                 {!hasApproved && hasPending && (
                   <p className="text-sm text-agri-gray mt-3 p-3 bg-agri-green-light rounded-lg">
                     Đơn của bạn đang chờ duyệt. Khi được chấp thuận, vai trò
-                    sẽ chuyển sang <b>expert</b>. Vui lòng đăng xuất và đăng
+                    sẽ chuyển sang <b>Chuyên Gia</b>. Vui lòng đăng xuất và đăng
                     nhập lại với quyền Chuyên Gia.
                   </p>
                 )}
