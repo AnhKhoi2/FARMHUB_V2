@@ -145,12 +145,12 @@ const Collections = () => {
       <div className="collections-container">
         {/* Header */}
         <div className="collections-header">
-          <h1>📚 Bộ sưu tập của tôi</h1>
+          <h1>📚 BỘ SƯU TẬP CỦA TÔI</h1>
           <button
             className="btn-create-collection"
             onClick={() => setShowCreateModal(true)}
           >
-            + Tạo bộ sưu tập mới
+            + TẠO BỘ SƯU TẬP MỚI
           </button>
         </div>
 
@@ -158,12 +158,12 @@ const Collections = () => {
         <div className="search-bar">
           <input
             type="text"
-            placeholder="Tìm kiếm bộ sưu tập..."
+            placeholder="TÌM KIẾM BỘ SƯU TẬP..."
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSearch()}
           />
-          <button onClick={handleSearch}>🔍 Tìm kiếm</button>
+          <button onClick={handleSearch}>🔍 TÌM KIẾM</button>
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -172,8 +172,8 @@ const Collections = () => {
         <div className="collections-grid">
           {collections.length === 0 ? (
             <div className="empty-state">
-              <p>📭 Chưa có bộ sưu tập nào</p>
-              <p>Tạo bộ sưu tập đầu tiên để tổ chức các nhật ký của bạn!</p>
+              <p>📭 CHƯA CÓ BỘ SƯU TẬP NÀO</p>
+              <p>TẠO BỘ SƯU TẬP ĐẦU TIÊN ĐỂ TỔ CHỨC CÁC SỔ TAY CỦA BẠN!</p>
             </div>
           ) : (
             collections.map((collection) => (
@@ -203,7 +203,7 @@ const Collections = () => {
 
                   <div className="collection-meta">
                     <span className="notebook-count">
-                      📓 {collection.notebook_count} nhật ký
+                      📓 {collection.notebook_count} SỔ TAY
                     </span>
                     <span className="created-date">
                       {new Date(collection.createdAt).toLocaleDateString(

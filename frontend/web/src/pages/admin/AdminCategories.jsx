@@ -6,18 +6,22 @@ import axiosClient from "../../api/shared/axiosClient";
 import "../../css/admin/AdminCategories.css";
 import { toast, Toaster } from 'react-hot-toast';
 import { showError, showSuccess } from '../../utils/notify';
-import { FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiX } from 'react-icons/fi';
 import { PlusOutlined, InboxOutlined } from "@ant-design/icons";
 import { Button, Space, Spin, Typography } from 'antd';
 
 export default function AdminCategories() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [current, setCurrent] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  
+  // Search state
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchItems = async () => {
     setLoading(true);
@@ -30,6 +34,7 @@ export default function AdminCategories() {
       const items = res.data?.data?.items || [];
       console.log("Categories items:", items);
       setItems(items);
+      setFilteredItems(items);
     } catch (err) {
       console.error("Error fetching categories:", err);
       console.error("Error response:", err.response?.data);
@@ -40,6 +45,20 @@ export default function AdminCategories() {
   };
 
   useEffect(() => { fetchItems(); }, []);
+
+  // Filter items when search term changes
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredItems(items);
+    } else {
+      const filtered = items.filter(item => 
+        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredItems(filtered);
+    }
+  }, [searchTerm, items]);
 
   const handleCreate = async (payload) => {
     try {
@@ -110,6 +129,40 @@ export default function AdminCategories() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="d-flex align-items-center mb-3" style={{ gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <input
+              className="form-control form-control-sm"
+              placeholder="Tìm kiếm theo tên, đường dẫn hoặc mô tả..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: 320, minWidth: 220 }}
+            />
+            {searchTerm && (
+              <button
+                className="btn btn-sm"
+                title="Xóa tìm kiếm"
+                onClick={() => setSearchTerm("")}
+                style={{
+                  padding: 0,
+                  width: 28,
+                  height: 28,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 4,
+                  border: '1px solid #ced4da',
+                  background: '#fff'
+                }}
+                aria-label="clear-search"
+              >
+                <FiX size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="table-responsive bg-white shadow-sm rounded border">
           <table className="table table-sm table-hover mb-0">
             <thead className="table-light">
@@ -126,10 +179,12 @@ export default function AdminCategories() {
               {loading && (
                 <tr><td colSpan={6} className="text-center py-4">Đang tải...</td></tr>
               )}
-              {!loading && items.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-4">Không có dữ liệu</td></tr>
+              {!loading && filteredItems.length === 0 && (
+                <tr><td colSpan={6} className="text-center py-4">
+                  {searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Không có dữ liệu'}
+                </td></tr>
               )}
-              {!loading && items.map((it, idx) => (
+              {!loading && filteredItems.map((it, idx) => (
                 <tr key={it._id}>
                   <td className="small text-muted">{idx + 1}</td>
                   <td><div className="category-icon">{it.icon || '🦠'}</div></td>
@@ -254,8 +309,20 @@ function CategoryModal({ title, initial = {}, onClose, onSubmit }) {
         </div>
       </div>
       <div className="modal-footer">
-        <button className="btn btn-cancel" onClick={onClose}>Hủy</button>
-        <button className="btn btn-add" onClick={submit}>Lưu</button>
+        <button 
+          className="btn btn-cancel" 
+          onClick={onClose}
+          style={{ backgroundColor: '#6c757d', border: 'none', color: 'white' }}
+        >
+          Hủy
+        </button>
+        <button 
+          className="btn btn-add" 
+          onClick={submit}
+          style={{ background: 'linear-gradient(135deg, #2ecc71, #27ae60)', border: 'none', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '8px', fontWeight: '500' }}
+        >
+          Lưu
+        </button>
       </div>
     </div>
   );

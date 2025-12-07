@@ -151,7 +151,7 @@ const Header = () => {
                   className="dropdown-toggle"
                   onClick={() => window.innerWidth < 992 && toggleSubmenu()}
                 >
-                  Nhật Ký
+                  Sổ tay
                 </span>
 
                 <ul
@@ -160,10 +160,10 @@ const Header = () => {
                   }`}
                 >
                   <li>
-                    <Link to="/farmer/notebooks">Nhật ký cơ bản</Link>
+                    <Link to="/farmer/notebooks">Sổ tay cơ bản</Link>
                   </li>
                   <li>
-                    <Link to="/farmer/notebooks/stats">Thống kê nhật ký</Link>
+                    <Link to="/farmer/notebooks/stats">Thống kê sổ tay</Link>
                   </li>
                   <li>
                     <Link to="/farmer/collections">Bộ sưu tập</Link>

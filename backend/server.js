@@ -22,6 +22,7 @@ import expertRoutes from "./routes/expert.routes.js";
 import plantTemplateRoutes from "./routes/plantTemplates.js";
 import uploadRoutes from "./routes/upload.js";
 import plantGroupsRoute from "./routes/plantGroups.js";
+import PlantGroup from "./models/PlantGroup.js";
 import collectionsRoute from "./routes/collections.js";
 import path from "path";
 import fs from "fs";
@@ -58,6 +59,22 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 
 connectDB();
+
+// Ensure default "other" plant group exists so frontend can offer a fallback option
+(async () => {
+  try {
+    const slug = 'other';
+    const name = 'NHÓM CÂY KHÁC';
+    // Only run if PlantGroup model is available (DB connected)
+    const existing = await PlantGroup.findOne({ slug }).lean().exec();
+    if (!existing) {
+      await PlantGroup.create({ slug, name, description: 'Nhóm cây chưa phân loại / khác' });
+      console.log(`Created default PlantGroup: ${slug} - ${name}`);
+    }
+  } catch (e) {
+    console.warn('Failed to ensure default PlantGroup exists:', e?.message || e);
+  }
+})();
 
 // Middleware
 // Allow the frontend dev server (supports multiple dev ports and an env override)

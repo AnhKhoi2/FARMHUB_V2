@@ -209,12 +209,36 @@ export default function Guides() {
                       />
                     }
                     style={{ borderRadius: 8, overflow: "hidden", textAlign: "center" }}
-                    bodyStyle={{ padding: "12px 8px", minHeight: 100 }}
+                    bodyStyle={{ padding: "12px 8px", minHeight: 140, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
                   >
-                    <Title level={5} style={{ margin: 0 }}>
-                      {g.title}
-                    </Title>
-                    <Tag style={{ margin: 0, fontSize: 12, color: getColorForKey(g.plantTags) }}>{g.plantTags}</Tag>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <div style={{ flex: '1 1 auto' }}>
+                        <Title level={5} style={{ margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {g.title}
+                        </Title>
+                      </div>
+
+                      <div style={{ marginTop: 10 }}>
+                        <Tag
+                          style={{
+                            margin: 0,
+                            fontSize: 12,
+                            color: getColorForKey(g.plantTags),
+                            display: "inline-block",
+                            width: "100%",
+                            textAlign: "center",
+                            padding: "6px 8px",
+                            borderRadius: 6,
+                            boxSizing: "border-box",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {g.plantTags}
+                        </Tag>
+                      </div>
+                    </div>
                   </Card>
                 </Link>
               </Col>

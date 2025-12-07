@@ -1,0 +1,146 @@
+/* Streak Popup Styles */
+.portal-modal {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.streak-header {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  border-bottom: none;
+  padding: 1.2rem 1.5rem;
+}
+
+.streak-title {
+  color: white !important;
+  font-weight: 600;
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.streak-header .btn-close {
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+
+.streak-header .btn-close:hover {
+  opacity: 1;
+}
+
+.streak-body {
+  padding: 2rem 1.5rem;
+  background: white;
+}
+
+.streak-main-text {
+  font-size: 1.2rem;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.streak-count-inline {
+  color: #27ae60;
+  font-weight: bold;
+  font-size: 1.5rem;
+  display: inline-block;
+  padding: 0 0.3rem;
+}
+
+.streak-milestone {
+  background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  border-left: 4px solid #fbc02d;
+}
+
+.streak-milestone strong {
+  color: #f57f17;
+  font-size: 1.1rem;
+}
+
+.streak-points {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  color: #2e7d32;
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-top: 1rem;
+  border-left: 4px solid #43a047;
+}
+
+.streak-badges {
+  background: #f8f9fa;
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.streak-badges strong {
+  color: #27ae60;
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 0.8rem;
+}
+
+.streak-badges-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.streak-badges-list li {
+  background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  display: inline-block;
+  margin: 0.3rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 6px rgba(46, 204, 113, 0.25);
+}
+
+.streak-total-points {
+  margin-top: 1.5rem;
+  padding: 0.8rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #555;
+  font-size: 1rem;
+  border: 1px solid #e0e0e0;
+}
+
+.streak-total-points strong {
+  color: #27ae60;
+  font-size: 1.2rem;
+}
+
+.streak-footer {
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  padding: 1rem 1.5rem;
+  justify-content: center;
+}
+
+.streak-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.6rem 2.5rem;
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.streak-btn:hover {
+  background: #5a6268;
+  color: white;
+}
+
+.streak-btn:active {
+  background: #545b62;
+}

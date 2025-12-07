@@ -151,7 +151,7 @@ const StageObservations = ({ notebookId }) => {
   if (observations.length === 0)
     return (
       <div className="observations-empty">
-        Không có quan sát cho giai đoạn này
+        CHƯA CÓ QUAN SÁT NÀO CHO GIAI ĐOẠN NÀY
       </div>
     );
 

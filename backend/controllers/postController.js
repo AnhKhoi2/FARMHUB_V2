@@ -4,6 +4,30 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ok, noContent } from "../utils/ApiResponse.js";
 import { AppError } from "../utils/AppError.js";
 
+// Helper: ensure images are usable by frontend
+const BASE_URL = (process.env.BASE_URL || process.env.VNP_BASE_URL || '').replace(/\/$/, '');
+const normalizeImageSrc = (img) => {
+  try {
+    if (!img) return img;
+    if (typeof img !== 'string') return img;
+    let s = img.trim();
+    if (!s) return s;
+    // normalize backslashes to forward slashes (some records have Windows style paths)
+    s = s.replace(/\\/g, '/');
+    // Already a full URL or data URI
+    if (s.startsWith('http') || s.startsWith('data:')) return s;
+    // If it's an absolute path (starts with '/'), prefix BASE_URL when available
+    if (s.startsWith('/')) {
+      return BASE_URL ? `${BASE_URL}${s}` : s;
+    }
+    // Otherwise assume it's a filename stored under /uploads
+    const path = `/${s.startsWith('uploads') ? s : `uploads/${s}`}`;
+    return BASE_URL ? `${BASE_URL}${path}` : path;
+  } catch (e) {
+    return img;
+  }
+};
+
 export const postController = {
   list: asyncHandler(async (req, res) => {
     const { page = 1, limit = 50, q } = req.query;
@@ -27,6 +51,10 @@ export const postController = {
       const obj = it.toObject ? it.toObject() : it;
       obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
       if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+      // Normalize image paths so frontend always receives a usable src string
+      if (obj.images && Array.isArray(obj.images)) {
+        obj.images = obj.images.map((img) => normalizeImageSrc(img));
+      }
       return obj;
     });
 
@@ -35,10 +63,14 @@ export const postController = {
 
   // Public listing (no auth) for browsing marketplace
   listPublic: asyncHandler(async (req, res) => {
-    const { page = 1, limit = 50, q } = req.query;
+    const { page = 1, limit = 50, q, category } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     const filter = { isDeleted: false };
+    if (category) {
+      // Allow frontend to request posts filtered by category (exact match)
+      filter.category = category;
+    }
     if (q) {
       filter.$or = [
         { title: { $regex: q, $options: "i" } },
@@ -60,10 +92,16 @@ export const postController = {
       { $project: { user: 0, __priority: 0 } },
     ];
 
-    const [items, total] = await Promise.all([
+    const [rawItemsAgg, total] = await Promise.all([
       MarketPost.aggregate(aggPipeline),
       MarketPost.countDocuments(filter),
     ]);
+
+    // normalize images for aggregated results
+    const items = (rawItemsAgg || []).map((obj) => {
+      if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+      return obj;
+    });
 
     return ok(res, { items, meta: { total, page: Number(page), limit: Number(limit) } });
   }),
@@ -74,6 +112,7 @@ export const postController = {
       const obj = it.toObject ? it.toObject() : it;
       obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
       if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+      if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
       return obj;
     });
     return ok(res, items);
@@ -87,6 +126,7 @@ export const postController = {
       const obj = it.toObject ? it.toObject() : it;
       obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
       if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+      if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
       return obj;
     });
     return ok(res, posts);
@@ -100,7 +140,8 @@ export const postController = {
     const obj = post.toObject ? post.toObject() : post;
     obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
     if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
-    return ok(res, { postId: obj._id, reports: obj.reports || [], postOwner: obj.userId });
+    if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+    return ok(res, { postId: obj._id, reports: obj.reports || [], postOwner: obj.userId, post: obj });
   }),
 
   // Add a report to a post (authenticated users)
@@ -137,6 +178,7 @@ export const postController = {
     const obj = item.toObject ? item.toObject() : item;
     obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
     if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+    if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
     return ok(res, obj);
   }),
 
@@ -150,6 +192,7 @@ export const postController = {
     obj.posterPhone = obj.phone || (obj.userId && obj.userId.phone) || null;
     // also ensure userId.phone is set to the post phone if user record doesn't have phone
     if (obj.userId) obj.userId.phone = obj.userId.phone || obj.posterPhone;
+    if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
     return ok(res, obj);
   }),
 
@@ -178,8 +221,10 @@ export const postController = {
       category: category || "Khác",
       price: price || "",
     });
-  
-    return ok(res, post);
+
+    const obj = post.toObject ? post.toObject() : post;
+    if (obj.images && Array.isArray(obj.images)) obj.images = obj.images.map((i) => normalizeImageSrc(i));
+    return ok(res, obj);
   }),
   
   

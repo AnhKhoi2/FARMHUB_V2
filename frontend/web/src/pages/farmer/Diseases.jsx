@@ -20,6 +20,10 @@ const Diseases = () => {
   const [chatResult, setChatResult] = useState(null);
   const [chatMessages, setChatMessages] = useState([]); // local history of messages
   const [sending, setSending] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   useEffect(() => {
     fetchData();
@@ -27,6 +31,7 @@ const Diseases = () => {
 
   useEffect(() => {
     filterDiseases();
+    setCurrentPage(1); // Reset to page 1 when filters change
   }, [selectedCategory, searchTerm, selectedSeverity, diseases]);
 
   const fetchData = async () => {
@@ -96,6 +101,17 @@ const Diseases = () => {
     if (severity === "high") return "🔴";
     if (severity === "medium") return "🟡";
     return "🟢";
+  };
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredDiseases.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentDiseases = filteredDiseases.slice(startIndex, endIndex);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -228,17 +244,16 @@ const Diseases = () => {
             ) : (
               <>
               <div className="row g-4">
-                {filteredDiseases.map(disease => (
+                {currentDiseases.map(disease => (
                   <div key={disease._id} className="col-md-6 col-lg-4">
-                    <div className="card disease-card h-100 shadow-sm hover-card">
-                      <div className="card-header bg-white border-bottom">
-                        <div className="d-flex justify-content-between align-items-start">
+                    <div className="card disease-card h-100 shadow-sm hover-card p-3">
+                      <div className="disease-card-content">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
                           <div>
                             <span className="severity-icon">
                               {getSeverityIcon(disease.severity)}
                             </span>
                             <span className="badge bg-light text-dark ms-2">
-                              {/* display friendly name when possible */}
                               {(() => {
                                 const map = Object.fromEntries(categories.map(c => [String(c.slug || c.name), c.name]));
                                 return map[String(disease.category)] || disease.category || "Chưa phân loại";
@@ -247,51 +262,119 @@ const Diseases = () => {
                           </div>
                           {getSeverityBadge(disease.severity)}
                         </div>
-                      </div>
-                      <div className="card-body">
-                        <h5 className="card-title fw-bold text-success">
+                        
+                        <h5 className="card-title fw-bold text-success mb-2">
                           {disease.name}
                         </h5>
-                        <p className="card-text text-muted small">
+                        
+                        <p className="card-text text-muted mb-2">
                           {disease.description
-                            ? disease.description.substring(0, 100) + "..."
+                            ? disease.description.substring(0, 70) + "..."
                             : "Chưa có mô tả chi tiết"}
                         </p>
+                        
                         {disease.plantTypes && disease.plantTypes.length > 0 && (
-                          <div className="mb-3">
-                            <strong className="small text-muted">Cây bị ảnh hưởng:</strong>
-                            <div className="mt-1">
-                              {disease.plantTypes.slice(0, 3).map((plant, idx) => (
-                                <span key={idx} className="badge bg-light text-dark me-1 mb-1">
+                          <div className="mb-2">
+                            <div className="d-flex flex-wrap gap-1">
+                              {disease.plantTypes.slice(0, 2).map((plant, idx) => (
+                                <span key={idx} className="badge bg-light text-dark" style={{fontSize: '0.65rem'}}>
                                   {plant}
                                 </span>
                               ))}
-                              {disease.plantTypes.length > 3 && (
-                                <span className="badge bg-light text-dark">
-                                  +{disease.plantTypes.length - 3}
+                              {disease.plantTypes.length > 2 && (
+                                <span className="badge bg-light text-dark" style={{fontSize: '0.65rem'}}>
+                                  +{disease.plantTypes.length - 2}
                                 </span>
                               )}
                             </div>
                           </div>
                         )}
+                        
                         {disease.symptoms && disease.symptoms.length > 0 && (
                           <div className="symptoms-preview">
-                            <FaExclamationTriangle className="text-warning me-1" />
+                            <FaExclamationTriangle className="text-warning me-1" size={11} />
                             <small className="text-muted">
                               {disease.symptoms.length} triệu chứng
                             </small>
                           </div>
                         )}
                       </div>
-                      <div className="card-footer bg-white border-top">
-                        <button className="btn btn-outline-success btn-sm w-100">
+                      
+                      <div className="disease-card-footer">
+                        <Link 
+                          to={`/diseases/${disease.slug || disease._id}`} 
+                          className="btn btn-outline-success"
+                        >
                           Xem Chi Tiết
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="d-flex justify-content-center mt-5">
+                  <nav>
+                    <ul className="pagination pagination-lg">
+                      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                        <button 
+                          className="page-link"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                        >
+                          <span aria-hidden="true">&laquo;</span>
+                        </button>
+                      </li>
+                      
+                      {[...Array(totalPages)].map((_, index) => {
+                        const pageNumber = index + 1;
+                        // Show first page, last page, current page, and pages around current
+                        if (
+                          pageNumber === 1 ||
+                          pageNumber === totalPages ||
+                          (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                        ) {
+                          return (
+                            <li 
+                              key={pageNumber} 
+                              className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}
+                            >
+                              <button
+                                className="page-link"
+                                onClick={() => handlePageChange(pageNumber)}
+                              >
+                                {pageNumber}
+                              </button>
+                            </li>
+                          );
+                        } else if (
+                          pageNumber === currentPage - 2 ||
+                          pageNumber === currentPage + 2
+                        ) {
+                          return (
+                            <li key={pageNumber} className="page-item disabled">
+                              <span className="page-link">...</span>
+                            </li>
+                          );
+                        }
+                        return null;
+                      })}
+                      
+                      <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                        <button
+                          className="page-link"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                        >
+                          <span aria-hidden="true">&raquo;</span>
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              )}
               </>
             )}
           </section>

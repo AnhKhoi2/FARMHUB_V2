@@ -11,6 +11,7 @@ import {
   Divider,
   Row,
   Col,
+  Modal,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -28,6 +29,8 @@ export default function GuideDetail() {
   const [searchParams] = useSearchParams();
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stepModalVisible, setStepModalVisible] = useState(false);
+  const [activeStep, setActiveStep] = useState(null);
 
   useEffect(() => {
     axiosClient
@@ -161,10 +164,18 @@ export default function GuideDetail() {
 
               <Row gutter={[16, 16]}>
                 {guide.steps.map((s, idx) => (
-                  <Col xs={24} sm={12} md={8} key={idx}>
-                    <Card hoverable>
+                  <Col xs={24} sm={12} md={8} key={idx} style={{ display: "flex" }}>
+                    <Card
+                      hoverable
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                      }}
+                    >
 
-                      <Flex vertical gap={12}>
+                      <Flex vertical gap={12} style={{ flex: 1 }}>
                         <Title level={5}>Bước {idx + 1}</Title>
 
                         <img
@@ -182,9 +193,28 @@ export default function GuideDetail() {
                         </Text>
 
                         <div
-                          dangerouslySetInnerHTML={{
-                            __html: s.text || "",
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            setActiveStep(s);
+                            setStepModalVisible(true);
                           }}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              setActiveStep(s);
+                              setStepModalVisible(true);
+                            }
+                          }}
+                          style={{
+                            // clamp to single line with ellipsis
+                            display: "-webkit-box",
+                            WebkitLineClamp: 1,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            cursor: "pointer",
+                          }}
+                          dangerouslySetInnerHTML={{ __html: s.text || "" }}
                         />
                       </Flex>
 
@@ -196,6 +226,27 @@ export default function GuideDetail() {
           )}
         </Flex>
       </Card>
+      {/* Step detail modal */}
+      <Modal
+        title={activeStep ? (activeStep.title || `Bước`) : "Chi tiết bước"}
+        open={stepModalVisible}
+        onCancel={() => setStepModalVisible(false)}
+        footer={null}
+        width={720}
+      >
+        {activeStep ? (
+          <div>
+            {activeStep.image && (
+              <div style={{ marginBottom: 12 }}>
+                <img src={activeStep.image} alt={activeStep.title} style={{ width: "100%", borderRadius: 6 }} />
+              </div>
+            )}
+            <div dangerouslySetInnerHTML={{ __html: activeStep.text || activeStep.description || "" }} />
+          </div>
+        ) : (
+          <p>Không có nội dung</p>
+        )}
+      </Modal>
     </Flex>
   );
 }

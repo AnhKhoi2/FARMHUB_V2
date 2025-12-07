@@ -385,7 +385,7 @@ export default function ManagerPost() {
                         total={total}
                         pageSize={limit}
                         showSizeChanger={false}
-                        onChange={(p) => setPage(p)}
+                        onChange={(p) => fetchItems(p)}
                     />
                 </Space>
 
