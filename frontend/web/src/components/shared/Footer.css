@@ -5,7 +5,7 @@
     /* Move spacing from external margin into internal padding so
        the footer background covers the visual gap and no underlying
        element shows through as a dark strip. */
-    padding: 6rem 0 1rem;
+    padding:3px;
     margin-top: 0;
     width: 100%;
 }
