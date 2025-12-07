@@ -11,6 +11,7 @@ import ResetPassword from "../pages/auth/ResetPassword"; // <- thêm từ code 2
 import WeatherPage from "../pages/WeatherPage.jsx";
 import PlantDiagnosisPage from "../pages/PlantDiagnosisPage";
 import UrbanFarmingPlansPage from "../pages/UrbanFarmingPlansPage";
+import PesticideAiInfoPage from "../pages/PesticideAiInfoPage";
 // Guards
 import PrivateRoute from "./shared/PrivateRoute"; // dùng path kiểu code 1
 import AdminRoute from "./admin/AdminRoute";
@@ -122,6 +123,7 @@ export default function AppRoutes() {
             </PrivateRoute>
           } />
         <Route path="/urban-farming" element={<UrbanFarmingPlansPage />} />
+        <Route path="/pesticides/ai-info" element={<PesticideAiInfoPage />} />
         {/* <- từ code 2 */}
         {/* ===== Protected app (từ code 2) ===== */}
         <Route

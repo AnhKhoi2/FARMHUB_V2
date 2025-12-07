@@ -12,9 +12,10 @@ import Footer from "../../components/shared/Footer";
 import axiosClient from "../../api/shared/axiosClient";
 import "../../css/farmer/Home.css";
 
-// Toạ độ mặc định (TP.HCM)
-const DEFAULT_LAT = 10.7769;
-const DEFAULT_LON = 106.7009;
+// Toạ độ mặc định (Cần Thơ)
+const DEFAULT_LAT = 10.0452;
+const DEFAULT_LON = 105.7469;
+
 
 // API mới – lấy từ POST
 const API_LATEST_POSTS = "/api/posts/public";
