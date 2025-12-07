@@ -1,96 +1,93 @@
 // controllers/plantAdviceController.js
-import WeatherSnapshot from "../models/WeatherSnapshot.js";
-import AirSnapshot from "../models/AirSnapshot.js";
-import { isFresh } from "../lib/cache.js";
-import { owCurrent } from "../services/openweather.js";
-import { getAirQuality } from "../services/openweatherAir.js";
-import { buildPlantAdvice } from "../services/plantWeatherAdvice.js";
+import {
+  owCurrent,
+  owForecast3h,
+} from '../services/openweather.js';
+import { buildWeatherBasedPlantCare } from '../services/aiGemini.js';
 
-export const getPlantAdviceController = async (req, res, next) => {
+export const getPlantCareAdviceByWeather = async (req, res, next) => {
   try {
-    const { lat, lon, plant_group: plantGroup = "other" } = req.query;
+    const { lat, lon, plantName } = req.query;
 
     if (!lat || !lon) {
-      return res.status(400).json({ error: "Thiếu lat/lon" });
+      return res.status(400).json({ error: 'Thiếu lat/lon' });
+    }
+
+    if (!plantName || !plantName.trim()) {
+      return res
+        .status(400)
+        .json({ error: 'Vui lòng nhập tên cây trồng' });
     }
 
     if (!process.env.OW_API_KEY) {
-      // nếu thiếu key thì báo lỗi rõ ràng (tránh crash)
-      return res.status(500).json({ error: "Thiếu OW_API_KEY trong server." });
+      return res
+        .status(500)
+        .json({ error: 'Thiếu OW_API_KEY trên server. Hãy cấu hình .env.' });
     }
 
-    const latNum = Number(lat);
-    const lonNum = Number(lon);
+    // Lấy thời tiết hiện tại + forecast 3h (24h tới)
+    const [current, forecast3h] = await Promise.all([
+      owCurrent(lat, lon, 'metric', 'vi'),
+      owForecast3h(lat, lon, 'metric', 'vi'),
+    ]);
 
-    // 1. WEATHER current (cache)
-    let weatherDoc = await WeatherSnapshot.findOne({
-      provider: "openweather",
-      scope: "current",
-      lat: latNum,
-      lon: lonNum,
-    }).sort({ createdAt: -1 });
+    const list = forecast3h?.list || [];
 
-    let weatherPayload;
-    if (isFresh(weatherDoc, 10)) {
-      weatherPayload = weatherDoc.payload;
-    } else {
-      const data = await owCurrent(lat, lon, "metric", "vi");
-      weatherPayload = data;
-      await WeatherSnapshot.create({
-        provider: "openweather",
-        scope: "current",
-        lat: latNum,
-        lon: lonNum,
-        payload: data,
-      });
-    }
+    // Tính min/max nhiệt độ, tổng mưa, gió mạnh nhất trong ~24h tới
+    let minTemp = null;
+    let maxTemp = null;
+    let rainTotal = 0;
+    let maxWind = 0;
 
-    // 2. AQI (cache)
-    let airDoc = await AirSnapshot.findOne({
-      lat: latNum,
-      lon: lonNum,
-    }).sort({ createdAt: -1 });
+    const slice = list.slice(0, 8); // 8 * 3h = 24h
+    slice.forEach((item) => {
+      const t = item.main?.temp;
+      if (t != null) {
+        minTemp = minTemp === null ? t : Math.min(minTemp, t);
+        maxTemp = maxTemp === null ? t : Math.max(maxTemp, t);
+      }
 
-    let airPayload;
-    if (isFresh(airDoc, 30)) {
-      airPayload = airDoc.payload;
-    } else {
-      const data = await getAirQuality(lat, lon, process.env.OW_API_KEY);
-      airPayload = data;
-      await AirSnapshot.create({ lat: latNum, lon: lonNum, payload: data });
-    }
+      const r = item.rain?.['3h'];
+      if (r != null) rainTotal += r;
 
-    // 3. Build advice
-    const advice = buildPlantAdvice({
-      weatherPayload,
-      airPayload,
-      plantGroup,
+      const w = item.wind?.speed;
+      if (w != null && w > maxWind) maxWind = w;
     });
 
-    const c = advice.basicConditions;
+    const weatherSummary = {
+      currentTempC: current?.main?.temp ?? null,
+      currentHumidity: current?.main?.humidity ?? null,
+      currentDescription: current?.weather?.[0]?.description ?? null,
+      todayMinTempC: minTemp,
+      todayMaxTempC: maxTemp,
+      rainNext24hMm: Number(rainTotal.toFixed(1)),
+      maxWindSpeedMs: maxWind,
+      forecastSample: slice.map((item) => ({
+        time: item.dt_txt || item.dt,
+        tempC: item.main?.temp ?? null,
+        humidity: item.main?.humidity ?? null,
+        description: item.weather?.[0]?.description ?? null,
+        rain3hMm: item.rain?.['3h'] ?? 0,
+      })),
+    };
 
-    return res.json({
-      lat: latNum,
-      lon: lonNum,
-      plant_group: plantGroup,
-      conditions: {
-        temp: c.temp,
-        humidity: c.humidity,
-        rain1h: c.rain1h,
-        windSpeed: c.windSpeed,
-        uvi: c.uvi,
-        aqi: advice.aqi,
-        aqi_label: advice.aqiLabel,
-      },
-      summary: advice.summary,
-      tips: advice.tips,
-      extraNotes: advice.extraNotes,
+    const locationName = [
+      current?.name,
+      current?.sys?.state,
+      current?.sys?.country,
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+    const aiResult = await buildWeatherBasedPlantCare({
+      plantName: plantName.trim(),
+      locationName: locationName || 'Không rõ',
+      weatherSummary,
     });
-  } catch (err) {
-    console.error("ERROR in getPlantAdviceController:", err);
-    // đảm bảo trả JSON để FE đọc được message
-    res
-      .status(500)
-      .json({ error: "Lỗi server khi tạo gợi ý chăm sóc cây.", detail: err.message });
+
+    return res.json(aiResult);
+  } catch (e) {
+    console.error('getPlantCareAdviceByWeather error:', e);
+    next(e);
   }
 };

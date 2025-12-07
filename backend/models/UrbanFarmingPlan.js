@@ -31,7 +31,7 @@ const urbanFarmingPlanSchema = new mongoose.Schema(
     // Có thể lưu thêm vài thông tin tóm tắt cho list
     climate_zone_vn: {
       type: String,
-      enum: ["north", "central", "south", "highland", null],
+      enum: ["Miền Bắc", "Miền Trung", "Miền Nam", "Tây Nguyên", null],
       default: null,
     },
     main_model_id: {
