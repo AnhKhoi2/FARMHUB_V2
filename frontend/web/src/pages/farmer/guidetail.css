@@ -1,0 +1,9 @@
+.glass {
+  background: rgba(124, 181, 70, 0.15);   /* nền hơi trong suốt  */
+  backdrop-filter: blur(12px);             /* blur phía sau */
+  -webkit-backdrop-filter: blur(12px);     /* Safari */
+  
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  
+}
