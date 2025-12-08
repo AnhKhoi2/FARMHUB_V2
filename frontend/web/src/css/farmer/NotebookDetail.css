@@ -44,11 +44,14 @@
 
 .banner-overlay .plant-type {
     margin: 0;
-    font-size: 1.2rem;
-    opacity: 0.95;
+    font-size: 1.5rem;
+    color: white;
+    opacity: 1;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-weight: 600;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* ========== HEADER ========== */
@@ -98,10 +101,13 @@
 
 .plant-type {
     margin: 0;
-    opacity: 0.9;
+    font-size: 1.3rem;
+    color: white;
+    opacity: 1;
     display: flex;
     align-items: center;
     gap: 0.3rem;
+    font-weight: 600;
 }
 
 .header-actions {

@@ -10,9 +10,11 @@
   --glass: rgba(255,255,255,0.6);
 }
 
-/* Page base */
+/* ========== PAGE BASE ========== */
 .urban-farming-page{
-  background: var(--bg);
+  background: radial-gradient(circle at top left, #e0f2fe 0, transparent 50%),
+              radial-gradient(circle at bottom right, #dcfce7 0, transparent 55%),
+              var(--bg);
   min-height: 100vh;
   font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   color: #0f172a;
@@ -25,76 +27,104 @@
   font-weight:700;
   color: #072b2a;
   letter-spacing: -0.2px;
+  margin-bottom: 4px;
 }
 
-/* Cards */
+/* small subtitle under main title */
+.urban-farming-page .page-subtitle{
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ========== CARDS & LAYOUT ========== */
 .card{
   background: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   border: 1px solid rgba(15,23,42,0.04);
+  backdrop-filter: blur(8px);
 }
 
-/* Layout */
+/* Two-column layout: list + detail */
 .urban-farming-layout{
   gap: 20px;
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1.2fr 1.1fr;
   align-items: start;
 }
 
-/* Right panel: list and detail stacked */
+/* Right panel stack helper (nếu sau này bạn muốn list + detail cùng 1 cột) */
 .right-panel{
   display:flex;
   flex-direction:column;
   gap:12px;
 }
 
-/* Form controls (override default bootstrap if present) */
+/* ========== FORM CONTROLS ========== */
 .form-control{
   display:block;
   width:100%;
-  padding:10px 12px;
+  padding:9px 11px;
   font-size:14px;
   border-radius:8px;
   border:1px solid rgba(15,23,42,0.08);
   background:white;
   color:#04202a;
   box-sizing:border-box;
-  transition:box-shadow .12s, border-color .12s;
+  transition:box-shadow .12s, border-color .12s, background-color .12s;
+}
+.form-control::placeholder{
+  color: rgba(148,163,184,0.9);
 }
 .form-control:focus{
   outline:none;
   box-shadow: 0 4px 14px rgba(2,132,199,0.08);
   border-color: rgba(2,132,199,0.45);
+  background:#f9fafb;
 }
 
-/* Buttons */
+/* Form row helper */
+.form-row{ 
+  display:flex; 
+  gap:12px; 
+}
+
+.form-label{ 
+  display:block; 
+  margin-bottom:6px; 
+  font-size:13px; 
+  color:var(--muted); 
+}
+
+/* ========== BUTTONS ========== */
 .btn{
   padding:8px 12px;
   border-radius:8px;
   font-weight:600;
   cursor:pointer;
   border: none;
+  font-size:14px;
 }
+
+/* Nút chính màu xanh (override cũ) */
 .btn-primary_sb{
-  /* override previous */
   background: linear-gradient(90deg, #06b6a4 0%, #0f766e 100%);
   color: #ffffff;
-  padding: 10px 18px;
+  padding: 9px 18px;
   border-radius: 10px;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
   box-shadow: 0 8px 20px rgba(15,118,110,0.18);
   border: none;
   transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
 }
 .btn-primary_sb:hover{
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: 0 14px 30px rgba(15,118,110,0.22);
   opacity: 0.98;
 }
@@ -102,59 +132,107 @@
   transform: translateY(-1px) scale(.995);
   box-shadow: 0 8px 18px rgba(15,118,110,0.18);
 }
-.btn-primary_sb:disabled{ opacity:0.6; cursor:default; }
+.btn-primary_sb:disabled{ 
+  opacity:0.6; 
+  cursor:default; 
+}
+
+/* Nút dạng text/link */
 .btn-link{
   background:transparent;
   color: var(--accent);
   padding:4px 6px;
   border-radius:6px;
   text-decoration: none;
+  font-size: 13px;
 }
+.btn-link:hover{ 
+  text-decoration:underline;
+  background: rgba(15,118,110,0.06);
+}
+
+/* Nút viền xám */
 .btn-outline-secondary{
   background: transparent;
-  border:1px solid rgba(15,23,42,0.08);
+  border:1px solid rgba(15,23,42,0.12);
   color: #0f172a;
 }
-.btn-sm{ padding:6px 8px; font-size:13px; }
+.btn-outline-secondary:hover{
+  background: rgba(15,23,42,0.02);
+}
+.btn-sm{ 
+  padding:6px 8px; 
+  font-size:13px; 
+}
 
-/* Badges */
+/* ========== BADGES ========== */
 .badge{
   display:inline-block;
   padding:4px 8px;
   border-radius:999px;
-  font-size:12px;
+  font-size:11px;
   font-weight:600;
 }
-.badge-danger{ background: rgba(239,68,68,0.12); color: var(--danger); }
-.badge-success{ background: rgba(22,163,74,0.12); color: var(--success); }
+.badge-danger{ 
+  background: rgba(239,68,68,0.08); 
+  color: var(--danger); 
+}
+.badge-success{ 
+  background: rgba(22,163,74,0.08); 
+  color: var(--success); 
+}
 
-/* Plan list */
+/* ========== PLAN LIST ========== */
 .plan-item{
   padding:10px 6px;
   border-bottom:1px solid rgba(15,23,42,0.03);
-  transition: background .12s, transform .06s;
+  transition: background .12s, transform .06s, box-shadow .12s, border-left-color .12s;
+  border-left: 3px solid transparent;
 }
 .plan-item:hover{
-  background: rgba(2,132,199,0.03);
+  background: rgba(2,132,199,0.035);
   transform: translateY(-1px);
 }
 .plan-item .title{
   font-weight:600;
   font-size:14px;
 }
-.plan-item .meta{ color: var(--muted); font-size:12px; margin-top:4px; }
+.plan-item .meta{ 
+  color: var(--muted); 
+  font-size:12px; 
+  margin-top:3px; 
+}
 
-/* Selected override (if inline styles removed later) */
-.plan-item.selected{ background: #f2faf3; border-left:3px solid rgba(22,163,74,0.15); }
+/* Selected item (nếu bạn có thêm class .selected) */
+.plan-item.selected{ 
+  background: #f2faf3; 
+  border-left-color: rgba(22,163,74,0.5); 
+}
 
-/* Scroll areas */
-.card > div[style*="overflowY: auto"], .card .table-wrapper{
+/* ========== SCROLL AREAS ========== */
+.card > div[style*="overflowY: auto"], 
+.card .table-wrapper{
   max-height: 280px;
   overflow-y: auto;
   padding-right:6px;
 }
 
-/* Table */
+/* Custom scrollbar nhẹ nhàng */
+.card > div[style*="overflowY: auto"]::-webkit-scrollbar,
+.card .table-wrapper::-webkit-scrollbar{
+  width: 6px;
+}
+.card > div[style*="overflowY: auto"]::-webkit-scrollbar-thumb,
+.card .table-wrapper::-webkit-scrollbar-thumb{
+  background: rgba(148,163,184,0.7);
+  border-radius: 999px;
+}
+.card > div[style*="overflowY: auto"]::-webkit-scrollbar-track,
+.card .table-wrapper::-webkit-scrollbar-track{
+  background: transparent;
+}
+
+/* ========== TABLE ========== */
 .table{
   width:100%;
   border-collapse:collapse;
@@ -170,38 +248,90 @@
   background: rgba(2,6,23,0.02);
 }
 
-/* Responsive: stack columns on small screens */
-@media (max-width: 980px){
-  .urban-farming-layout{
-    grid-template-columns: 1fr;
-  }
-  .urban-farming-page{ padding: 16px; }
-  .card{ padding:12px; }
-  .card .form-row{ flex-direction: column; gap:10px; }
-  .right-panel{ order: 2; }
+/* Khi table nằm trong vùng hẹp: cho phép cuộn ngang */
+.table-wrapper{ 
+  width:100%; 
+  overflow-x:auto; 
 }
 
-/* Small screens: make table scroll horizontally */
-@media (max-width:720px){
-  .table{ font-size:12px; }
-  .table-wrapper{ overflow-x:auto; }
-}
-
-/* Utility */
-.form-row{ display:flex; gap:12px; }
-.form-label{ display:block; margin-bottom:6px; font-size:13px; color:var(--muted); }
-
-/* Small helper for notices */
+/* ========== NOTICE / ALERT TRÊN PAGE ========== */
 .urban-farming-page .notice{
   padding:10px 12px;
   border-radius:8px;
   font-size:13px;
 }
 
-/* subtle link hover */
-.btn-link:hover{ text-decoration:underline; }
+.notice-error{
+  background:#fee2e2;
+  color:#b91c1c;
+  border:1px solid #fecaca;
+}
+.notice-success{
+  background:#dcfce7;
+  color:#166534;
+  border:1px solid #bbf7d0;
+}
 
-/* NÚT TẠO GỢI Ý NHỎ Ở GÓC TRÁI */
+/* ========== MODAL (FORM + TÓM TẮT) ========== */
+/* Nếu JSX dùng className="uf-modal-backdrop" */
+.uf-modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+/* Nếu JSX dùng className="uf-modal-content" */
+.uf-modal-content{
+  background: var(--glass);
+  border-radius: 18px;
+  width: min(960px,96%);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(15,23,42,0.55);
+  padding: 16px 20px 20px;
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(148,163,184,0.6);
+}
+
+/* Header/footer trong modal (nếu bạn đặt class) */
+.uf-modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.uf-modal-title{
+  font-size:16px;
+  font-weight:700;
+  color:#064e3b;
+}
+.uf-modal-subtitle{
+  font-size:12px;
+  color:#6b7280;
+}
+.uf-modal-footer{
+  margin-top: 14px;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+/* Error trong modal */
+.uf-modal-error{
+  background:#ffe5e5;
+  color:#b30000;
+  padding:6px 10px;
+  border-radius:6px;
+  margin-bottom:8px;
+  font-size:12px;
+  border:1px solid #fecaca;
+}
+
+/* ========== NÚT TẠO GỢI Ý NHỎ Ở GÓC TRÁI (NẾU DÙNG) ========== */
 .create-btn-small {
   position: absolute;
   top: 20px;
@@ -218,4 +348,29 @@
 }
 .create-btn-small:hover {
   background: #0d5f58;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 980px){
+  .urban-farming-layout{
+    grid-template-columns: 1fr;
+  }
+  .urban-farming-page{ 
+    padding: 16px; 
+  }
+  .card{ 
+    padding:12px; 
+  }
+  .card .form-row{ 
+    flex-direction: column; 
+    gap:10px; 
+  }
+  .right-panel{ 
+    order: 2; 
+  }
+}
+
+@media (max-width:720px){
+  .table{ font-size:12px; }
+  .table-wrapper{ overflow-x:auto; }
 }

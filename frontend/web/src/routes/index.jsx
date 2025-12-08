@@ -11,6 +11,7 @@ import ResetPassword from "../pages/auth/ResetPassword"; // <- thêm từ code 2
 import WeatherPage from "../pages/WeatherPage.jsx";
 import PlantDiagnosisPage from "../pages/PlantDiagnosisPage";
 import UrbanFarmingPlansPage from "../pages/UrbanFarmingPlansPage";
+import PesticideAiInfoPage from "../pages/PesticideAiInfoPage";
 // Guards
 import PrivateRoute from "./shared/PrivateRoute"; // dùng path kiểu code 1
 import AdminRoute from "./admin/AdminRoute";
@@ -33,6 +34,8 @@ import AdminProfile from "../pages/admin/AdminProfile";
 import AdminModels from "../pages/admin/Models";
 import AdminPost from "../pages/admin/AdminPost";
 import AdminGuides from "../pages/admin/AdminGuides";
+import AdminGuideEdit from "../pages/admin/AdminGuideEdit";
+
 // lazy load để tránh require() trên browser
 const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
 const AdminTransactions = React.lazy(() =>
@@ -92,6 +95,7 @@ import AdminDetailGuides from "../pages/admin/AdminDetailGuides.jsx";
 import PlantCarePricing from "../pages/Subscription/PlantCarePricing";
 import PaymentSuccess from "../pages/Subscription/PaymentSuccess";
 import PaymentFailed from "../pages/Subscription/PaymentFailed";
+import { ToastContainer } from "react-toastify";
 
 export default function AppRoutes() {
   function ChatWrapper() {
@@ -103,6 +107,7 @@ export default function AppRoutes() {
   }
   return (
     <BrowserRouter>
+
       <Routes>
         {/* ===== Public Auth ===== */}
         <Route path="/login" element={<Login />} />
@@ -117,11 +122,12 @@ export default function AppRoutes() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
         <Route path="/weather" element={<WeatherPage />} />
         <Route path="/plant-diagnosis" element={
-            <PrivateRoute>
-              <PlantDiagnosisPage />
-            </PrivateRoute>
-          } />
+          <PrivateRoute>
+            <PlantDiagnosisPage />
+          </PrivateRoute>
+        } />
         <Route path="/urban-farming" element={<UrbanFarmingPlansPage />} />
+        <Route path="/pesticides/ai-info" element={<PesticideAiInfoPage />} />
         {/* <- từ code 2 */}
         {/* ===== Protected app (từ code 2) ===== */}
         <Route
@@ -397,6 +403,24 @@ export default function AppRoutes() {
             </AdminRoute>
           }
         />
+        <Route
+          path="/admin/adminGuideCreate"
+          element={
+            <AdminRoute>
+              <AdminGuideEdit />
+            </AdminRoute>
+          }
+          
+        />
+          <Route
+          path="/admin/adminGuideEdit/:id"
+          element={
+            <AdminRoute>
+              <AdminGuideEdit />
+            </AdminRoute>
+          }
+          
+        />
         {/* Expert Routes */}
         <Route
           path="/expert/home"
@@ -580,6 +604,16 @@ export default function AppRoutes() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      <ToastContainer
+        position="top-right"
+        style={{ zIndex: 10000000099999 }}
+        autoClose={2500}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss={false}
+        draggable
+      />
+
       {/* Global AI chat widget (floating) - hidden on /admin */}
       <ChatWrapper />
     </BrowserRouter>

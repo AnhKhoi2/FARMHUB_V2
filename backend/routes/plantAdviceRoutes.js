@@ -1,9 +1,9 @@
 // routes/plantAdviceRoutes.js
 import express from "express";
-import { getPlantAdviceController } from "../controllers/plantAdviceController.js";
+import { getPlantCareAdviceByWeather } from '../controllers/plantAdviceController.js';
 
 const router = express.Router();
 
-router.get("/gardening/advice", getPlantAdviceController);
+router.get('/plant-advice', getPlantCareAdviceByWeather);
 
 export default router;

@@ -411,7 +411,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
       <div className="cw-panel">
         <div className="cw-header">
           <div className="cw-title">
-            <MessageCircle size={18} /> Trò chuyện
+            <MessageCircle size={18} /> Trò Chuyện
           </div>
           <div className="cw-actions">
             <button className="cw-icon" onClick={() => onClose?.(false)}>
@@ -423,10 +423,10 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
         <div className="cw-body">
           {/* Danh sách hội thoại */}
           <div className="cw-left">
-            <div className="cw-left-head">Cuộc trò chuyện</div>
+            <div className="cw-left-head">Cuộc Trò Chuyện</div>
             <div className="cw-left-list">
               {conversations.length === 0 ? (
-                <div className="cw-empty">Chưa có cuộc trò chuyện</div>
+                <div className="cw-empty">Chưa Có Cuộc Trò Chuyện</div>
               ) : (
                 conversations.map((c) => (
                   <div
@@ -491,14 +491,14 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
           {/* Nội dung hội thoại */}
           <div className="cw-right">
             {!activeConv ? (
-              <div className="cw-empty big">Chọn 1 cuộc trò chuyện</div>
+              <div className="cw-empty big">Chọn 1 Cuộc Trò Chuyện</div>
             ) : (
               <>
                 <div className="cw-room-head">
                   <div className="cw-room-title">
                     {activeConv.peer?.name || "Người dùng"}
                   </div>
-                  <div className="cw-room-sub">Đang hoạt động</div>
+                  <div className="cw-room-sub">Đang Hoạt Động</div>
                 </div>
 
                 <div
@@ -513,7 +513,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
                   }}
                 >
                   {msgs.length === 0 ? (
-                    <div className="cw-empty">Chưa có tin nhắn</div>
+                    <div className="cw-empty">Chưa Có Tin Nhắn</div>
                   ) : (
                     msgs.slice(-visibleCount).map((m) => (
                       <div
@@ -544,7 +544,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
                         sendMessage();
                       }
                     }}
-                    placeholder="Nhập tin nhắn của bạn..."
+                    placeholder="Nhập Tin Nhắn Của Bạn..."
                   />
 
                   <button

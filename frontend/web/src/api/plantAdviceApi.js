@@ -1,14 +1,19 @@
 // src/api/plantAdviceApi.js
-import axiosClient from "../api/shared/axiosClient.js";
+import axios from "../api/shared/axiosClient";
 
 const plantAdviceApi = {
-  getAdvice(lat, lon, plantGroup) {
-    return axiosClient.get("/api/gardening/advice", {
+  /**
+   * Lấy gợi ý chăm sóc cây theo thời tiết + tên cây
+   * @param {number} lat
+   * @param {number} lon
+   * @param {string} plantName
+   */
+  getAdvice(lat, lon, plantName) {
+    return axios.get("/api/plant-advice", {
       params: {
         lat,
         lon,
-        plant_group: plantGroup,
-        lang: "vi",
+        plantName,
       },
     });
   },

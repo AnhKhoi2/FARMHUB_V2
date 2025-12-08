@@ -7,9 +7,10 @@ import Footer from "../../components/shared/Footer";
 import axiosClient from "../../api/shared/axiosClient";
 import "../../css/farmer/Home.css";
 
-// Toạ độ mặc định (TP.HCM)
-const DEFAULT_LAT = 10.7769;
-const DEFAULT_LON = 106.7009;
+// Toạ độ mặc định (Cần Thơ)
+const DEFAULT_LAT = 10.0452;
+const DEFAULT_LON = 105.7469;
+
 
 // API mới – lấy từ POST
 const API_LATEST_POSTS = "/api/posts/public";
@@ -118,7 +119,7 @@ const Home = () => {
     const fetchOnePerCategory = async () => {
       // Use actual category labels used across the app. "Bán" posts are labeled
       // under "Nông sản" in the category list, so request that label.
-      const groups = ["Trao đổi", "Cho tặng", "Nông sản"];
+      const groups = ["Trao đổi", "Cho tặng", "Thiết bị"];
 
       try {
         setPostsLoading(true);
@@ -508,9 +509,9 @@ const Home = () => {
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div>
               <span className="text-success text-uppercase fw-semibold">
-                Hướng dẫn
+                HƯỚNG DẪN
               </span>
-              <h2 className="h3 fw-bold mb-0">Hướng dẫn trồng trọt</h2>
+              <h2 className="h3 fw-bold mb-0">HƯỚNG DẪN TRỒNG TRỌT</h2>
             </div>
           </div>
 
@@ -526,7 +527,7 @@ const Home = () => {
                     {g.image ? (
                       <img
                         src={g.image}
-                        alt={g.title}
+                        alt={(g.title || "").toUpperCase()}
                         className="guide-image"
                       />
                     ) : (
@@ -536,7 +537,7 @@ const Home = () => {
                     )}
 
                     <div className="guide-body">
-                      <h5 className="guide-title">{g.title}</h5>
+                      <h5 className="guide-title">{(g.title || "").toUpperCase()}</h5>
                       <p className="guide-desc">
                         {g.summary || g.description?.slice(0, 120)}...
                       </p>

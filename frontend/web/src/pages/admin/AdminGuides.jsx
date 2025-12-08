@@ -36,7 +36,7 @@ const NATURE_COLORS = {
   background: "#F9FBE7",   // Nature Ivory (Nền content)
   neutralBorder: "#E0E0E0",// Soft Stone (Border, Khung)
   highlight: "#8BC34A",    // Lime Touch (Tag, Highlight)
-  
+
   // Secondary/Utility Palette
   warning: "#FFEB3B",      // Sunlight (Warning/Good status)
   danger: "#FF4D4F",       // Ant Red (Xóa)
@@ -69,7 +69,7 @@ export default function AdminGuides() {
         const docs = data.data || data.docs || [];
         const meta = data.meta || {};
         const tot = data.total || meta.total || (meta.pages ? meta.pages * limit : docs.length);
-        
+
         setGuides(docs);
         // If some guides reference users only by id (e.g. expert_id is a string), try to fetch those users
         (async () => {
@@ -120,29 +120,29 @@ export default function AdminGuides() {
         setLoading(false);
       }
     },
-      {
-        title: "Người chỉnh sửa",
-        dataIndex: "updatedBy",
-        width: 180,
-        render: (_, record) => {
-          const editor = getEditorName(record);
-          const t = record.updatedAt || record.modifiedAt || record.updated_at || record.modified_at || record.lastModified;
-          return editor ? (
-            <div>
-              <div style={{ fontWeight: 600 }}>{editor}</div>
-              {t ? <div style={{ fontSize: 12, color: NATURE_COLORS.textMuted }}>{new Date(t).toLocaleDateString('vi-VN')}</div> : null}
-            </div>
-          ) : (
-            <span style={{ color: NATURE_COLORS.textMuted }}>—</span>
-          );
-        },
-        onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
+    {
+      title: "Người chỉnh sửa",
+      dataIndex: "updatedBy",
+      width: 180,
+      render: (_, record) => {
+        const editor = getEditorName(record);
+        const t = record.updatedAt || record.modifiedAt || record.updated_at || record.modified_at || record.lastModified;
+        return editor ? (
+          <div>
+            <div style={{ fontWeight: 600 }}>{editor}</div>
+            {t ? <div style={{ fontSize: 12, color: NATURE_COLORS.textMuted }}>{new Date(t).toLocaleDateString('vi-VN')}</div> : null}
+          </div>
+        ) : (
+          <span style={{ color: NATURE_COLORS.textMuted }}>—</span>
+        );
       },
+      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
+    },
     [limit, searchTerm]
   );
 
   useEffect(() => {
-    fetchGuides(1); 
+    fetchGuides(1);
   }, [searchTerm, fetchGuides]);
 
   const handleDelete = async (id) => {
@@ -151,7 +151,7 @@ export default function AdminGuides() {
     try {
       await axiosClient.delete(`/guides/${id}`);
       message.success("Xóa thành công");
-      
+
       const remaining = guides.length - 1;
       let targetPage = page;
       if (remaining === 0 && page > 1) {
@@ -201,7 +201,7 @@ export default function AdminGuides() {
       sorter: (a, b) => (a.title || "").localeCompare(b.title || ""),
       render: (t) => t || (
         <Tag color="error">
-            KHÔNG TIÊU ĐỀ
+          KHÔNG TIÊU ĐỀ
         </Tag>
       ),
       onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
@@ -258,8 +258,7 @@ export default function AdminGuides() {
             style={{ color: NATURE_COLORS.highlight }} // Icon sửa dùng Highlight
             title="Chỉnh sửa"
             onClick={() => {
-              setEditingGuide(record);
-              setDrawerVisible(true);
+              navigate(`/admin/adminGuideEdit/${record._id || record.id}`, { state: { page } });
             }}
           />
           <Button
@@ -276,87 +275,87 @@ export default function AdminGuides() {
     },
   ];
 
-    // Helper to extract a readable author name from a guide record
-    const getAuthorName = (record) => {
-      if (!record) return null;
-      // prefer pre-resolved author
-      if (record._resolvedAuthor) {
-        const ra = record._resolvedAuthor;
-        return (ra.username || ra.fullName || ra.name || ra.email || null) || null;
-      }
-      const tryPaths = [
-        () => record.expert_id?.username,
-        () => record.expert_id?.name,
-        () => record.author?.username,
-        () => record.author?.name,
-        () => record.user?.username,
-        () => record.user?.fullName,
-        () => record.createdBy?.username,
-        () => record.createdBy?.name,
-        () => record.created_by?.username,
-        () => record.created_by?.name,
-        () => record.owner?.username,
-        () => record.owner?.name,
-        () => record.authorName,
-        () => record.creatorName,
-        () => record.postedBy,
-        () => record.author,
-      ];
+  // Helper to extract a readable author name from a guide record
+  const getAuthorName = (record) => {
+    if (!record) return null;
+    // prefer pre-resolved author
+    if (record._resolvedAuthor) {
+      const ra = record._resolvedAuthor;
+      return (ra.username || ra.fullName || ra.name || ra.email || null) || null;
+    }
+    const tryPaths = [
+      () => record.expert_id?.username,
+      () => record.expert_id?.name,
+      () => record.author?.username,
+      () => record.author?.name,
+      () => record.user?.username,
+      () => record.user?.fullName,
+      () => record.createdBy?.username,
+      () => record.createdBy?.name,
+      () => record.created_by?.username,
+      () => record.created_by?.name,
+      () => record.owner?.username,
+      () => record.owner?.name,
+      () => record.authorName,
+      () => record.creatorName,
+      () => record.postedBy,
+      () => record.author,
+    ];
 
-      for (const fn of tryPaths) {
-        try {
-          const v = fn();
-          if (v && typeof v === "string" && v.trim()) return v.trim();
-        } catch (e) {
-          // ignore
+    for (const fn of tryPaths) {
+      try {
+        const v = fn();
+        if (v && typeof v === "string" && v.trim()) return v.trim();
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    return null;
+  };
+
+  // Helper to extract the last editor's name from a guide record
+  const getEditorName = (record) => {
+    if (!record) return null;
+    const tryPaths = [
+      () => record.updatedBy?.username,
+      () => record.updatedBy?.name,
+      () => record.updated_by?.username,
+      () => record.updated_by?.name,
+      () => record.modifiedBy?.username,
+      () => record.modifiedBy?.name,
+      () => record.modified_by?.username,
+      () => record.modified_by?.name,
+      () => record.editor?.username,
+      () => record.editor?.name,
+      () => record.editedBy,
+      () => record.lastEditedBy,
+      () => record.lastModifiedBy,
+      () => record.updaterName,
+      () => record.editorName,
+    ];
+
+    for (const fn of tryPaths) {
+      try {
+        const v = fn();
+        if (v && typeof v === "string" && v.trim()) return v.trim();
+        if (v && typeof v === "object") {
+          // object with username/name
+          const candidate = v.username || v.name || v.fullName;
+          if (candidate && String(candidate).trim()) return String(candidate).trim();
         }
-      }
+      } catch (e) { }
+    }
 
-      return null;
-    };
-
-    // Helper to extract the last editor's name from a guide record
-    const getEditorName = (record) => {
-      if (!record) return null;
-      const tryPaths = [
-        () => record.updatedBy?.username,
-        () => record.updatedBy?.name,
-        () => record.updated_by?.username,
-        () => record.updated_by?.name,
-        () => record.modifiedBy?.username,
-        () => record.modifiedBy?.name,
-        () => record.modified_by?.username,
-        () => record.modified_by?.name,
-        () => record.editor?.username,
-        () => record.editor?.name,
-        () => record.editedBy,
-        () => record.lastEditedBy,
-        () => record.lastModifiedBy,
-        () => record.updaterName,
-        () => record.editorName,
-      ];
-
-      for (const fn of tryPaths) {
-        try {
-          const v = fn();
-          if (v && typeof v === "string" && v.trim()) return v.trim();
-          if (v && typeof v === "object") {
-            // object with username/name
-            const candidate = v.username || v.name || v.fullName;
-            if (candidate && String(candidate).trim()) return String(candidate).trim();
-          }
-        } catch (e) {}
-      }
-
-      return null;
-    };
+    return null;
+  };
 
   return (
     <AdminLayout>
       <Card
         title={
           <h4 style={{ margin: 0, color: NATURE_COLORS.darkText, fontWeight: 600 }}>
-             HƯỚNG DẪN TRỒNG
+            HƯỚNG DẪN TRỒNG
           </h4>
         }
         extra={
@@ -367,8 +366,7 @@ export default function AdminGuides() {
               // Primary Green
               style={{ backgroundColor: NATURE_COLORS.primary, borderColor: NATURE_COLORS.primary, fontWeight: 500 }}
               onClick={() => {
-                setEditingGuide(null);
-                setDrawerVisible(true);
+                navigate(`/admin/adminGuidecreate`);
               }}
             >
               Thêm mới
@@ -430,204 +428,7 @@ export default function AdminGuides() {
         </div>
       </Card>
 
-      <GuideDrawer
-        visible={drawerVisible}
-        guide={editingGuide}
-        onClose={() => setDrawerVisible(false)}
-        onSubmit={async (formValues) => {
-          try {
-            const fd = new FormData();
-            Object.entries(formValues).forEach(([k, v]) => {
-              if (k === "plantTags" || Array.isArray(v)) {
-                fd.append(k, JSON.stringify(v));
-              } else if (k === "image") {
-                if (v instanceof File) fd.append("image", v);
-              } else if (v !== undefined && v !== null) {
-                fd.append(k, v);
-              }
-            });
 
-            if (editingGuide) {
-              await axiosClient.put(
-                `/guides/${editingGuide._id || editingGuide.id}`, fd,
-                { headers: { "Content-Type": "multipart/form-data" } }
-              );
-              message.success("Cập nhật thành công");
-            } else {
-              await axiosClient.post("/guides", fd, {
-                headers: { "Content-Type": "multipart/form-data" },
-              });
-              message.success("Tạo mới thành công");
-            }
-
-            setDrawerVisible(false);
-            setEditingGuide(null);
-            fetchGuides(page);
-
-          } catch (e) {
-            console.error(e);
-            message.error("Thao tác không thành công");
-          }
-        }}
-      />
     </AdminLayout>
-  );
-}
-
-// ---------------- GuideDrawer Component ----------------
-function GuideDrawer({ visible, guide, onClose, onSubmit }) {
-  const safeGuide = guide || {};
-  const [form] = Form.useForm();
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const prevObjectUrlRef = useRef(null);
-
-  useEffect(() => {
-    return () => {
-      if (prevObjectUrlRef.current) {
-        URL.revokeObjectURL(prevObjectUrlRef.current);
-        prevObjectUrlRef.current = null;
-      }
-    };
-  }, []);
-  
-  useEffect(() => {
-    form.setFieldsValue({
-      title: safeGuide.title || "",
-      description: safeGuide.description || safeGuide.summary || "",
-      content: safeGuide.content || "",
-      plantTags: Array.isArray(safeGuide.plantTags)
-        ? safeGuide.plantTags.join(", ")
-        : "",
-      image: null,
-    });
-
-    setPreviewUrl(safeGuide.image || null);
-
-  }, [safeGuide, form, visible]);
-
-
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0] || null;
-    form.setFieldValue("image", file);
-
-    if (prevObjectUrlRef.current) {
-      URL.revokeObjectURL(prevObjectUrlRef.current);
-      prevObjectUrlRef.current = null;
-    }
-
-    if (file) {
-      const objUrl = URL.createObjectURL(file);
-      prevObjectUrlRef.current = objUrl;
-      setPreviewUrl(objUrl);
-    } else {
-      setPreviewUrl(safeGuide.image || null);
-    }
-  };
-
-  const handleFinish = (values) => {
-    const payload = {
-      ...values,
-      plantTags: values.plantTags
-        ? values.plantTags
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [],
-    };
-    onSubmit(payload);
-  };
-
-  const handleClose = () => {
-    form.resetFields();
-    setPreviewUrl(null);
-    onClose();
-  };
-
-  return (
-    <Drawer
-      title={<span style={{ color: NATURE_COLORS.darkText, fontWeight: 600 }}>{safeGuide._id ? "Sửa Hướng Dẫn" : "Tạo Hướng Dẫn Mới"}</span>}
-      width={window.innerWidth > 768 ? 480 : "100%"}
-      onClose={handleClose}
-      open={visible}
-      destroyOnClose={false}
-      bodyStyle={{ paddingBottom: 80, backgroundColor: NATURE_COLORS.background }} // Nền Drawer dùng Nature Ivory
-      footerStyle={{ borderTop: `1px solid ${NATURE_COLORS.neutralBorder}` }}
-      footer={
-        <div style={{ textAlign: "right" }}>
-          <Button
-            onClick={handleClose}
-            style={{ marginRight: 8, color: NATURE_COLORS.darkText, borderColor: NATURE_COLORS.neutralBorder }}
-          >
-            Hủy
-          </Button>
-          <Button
-            type="primary"
-            onClick={() => form.submit()}
-            // Primary Green
-            style={{
-              backgroundColor: NATURE_COLORS.primary,
-              borderColor: NATURE_COLORS.primary,
-              fontWeight: 500
-            }}
-          >
-            Lưu
-          </Button>
-        </div>
-      }
-    >
-      <Form layout="vertical" form={form} onFinish={handleFinish}>
-        <Form.Item
-          label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Tiêu đề</span>}
-          name="title"
-          rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}
-        >
-          <Input placeholder="Ví dụ: Kỹ thuật trồng Cà Chua" />
-        </Form.Item>
-
-        <Form.Item label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Mô tả ngắn</span>} name="description">
-          <Input.TextArea rows={2} placeholder="Tóm tắt ngắn gọn về hướng dẫn" />
-        </Form.Item>
-
-        <Form.Item label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Nội dung chi tiết</span>} name="content">
-          <Input.TextArea rows={6} placeholder="Nhập toàn bộ nội dung hướng dẫn tại đây" />
-        </Form.Item>
-
-        <Form.Item 
-            label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Thẻ cây trồng (Tags)</span>} 
-            name="plantTags"
-            tooltip="Phân cách bằng dấu phẩy (ví dụ: cà chua, rau xanh, thủy canh)"
-        >
-          <Input placeholder="cà chua, rau xanh, thủy canh" />
-        </Form.Item>
-
-        <Form.Item label={<span style={{ fontWeight: 500, color: NATURE_COLORS.darkText }}>Ảnh đại diện</span>} name="image">
-          <>
-            <div style={{ marginBottom: 8 }}>
-                <img
-                  src={previewUrl || placeholderImg}
-                  alt="preview/placeholder"
-                  style={{
-                    width: "100%",
-                    maxHeight: 200,
-                    objectFit: "cover",
-                    borderRadius: 6,
-                    border: `1px solid ${NATURE_COLORS.neutralBorder}`,
-                    marginBottom: 8
-                  }}
-                />
-            </div>
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              // Tinh chỉnh style input file
-              style={{ width: "100%", padding: 6, border: `1px solid ${NATURE_COLORS.neutralBorder}`, borderRadius: 4 }}
-            />
-            {previewUrl && <small style={{ color: NATURE_COLORS.textMuted }}>* Ảnh mới sẽ thay thế ảnh cũ.</small>}
-          </>
-        </Form.Item>
-      </Form>
-    </Drawer>
   );
 }

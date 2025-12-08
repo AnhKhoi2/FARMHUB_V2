@@ -69,7 +69,7 @@ export default function AdminExpertApplications() {
       );
       toast.success(
         res.data?.message ||
-        "Duyệt đơn thành công, user đã được chuyển sang role expert."
+        "Duyệt đơn thành công, người dùng đã được chuyển sang role chuyên gia."
       );
       load();
     } catch (err) {
@@ -167,16 +167,16 @@ export default function AdminExpertApplications() {
   return (
     <AdminLayout>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="h5 mb-0">Đơn ứng tuyển chuyên gia</h3>
+        <h3 className="h5 mb-0">Đơn Ứng Tuyển Chuyên Gia</h3>
         <div className="text-muted small">
           Hiển thị:{" "}
           {status === "pending"
-            ? "Đang chờ"
+            ? "Đang Chờ"
             : status === "approved"
-              ? "Đã duyệt"
+              ? "Đã Duyệt"
               : status === "rejected"
-                ? "Đã từ chối"
-                : "Tất cả"}
+                ? "Đã Từ Chối"
+                : "Tất Cả"}
         </div>
       </div>
 
@@ -188,17 +188,17 @@ export default function AdminExpertApplications() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="">Tất cả</option>
-            <option value="pending">Đang chờ</option>
-            <option value="approved">Đã duyệt</option>
-            <option value="rejected">Đã từ chối</option>
+            <option value="">Tất Cả</option>
+            <option value="pending">Đang Chờ</option>
+            <option value="approved">Đã Duyệt</option>
+            <option value="rejected">Đã Từ Chối</option>
           </select>
         </div>
         <div className="col-auto">
           <input
             type="text"
             className="form-control form-control-sm"
-            placeholder="Tìm theo tên, lĩnh vực."
+            placeholder="Tìm Kiếm Tên, Lĩnh Vực."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -216,20 +216,20 @@ export default function AdminExpertApplications() {
             <table className="table table-sm table-hover mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Họ và Tên</th>
-                  <th>Email</th>
-                  <th>Số Điện Thoại</th>
-                  <th>Lĩnh Vực</th>
-                  <th>Kinh Nghiệm</th>
-                  <th>Trạng Thái</th>
-                  <th>Hành Động</th>
+                  <th>HỌ & TÊN</th>
+                  <th>EMAIL</th>
+                  <th>SỐ ĐIỆN THOẠI</th>
+                  <th>LĨNH VỰC</th>
+                  <th>KINH NGHIỆM</th>
+                  <th>TRẠNG THÁI</th>
+                  <th>HÀNH ĐỘNG</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
                     <td colSpan={7} className="text-center py-3">
-                      Đang tải...
+                      Đang Tải...
                     </td>
                   </tr>
                 ) : items.length === 0 ? (
@@ -245,7 +245,7 @@ export default function AdminExpertApplications() {
                       <td className="small">{it.email}</td>
                       <td className="small">{it.phone_number || "—"}</td>
                       <td>{it.expertise_area}</td>
-                      <td>{it.experience_years ?? 0} năm</td>
+                      <td>{it.experience_years ?? 0} Năm</td>
                       <td>{renderStatusBadge(it.status)}</td>
                       <td>
                         <div className="ea-action-group">
@@ -254,7 +254,7 @@ export default function AdminExpertApplications() {
                             className="ea-btn ea-view"
                             onClick={() => openDetail(it)}
                           >
-                            View
+                            XEM
                           </button>
 
                           <button
@@ -262,7 +262,7 @@ export default function AdminExpertApplications() {
                             onClick={() => approve(it._id)}
                             disabled={it.status !== "pending"}
                           >
-                            Duyệt
+                            DUYỆT
                           </button>
 
                           <button
@@ -270,7 +270,7 @@ export default function AdminExpertApplications() {
                             onClick={() => reject(it._id)}
                             disabled={it.status !== "pending"}
                           >
-                            Từ chối
+                            TỪ CHỐI
                           </button>
                         </div>
                       </td>
@@ -302,38 +302,38 @@ export default function AdminExpertApplications() {
             <div className="ea-detail-grid">
 
               <div className="ea-field">
-                <label>Họ và tên</label>
+                <label>HỌ & TÊN</label>
                 <p>{detailData.full_name}</p>
               </div>
 
               <div className="ea-field">
-                <label>Email</label>
+                <label>EMAIL</label>
                 <p>{detailData.email}</p>
               </div>
 
               <div className="ea-field">
-                <label>Số điện thoại</label>
+                <label>SỐ ĐIỆN THOẠI</label>
                 <p>{detailData.phone_number || "—"}</p>
               </div>
 
               <div className="ea-field">
-                <label>Lĩnh vực chuyên môn</label>
+                <label>LĨNH VỰC CHUYÊN MÔN</label>
                 <p>{detailData.expertise_area}</p>
               </div>
 
               <div className="ea-field">
-                <label>Kinh nghiệm</label>
-                <p>{detailData.experience_years ?? 0} năm</p>
+                <label>KINH NGHIỆM</label>
+                <p>{detailData.experience_years ?? 0} Năm</p>
               </div>
 
               {/* FULL WIDTH ROW */}
               <div className="ea-field full">
-                <label>Giới thiệu</label>
+                <label>GIỚI THIỆU</label>
                 <p>{detailData.description || "—"}</p>
               </div>
 
               <div className="ea-field full">
-                <label>Chứng chỉ</label>
+                <label>CHỨNG CHỈ</label>
                 <ul className="ea-cert-list">
                   {detailData.certificates?.length > 0 ? (
                     detailData.certificates.map((c, i) => (
@@ -352,7 +352,7 @@ export default function AdminExpertApplications() {
             {/* Footer */}
             <div className="ea-detail-footer">
               <button className="ea-btn-close" onClick={() => setDetailOpen(false)}>
-                Đóng
+                ĐÓNG
               </button>
             </div>
 

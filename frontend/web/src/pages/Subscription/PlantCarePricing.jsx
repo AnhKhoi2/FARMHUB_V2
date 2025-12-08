@@ -165,6 +165,16 @@ const PlantCarePricing = () => {
           )}
         </div>
 
+        {/* Hiển thị gói hiện tại */}
+        {user && (
+          <div className="current-plan-banner">
+            📦 Gói hiện tại:{" "}
+            <strong>
+              {plans.find((p) => p.key === currentPlan)?.name || "Cơ Bản"}
+            </strong>
+          </div>
+        )}
+
         {error && <div className="alert alert-danger text-center">{error}</div>}
 
         <div className="plans-grid">

@@ -46,13 +46,14 @@ import geocodeRoute from "./routes/geocode.js";
 import weatherRoute from "./routes/weather_v2.js";
 import airRoute from "./routes/air.js";
 import cloudinaryUploadRoutes from "./routes/cloudinaryUpload.js";
-import tilesRoute from "./routes/tiles.js";
+
 import plantRoute from "./routes/plant.js";
 import plantsRoute from "./routes/plants.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 import adminTransactionsRoute from "./routes/adminTransactions.js";
 import dashboardRoute from "./routes/dashboard.js";
 import urbanFarmingRoutes from "./routes/urbanFarmingRoutes.js";
+import pesticideInfoRoutes from "./routes/pesticideInfoRoutes.js";
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -112,7 +113,6 @@ app.use("/api/geocode", geocodeRoute);
 app.use("/api/weather", weatherRoute);
 app.use("/api/air", airRoute);
 app.use("/api/plant", plantRoute);
-app.use("/api/ow/tiles", tilesRoute);
 app.use("/api/plants", plantsRoute);
 app.use("/auth", authRoute);
 app.use("/profile", profileRoute);
@@ -155,7 +155,7 @@ app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 
 app.use("/api/urban-farming", urbanFarmingRoutes);
-
+app.use("/api/pesticides", pesticideInfoRoutes);
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

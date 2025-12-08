@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import PlantGroup from "../models/PlantGroup.js";
-import { verifyToken, requireAdmin } from "../middlewares/authMiddleware.js";
+import { verifyToken, requireAdmin, requireRoles } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -55,7 +55,7 @@ router.get("/", async (req, res) => {
 });
 
 // Admin: create a plant group
-router.post("/", verifyToken, requireAdmin, async (req, res) => {
+router.post("/", verifyToken, requireRoles(["admin","expert"]), async (req, res) => {
   try {
     const { name, slug, description, plants } = req.body;
     if (!name)

@@ -248,5 +248,5 @@
 .badge.bg-success,
 .badge.bg-danger {
   border: 3px ; /* độ dày border */
-  padding: 6px 10px !important;
+  padding: 8px 12px !important;
 }

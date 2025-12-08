@@ -127,7 +127,7 @@ export default function ExpertProfile() {
     return (
       <div className="xp-loader">
         <div className="xp-spinner" />
-        <span>Đang tải hồ sơ chuyên gia…</span>
+        <span>Đang Tải Hồ Sơ Chuyên Gia…</span>
       </div>
     );
   }
@@ -317,7 +317,7 @@ if (photoFile) {
               onClick={() => navigate("/expert/home")}
             >
               <ArrowLeft size={18} />
-              <span>Quay lại</span>
+              <span>Quay Lại</span>
             </button>
 
             <button
@@ -330,7 +330,7 @@ if (photoFile) {
               }}
             >
               <LogOut size={18} />
-              <span>Đăng xuất</span>
+              <span>Đăng Xuất</span>
             </button>
           </div>
         </div>
@@ -348,7 +348,7 @@ if (photoFile) {
             {editing && (
               <div style={{ marginLeft: 16 }}>
                 <label className="xp-btn outline" style={{ cursor: "pointer" }}>
-                  Chọn ảnh
+                  CHỌN ẢNH
                   <input
                     type="file"
                     accept="image/*"
@@ -373,7 +373,7 @@ if (photoFile) {
                 <User size={18} />
               </div>
               <div className="xp-info-text">
-                <span className="xp-info-label">Họ tên</span>
+                <span className="xp-info-label">HỌ & TÊN</span>
                 <span className="xp-info-value">{name}</span>
               </div>
             </div>
@@ -383,7 +383,7 @@ if (photoFile) {
                 <Mail size={18} />
               </div>
               <div className="xp-info-text">
-                <span className="xp-info-label">Email</span>
+                <span className="xp-info-label">EMAIL</span>
                 <span className="xp-info-value">{email}</span>
               </div>
             </div>
@@ -393,7 +393,7 @@ if (photoFile) {
                 <Shield size={18} />
               </div>
               <div className="xp-info-text">
-                <span className="xp-info-label">Vai trò</span>
+                <span className="xp-info-label">VAI TRÒ</span>
                 <span className="xp-info-value">{role}</span>
               </div>
             </div>
@@ -403,9 +403,9 @@ if (photoFile) {
                 <Phone size={18} />
               </div>
               <div className="xp-info-text">
-                <span className="xp-info-label">Số điện thoại</span>
+                <span className="xp-info-label">SỐ ĐIỆN THOẠI</span>
                 <span className="xp-info-value">
-                  {phone || "Chưa cập nhật"}
+                  {phone || "Chưa Cập Nhật"}
                 </span>
               </div>
             </div>
@@ -415,7 +415,7 @@ if (photoFile) {
             <form className="xp-edit-form" onSubmit={handleSave}>
               <div className="xp-edit-grid">
                 <div className="xp-edit-field">
-                  <label>Họ tên</label>
+                  <label>HỌ & TÊN</label>
                   <input
                     type="text"
                     value={form.name}
@@ -427,7 +427,7 @@ if (photoFile) {
                 </div>
 
                 <div className="xp-edit-field">
-                  <label>Email</label>
+                  <label>EMAIL</label>
                   <input
                     type="email"
                     value={form.email}
@@ -439,7 +439,7 @@ if (photoFile) {
                 </div>
 
                 <div className="xp-edit-field">
-                  <label>Vai trò</label>
+                  <label>VAI TRÒ</label>
                   <input
                     type="text"
                     value={form.role}
@@ -451,7 +451,7 @@ if (photoFile) {
                 </div>
 
                 <div className="xp-edit-field">
-                  <label>Số điện thoại</label>
+                  <label>SỐ ĐIỆN THOẠI</label>
                   <input
                     type="text"
                     value={form.phone}
@@ -482,11 +482,11 @@ if (photoFile) {
                     setEditing(false);
                   }}
                 >
-                  Hủy
+                  HỦY
                 </button>
 
                 <button className="xp-btn" disabled={saving}>
-                  {saving ? "Đang lưu…" : "Lưu thay đổi"}
+                  {saving ? "Đang Lưu…" : "LƯU THAY ĐỔI"}
                 </button>
               </div>
             </form>
@@ -498,11 +498,11 @@ if (photoFile) {
                 className="xp-btn"
                 onClick={() => navigate("/expert/home")}
               >
-                Trở về trang chuyên gia
+                TRỞ VỀ TRANG CHUYÊN GIA
               </button>
 
               <button className="xp-btn outline" onClick={() => setEditing(true)}>
-                Chỉnh sửa hồ sơ
+                CHỈNH SỬA HỒ SƠ
               </button>
             </div>
           )}

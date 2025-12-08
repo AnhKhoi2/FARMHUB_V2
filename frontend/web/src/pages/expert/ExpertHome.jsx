@@ -241,7 +241,7 @@ export default function ExpertHome({
               >
                 <MessageCircle size={20} />
                 {unreadCount > 0 && <span className="chat-badge" />}
-                <span>Trò chuyện</span>
+                <span>Trò Chuyện</span>
               </button>
 
               <button
@@ -252,7 +252,7 @@ export default function ExpertHome({
                 }}
               >
                 <Book size={20} />
-                <span>Quản lý hướng dẫn</span>
+                <span>Quản Lý Hướng Dẫn</span>
               </button>
 
               <button
@@ -260,7 +260,7 @@ export default function ExpertHome({
                 onClick={() => navigate("/experthome/models")}
               >
                 <Leaf size={20} />
-                <span>Mô hình trồng</span>
+                <span>Mô Hình Trồng</span>
               </button>
 
               <button
@@ -304,7 +304,7 @@ export default function ExpertHome({
                       }}
                     >
                       <User size={18} />
-                      <span>Hồ sơ</span>
+                      <span>Hồ Sơ</span>
                     </button>
 
                     <div className="profile-divider"></div>
@@ -318,7 +318,7 @@ export default function ExpertHome({
                       }}
                     >
                       <LogOut size={18} />
-                      <span>Đăng xuất</span>
+                      <span>Đăng Xuất</span>
                     </button>
                   </div>
                 )}
@@ -331,7 +331,7 @@ export default function ExpertHome({
           <div className="content-container">
             <section className="welcome-section">
               <h2 className="welcome-title">
-                Xin chào, {name.split(" ")[1] || name}! 👋
+                Xin Chào, {name.split(" ")[1] || name}! 👋
               </h2>
               <p className="welcome-subtitle">
                 Quản lý hướng dẫn trồng trọt và trao đổi với người dùng
@@ -381,11 +381,11 @@ export default function ExpertHome({
                   <div className="item-card" key={g._id}>
                     <img
                       src={g.image || "/placeholder.jpg"}
-                      alt={g.title}
+                      alt={(g.title || "").toUpperCase()}
                       className="item-image"
                     />
 
-                    <h3 className="item-name">{g.title}</h3>
+                    <h3 className="item-name">{(g.title || "").toUpperCase()}</h3>
 
                     <p className="item-desc">
                       {g.summary?.slice(0, 80) ||
