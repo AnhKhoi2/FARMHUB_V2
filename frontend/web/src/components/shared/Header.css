@@ -37,6 +37,15 @@
     gap: 0.45rem;
     transition: transform 0.18s ease, opacity 0.18s ease;
   }
+
+  /* Remove any outer box/padding added by global styles (keep logo compact) */
+  .logo {
+    background: transparent !important;
+    padding: 0 !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
   
   .logo a:hover {
     transform: translateY(-1px);

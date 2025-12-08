@@ -381,11 +381,11 @@ export default function ExpertHome({
                   <div className="item-card" key={g._id}>
                     <img
                       src={g.image || "/placeholder.jpg"}
-                      alt={g.title}
+                      alt={(g.title || "").toUpperCase()}
                       className="item-image"
                     />
 
-                    <h3 className="item-name">{g.title}</h3>
+                    <h3 className="item-name">{(g.title || "").toUpperCase()}</h3>
 
                     <p className="item-desc">
                       {g.summary?.slice(0, 80) ||

@@ -542,6 +542,14 @@ body {
   overflow: hidden;
 }
 
+/* Generic 2-line clamp utility */
+.clamp-2 {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
 .market-card-price {
   font-weight: bold;
   color: var(--emerald-600);
