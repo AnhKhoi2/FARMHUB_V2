@@ -52,7 +52,7 @@ import plantsRoute from "./routes/plants.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 import adminTransactionsRoute from "./routes/adminTransactions.js";
 import dashboardRoute from "./routes/dashboard.js";
-import urbanFarmingRoutes from "./routes/urbanFarmingRoutes.js";
+import urbanFarmingRoutes from "./routes/farmingRoutes.js";
 import pesticideInfoRoutes from "./routes/pesticideInfoRoutes.js";
 const PORT = process.env.PORT || 5000;
 

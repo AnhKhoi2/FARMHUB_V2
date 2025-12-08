@@ -328,8 +328,7 @@ function UrbanFarmingPlansPage() {
     } catch (err) {
       console.error("[UrbanFarmingPlansPage] softDelete error:", err);
       setPageError(
-        err.response?.data?.message ||
-          "Không xóa được gợi ý. Vui lòng thử lại."
+        err.response?.data?.message || "Không xóa được gợi ý. Vui lòng thử lại."
       );
     } finally {
       setLoadingSoftDelete(false);
@@ -382,7 +381,7 @@ function UrbanFarmingPlansPage() {
       return str;
     }
   };
-    const renderStepHintCard = () => {
+  const renderStepHintCard = () => {
     let title = "";
     let lines = [];
 
@@ -391,21 +390,21 @@ function UrbanFarmingPlansPage() {
       lines = [
         "Ở mục “Loại không gian”, hãy nhập bạn trồng ở đâu (sân thượng, sân vườn, ban công, hiên nhà, đất trống...).",
         "Diện tích chỉ cần ước lượng gần đúng, không cần chính xác tuyệt đối.",
-        "Hình dạng, cao lan can, mái che và mức gió giúp AI hiểu mức nắng và độ an toàn khi đặt chậu/kệ."
+        "Hình dạng, cao lan can, mái che và mức gió giúp AI hiểu mức nắng và độ an toàn khi đặt chậu/kệ.",
       ];
     } else if (wizardStep === 2) {
       title = "Gợi ý điền bước 2 – Nước, thoát nước & thời gian chăm";
       lines = [
         "Mục nguồn nước: ghi rõ bạn lấy nước ở đâu (vòi gần, xách nước từ trong nhà, dùng bồn chứa...).",
         "Thoát nước: mô tả khu vực có dễ đọng nước hay thoát tốt, để AI tránh gợi ý mô hình dễ gây ngập.",
-        "Thời gian chăm (giờ/tuần) chỉ cần ước lượng bạn rảnh khoảng bao nhiêu giờ mỗi tuần cho việc chăm cây."
+        "Thời gian chăm (giờ/tuần) chỉ cần ước lượng bạn rảnh khoảng bao nhiêu giờ mỗi tuần cho việc chăm cây.",
       ];
     } else if (wizardStep === 3) {
       title = "Gợi ý điền bước 3 – Ngân sách & mục tiêu";
       lines = [
         "Ngân sách đầu tư ban đầu là số tiền bạn dự kiến chi cho chậu, đất, giống, dụng cụ cơ bản.",
         "Ngân sách duy trì là số tiền mỗi tháng bạn thấy thoải mái cho phân bón, giống bổ sung...",
-        "Mục tiêu chính và mức độ ưu tiên (1–5) giúp AI hiểu bạn ưu tiên sản lượng, thẩm mỹ hay học hỏi."
+        "Mục tiêu chính và mức độ ưu tiên (1–5) giúp AI hiểu bạn ưu tiên sản lượng, thẩm mỹ hay học hỏi.",
       ];
     } else if (wizardStep === 4) {
       title = "Gợi ý điền bước 4 – Ưu tiên & khu vực";
@@ -413,7 +412,7 @@ function UrbanFarmingPlansPage() {
         "Ưu tiên hữu cơ/tiết kiệm nước: chọn theo thói quen sinh hoạt và điều kiện gia đình.",
         "Khu vực / thành phố giúp AI xác định vùng khí hậu và mùa vụ phù hợp cho Việt Nam.",
         "Tháng bắt đầu dự kiến là thời điểm bạn định bắt đầu trồng, AI sẽ gợi ý cây & lịch chăm phù hợp.",
-        "Mức kinh nghiệm giúp AI không gợi ý mô hình quá phức tạp nếu bạn mới bắt đầu."
+        "Mức kinh nghiệm giúp AI không gợi ý mô hình quá phức tạp nếu bạn mới bắt đầu.",
       ];
     }
 
@@ -463,26 +462,20 @@ function UrbanFarmingPlansPage() {
             "linear-gradient(90deg, rgb(232, 245, 233), rgb(227, 242, 253))",
         }}
       >
-        <div
-          style={{
-            marginBottom: "12px",
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "12px",
-            alignItems: "center",
-          }}
-        >
+        <div className="uf-header-bar">
           <div>
-            <h2 style={{ marginBottom: "4px" }}>
-              AI GỢI Ý KẾ HOẠCH NÔNG NGHIỆP
-            </h2>
-            <p style={{ fontSize: 13, color: "#555", margin: 0 }}>
-              Không biết bắt đầu từ đâu? AI sẽ dựa vào thông tin bạn cung cấp để gợi ý mô hình trồng và danh sách cây phù hợp với không gian của bạn.
+            <h1 style={{ fontWeight: 700, fontSize: "26px" }}>
+              Gợi Ý Mô Hình Trồng Trọt & Cây Trồng
+            </h1>
+            <p className="uf-header-subtitle">
+              Không biết bắt đầu từ đâu? AI ( Trí tuệ nhân tạo ) sẽ dựa vào thông tin bạn cung cấp để
+              gợi ý mô hình trồng và danh sách cây phù hợp với không gian của
+              bạn.
             </p>
           </div>
           <button
             type="button"
-            className=" btn-primary_sb"
+            className="btn-primary_sb"
             onClick={() => {
               setShowFormModal(true);
               setWizardStep(1);
@@ -527,16 +520,8 @@ function UrbanFarmingPlansPage() {
           </div>
         )}
 
-        {/* GRID: list + detail */}
-        <div
-          className="urban-farming-layout"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 1.1fr)",
-            gap: "20px",
-            alignItems: "flex-start",
-          }}
-        >
+        {/* LIST trên – DETAIL dưới */}
+        <div className="urban-farming-layout">
           {/* LIST */}
           <div
             className="card"
@@ -546,7 +531,7 @@ function UrbanFarmingPlansPage() {
               padding: "12px 16px",
               boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
               border: "1px solid #e3e3e3",
-              maxHeight: "500px",
+              maxHeight: "300px",
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
@@ -949,7 +934,7 @@ function UrbanFarmingPlansPage() {
                       color: "#064e3b",
                     }}
                   >
-                    AI GỢI Ý KẾ HOẠCH NÔNG NGHIỆP MỚI
+                     Tìm Kiếm Mô Hình Trồng Phù Hợp
                   </h3>
                   <p
                     style={{
@@ -958,8 +943,7 @@ function UrbanFarmingPlansPage() {
                       margin: "2px 0 0",
                     }}
                   >
-                    Trả lời lần lượt các câu hỏi. Sau khi hoàn tất, hệ thống sẽ
-                    hiển thị bản tóm tắt trước khi gửi AI phân tích.
+                    Vui lòng điền thông tin theo từng bước bên dưới.
                   </p>
                   <p
                     style={{
@@ -1386,9 +1370,7 @@ function UrbanFarmingPlansPage() {
                           max="5"
                           className="form-control"
                           value={aestheticPriority}
-                          onChange={(e) =>
-                            setAestheticPriority(e.target.value)
-                          }
+                          onChange={(e) => setAestheticPriority(e.target.value)}
                         />
                       </div>
                       <div style={{ flex: 1 }}>
@@ -1579,95 +1561,50 @@ function UrbanFarmingPlansPage() {
           </div>
         )}
 
-        {/* MODAL TÓM TẮT TRƯỚC KHI GỬI AI */}
+        {/* MODAL TÓM TẮT TRƯỚC KHI GỬI AI - HIỆN ĐẠI */}
         {showSummaryModal && pendingBody && (
-          <div
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.55)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 2100,
-            }}
-          >
-            <div
-              style={{
-                background: "#ffffff",
-                borderRadius: "14px",
-                width: "min(720px, 96%)",
-                maxHeight: "85vh",
-                overflowY: "auto",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.45)",
-                padding: "16px 20px 20px",
-                fontSize: 13,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 8,
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: 16,
-                    margin: 0,
-                    color: "#064e3b",
-                  }}
-                >
-                  TÓM TẮT
-                </h3>
+          <div className="uf-summary-backdrop">
+            <div className="uf-summary-modal">
+              {/* Header */}
+              <div className="uf-summary-header">
+                <div className="uf-summary-title-wrap">
+                  <span className="uf-summary-chip">
+                    <span>🔍</span> TÓM TẮT THÔNG TIN
+                  </span>
+                  <div className="uf-summary-title">Kiểm tra lại trước khi gửi</div>
+                  <div className="uf-summary-subtitle">
+                    Đây là bản tóm tắt thông tin không gian, mục tiêu và ưu tiên của bạn.
+                    Nếu đã đúng, bấm “Gợi ý” để AI ( Trí tuệ nhân tạo ) phân tích và đề xuất mô hình & cây trồng phù hợp.
+                  </div>
+                </div>
                 <button
                   type="button"
+                  className="uf-summary-close-btn"
                   onClick={() => {
                     setShowSummaryModal(false);
                     setSummaryError("");
                   }}
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    fontSize: 20,
-                    cursor: "pointer",
-                    lineHeight: 1,
-                  }}
+                  aria-label="Đóng"
                 >
                   ×
                 </button>
               </div>
 
-              <hr style={{ margin: "8px 0 12px" }} />
+              <hr className="uf-summary-divider" />
 
               {/* Lỗi trong modal tổng hợp */}
               {summaryError && (
-                <div
-                  style={{
-                    background: "#ffe5e5",
-                    color: "#b30000",
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    marginBottom: "8px",
-                    fontSize: 12,
-                  }}
-                >
+                <div className="uf-summary-error">
                   {summaryError}
                 </div>
               )}
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: "12px 24px",
-                }}
-              >
+              {/* Body: 3 cột thông tin */}
+              <div className="uf-summary-grid">
                 <div>
-                  <h4 style={{ fontSize: 13, marginBottom: 6 }}>
-                    Không gian & ánh sáng
-                  </h4>
+                  <div className="uf-summary-section-title">
+                    📍 Không gian & ánh sáng
+                  </div>
                   <p>
                     <strong>Loại không gian:</strong>{" "}
                     {pendingBody.space_type || "—"}
@@ -1713,9 +1650,9 @@ function UrbanFarmingPlansPage() {
                 </div>
 
                 <div>
-                  <h4 style={{ fontSize: 13, marginBottom: 6 }}>
-                    Nước, thời gian chăm & ưu tiên
-                  </h4>
+                  <div className="uf-summary-section-title">
+                    💧 Nước, thời gian & ưu tiên
+                  </div>
                   <p>
                     <strong>Nguồn nước:</strong>{" "}
                     {pendingBody.water_access || "—"}
@@ -1783,9 +1720,9 @@ function UrbanFarmingPlansPage() {
                 </div>
 
                 <div>
-                  <h4 style={{ fontSize: 13, marginBottom: 6 }}>
-                    Khu vực & thời điểm
-                  </h4>
+                  <div className="uf-summary-section-title">
+                    🗺️ Khu vực & thời điểm
+                  </div>
                   <p>
                     <strong>Khu vực / Thành phố:</strong>{" "}
                     {pendingBody.locality || "—"}
@@ -1809,14 +1746,8 @@ function UrbanFarmingPlansPage() {
                 </div>
               </div>
 
-              <div
-                style={{
-                  marginTop: "14px",
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "8px",
-                }}
-              >
+              {/* Footer buttons */}
+              <div className="uf-summary-footer">
                 <button
                   type="button"
                   className="btn btn-outline-secondary"

@@ -312,7 +312,7 @@ const Header = () => {
                             <path d="M12 2L15 8H9L12 2Z" fill="#0f7a3b" />
                             <circle cx="12" cy="14" r="6" fill="#0f7a3b" />
                           </svg>
-                          Gợi ý trồng trọt (AI)
+                          Gợi Ý Mô Hình Trồng Trọt
                         </Link>
                       </li>
                           <li>
@@ -343,7 +343,7 @@ const Header = () => {
         strokeLinecap="round"
       />
     </svg>
-    Tra cứu thuốc BVTV (AI)
+    Tra cứu thuốc BVTV
   </Link>
 </li>
 
