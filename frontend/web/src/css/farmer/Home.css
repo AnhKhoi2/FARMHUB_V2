@@ -537,10 +537,10 @@
     .card-desc,
     .guide-desc,
     .card-body p {
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        display: block !important;
+        white-space: nowrap ;
+        overflow: hidden ;
+        text-overflow: ellipsis ;
+        display: block;
     }
   
   .market-card:hover {
