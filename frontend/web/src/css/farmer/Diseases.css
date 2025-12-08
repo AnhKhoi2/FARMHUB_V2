@@ -29,6 +29,34 @@
   z-index: 1;
 }
 
+/* Search & Filter Card - Make it smaller */
+.diseases-page .card.shadow-sm.mb-4 {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.diseases-page .card.shadow-sm.mb-4 .card-body {
+  padding: 1rem 1.25rem !important;
+}
+
+.diseases-page .card.shadow-sm.mb-4 .row.g-3 {
+  --bs-gutter-x: 0.75rem;
+  --bs-gutter-y: 0.5rem;
+}
+
+.diseases-page .card.shadow-sm.mb-4 .form-control,
+.diseases-page .card.shadow-sm.mb-4 .form-select {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  height: auto;
+  min-height: 38px;
+}
+
+.diseases-page .card.shadow-sm.mb-4 .input-group-text {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
 /* Section Titles */
 .section-title {
   font-size: 1.75rem;
