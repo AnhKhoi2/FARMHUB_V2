@@ -765,9 +765,10 @@ const getCurrentStageObservations = async (notebookId) => {
     return [];
   }
 
-  // Kiểm tra xem có phải ngày cuối của giai đoạn không (để xác định khi nào hiển thị observations)
+  // Kiểm tra xem có phải ngày cuối của giai đoạn không hoặc đã qua ngày cuối
   const currentDay = notebook.current_day || 1;
   const isLastDayOfStage = currentDay === currentStage.day_end;
+  const isPastLastDay = currentDay > currentStage.day_end;
 
   // Nếu stage đã completed thì không trả về observation required nữa
   const stageTracking = notebook.stages_tracking.find(
@@ -796,10 +797,20 @@ const getCurrentStageObservations = async (notebookId) => {
       return !found || found.value !== true;
     });
 
+  // ✅ Kiểm tra xem đã tạo observations nhưng chưa check (từ ngày cuối)
+  const hasObservationsStarted =
+    stageTracking?.observations && stageTracking.observations.length > 0;
+
   // CHỈ trả về observations nếu:
   // 1. Đang ở ngày cuối của giai đoạn HOẶC
-  // 2. Đã có observations chưa hoàn thành (tồn tại cho đến khi user check hết)
-  if (!isLastDayOfStage && !hasIncompleteObservations) {
+  // 2. Đã qua ngày cuối NHƯNG đã có observations được tạo và chưa hoàn thành (giữ observations cho đến khi user check xong)
+  // 3. Đã có observations chưa hoàn thành (tồn tại cho đến khi user check hết)
+  if (!isLastDayOfStage && !isPastLastDay && !hasIncompleteObservations) {
+    return [];
+  }
+
+  // Nếu đã qua ngày cuối nhưng chưa từng có observations thì không hiển thị nữa
+  if (isPastLastDay && !hasObservationsStarted) {
     return [];
   }
 
@@ -1249,9 +1260,17 @@ export const restoreNotebook = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Notebook not found or not deleted" });
   }
 
+  // ✅ LẤY USER TỪ DATABASE thay vì dùng req.user (token có thể cũ)
+  const User = (await import("../models/User.js")).default;
+  const currentUser = await User.findById(req.user.id);
+
   // Kiểm tra giới hạn gói miễn phí trước khi khôi phục
-  const userPlan = req.user?.subscriptionPlan || req.user?.plan || "basic";
+  const userPlan =
+    currentUser?.subscriptionPlan || currentUser?.plan || "basic";
   const isFree = userPlan === "basic" || userPlan === "free";
+
+  console.log("🔍 Restore notebook - User plan from DB:", userPlan);
+  console.log("🔍 Restore notebook - Is free plan:", isFree);
 
   if (isFree) {
     // Đếm số notebook active hiện tại (không bao gồm deleted)

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import vnpayService from "../../api/vnpayService";
+import authApi from "../../api/shared/authApi";
+import { updateUserPlan } from "../../redux/authSlice";
 import "./PaymentResult.css";
 
 const PaymentSuccess = () => {
@@ -31,14 +33,45 @@ const PaymentSuccess = () => {
           const pendingPlan = localStorage.getItem("pendingPlan");
 
           if (pendingPlan && response.order.paymentStatus === "paid") {
-            // TODO: Cập nhật plan của user trong Redux store
-            // dispatch(updateUserPlan(pendingPlan));
+            // ✅ Đợi một chút để backend cập nhật xong
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            // ✅ Refresh user data từ backend để lấy subscriptionPlan mới
+            try {
+              const userResponse = await authApi.getCurrentUser();
+              console.log("📡 User API Response:", userResponse.data);
+
+              if (userResponse.data?.data) {
+                // Cập nhật Redux store với user data mới (bao gồm subscriptionPlan)
+                const updatedUser = userResponse.data.data;
+                const newPlan =
+                  updatedUser.subscriptionPlan || updatedUser.plan || "smart";
+
+                // Cập nhật Redux store
+                dispatch(updateUserPlan(newPlan));
+
+                console.log("✅ Payment successful for plan:", pendingPlan);
+                console.log("✅ User plan updated to:", newPlan);
+                console.log(
+                  "✅ Updated subscriptionPlan:",
+                  updatedUser.subscriptionPlan
+                );
+                console.log(
+                  "✅ User from localStorage:",
+                  JSON.parse(localStorage.getItem("user") || "{}")
+                );
+              }
+            } catch (err) {
+              console.error("❌ Failed to refresh user data:", err);
+              console.error("❌ Error details:", err.response?.data);
+              // Fallback: cập nhật plan từ pendingPlan
+              dispatch(updateUserPlan(pendingPlan));
+              console.log("⚠️ Using fallback plan update:", pendingPlan);
+            }
 
             // Xóa pending plan
             localStorage.removeItem("pendingPlan");
             localStorage.removeItem("orderId");
-
-            console.log("Payment successful for plan:", pendingPlan);
           }
         }
       } catch (error) {

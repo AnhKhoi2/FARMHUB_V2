@@ -382,12 +382,18 @@ export async function approve(req, res) {
     });
 
     if (updatedUser?.email) {
-      sendMail({
-        to: updatedUser.email,
-        subject: "FarmHub - Expert Approved",
-        html: `<p>Đơn expert của bạn đã được duyệt.</p>`
-      }).catch(() => {});
-    }
+  sendMail({
+    to: updatedUser.email,
+    subject: "FarmHub - Expert Approved",
+    html: `
+      <p>Xin chúc mừng! Đơn đăng ký Expert của bạn trên hệ thống <strong>FarmHub</strong> đã được xét duyệt thành công.</p>
+      <p>Bây giờ bạn đã có thể truy cập vào các chức năng dành riêng cho Expert, bao gồm quản lý hồ sơ chuyên môn, tư vấn người dùng và tham gia đóng góp nội dung chuyên sâu.</p>
+      <p>Nếu bạn cần hỗ trợ thêm, vui lòng liên hệ đội ngũ FarmHub để được hỗ trợ kịp thời.</p>
+      <p>Trân trọng,<br/>FarmHub Team</p>
+    `
+  }).catch(() => {});
+}
+
 
   } catch (err) {
     console.error("Approve application error:", err);

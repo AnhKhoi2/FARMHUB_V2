@@ -158,7 +158,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
       }
     } catch (err) {
       console.error("Error loading template:", err);
-      setError("Không thể tải template");
+      setError("Không thể tải bộ mẫu");
     } finally {
       setLoading(false);
     }
@@ -384,7 +384,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     switch (step) {
       case 1:
         if (!formData.template_name.trim()) {
-          setError("Vui lòng nhập tên template");
+          setError("Vui lòng nhập tên bộ mẫu");
           return false;
         }
         if (!formData.plant_group) {
@@ -394,7 +394,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
         break;
       case 2:
         if (formData.stages.length < 3) {
-          setError("Template phải có ít nhất 3 giai đoạn");
+          setError("Bộ mẫu phải có ít nhất 3 giai đoạn");
           return false;
         }
         for (let stage of formData.stages) {
@@ -440,16 +440,16 @@ const PlantTemplateForm = ({ mode = "create" }) => {
 
       if (mode === "edit") {
         await plantTemplateApi.updateTemplate(id, formData);
-        alert("Cập nhật template thành công!");
+        alert("Cập nhật bộ mẫu thành công!");
       } else {
         await plantTemplateApi.createTemplate(formData);
-        alert("Tạo template thành công!");
+        alert("Tạo bộ mẫu thành công!");
       }
 
       navigate("/expert/plant-templates");
     } catch (err) {
       console.error("Error saving template:", err);
-      setError(err.response?.data?.message || "Không thể lưu template");
+      setError(err.response?.data?.message || "Không thể lưu bộ mẫu");
     } finally {
       setLoading(false);
     }
@@ -552,6 +552,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
             <Step5Review
               formData={formData}
               handleInputChange={handleInputChange}
+              plantGroups={plantGroups}
             />
           )}
         </div>
@@ -563,16 +564,16 @@ const PlantTemplateForm = ({ mode = "create" }) => {
             onClick={prevStep}
             disabled={currentStep === 1 || loading}
           >
-            ← Quay lại
+            ← QUAY LẠI
           </button>
 
           <div className="nav-info">
-            Bước {currentStep} / {steps.length}
+            BƯỚC {currentStep} / {steps.length}
           </div>
 
           {currentStep < 5 ? (
             <button className="btn btn-primary" onClick={nextStep}>
-              Tiếp theo →
+              TIẾP THEO →
             </button>
           ) : (
             <button
@@ -611,11 +612,11 @@ const Step1BasicInfo = ({
   addPlantExampleFromDropdown,
 }) => (
   <div className="step-basic-info">
-    <h2>Thông tin cơ bản</h2>
+    <h2>THÔNG TIN CƠ BẢN</h2>
 
     <div className="form-group">
       <label>
-        Tên Bộ mẫu <span className="required">*</span>
+        TÊN BỘ MẪU <span className="required">*</span>
       </label>
       <input
         type="text"
@@ -628,7 +629,7 @@ const Step1BasicInfo = ({
 
     <div className="form-group">
       <label>
-        Nhóm cây <span className="required">*</span>
+        NHÓM CÂY <span className="required">*</span>
       </label>
       <div className="plant-groups-grid">
         {plantGroups.map((group) => (
@@ -647,7 +648,7 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>Mô tả</label>
+      <label>MÔ TẢ</label>
       <textarea
         className="form-textarea"
         rows="3"
@@ -658,8 +659,8 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>🌱 Các loại cây phù hợp</label>
-      <p className="hint">Chọn các loại cây từ danh sách có sẵn</p>
+      <label>🌱 CÁC LOẠI CÂY PHÙ HỢP</label>
+      <p className="hint">CHỎN CÁC LOẠI CÂY TỪ DANH SÁCH CÓ SẴN</p>
 
       <div className="plant-selector">
         <button
@@ -668,7 +669,7 @@ const Step1BasicInfo = ({
           onClick={() => setShowPlantDropdown(!showPlantDropdown)}
           disabled={loadingGuides}
         >
-          {loadingGuides ? "Đang tải..." : "➕ Chọn cây từ danh sách"}
+          {loadingGuides ? "ĐANG TẢI..." : "➕ CHỎN CÂY TỪ DANH SÁCH"}
         </button>
 
         {showPlantDropdown && (
@@ -805,7 +806,7 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>📸 Ảnh bìa Bộ mẫu</label>
+      <label>📸 ẢNH BÌA BỘ MẪU</label>
       <div className="upload-area">
         <label className="upload-label">
           {uploadingCover ? (
@@ -942,10 +943,10 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
   return (
     <div className="step-stages">
       <div className="step-header">
-        <h2>🌱 Giai đoạn phát triển</h2>
+        <h2>🌱 GIAI ĐOẠN PHÁT TRIỂN</h2>
         <p className="hint">
-          Bộ mẫu cần có ít nhất 3 giai đoạn. Bạn có thể upload ảnh mẫu cho mỗi
-          giai đoạn.
+          BỘ MẪU CẦN CÓ ÍT NHẤT 3 GIAI ĐOẠN. BẠN CÓ THỂ UPLOAD ẢNH MẪU CHO MỖI
+          GIAI ĐOẠN.
         </p>
       </div>
 
@@ -960,7 +961,7 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
                 // Nếu xóa sẽ khiến tổng giai đoạn < 3 thì cảnh báo người dùng
                 if (stages.length <= 3) {
                   const confirmDelete = window.confirm(
-                    "Bạn sắp xóa giai đoạn. Lưu ý: Template cần ít nhất 3 giai đoạn để lưu. Bạn vẫn muốn xóa?"
+                    "Bạn sắp xóa giai đoạn. Lưu ý: Bộ mẫu cần ít nhất 3 giai đoạn để lưu. Bạn vẫn muốn xóa?"
                   );
                   if (!confirmDelete) return;
                 }
@@ -976,7 +977,7 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
           <div className="form-row">
             <div className="form-group flex-1">
               <label>
-                Tên giai đoạn <span className="required">*</span>
+                TÊN GIAI ĐOẠN <span className="required">*</span>
               </label>
               <input
                 type="text"
@@ -989,7 +990,7 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
           </div>
 
           <div className="form-group">
-            <label>Mô tả giai đoạn</label>
+            <label>MÔ TẢ GIAI ĐOẠN</label>
             <textarea
               className="form-textarea"
               rows="2"
@@ -1004,7 +1005,7 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
           <div className="form-row">
             <div className="form-group">
               <label>
-                Ngày bắt đầu <span className="required">*</span>
+                NGÀY BẮT ĐẦU <span className="required">*</span>
               </label>
               <input
                 type="number"
@@ -1019,7 +1020,7 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
 
             <div className="form-group">
               <label>
-                Ngày kết thúc <span className="required">*</span>
+                NGÀY KẾT THÚC <span className="required">*</span>
               </label>
               <input
                 type="number"
@@ -1033,15 +1034,15 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
             </div>
 
             <div className="form-group">
-              <label>Tổng ngày</label>
+              <label>TỔNG NGÀY</label>
               <div className="form-static">
-                {stage.day_end - stage.day_start + 1} ngày
+                {stage.day_end - stage.day_start + 1} NGÀY
               </div>
             </div>
           </div>
 
           <div className="form-group">
-            <label>📸 Ảnh mẫu giai đoạn</label>
+            <label>📸 ẢNH MẪU GIAI ĐOẠN</label>
             <div className="upload-area">
               <div className="upload-icon">🖼️</div>
               <label className="upload-label">
@@ -1200,7 +1201,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
 
               <div className="form-row">
                 <div className="form-group flex-2">
-                  <label>Tên nhiệm vụ</label>
+                  <label>TÊN NHIỆM VỤ</label>
                   <input
                     type="text"
                     className="form-input"
@@ -1218,7 +1219,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                 </div>
 
                 <div className="form-group flex-1">
-                  <label>Tần suất</label>
+                  <label>TẦN SUẤT</label>
                   <select
                     className="form-select"
                     value={task.frequency}
@@ -1231,16 +1232,16 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                       )
                     }
                   >
-                    <option value="daily">Hàng ngày</option>
-                    <option value="every_2_days">2 ngày/lần</option>
-                    <option value="every_3_days">3 ngày/lần</option>
-                    <option value="weekly">Hàng tuần</option>
-                    <option value="once">Một lần (chỉ xuất hiện 1 lần)</option>
+                    <option value="daily">HÀNG NGÀY</option>
+                    <option value="every_2_days">2 NGÀY/LẦN</option>
+                    <option value="every_3_days">3 NGÀY/LẦN</option>
+                    <option value="weekly">HÀNG TUẦN</option>
+                    <option value="once">MỘT LẦN (CHỈ XUẤT HIỆN 1 LẦN)</option>
                   </select>
                 </div>
 
                 <div className="form-group flex-1">
-                  <label>Độ ưu tiên</label>
+                  <label>ĐỘ ƯU TIÊN</label>
                   <select
                     className="form-select"
                     value={task.priority}
@@ -1253,19 +1254,19 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                       )
                     }
                   >
-                    <option value="low">Thấp</option>
-                    <option value="medium">Trung bình</option>
-                    <option value="high">Cao</option>
+                    <option value="low">THẤP</option>
+                    <option value="medium">TRUNG BÌNH</option>
+                    <option value="high">CAO</option>
                   </select>
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Mô tả</label>
+                <label>MÔ TẢ</label>
                 <textarea
                   className="form-textarea"
                   rows="2"
-                  placeholder="Mô tả chi tiết nhiệm vụ..."
+                  placeholder="MÔ TẢ CHI TIẼT NHIỆM VỤ..."
                   value={task.description}
                   onChange={(e) =>
                     updateTask(
@@ -1279,7 +1280,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
               </div>
 
               <div className="form-group">
-                <label>📸 Ảnh minh họa nhiệm vụ</label>
+                <label>📸 ẢNH MINH HỌA NHIỆM VỤ</label>
                 <div className="upload-area upload-area-sm">
                   <label className="upload-label">
                     {uploadingTask === `${stageIndex}-${taskIndex}` ? (
@@ -1395,9 +1396,9 @@ const Step4Observations = ({
 }) => (
   <div className="step-observations">
     <div className="step-header">
-      <h2>👁️ Điều kiện quan sát</h2>
+      <h2>👁️ ĐIỀU KIỆN QUAN SÁT</h2>
       <p className="hint">
-        Các điều kiện quan sát để theo dõi tiến độ phát triển của cây
+        CÁC ĐIỀU KIỆN QUAN SÁT ĐỂ THEO DÕI TIẾN ĐỘ PHÁT TRIỂN CỦA CÂY
       </p>
     </div>
 
@@ -1405,17 +1406,17 @@ const Step4Observations = ({
       <div key={stageIndex} className="stage-section">
         <div className="stage-section-header">
           <h3>
-            Giai đoạn {stage.stage_number}: {stage.name}
+            GIAI ĐOẠN {stage.stage_number}: {stage.name.toUpperCase()}
           </h3>
           <span className="badge">
-            {stage.observation_required?.length || 0} điều kiện
+            {stage.observation_required?.length || 0} ĐIỀU KIỆN
           </span>
         </div>
 
         {stage.observation_required?.map((obs, obsIndex) => (
           <div key={obsIndex} className="observation-card">
             <div className="observation-card-header">
-              <span className="obs-number">Điều kiện {obsIndex + 1}</span>
+              <span className="obs-number">ĐIỀU KIỆN {obsIndex + 1}</span>
               <button
                 type="button"
                 className="btn-icon btn-sm"
@@ -1434,7 +1435,7 @@ const Step4Observations = ({
 
             <div className="form-row">
               <div className="form-group flex-1">
-                <label>Key (định danh)</label>
+                <label>KEY (ĐỊNH DANH)</label>
                 <input
                   type="text"
                   className="form-input"
@@ -1453,7 +1454,7 @@ const Step4Observations = ({
               </div>
 
               <div className="form-group flex-1">
-                <label>Câu hỏi hiển thị</label>
+                <label>CÂU HỊI HIỂN THỊ</label>
                 <input
                   type="text"
                   className="form-input"
@@ -1524,34 +1525,34 @@ const Step4Observations = ({
 );
 
 // Step 5: Review (confirmation)
-const Step5Review = ({ formData, handleInputChange }) => (
+const Step5Review = ({ formData, handleInputChange, plantGroups }) => (
   <div className="step-review">
     <div className="step-header">
-      <h2>🔎 Xác nhận</h2>
-      <p className="hint">Xem lại toàn bộ mẫu trước khi lưu</p>
+      <h2>🔎 XÁC NHẬN</h2>
+      <p className="hint">XEM LẠI TOÀN BỘ MẪU TRƯỚC KHI LƯU</p>
     </div>
 
     <div className="section">
-      <h3>📋 Trạng thái & Ghi chú</h3>
+      <h3>📋 TRẠNG THÁI & GHI CHÚ</h3>
 
       <div className="form-group">
-        <label>Trạng thái</label>
+        <label>TRẠNG THÁI</label>
         <select
           className="form-select"
           value={formData.status}
           onChange={(e) => handleInputChange("status", e.target.value)}
         >
-          <option value="draft">Nháp (Draft)</option>
-          <option value="active">Hoạt động (Active)</option>
+          <option value="draft">NHÁP (DRAFT)</option>
+          <option value="active">HOẠT ĐỘNG (ACTIVE)</option>
         </select>
       </div>
 
       <div className="form-group">
-        <label>Ghi chú</label>
+        <label>GHI CHÚ</label>
         <textarea
           className="form-textarea"
           rows="3"
-          placeholder="Ghi chú thêm về bộ mẫu này..."
+          placeholder="GHI CHÚ THÊM VỀ BỘ MẪU NÀY..."
           value={formData.notes}
           onChange={(e) => handleInputChange("notes", e.target.value)}
         />
@@ -1559,22 +1560,25 @@ const Step5Review = ({ formData, handleInputChange }) => (
     </div>
 
     <div className="section">
-      <h3>📊 Tổng quan Bộ Mẫu</h3>
+      <h3>📊 TỔNG QUAN BỘ MẪU</h3>
       <div className="summary-grid">
         <div className="summary-item">
-          <div className="summary-label">Tên bộ mẫu</div>
+          <div className="summary-label">TÊN BỘ MẪU</div>
           <div className="summary-value">{formData.template_name}</div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Nhóm cây</div>
-          <div className="summary-value">{formData.plant_group}</div>
+          <div className="summary-label">NHÓM CÂY</div>
+          <div className="summary-value">
+            {plantGroups.find((g) => g.value === formData.plant_group)?.label ||
+              formData.plant_group}
+          </div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Số giai đoạn</div>
+          <div className="summary-label">SỐ GIAI ĐOẠN</div>
           <div className="summary-value">{formData.stages.length}</div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Tổng ngày</div>
+          <div className="summary-label">TỔNG NGÀY</div>
           <div className="summary-value">
             {formData.stages.length > 0
               ? Math.max(...formData.stages.map((s) => s.day_end))
@@ -1583,7 +1587,7 @@ const Step5Review = ({ formData, handleInputChange }) => (
           </div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Tổng nhiệm vụ</div>
+          <div className="summary-label">TỔNG NHIỆM VỤ</div>
           <div className="summary-value">
             {formData.stages.reduce(
               (sum, stage) => sum + (stage.autogenerated_tasks?.length || 0),
@@ -1592,7 +1596,7 @@ const Step5Review = ({ formData, handleInputChange }) => (
           </div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Tổng điều kiện</div>
+          <div className="summary-label">TỔNG ĐIỀU KIỆN</div>
           <div className="summary-value">
             {formData.stages.reduce(
               (sum, stage) => sum + (stage.observation_required?.length || 0),

@@ -11,7 +11,6 @@ import "./Header.css";
 import { RadarChartOutlined } from "@ant-design/icons";
 import { Tooltip } from "antd";
 import axiosClient from "../../api/shared/axiosClient";
-import SuggestionModal from "./SuggestionModal";
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
 
@@ -22,47 +21,12 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState(false);
-  const [suggestionOpen, setSuggestionOpen] = useState(false);
-  const [suggestionMode, setSuggestionMode] = useState("view");
 
   useEffect(() => {
     setDropdownOpen(false);
     setMenuOpen(false);
     setSubmenuOpen(false);
   }, [location.pathname]);
-
-  // show onboarding once after login if user has not selected model options
-  useEffect(() => {
-    let cancelled = false;
-    if (!user) return;
-
-    const shownKey = "modelSuggestionShownAtLogin";
-    const alreadyShown = sessionStorage.getItem(shownKey);
-    if (alreadyShown) return;
-
-    // fetch profile model suggestion quickly
-    (async () => {
-      try {
-        const res = await axiosClient.get("/profile/model-suggestion");
-        const data = res.data?.data || {};
-        const ms = data.modelSuggestion || {};
-        const selected = ms.selectedOptions || {};
-        const hasSelection = Object.keys(selected).length > 0;
-        if (!cancelled && !hasSelection) {
-          // show onboarding modal once for this login session
-          sessionStorage.setItem(shownKey, "1");
-          setSuggestionMode("onboarding");
-          setSuggestionOpen(true);
-        }
-      } catch (err) {
-        // ignore silently
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
 
   useEffect(() => {
     if (menuOpen) document.body.style.overflow = "hidden";
@@ -351,6 +315,37 @@ const Header = () => {
                           Gợi ý trồng trọt (AI)
                         </Link>
                       </li>
+                          <li>
+  <Link
+    to="/pesticides/ai-info"
+    onClick={() => setDropdownOpen(false)}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      padding: 0,
+      textDecoration: "none",
+      color: "inherit",
+    }}
+  >
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="4" fill="#0f7a3b" />
+      <path
+        d="M8 12h8M12 8v8"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+    Tra cứu thuốc BVTV (AI)
+  </Link>
+</li>
 
                       <li>
                         <button
@@ -386,11 +381,6 @@ const Header = () => {
           onClick={() => setMenuOpen(false)}
         />
       )}
-      <SuggestionModal
-        open={suggestionOpen}
-        mode={suggestionMode}
-        onClose={() => setSuggestionOpen(false)}
-      />
     </>
   );
 };

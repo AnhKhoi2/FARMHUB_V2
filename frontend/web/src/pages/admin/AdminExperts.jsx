@@ -26,13 +26,13 @@ export default function AdminExperts() {
   const mapStatusToVietnamese = (status) => {
     switch (status) {
       case "pending":
-        return "Đang chờ";
+        return "Đang Chờ";
       case "approved":
-        return "Đã duyệt";
+        return "Đã Duyệt";
       case "rejected":
-        return "Đã từ chối";
+        return "Đã Từ Chối";
       default:
-        return "Không xác định";
+        return "Không Xác Định";
     }
   };
 
@@ -119,7 +119,7 @@ export default function AdminExperts() {
         <div className="col-auto">
           <input
             className="form-control form-control-sm"
-            placeholder="Tìm kiếm tên,linh vực"
+            placeholder="Tìm Kiếm Tên, Lĩnh Vực."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -131,11 +131,11 @@ export default function AdminExperts() {
             value={expRange}
             onChange={(e) => setExpRange(e.target.value)}
           >
-            <option value="">Tất cả số năm KN</option>
-            <option value="1-3">1 - 3 năm</option>
-            <option value="4-6">4 - 6 năm</option>
-            <option value="7-10">7 - 10 năm</option>
-            <option value=">10">Trên 10 năm</option>
+            <option value="">Tất Cả Số Năm KN</option>
+            <option value="1-3">1 - 3 Năm</option>
+            <option value="4-6">4 - 6 Năm</option>
+            <option value="7-10">7 - 10 Năm</option>
+            <option value=">10">Trên 10 Năm</option>
           </select>
         </div>
       </div>
@@ -149,21 +149,21 @@ export default function AdminExperts() {
               <thead className="table-light">
                 <tr>
                   <th>STT</th>
-                  <th>Họ & Tên</th>
-                  <th>Lĩnh vực</th>
-                  <th>Kinh nghiệm</th>
-                  <th>Trạng thái</th>
-                  <th>Công khai</th>
-                  <th>Điểm TB</th>
-                  <th>Đánh giá</th>
-                  <th>Hành động</th>
+                  <th>HỌ & TÊN</th>
+                  <th>LĨNH VỰC</th>
+                  <th>KINH NGHIỆM</th>
+                  <th>TRẠNG THÁI</th>
+                  <th>CÔNG KHAI</th>
+                  <th>ĐIỂM TB</th>
+                  <th>ĐÁNH GIÁ</th>
+                  <th>HÀNH ĐỘNG</th>
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-3">Đang tải...</td>
+                    <td colSpan={9} className="text-center py-3">Đang Tải...</td>
                   </tr>
                 ) : filteredItems.length === 0 ? (
                   <tr>
@@ -229,43 +229,43 @@ export default function AdminExperts() {
                 <div className="detail-grid">
 
                   <div className="field">
-                    <label>Họ & tên</label>
+                    <label>HỌ & TÊN</label>
                     <p>{detail?.full_name}</p>
                   </div>
 
                   <div className="field">
-                    <label>Email</label>
+                    <label>EMAIL</label>
                     <p>{detail?.user?.email}</p>
                   </div>
 
                   <div className="field">
-                    <label>Lĩnh vực chuyên môn</label>
+                    <label>LĨNH VỰC CHUYÊN MÔN</label>
                     <p>{detail?.expertise_area}</p>
                   </div>
 
                   <div className="field">
-                    <label>Kinh nghiệm</label>
-                    <p>{detail?.experience_years} năm</p>
+                    <label>KINH NGHIỆM</label>
+                    <p>{detail?.experience_years} Năm</p>
                   </div>
 
                   <div className="field">
-                    <label>Trạng thái duyệt</label>
+                    <label>TRẠNG THÁI DUYỆT</label>
                     {/* ⭐ Dùng map để hiển thị tiếng Việt */}
                     <p>{mapStatusToVietnamese(detail?.review_status)}</p>
                   </div>
 
                   <div className="field">
-  <label>Số điện thoại</label>
+  <label>SỐ ĐIỆN THOẠI</label>
   <p>{detail?.phone_number || detail?.user?.phone_number || "—"}</p>
 </div>
 
                   <div className="field full">
-                    <label>Giới thiệu</label>
+                    <label>GIỚI THIỆU</label>
                     <p>{detail?.description || "—"}</p>
                   </div>
 
                   <div className="field full">
-                    <label>Chứng chỉ</label>
+                    <label>CHỨNG CHỈ</label>
                     <ul className="cert-list">
                       {detail?.certificates?.length > 0 ? (
                         detail.certificates.map((c, i) => {
@@ -303,7 +303,7 @@ export default function AdminExperts() {
 
             <div className="expert-detail-footer">
               <button className="btn-close-detail" onClick={() => setDetailOpen(false)}>
-                Đóng
+                ĐÓNG
               </button>
             </div>
           </div>

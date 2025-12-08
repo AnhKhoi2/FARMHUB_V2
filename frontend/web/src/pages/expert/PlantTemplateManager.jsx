@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import plantTemplateApi from "../../api/expert/plantTemplateApi";
 import "../../css/expert/PlantTemplateManager.css";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const PlantTemplateManager = () => {
   const navigate = useNavigate();
@@ -10,18 +13,11 @@ const PlantTemplateManager = () => {
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterGroup, setFilterGroup] = useState("all");
-
-  const plantGroups = [
+  const [plantGroups, setPlantGroups] = useState([
     { value: "all", label: "Tất cả nhóm cây" },
-    { value: "leaf_vegetable", label: "Rau ăn lá" },
-    { value: "root_vegetable", label: "Cây củ" },
-    { value: "fruit_short_term", label: "Rau/quả ngắn ngày" },
-    { value: "fruit_long_term", label: "Cây ăn quả dài ngày" },
-    { value: "bean_family", label: "Họ đậu" },
-    { value: "herb", label: "Cây gia vị" },
-    { value: "flower_vegetable", label: "Rau ăn hoa" },
-    { value: "other", label: "Khác" },
-  ];
+  ]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const statusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
@@ -31,8 +27,50 @@ const PlantTemplateManager = () => {
   ];
 
   useEffect(() => {
+    fetchPlantGroups();
     fetchTemplates();
   }, [filterStatus, filterGroup]);
+
+  const fetchPlantGroups = async () => {
+    try {
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+      let base = API_URL || "http://localhost:5000";
+      base = base.replace(/\/+$/, "");
+      const apiBase = base.endsWith("/api") ? base : `${base}/api`;
+      const endpoint = `${apiBase}/plant-groups`;
+
+      const res = await axios.get(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      const items = res.data?.data || [];
+
+      const iconMap = {
+        leaf_vegetable: "🥬",
+        root_vegetable: "🥕",
+        fruit_short_term: "🥒",
+        fruit_long_term: "🍊",
+        bean_family: "🫘",
+        herb: "🌿",
+        flower_vegetable: "🥦",
+      };
+
+      if (items.length > 0) {
+        const mapped = items.map((it) => ({
+          value: it.slug || it._id,
+          label: it.name || it.slug || it._id,
+          icon: iconMap[it.slug] || "🌱",
+        }));
+        setPlantGroups([{ value: "all", label: "Tất cả nhóm cây" }, ...mapped]);
+      }
+    } catch (err) {
+      console.warn(
+        "Could not fetch plant groups, using defaults:",
+        err?.message || err
+      );
+    }
+  };
 
   const fetchTemplates = async () => {
     try {
@@ -88,16 +126,16 @@ const PlantTemplateManager = () => {
       // Sau khi xóa mềm (archived), chuyển sang danh sách đã xóa để có thể restore
       setFilterStatus("archived");
       alert(
-        "Template đã được xóa và chuyển vào kho lưu trữ. Bạn có thể phục hồi từ danh sách đã xóa."
+        "Bộ mẫu đã được xóa và chuyển vào kho lưu trữ. Bạn có thể phục hồi từ danh sách đã xóa."
       );
     } catch (err) {
       console.error("Error deleting template:", err);
-      alert("Không thể xóa template");
+      alert("Không thể xóa bộ mẫu");
     }
   };
 
   const handleRestore = async (templateId) => {
-    if (!window.confirm("Phục hồi template này trở lại trạng thái hoạt động?"))
+    if (!window.confirm("Phục hồi bộ mẫu này trở lại trạng thái hoạt động?"))
       return;
 
     try {
@@ -107,7 +145,7 @@ const PlantTemplateManager = () => {
       alert("Phục hồi thành công!");
     } catch (err) {
       console.error("Error restoring template:", err);
-      alert("Không thể phục hồi template");
+      alert("Không thể phục hồi bộ mẫu");
     }
   };
 
@@ -115,10 +153,10 @@ const PlantTemplateManager = () => {
     try {
       await plantTemplateApi.activateTemplate(templateId);
       fetchTemplates();
-      alert("Kích hoạt template thành công!");
+      alert("Kích hoạt bộ mẫu thành công!");
     } catch (err) {
       console.error("Error activating template:", err);
-      alert("Không thể kích hoạt template");
+      alert("Không thể kích hoạt bộ mẫu");
     }
   };
 
@@ -138,11 +176,11 @@ const PlantTemplateManager = () => {
   const getStatusLabel = (status) => {
     switch (status) {
       case "active":
-        return "Hoạt động";
+        return "HOẠT ĐỘNG";
       case "draft":
-        return "Nháp";
+        return "NHÁP";
       case "archived":
-        return "Đã lưu trữ";
+        return "ĐÃ LƯU TRỮ";
       default:
         return status;
     }
@@ -151,6 +189,22 @@ const PlantTemplateManager = () => {
   const getGroupLabel = (group) => {
     const found = plantGroups.find((g) => g.value === group);
     return found ? found.label : group;
+  };
+
+  // Pagination calculations
+  const totalPages = Math.ceil(templates.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTemplates = templates.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, filterGroup]);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   if (loading) {
@@ -166,40 +220,32 @@ const PlantTemplateManager = () => {
 
   return (
     <div className="plant-template-manager">
-      <div className="page-header">
-        <button
-          className="btn-back"
-          onClick={() => navigate("/expert/home")}
-          title="Quay lại trang chủ"
+      <button
+        className="btn-back"
+        onClick={() => navigate("/expert/home")}
+        title="Quay lại trang chủ"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          <span>Quay lại</span>
-        </button>
-        <div className="header-content">
-          <h1>Quản lý Plant Template</h1>
-          {/* <p className="subtitle">
-            Tạo và quản lý các mẫu chuẩn cho từng nhóm cây
-          </p> */}
-        </div>
-        <button
-          className="btn btn-primary btn-create"
-          onClick={() => navigate("/expert/plant-templates/create")}
-        >
-          <span className="icon">+</span>
-          Tạo Template Mới
-        </button>
-      </div>
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        <span>Quay lại</span>
+      </button>
+      <button
+        className="btn-create"
+        onClick={() => navigate("/expert/plant-templates/create")}
+      >
+        <span className="icon">+</span>
+        Tạo Bộ mẫu mới
+      </button>
 
       {error && (
         <div className="alert alert-error">
@@ -240,7 +286,13 @@ const PlantTemplateManager = () => {
         </div>
 
         <div className="filter-summary">
-          Tìm thấy <strong>{templates.length}</strong> template
+          Tìm thấy <strong>{templates.length}</strong> bộ mẫu
+          {templates.length > itemsPerPage && (
+            <span className="page-info">
+              {" "}
+              • Trang {currentPage} / {totalPages}
+            </span>
+          )}
         </div>
       </div>
 
@@ -248,8 +300,8 @@ const PlantTemplateManager = () => {
         {templates.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📋</div>
-            <h3>Chưa có template nào</h3>
-            <p>Hãy tạo template đầu tiên để bắt đầu!</p>
+            <h3>Chưa có bộ mẫu nào</h3>
+            <p>Hãy tạo bộ mẫu đầu tiên để bắt đầu!</p>
             <button
               className="btn-create-new"
               onClick={() => navigate("/expert/plant-templates/create")}
@@ -264,11 +316,11 @@ const PlantTemplateManager = () => {
               >
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              <span>Tạo Template Mới</span>
+              <span>Tạo Bộ mẫu mới</span>
             </button>
           </div>
         ) : (
-          templates.map((template) => (
+          currentTemplates.map((template) => (
             <div key={template._id} className="template-card">
               {/* Poster Background */}
               <div className="card-poster">
@@ -386,6 +438,85 @@ const PlantTemplateManager = () => {
           ))
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {templates.length > itemsPerPage && (
+        <div className="pagination-container">
+          <button
+            className="pagination-btn pagination-prev"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Trước</span>
+          </button>
+
+          <div className="pagination-numbers">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Show first page, last page, current page, and pages around current
+              const showPage =
+                page === 1 ||
+                page === totalPages ||
+                Math.abs(page - currentPage) <= 1;
+
+              if (!showPage && page === currentPage - 2) {
+                return (
+                  <span key={page} className="pagination-ellipsis">
+                    ...
+                  </span>
+                );
+              }
+              if (!showPage && page === currentPage + 2) {
+                return (
+                  <span key={page} className="pagination-ellipsis">
+                    ...
+                  </span>
+                );
+              }
+              if (!showPage) return null;
+
+              return (
+                <button
+                  key={page}
+                  className={`pagination-number ${
+                    currentPage === page ? "active" : ""
+                  }`}
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            className="pagination-btn pagination-next"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <span>Sau</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
