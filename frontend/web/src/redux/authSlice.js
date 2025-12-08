@@ -94,6 +94,22 @@ const authSlice = createSlice({
       localStorage.setItem("user", JSON.stringify(state.user));
     },
 
+    // 🔴 THÊM MỚI: updateUserPlan – cập nhật subscriptionPlan sau khi thanh toán
+    updateUserPlan(state, action) {
+      if (!state.user) return;
+
+      const newPlan = action.payload; // "smart", "premium", etc.
+
+      state.user = {
+        ...state.user,
+        subscriptionPlan: newPlan,
+        plan: newPlan, // fallback compatibility
+      };
+
+      // Lưu lại vào localStorage
+      localStorage.setItem("user", JSON.stringify(state.user));
+    },
+
     // Logout: xóa sạch storage + state
     logout(state) {
       state.user = null;
@@ -147,6 +163,7 @@ export const {
   logout,
   setUser,
   updateUserProfile,
+  updateUserPlan,
 } = authSlice.actions;
 
 export default authSlice.reducer;

@@ -172,7 +172,10 @@ export default function ExpertApplyForm() {
                 headers: { "Content-Type": "multipart/form-data" },
               });
               const url2 = res2?.data?.data?.url || res2?.data?.url;
-              if (!url2) throw new Error("Tải lên chứng chỉ thất bại (no url, fallback)");
+              if (!url2)
+                throw new Error(
+                  "Tải lên chứng chỉ thất bại (no url, fallback)"
+                );
               uploadedUrls.push(url2);
               continue;
             } catch (err2) {
@@ -279,107 +282,98 @@ export default function ExpertApplyForm() {
       {/* FORM ĐĂNG KÝ EXPERT */}
       <div className="expert-apply-page">
         <form className="expert-card" onSubmit={handleSubmit}>
-         <h3 className="mb-3">ĐĂNG KÝ TRỞ THÀNH CHUYÊN GIA</h3>
+          <h3 className="mb-3">ĐĂNG KÝ TRỞ THÀNH CHUYÊN GIA</h3>
 
-        {/* Họ tên */}
-        <div className="mb-3">
-          <label className="form-label">1. HỌ VÀ TÊN *</label>
-          <input
-            type="text"
-            className="form-control"
-            value={form.full_name}
-            maxLength={50}
-            onChange={(e) => setField("full_name", e.target.value)}
-          />
-          {fieldErrors.full_name && (
-            <div className="text-danger small mt-1">
-              {fieldErrors.full_name}
-            </div>
-          )}
-        </div>
+          {/* Họ tên */}
+          <div className="mb-3">
+            <label className="form-label">1. HỌ VÀ TÊN *</label>
+            <input
+              type="text"
+              className="form-control"
+              value={form.full_name}
+              maxLength={50}
+              onChange={(e) => setField("full_name", e.target.value)}
+            />
+            {fieldErrors.full_name && (
+              <div className="text-danger small mt-1">
+                {fieldErrors.full_name}
+              </div>
+            )}
+          </div>
 
-        {/* Lĩnh vực */}
-        <div className="mb-3">
-          <label className="form-label">2. LĨNH VỰC CHUYÊN MÔN *</label>
-          <input
-            type="text"
-            className="form-control"
-            value={form.expertise_area}
-            onChange={(e) => setField("expertise_area", e.target.value)}
-          />
-          {fieldErrors.expertise_area && (
-            <div className="text-danger small mt-1">
-              {fieldErrors.expertise_area}
-            </div>
-          )}
-        </div>
+          {/* Lĩnh vực */}
+          <div className="mb-3">
+            <label className="form-label">2. LĨNH VỰC CHUYÊN MÔN *</label>
+            <input
+              type="text"
+              className="form-control"
+              value={form.expertise_area}
+              onChange={(e) => setField("expertise_area", e.target.value)}
+            />
+            {fieldErrors.expertise_area && (
+              <div className="text-danger small mt-1">
+                {fieldErrors.expertise_area}
+              </div>
+            )}
+          </div>
 
-        {/* Số năm kinh nghiệm */}
-        <div className="mb-3">
-          <label className="form-label">3. SỐ NĂM KINH NGHIỆM</label>
-          <input
-            type="number"
-            min="0"
-            className="form-control"
-            value={form.experience_years}
-            onChange={(e) => setField("experience_years", e.target.value)}
-          />
-          {fieldErrors.experience_years && (
-            <div className="text-danger small mt-1">
-              {fieldErrors.experience_years}
-            </div>
-          )}
-        </div>
+          {/* Số năm kinh nghiệm */}
+          <div className="mb-3">
+            <label className="form-label">3. SỐ NĂM KINH NGHIỆM</label>
+            <input
+              type="number"
+              min="0"
+              className="form-control"
+              value={form.experience_years}
+              onChange={(e) => setField("experience_years", e.target.value)}
+            />
+            {fieldErrors.experience_years && (
+              <div className="text-danger small mt-1">
+                {fieldErrors.experience_years}
+              </div>
+            )}
+          </div>
 
-        {/* Số điện thoại */}
-        <div className="mb-3">
-          <label className="form-label">4. SỐ ĐIỆN THOẠI</label>
-          <input
-            type="text"
-            className="form-control"
-            value={form.phone_number}
-            onChange={(e) => setField("phone_number", e.target.value)}
-          />
-          {fieldErrors.phone_number && (
-            <div className="text-danger small mt-1">
-              {fieldErrors.phone_number}
-            </div>
-          )}
-        </div>
+          {/* Số điện thoại */}
+          <div className="mb-3">
+            <label className="form-label">4. SỐ ĐIỆN THOẠI</label>
+            <input
+              type="text"
+              className="form-control"
+              value={form.phone_number}
+              onChange={(e) => setField("phone_number", e.target.value)}
+            />
+            {fieldErrors.phone_number && (
+              <div className="text-danger small mt-1">
+                {fieldErrors.phone_number}
+              </div>
+            )}
+          </div>
 
-        {/* Mô tả */}
-        <div className="mb-3">
-          <label className="form-label">5. GIỚI THIỆU / MÔ TẢ</label>
-          <textarea
-            className="form-control"
-            rows={4}
-            value={form.description}
-            maxLength={250}
-            onChange={(e) => setField("description", e.target.value)}
-          />
-        </div>
+          {/* Mô tả */}
+          <div className="mb-3">
+            <label className="form-label">5. GIỚI THIỆU / MÔ TẢ</label>
+            <textarea
+              className="form-control"
+              rows={4}
+              value={form.description}
+              maxLength={250}
+              onChange={(e) => setField("description", e.target.value)}
+            />
+          </div>
 
-        {/* Certificates (URL) */}
-        <div className="mb-3">
-          <label className="form-label">6. CHỨNG CHỈ (URL)</label>
-          {form.certificates.map((c, i) => (
-            <div key={i} className="d-flex gap-2 mb-2">
-              <input
-                type="text"
-                className="form-control"
-                value={c}
-                placeholder="URL chứng chỉ hoặc mô tả"
-                onChange={(e) => handleCertChange(i, e.target.value)}
-              />
-              <button
-                type="button"
-                className="btn btn-outline-danger"
-                onClick={() => removeCertField(i)}
-                disabled={form.certificates.length === 1}
-              >
-                −
-              </button>
-              {i === form.certificates.length - 1 && (
+          {/* Certificates (URL) */}
+          <div className="mb-3">
+            <label className="form-label">6. CHỨNG CHỈ (URL)</label>
+            {form.certificates.map((c, i) => (
+              <div key={i} className="d-flex gap-2 mb-2">
+                <input
+                  type="text"
+                  className="form-control"
+                  value={c}
+                  placeholder="URL chứng chỉ hoặc mô tả"
+                  onChange={(e) => handleCertChange(i, e.target.value)}
+                />
                 <button
                   type="button"
                   className="btn btn-outline-danger"
@@ -406,39 +400,40 @@ export default function ExpertApplyForm() {
             )}
           </div>
 
-        {/* Upload chứng chỉ (file) */}
-        <div className="mb-3">
-          <label className="form-label">7. TẢI LÊN CHỨNG CHỈ (TỆP)</label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="form-control"
-            multiple
-            onChange={handleCertFileChange}
-          />
-          <div className="form-text">
-            Bạn có thể chọn nhiều file (PDF, ảnh...). Hệ thống sẽ tự tải lên và
-            lưu liên kết chứng chỉ.
+          {/* Upload chứng chỉ (file) */}
+          <div className="mb-3">
+            <label className="form-label">7. TẢI LÊN CHỨNG CHỈ (TỆP)</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="form-control"
+              multiple
+              onChange={handleCertFileChange}
+            />
+            <div className="form-text">
+              Bạn có thể chọn nhiều file (PDF, ảnh...). Hệ thống sẽ tự tải lên
+              và lưu liên kết chứng chỉ.
+            </div>
           </div>
 
-        <div className="form-actions">
-          <button
-            type="submit"
-            className="agri-btn-primary"
-            disabled={submitting}
-          >
-            {submitting ? "Đang gửi..." : "✉️ NỘP ĐƠN"}
-          </button>
-          <button
-            type="button"
-            className="agri-btn-secondary"
-            onClick={resetForm}
-            disabled={submitting}
-            style={{ marginLeft: 12 }}
-          >
-            ĐẶT LẠI
-          </button>
-        </div>
+          <div className="form-actions">
+            <button
+              type="submit"
+              className="agri-btn-primary"
+              disabled={submitting}
+            >
+              {submitting ? "Đang gửi..." : "✉️ NỘP ĐƠN"}
+            </button>
+            <button
+              type="button"
+              className="agri-btn-secondary"
+              onClick={resetForm}
+              disabled={submitting}
+              style={{ marginLeft: 12 }}
+            >
+              ĐẶT LẠI
+            </button>
+          </div>
         </form>
       </div>
 
@@ -455,8 +450,8 @@ export default function ExpertApplyForm() {
             <h4 className="mb-3">🎉 Đã gửi đơn đăng ký Chuyên Gia</h4>
             <p className="mb-3">
               Đơn đăng ký của bạn đã được gửi thành công và đang ở trạng thái{" "}
-              <strong>Đang Chờ Duyệt</strong>. Quản Trị Viên sẽ xem xét và Duyệt trong thời
-              gian sớm nhất.
+              <strong>Đang Chờ Duyệt</strong>. Quản Trị Viên sẽ xem xét và Duyệt
+              trong thời gian sớm nhất.
             </p>
             <p className="mb-3">
               Bạn có thể kiểm tra lịch sử đơn trong mục{" "}
