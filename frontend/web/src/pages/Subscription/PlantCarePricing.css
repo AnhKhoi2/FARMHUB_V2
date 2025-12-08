@@ -21,6 +21,39 @@
     margin-bottom: 0.75rem;
 }
 
+/* Current Plan Banner */
+.current-plan-banner {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 1.1rem;
+    margin: 1.5rem auto;
+    max-width: 500px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    animation: fadeInScale 0.5s ease-out;
+}
+
+.current-plan-banner strong {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 .plans-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

@@ -6,10 +6,7 @@ const authApi = {
   loginApi(payload) {
     // Ưu tiên username, fallback từ emailOrUsername / email cho tương thích cũ
     const username =
-      payload?.username ||
-      payload?.emailOrUsername ||
-      payload?.email ||
-      "";
+      payload?.username || payload?.emailOrUsername || payload?.email || "";
     const password = payload?.password || "";
 
     return axiosClient.post("/auth/login", { username, password });
@@ -42,6 +39,11 @@ const authApi = {
 
   logout() {
     return axiosClient.post("/auth/logout");
+  },
+
+  // Lấy thông tin user hiện tại (refresh user data)
+  getCurrentUser() {
+    return axiosClient.get("/auth/me");
   },
 };
 

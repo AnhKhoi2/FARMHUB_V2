@@ -18,10 +18,13 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [showDeleted, setShowDeleted] = useState(initialShowDeleted);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const location = useLocation();
 
   useEffect(() => {
     fetchNotebooks();
+    setCurrentPage(1);
   }, [showDeleted]);
 
   // Apply page-level class so background covers entire viewport
@@ -75,6 +78,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
       const notebooksData = response.data?.data || response.data || [];
       setNotebooks(Array.isArray(notebooksData) ? notebooksData : []);
       setError(null);
+      setCurrentPage(1);
     } catch (err) {
       console.error("Error searching notebooks:", err);
       setError("Không thể tìm kiếm");
@@ -104,16 +108,31 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
     try {
       await notebookApi.restoreNotebook(id);
       fetchNotebooks();
-      alert("Khôi phục nhật ký thành công!");
+      alert("✅ Khôi phục nhật ký thành công!");
     } catch (err) {
       console.error("Error restoring notebook:", err);
 
       // Kiểm tra lỗi vượt quá giới hạn
       if (err?.response?.data?.code === "NOTEBOOK_LIMIT_EXCEEDED") {
-        const message =
-          err.response.data.message ||
-          "Không thể khôi phục. Gói miễn phí chỉ được có tối đa 3 nhật ký. Vui lòng xóa một nhật ký khác hoặc nâng cấp lên gói Thông Minh.";
-        alert(message);
+        const currentCount = err.response.data?.currentCount || 3;
+        const maxAllowed = err.response.data?.maxAllowed || 3;
+
+        // Hiển thị modal với option nâng cấp
+        if (
+          window.confirm(
+            `❌ GIỚI HẠN GÓI MIỄN PHÍ\n\n` +
+              `Bạn đang có ${currentCount}/${maxAllowed} nhật ký đang hoạt động.\n` +
+              `Gói miễn phí chỉ cho phép tối đa 3 nhật ký.\n\n` +
+              `🌟 Nâng cấp lên gói THÔNG MINH để:\n` +
+              `✓ Khôi phục không giới hạn\n` +
+              `✓ Tạo nhật ký không giới hạn\n` +
+              `✓ Truy cập tính năng AI\n` +
+              `✓ Hỗ trợ ưu tiên\n\n` +
+              `Bạn có muốn nâng cấp ngay không?`
+          )
+        ) {
+          navigate("/pricing");
+        }
       } else {
         alert(err?.response?.data?.message || "Không thể khôi phục nhật ký");
       }
@@ -238,6 +257,22 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
           </div>
         </div>
 
+        {/* Info banner for deleted notebooks page */}
+        {showDeleted && (
+          <div className="alert alert-info">
+            <span>ℹ️</span>
+            <div>
+              <strong>Khôi phục nhật ký đã xóa</strong>
+              <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.9rem" }}>
+                {(user?.subscriptionPlan || user?.plan) === "smart" ||
+                (user?.subscriptionPlan || user?.plan) === "premium"
+                  ? "Gói Thông Minh: Bạn có thể khôi phục không giới hạn nhật ký đã xóa! 🌟"
+                  : "Gói miễn phí chỉ cho phép khôi phục nếu bạn có ít hơn 3 nhật ký đang hoạt động. Nâng cấp lên gói Thông Minh để khôi phục không giới hạn! 🚀"}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <div className="alert alert-error">
@@ -339,19 +374,71 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
             </button>
           </div>
         ) : (
-          <div className="notebooks-grid">
-            {notebooks.map((nb) => (
-              <NotebookCard
-                key={nb._id}
-                notebook={nb}
-                onView={(n) => navigate(`/farmer/notebooks/${n._id}`)}
-                onDelete={(id) => handleDelete(id)}
-                onRestore={(id) => handleRestore(id)}
-                onPermanentDelete={(id) => handlePermanentDelete(id)}
-                showDeleted={showDeleted}
-              />
-            ))}
-          </div>
+          <>
+            <div className="notebooks-grid">
+              {notebooks
+                .slice(
+                  (currentPage - 1) * itemsPerPage,
+                  currentPage * itemsPerPage
+                )
+                .map((nb) => (
+                  <NotebookCard
+                    key={nb._id}
+                    notebook={nb}
+                    onView={(n) => navigate(`/farmer/notebooks/${n._id}`)}
+                    onDelete={(id) => handleDelete(id)}
+                    onRestore={(id) => handleRestore(id)}
+                    onPermanentDelete={(id) => handlePermanentDelete(id)}
+                    showDeleted={showDeleted}
+                  />
+                ))}
+            </div>
+
+            {/* Pagination */}
+            {notebooks.length > itemsPerPage && (
+              <div className="pagination-container">
+                <button
+                  className="pagination-btn"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  ←
+                </button>
+                {Array.from(
+                  { length: Math.ceil(notebooks.length / itemsPerPage) },
+                  (_, i) => i + 1
+                ).map((page) => (
+                  <button
+                    key={page}
+                    className={`pagination-number ${
+                      currentPage === page ? "active" : ""
+                    }`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  className="pagination-btn"
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      Math.min(
+                        Math.ceil(notebooks.length / itemsPerPage),
+                        prev + 1
+                      )
+                    )
+                  }
+                  disabled={
+                    currentPage === Math.ceil(notebooks.length / itemsPerPage)
+                  }
+                >
+                  →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
       <Footer />
