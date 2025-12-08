@@ -87,7 +87,7 @@ export default function AdminDetailGuides() {
         {/* MAIN CARD */}
         <Card bordered>
           <Flex vertical gap={10}>
-            <Title level={2}>{guide.title}</Title>
+            <Title level={2}>{(guide.title || "").toUpperCase()}</Title>
 
             <Flex gap={8} wrap>
               <Text>
@@ -136,14 +136,14 @@ export default function AdminDetailGuides() {
             {/* STEPS */}
             {guide.steps?.length > 0 && (
               <Flex vertical gap={16}>
-                <Title level={3}>Các bước thực hiện</Title>
+                <Title level={3}>CÁC BƯỚC THỰC HIỆN</Title>
 
                 <Row gutter={[16, 16]}>
                   {guide.steps.map((s, idx) => (
                     <Col xs={24} sm={12} md={8} key={idx}>
                       <Card hoverable>
                         <Flex vertical gap={12}>
-                          <Title level={5}>Bước {idx + 1}</Title>
+                          <Title level={5}>{`BƯỚC ${idx + 1}`}</Title>
 
                           <img
                             src={s.image || placeholderImg}
@@ -155,7 +155,7 @@ export default function AdminDetailGuides() {
                             }}
                           />
 
-                          <Text strong>{s.title || `Bước ${idx + 1}`}</Text>
+                          <Text strong>{(s.title || `BƯỚC ${idx + 1}`).toUpperCase()}</Text>
 
                           <div
                             dangerouslySetInnerHTML={{
