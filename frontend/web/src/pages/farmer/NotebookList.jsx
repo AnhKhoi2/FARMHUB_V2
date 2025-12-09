@@ -196,6 +196,28 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
     <>
       <Header />
       <div className="notebook-list-container">
+        {/* Search & Filter */}
+        <div className="filters-section">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Tìm kiếm sổ tay..."
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+            />
+            <button className="btn-search" onClick={handleSearch}>
+              🔍 TÌM KIẾM
+            </button>
+          </div>
+
+          {/* Trạng thái filter removed per request */}
+
+          <div className="summary">
+            <strong>{notebooks.length}</strong> SỔ TAY
+          </div>
+        </div>
+
         {/* Action Buttons */}
         <div className="action-buttons">
           <button
@@ -235,28 +257,6 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
               ↩️ Quay lại sổ tay
             </button>
           )}
-        </div>
-
-        {/* Search & Filter */}
-        <div className="filters-section">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sổ tay..."
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <button className="btn-search" onClick={handleSearch}>
-              🔍 TÌM KIẾM
-            </button>
-          </div>
-
-          {/* Trạng thái filter removed per request */}
-
-          <div className="summary">
-            <strong>{notebooks.length}</strong> SỔ TAY
-          </div>
         </div>
 
         {/* Info banner for deleted notebooks page */}
