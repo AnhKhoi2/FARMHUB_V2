@@ -138,6 +138,9 @@
 .upload-icon {
     font-size: 48px;
     margin-bottom: 12px;
+    /* Disable any animation/transform from global styles */
+    animation: none !important;
+    transform: none !important;
 }
 
 .upload-text {
@@ -650,6 +653,19 @@
 
 .btn-danger {
     color: #f44336;
+}
+
+/* Specific style for the "Hoàn tác" (undo) button inside tasks-actions-row */
+.plant-template-form .tasks-actions-row .btn-danger {
+    /* dark orange */
+    background: #ff6600 !important;
+    border: 1px solid #ff6600 !important;
+    color: #ffffff !important;
+}
+
+.plant-template-form .tasks-actions-row .btn-danger:hover {
+    background: #e65500 !important;
+    border-color: #e65500 !important;
 }
 
 .btn:disabled {

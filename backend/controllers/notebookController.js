@@ -786,33 +786,8 @@ const getCurrentStageObservations = async (notebookId) => {
     );
   }
 
-  // ✅ Kiểm tra xem đã có observations chưa hoàn thành
-  const hasIncompleteObservations =
-    stageTracking?.observations &&
-    stageTracking.observations.length > 0 &&
-    (currentStage?.observation_required || []).some((obsReq) => {
-      const found = stageTracking.observations.find(
-        (o) => o.key === obsReq.key
-      );
-      return !found || found.value !== true;
-    });
-
-  // ✅ Kiểm tra xem đã tạo observations nhưng chưa check (từ ngày cuối)
-  const hasObservationsStarted =
-    stageTracking?.observations && stageTracking.observations.length > 0;
-
-  // CHỈ trả về observations nếu:
-  // 1. Đang ở ngày cuối của giai đoạn HOẶC
-  // 2. Đã qua ngày cuối NHƯNG đã có observations được tạo và chưa hoàn thành (giữ observations cho đến khi user check xong)
-  // 3. Đã có observations chưa hoàn thành (tồn tại cho đến khi user check hết)
-  if (!isLastDayOfStage && !isPastLastDay && !hasIncompleteObservations) {
-    return [];
-  }
-
-  // Nếu đã qua ngày cuối nhưng chưa từng có observations thì không hiển thị nữa
-  if (isPastLastDay && !hasObservationsStarted) {
-    return [];
-  }
+  // ✅ LUÔN trả về observations của giai đoạn hiện tại (frontend sẽ xử lý việc dimmed/enabled)
+  // Không còn ẩn observations trước ngày cuối nữa — chỉ ẩn khi stage đã completed
 
   // Trả về danh sách observation required, kèm trạng thái đã hoàn thành nếu có
   return (currentStage?.observation_required || []).map((obsReq) => {

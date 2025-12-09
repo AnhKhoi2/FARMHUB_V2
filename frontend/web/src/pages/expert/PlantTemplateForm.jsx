@@ -1067,7 +1067,6 @@ const Step1BasicInfo = ({
             </div>
           ) : (
             <div className="upload-placeholder">
-              <div className="upload-icon">🖼️</div>
               <div className="upload-text">
                 <strong>Click để chọn ảnh bìa</strong>
                 <span>Ảnh này sẽ hiển thị trong danh sách bộ mẫu</span>
@@ -1276,7 +1275,6 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
           <div className="form-group">
             <label>📸 ẢNH MẪU GIAI ĐOẠN</label>
             <div className="upload-area">
-              <div className="upload-icon">🖼️</div>
               <label className="upload-label">
                 {uploadingStage === index ? (
                   <div className="uploading">
