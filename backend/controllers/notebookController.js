@@ -1344,7 +1344,7 @@ export const permanentDeleteNotebook = asyncHandler(async (req, res) => {
 
 // 🔍 Tìm kiếm notebook theo từ khóa
 export const searchNotebooks = asyncHandler(async (req, res) => {
-  const { keyword } = req.query;
+  const { keyword, status } = req.query;
 
   if (!keyword) {
     return res
@@ -1352,15 +1352,25 @@ export const searchNotebooks = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Keyword is required" });
   }
 
-  const notebooks = await Notebook.find({
+  const filter = {
     user_id: req.user.id,
-    status: { $ne: "deleted" },
     $or: [
       { notebook_name: { $regex: keyword, $options: "i" } },
       { plant_type: { $regex: keyword, $options: "i" } },
       { description: { $regex: keyword, $options: "i" } },
     ],
-  })
+  };
+
+  // Support searching by status: 'deleted', 'active', 'archived', or exclude deleted by default
+  if (status === "deleted") {
+    filter.status = "deleted";
+  } else if (status) {
+    filter.status = status;
+  } else {
+    filter.status = { $ne: "deleted" };
+  }
+
+  const notebooks = await Notebook.find(filter)
     .populate("guide_id", "title category difficulty")
     .populate("template_id", "template_name plant_group")
     .sort({ createdAt: -1 });
@@ -2580,8 +2590,24 @@ export const getStats = asyncHandler(async (req, res) => {
   const byType = {};
   byTypeAgg.forEach((r) => (byType[r._id || "Unknown"] = r.count));
 
+  // Plant group Vietnamese mapping
+  const plantGroupNames = {
+    leaf_vegetable: "Rau ăn lá",
+    root_vegetable: "Cây củ",
+    fruit_short_term: "Rau/quả ngắn ngày",
+    fruit_long_term: "Cây ăn quả dài ngày",
+    bean_family: "Họ đậu ngắn ngày",
+    herb: "Cây gia vị",
+    flower_vegetable: "Rau ăn hoa",
+    other: "Khác",
+  };
+
   const byGroup = {};
-  byGroupAgg.forEach((r) => (byGroup[r._id || "unknown"] = r.count));
+  byGroupAgg.forEach((r) => {
+    const groupKey = r._id || "other";
+    const groupName = plantGroupNames[groupKey] || groupKey;
+    byGroup[groupName] = r.count;
+  });
 
   const result = {
     byType,

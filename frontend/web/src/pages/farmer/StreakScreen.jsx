@@ -12,9 +12,9 @@ import {
 } from "antd";
 import axiosClient from "../../api/shared/axiosClient";
 import Header from "../../components/shared/Header";
+import Footer from "../../components/shared/Footer";
 import { useSelector } from "react-redux";
 import { FireFilled, TrophyFilled } from "@ant-design/icons"; // Thêm icon
-
 
 const { Title, Text } = Typography;
 
@@ -46,7 +46,10 @@ export default function StreakScreen() {
     setLoading(true);
     try {
       const res = await axiosClient.get("/admin/streaks/me");
-      const item = res?.data?.data?.item ?? { current_streak: 0, max_streak: 0 };
+      const item = res?.data?.data?.item ?? {
+        current_streak: 0,
+        max_streak: 0,
+      };
       setStreakInfo(item);
     } catch (err) {
       message.error("Không tải được streak.");
@@ -141,7 +144,16 @@ export default function StreakScreen() {
 
           {/* Vùng thông tin Streak hiện tại */}
           <Row gutter={16} align="middle" style={{ marginBottom: 30 }}>
-            <Col xs={24} sm={8} style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Col
+              xs={24}
+              sm={8}
+              style={{
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
               <img
                 src={currentLevel.icon}
                 alt={currentLevel.title}
@@ -160,7 +172,10 @@ export default function StreakScreen() {
               </Text>
             </Col>
             <Col xs={24} sm={16}>
-              <Text type="secondary" style={{ display: "block", marginBottom: 5 }}>
+              <Text
+                type="secondary"
+                style={{ display: "block", marginBottom: 5 }}
+              >
                 Chuỗi hiện tại:
               </Text>
               <Title level={1} style={{ margin: 0, color: CHOTOT_GREEN }}>
@@ -169,7 +184,10 @@ export default function StreakScreen() {
                   ngày
                 </span>
               </Title>
-              <Text type="secondary" style={{ display: "block", marginTop: 10 }}>
+              <Text
+                type="secondary"
+                style={{ display: "block", marginTop: 10 }}
+              >
                 Kỷ lục cá nhân: **{streakInfo.max_streak || 0} ngày**
               </Text>
               <Text type="secondary" style={{ display: "block" }}>
@@ -215,7 +233,14 @@ export default function StreakScreen() {
           )}
 
           {/* Danh sách các mốc danh hiệu */}
-          <Title level={4} style={{ color: "#333", borderBottom: "1px solid #eee", paddingBottom: 10 }}>
+          <Title
+            level={4}
+            style={{
+              color: "#333",
+              borderBottom: "1px solid #eee",
+              paddingBottom: 10,
+            }}
+          >
             <TrophyFilled style={{ marginRight: 8, color: CHOTOT_GREEN }} />
             Các Mốc Danh Hiệu
           </Title>
@@ -247,13 +272,19 @@ export default function StreakScreen() {
                         : "#fff",
                       opacity: isReached ? 1 : 0.6,
                       transition: "all 0.3s",
-                      boxShadow: isCurrent ? "0 0 8px rgba(0,178,94,0.3)" : "none",
+                      boxShadow: isCurrent
+                        ? "0 0 8px rgba(0,178,94,0.3)"
+                        : "none",
                     }}
                   >
                     <Badge
                       count={lv.point === 0 ? "Bắt đầu" : lv.point + " ngày"}
                       style={{
-                        backgroundColor: isCurrent ? CHOTOT_GREEN : isReached ? "#95de64" : "#bfbfbf",
+                        backgroundColor: isCurrent
+                          ? CHOTOT_GREEN
+                          : isReached
+                          ? "#95de64"
+                          : "#bfbfbf",
                         color: "white",
                         fontSize: 12,
                         marginBottom: 10,
@@ -290,7 +321,7 @@ export default function StreakScreen() {
           </Row>
         </Card>
       </div>
-      
+      <Footer />
     </>
   );
 }
