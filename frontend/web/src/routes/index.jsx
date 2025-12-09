@@ -31,10 +31,11 @@ import AdminWeather from "../pages/admin/AdminWeather";
 import AdminExperts from "../pages/admin/AdminExperts";
 import AdminExpertApplications from "../pages/admin/AdminExpertApplications";
 import AdminProfile from "../pages/admin/AdminProfile";
-import AdminModels from "../pages/admin/Models";
+// import AdminModels from "../pages/admin/Models"; // Removed - Plant template management
 import AdminPost from "../pages/admin/AdminPost";
 import AdminGuides from "../pages/admin/AdminGuides";
 import AdminGuideEdit from "../pages/admin/AdminGuideEdit";
+import AdminTrashGuides from "../pages/admin/TrashGuides";
 
 // lazy load để tránh require() trên browser
 const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
@@ -278,6 +279,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/admin/guides/trash"
+          element={
+            <AdminRoute>
+              <AdminTrashGuides />
+            </AdminRoute>
+          }
+        />
+        <Route
           path="/admin/expert-applications"
           element={
             <AdminRoute>
@@ -379,14 +388,7 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-        <Route
-          path="/admin/models"
-          element={
-            <AdminRoute>
-              <AdminModels />
-            </AdminRoute>
-          }
-        />
+        {/* Removed /admin/models route - Plant template management removed */}
         <Route
           path="/admin/managerpost"
           element={

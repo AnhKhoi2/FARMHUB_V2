@@ -266,15 +266,21 @@ export const removeNotebookFromCollection = asyncHandler(async (req, res) => {
 export const searchCollections = asyncHandler(async (req, res) => {
   const { keyword } = req.query;
 
-  const collections = await Collection.find({
+  const filter = {
     user_id: req.user.id,
     status: { $ne: "deleted" },
-    $or: [
-      { collection_name: { $regex: keyword, $options: "i" } },
-      { description: { $regex: keyword, $options: "i" } },
-      { tags: { $regex: keyword, $options: "i" } },
-    ],
-  })
+  };
+
+  // Chỉ thêm điều kiện tìm kiếm nếu có keyword
+  if (keyword && keyword.trim() !== "") {
+    filter.$or = [
+      { collection_name: { $regex: keyword.trim(), $options: "i" } },
+      { description: { $regex: keyword.trim(), $options: "i" } },
+      { tags: { $regex: keyword.trim(), $options: "i" } },
+    ];
+  }
+
+  const collections = await Collection.find(filter)
     .populate({
       path: "notebooks",
       match: { status: { $ne: "deleted" } },
@@ -290,7 +296,7 @@ export const searchCollections = asyncHandler(async (req, res) => {
   return ok(
     res,
     collectionsWithCount,
-    { count: collections.length, keyword },
+    { count: collections.length, keyword: keyword || "" },
     "Search results fetched successfully"
   );
 });

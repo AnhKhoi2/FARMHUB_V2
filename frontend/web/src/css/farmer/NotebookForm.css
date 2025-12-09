@@ -9,6 +9,8 @@
     background: linear-gradient(135deg, #f5f9f5 0%, #e8f5e9 100%);
     min-height: 100vh;
     box-sizing: border-box;
+    /* Uppercase all visible texts on this page by default */
+    text-transform: uppercase;
 }
 
 /* ========== FORM HEADER ========== */
@@ -47,10 +49,9 @@
     gap: 0.5rem;
 }
 
-.form-header h1::before {
-    content: "📝";
-    animation: float 3s ease-in-out infinite;
-}
+/* Remove animated icon next to the header title */
+/* (Previously added via ::before) */
+/* .form-header h1::before { content: ""; } */
 
 /* ========== FORM CARD ========== */
 .form-card {
@@ -105,6 +106,12 @@
 .form-group select {
     background: #ffffff;
     color: #111;
+}
+
+/* Do not force uppercase for user-typed fields */
+.notebook-form-container input,
+.notebook-form-container textarea {
+    text-transform: none;
 }
 
 .readonly-date {

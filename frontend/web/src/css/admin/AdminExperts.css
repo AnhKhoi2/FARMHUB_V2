@@ -1,3 +1,6 @@
+/* Import shared admin table styles */
+@import './AdminTable.css';
+
 /* ==== OVERLAY ==== */
 .expert-detail-overlay {
     position: fixed;

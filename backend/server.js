@@ -52,7 +52,7 @@ import plantsRoute from "./routes/plants.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
 import adminTransactionsRoute from "./routes/adminTransactions.js";
 import dashboardRoute from "./routes/dashboard.js";
-import urbanFarmingRoutes from "./routes/urbanFarmingRoutes.js";
+import urbanFarmingRoutes from "./routes/farmingRoutes.js";
 import pesticideInfoRoutes from "./routes/pesticideInfoRoutes.js";
 const PORT = process.env.PORT || 5000;
 
@@ -63,16 +63,23 @@ connectDB();
 // Ensure default "other" plant group exists so frontend can offer a fallback option
 (async () => {
   try {
-    const slug = 'other';
-    const name = 'NHÓM CÂY KHÁC';
+    const slug = "other";
+    const name = "NHÓM CÂY KHÁC";
     // Only run if PlantGroup model is available (DB connected)
     const existing = await PlantGroup.findOne({ slug }).lean().exec();
     if (!existing) {
-      await PlantGroup.create({ slug, name, description: 'Nhóm cây chưa phân loại / khác' });
+      await PlantGroup.create({
+        slug,
+        name,
+        description: "Nhóm cây chưa phân loại / khác",
+      });
       console.log(`Created default PlantGroup: ${slug} - ${name}`);
     }
   } catch (e) {
-    console.warn('Failed to ensure default PlantGroup exists:', e?.message || e);
+    console.warn(
+      "Failed to ensure default PlantGroup exists:",
+      e?.message || e
+    );
   }
 })();
 
@@ -98,6 +105,11 @@ app.use(
     credentials: true,
   })
 );
+
+// ⭐ IMPORTANT: Upload routes MUST be registered BEFORE express.json() and express.urlencoded()
+// to prevent body parsers from interfering with multipart/form-data parsing
+app.use("/api/upload", uploadRoutes);
+app.use("/upload", uploadRoutes); // Legacy/compatibility route
 
 // 🔧 TĂNG LIMIT JSON – tránh 413 khi có body lớn (ngoài upload file)
 app.use(express.json({ limit: "100mb" }));
@@ -133,14 +145,12 @@ app.use("/admin/users", usersRoute);
 // ⭐ API upload dùng Cloudinary (mới tạo)
 app.use("/api/cloudinary-upload", cloudinaryUploadRoutes);
 app.use("/api/expert-applications", expertApplicationsRouter);
-app.use("/api/experts", expertRatingRoutes); 
+app.use("/api/experts", expertRatingRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/api/plant-templates", plantTemplateRoutes);
-app.use("/api/upload", uploadRoutes);
 app.use("/api/plant-groups", plantGroupsRoute);
-// Legacy/compatibility: some frontends post to /upload (no /api prefix)
-app.use("/upload", uploadRoutes);
+// Note: Upload routes are registered earlier (before body parsers) to handle multipart/form-data correctly
 app.use("/api/collections", collectionsRoute);
 app.use("/layouts", layoutsRoutes);
 // new primary path
@@ -162,44 +172,45 @@ const __dirname = path.dirname(__filename);
 
 // Global error handlers to capture crashes that may cause connection resets
 try {
-  const tmpDir = path.join(__dirname, '..', 'tmp');
+  const tmpDir = path.join(__dirname, "..", "tmp");
   fs.mkdirSync(tmpDir, { recursive: true });
 } catch (e) {
   // ignore
 }
 
-process.on('uncaughtException', (err) => {
+process.on("uncaughtException", (err) => {
   try {
     const out = {
       ts: new Date().toISOString(),
-      type: 'uncaughtException',
+      type: "uncaughtException",
       message: err?.message,
       stack: err?.stack,
     };
-    const p = path.join(__dirname, '..', 'tmp', 'uncaught_error.json');
-    fs.writeFileSync(p, JSON.stringify(out, null, 2), 'utf8');
-    console.error('[uncaughtException] wrote', p);
+    const p = path.join(__dirname, "..", "tmp", "uncaught_error.json");
+    fs.writeFileSync(p, JSON.stringify(out, null, 2), "utf8");
+    console.error("[uncaughtException] wrote", p);
   } catch (e) {
-    console.error('Failed writing uncaughtException file', e);
+    console.error("Failed writing uncaughtException file", e);
   }
-  console.error('Uncaught Exception:', err);
+  console.error("Uncaught Exception:", err);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on("unhandledRejection", (reason, promise) => {
   try {
     const out = {
       ts: new Date().toISOString(),
-      type: 'unhandledRejection',
-      reason: typeof reason === 'object' ? (reason && reason.message) : String(reason),
-      details: typeof reason === 'object' ? (reason && reason.stack) : null,
+      type: "unhandledRejection",
+      reason:
+        typeof reason === "object" ? reason && reason.message : String(reason),
+      details: typeof reason === "object" ? reason && reason.stack : null,
     };
-    const p = path.join(__dirname, '..', 'tmp', 'uncaught_error.json');
-    fs.writeFileSync(p, JSON.stringify(out, null, 2), 'utf8');
-    console.error('[unhandledRejection] wrote', p);
+    const p = path.join(__dirname, "..", "tmp", "uncaught_error.json");
+    fs.writeFileSync(p, JSON.stringify(out, null, 2), "utf8");
+    console.error("[unhandledRejection] wrote", p);
   } catch (e) {
-    console.error('Failed writing unhandledRejection file', e);
+    console.error("Failed writing unhandledRejection file", e);
   }
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
