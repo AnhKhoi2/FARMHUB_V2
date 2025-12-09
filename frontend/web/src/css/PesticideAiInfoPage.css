@@ -1,0 +1,272 @@
+/* src/pages/PesticideAiInfoPage.css */
+
+:root {
+  --emerald-700: #047857;
+  --emerald-600: #059669;
+  --emerald-300: #6ee7b7; /* added */
+  --emerald-200: #a7f3d0; /* added */
+  --emerald-100: #d1fae5;
+  --emerald-50:  #f0fdf4;
+
+  --amber-50: #fffbeb;
+
+  --gray-900: #111827;
+  --gray-700: #374151;
+  --gray-600: #4b5563;
+  --gray-500: #6b7280;
+  --gray-400: #9ca3af;
+  --gray-300: #d1d5db;
+  --gray-200: #e5e7eb;
+  --gray-100: #f3f4f6;
+
+  --red-500: #ef4444;
+  --white: #ffffff;
+}
+.pesticide-page {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0f7f2 0%, #e8f5ff 100%);
+  min-height: calc(100vh - 80px); /* trừ chiều cao header nếu cần */
+}
+
+.pesticide-card {
+  width: 100%;
+  max-width: 780px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px 26px 28px;
+  box-shadow: 0 18px 40px rgba(6, 40, 12, 0.08);
+  border: 1px solid rgba(6, 40, 12, 0.04);
+  height: auto;
+}
+
+/* ==== HEADER ==== */
+
+.pesticide-header h2 {
+  font-size: 22px;
+  margin-bottom: 10px;
+  color: #0c5b2e;
+  font-weight: 800;
+}
+
+.pesticide-subtitle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: #43524a;
+  margin-bottom: 18px;
+}
+
+.subtitle-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f9f5;
+  font-size: 18px;
+}
+
+.subtitle-text p {
+  margin: 0 0 4px;
+}
+
+.subtitle-text ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.subtitle-text li {
+  margin-bottom: 2px;
+}
+
+.highlight {
+  font-weight: 700;
+  color: #0c5b2e;
+}
+
+/* ==== FORM ==== */
+
+.pesticide-form {
+  margin-top: 8px;
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: #114b2b;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #c9d7cd;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  background-color: #ffffff;
+}
+
+.form-input::placeholder {
+  color: #9ba8a0;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #2f855a;
+  box-shadow: 0 0 0 1px rgba(47, 133, 90, 0.2);
+}
+
+/* Button */
+
+.btn-primary {
+  margin-top: 12px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #0c5b2e;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s ease, transform 0.1s ease,
+    box-shadow 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0a4b26;
+  box-shadow: 0 10px 20px rgba(12, 91, 46, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Error */
+
+.error-box {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff5f5;
+  color: #c53030;
+  font-size: 13px;
+  border: 1px solid #fed7d7;
+}
+
+/* Disclaimer */
+
+.disclaimer-box {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f4f9f5;
+  border: 1px dashed #9ac2a6;
+  font-size: 13px;
+  color: #2d4a34;
+}
+
+.disclaimer-box ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.disclaimer-box li {
+  margin-bottom: 2px;
+}
+
+/* Result card */
+
+.result-card {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f9fafb;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #1a202c;
+}
+
+.result-card h3 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #0c5b2e;
+  font-weight: 700;
+}
+
+.result-card p {
+  margin-bottom: 6px;
+}
+
+.result-disclaimer {
+  margin-top: 10px;
+  font-style: italic;
+  color: #b7791f;
+}
+
+/* Links */
+
+.link-main,
+.link-sub {
+  color: #0c5b2e;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.link-main:hover,
+.link-sub:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .pesticide-page {
+    padding: 16px;
+  }
+
+  .pesticide-card {
+    padding: 18px 16px 22px;
+    border-radius: 16px;
+  }
+
+  .pesticide-header h2 {
+    font-size: 20px;
+  }
+
+  .pesticide-subtitle {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+
+.form-error {
+  margin-top: 6px;
+  margin-bottom: 10px;
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #ffecec;
+  color: #b20000;
+  font-size: 14px;
+  border-left: 4px solid #ff7a7a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}

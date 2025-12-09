@@ -1,0 +1,76 @@
+.detail-footer{
+  background: linear-gradient(135deg, #1a3a0f 0%, #2d5016 100%);
+  color: white;
+}
+
+.detail-footer-inner{
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+}
+
+.df-left{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.df-center{
+  flex: 0 1 auto;
+  color: rgba(255,255,255,0.9);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.df-brand{
+  color: #ffd700;
+  font-weight: 700;
+  margin: 0 6px;
+}
+
+.df-brand-link{
+  text-decoration: none;
+  color: inherit;
+}
+
+.df-dot{
+  margin: 0 8px;
+  color: rgba(255,255,255,0.9);
+}
+
+.df-note{
+  color: rgba(255,255,255,0.9);
+}
+
+.df-right{
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.df-hotline{
+  color: #ffd700;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 768px){
+  .detail-footer-inner{
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 16px;
+  }
+
+  .df-right{
+    justify-content: center;
+  }
+
+  .df-hotline{
+    font-size: 1rem;
+  }
+}

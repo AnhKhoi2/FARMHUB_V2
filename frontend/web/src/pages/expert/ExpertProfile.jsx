@@ -70,44 +70,43 @@ export default function ExpertProfile() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // ================================
+  // ⭐ SỬA ĐÚNG: CHỈ GỌI 1 ROUTE DUY NHẤT
+  // ================================
   useEffect(() => {
     (async () => {
-      const candidates = ["/api/experts/me/basic", "/experts/me/basic"];
-      let ok = false;
+      try {
+        const res = await axiosClient.get("/api/experts/me/basic");
+        const data = res?.data?.data;
+        if (!data || data.role !== "expert") {
+          navigate("/");   // hoặc navigate("/home")
+          return;
+        }
+        
+        if (!data) throw new Error("No data");
 
-      for (const url of candidates) {
-        try {
-          const res = await axiosClient.get(url);
-          const data = res?.data?.data;
-          if (data && (data.name || data.email)) {
-            const payload = {
-              name: data.name || "Expert",
-              email: data.email || "",
-              role: data.role || "Chuyên gia nông nghiệp",
-              phone: data.phone || "",
-              avatarSeed: data.avatarSeed || "",
-              avatar: data.avatar || "",
-              notifications: Number(data.notifications || 0),
-            };
+        const payload = {
+          name: data.name || "Expert",
+          email: data.email || "",
+          role: data.expertise_area || "Chuyên gia nông nghiệp",
+          phone: data.phone || "",
+          avatarSeed: data.avatarSeed || "",
+          avatar: data.avatar || "",
+          notifications: Number(data.notifications || 0),
+        };
 
-            setBasic(payload);
-            setForm({
-              name: payload.name,
-              email: payload.email,
-              role: payload.role,
-              phone: payload.phone,
-              avatarSeed: payload.avatarSeed || "",
-            });
+        setBasic(payload);
+        setForm({
+          name: payload.name,
+          email: payload.email,
+          role: payload.expertise_area || payload.role,
 
-            setPhotoPreview(payload.avatar || null);
-
-            ok = true;
-            break;
-          }
-        } catch {}
-      }
-
-      if (!ok) {
+          phone: payload.phone,
+          avatarSeed: payload.avatarSeed || "",
+        });
+        setPhotoPreview(payload.avatar || null);
+      } catch (err) {
+        console.log("Load expert basic failed → dùng fallback");
         const fallback = getLocalUserFallback();
         setBasic(fallback);
         setForm({
@@ -128,7 +127,7 @@ export default function ExpertProfile() {
     return (
       <div className="xp-loader">
         <div className="xp-spinner" />
-        <span>Đang tải hồ sơ chuyên gia…</span>
+        <span>Đang Tải Hồ Sơ Chuyên Gia…</span>
       </div>
     );
   }
@@ -201,38 +200,32 @@ export default function ExpertProfile() {
     try {
       let avatarUrlToSend = null;
 
-      if (photoFile) {
-        try {
-          const fd = new FormData();
-          fd.append("image", photoFile);
+// ⭐ Upload ảnh lên Cloudinary nếu có file mới
+if (photoFile) {
+  try {
+    const fd = new FormData();
+    fd.append("file", photoFile);    // 🔥 Cloudinary route cần key "file"
 
-          const upRes = await axiosClient.post("/api/upload", fd, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
+    const upRes = await axiosClient.post("/api/cloudinary-upload", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
 
-          let returnedUrl = upRes?.data?.data?.url;
-          if (returnedUrl) {
-            if (!/^https?:\/\//i.test(returnedUrl)) {
-              const base =
-                axiosClient.defaults?.baseURL ||
-                window.location.origin ||
-                "";
-              returnedUrl =
-                base.replace(/\/$/, "") +
-                (returnedUrl.startsWith("/") ? returnedUrl : "/" + returnedUrl);
-            }
-            avatarUrlToSend = returnedUrl;
-          } else {
-            toast.error("Upload ảnh thất bại: không có URL trả về");
-            setSaving(false);
-            return;
-          }
-        } catch {
-          toast.error("Không thể upload ảnh.");
-          setSaving(false);
-          return;
-        }
-      }
+    const returnedUrl = upRes?.data?.url;
+    if (!returnedUrl) {
+      toast.error("Upload ảnh thất bại: không có URL trả về từ Cloudinary");
+      setSaving(false);
+      return;
+    }
+
+    avatarUrlToSend = returnedUrl; // 🔥 Lưu URL Cloudinary vào body
+  } catch (err) {
+    console.error(err);
+    toast.error("Không thể upload ảnh lên Cloudinary.");
+    setSaving(false);
+    return;
+  }
+}
+
 
       const body = {
         name: form.name.trim(),
@@ -324,7 +317,7 @@ export default function ExpertProfile() {
               onClick={() => navigate("/expert/home")}
             >
               <ArrowLeft size={18} />
-              <span>Quay lại</span>
+              <span>Quay Lại</span>
             </button>
 
             <button
@@ -333,11 +326,11 @@ export default function ExpertProfile() {
                 try {
                   await dispatch(logoutThunk());
                 } catch {}
-                  navigate("/login");
+                navigate("/login");
               }}
             >
               <LogOut size={18} />
-              <span>Đăng xuất</span>
+              <span>Đăng Xuất</span>
             </button>
           </div>
         </div>
@@ -355,7 +348,7 @@ export default function ExpertProfile() {
             {editing && (
               <div style={{ marginLeft: 16 }}>
                 <label className="xp-btn outline" style={{ cursor: "pointer" }}>
-                  Chọn ảnh
+                  CHỌN ẢNH
                   <input
                     type="file"
                     accept="image/*"
@@ -380,7 +373,7 @@ export default function ExpertProfile() {
                 <User size={18} />
               </div>
               <div className="xp-info-text">
-                <span className="xp-info-label">Họ tên</span>
+                <span className="xp-info-label">HỌ & TÊN</span>
                 <span className="xp-info-value">{name}</span>
               </div>
             </div>
@@ -390,7 +383,7 @@ export default function ExpertProfile() {
                 <Mail size={18} />
               </div>
               <div className="xp-info-text">
-                <span className="xp-info-label">Email</span>
+                <span className="xp-info-label">EMAIL</span>
                 <span className="xp-info-value">{email}</span>
               </div>
             </div>
@@ -400,7 +393,7 @@ export default function ExpertProfile() {
                 <Shield size={18} />
               </div>
               <div className="xp-info-text">
-                <span className="xp-info-label">Vai trò</span>
+                <span className="xp-info-label">VAI TRÒ</span>
                 <span className="xp-info-value">{role}</span>
               </div>
             </div>
@@ -410,9 +403,9 @@ export default function ExpertProfile() {
                 <Phone size={18} />
               </div>
               <div className="xp-info-text">
-                <span className="xp-info-label">Số điện thoại</span>
+                <span className="xp-info-label">SỐ ĐIỆN THOẠI</span>
                 <span className="xp-info-value">
-                  {phone || "Chưa cập nhật"}
+                  {phone || "Chưa Cập Nhật"}
                 </span>
               </div>
             </div>
@@ -422,7 +415,7 @@ export default function ExpertProfile() {
             <form className="xp-edit-form" onSubmit={handleSave}>
               <div className="xp-edit-grid">
                 <div className="xp-edit-field">
-                  <label>Họ tên</label>
+                  <label>HỌ & TÊN</label>
                   <input
                     type="text"
                     value={form.name}
@@ -434,7 +427,7 @@ export default function ExpertProfile() {
                 </div>
 
                 <div className="xp-edit-field">
-                  <label>Email</label>
+                  <label>EMAIL</label>
                   <input
                     type="email"
                     value={form.email}
@@ -446,7 +439,7 @@ export default function ExpertProfile() {
                 </div>
 
                 <div className="xp-edit-field">
-                  <label>Vai trò</label>
+                  <label>VAI TRÒ</label>
                   <input
                     type="text"
                     value={form.role}
@@ -458,7 +451,7 @@ export default function ExpertProfile() {
                 </div>
 
                 <div className="xp-edit-field">
-                  <label>Số điện thoại</label>
+                  <label>SỐ ĐIỆN THOẠI</label>
                   <input
                     type="text"
                     value={form.phone}
@@ -489,10 +482,11 @@ export default function ExpertProfile() {
                     setEditing(false);
                   }}
                 >
-                  Hủy
+                  HỦY
                 </button>
+
                 <button className="xp-btn" disabled={saving}>
-                  {saving ? "Đang lưu…" : "Lưu thay đổi"}
+                  {saving ? "Đang Lưu…" : "LƯU THAY ĐỔI"}
                 </button>
               </div>
             </form>
@@ -504,14 +498,11 @@ export default function ExpertProfile() {
                 className="xp-btn"
                 onClick={() => navigate("/expert/home")}
               >
-                Trở về trang chuyên gia
+                TRỞ VỀ TRANG CHUYÊN GIA
               </button>
 
-              <button
-                className="xp-btn outline"
-                onClick={() => setEditing(true)}
-              >
-                Chỉnh sửa hồ sơ
+              <button className="xp-btn outline" onClick={() => setEditing(true)}>
+                CHỈNH SỬA HỒ SƠ
               </button>
             </div>
           )}

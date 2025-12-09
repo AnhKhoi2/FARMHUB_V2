@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import plantTemplateApi from "../../api/expert/plantTemplateApi";
 import "../../css/expert/PlantTemplateDetail.css";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const PlantTemplateDetail = () => {
   const { id } = useParams();
@@ -10,10 +13,39 @@ const PlantTemplateDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("stages");
+  const [plantGroups, setPlantGroups] = useState([]);
 
   useEffect(() => {
+    fetchPlantGroups();
     fetchTemplate();
   }, [id]);
+
+  const fetchPlantGroups = async () => {
+    try {
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+      let base = API_URL || "http://localhost:5000";
+      base = base.replace(/\/+$/, "");
+      const apiBase = base.endsWith("/api") ? base : `${base}/api`;
+      const endpoint = `${apiBase}/plant-groups`;
+
+      const res = await axios.get(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      const items = res.data?.data || [];
+
+      if (items.length > 0) {
+        const mapped = items.map((it) => ({
+          slug: it.slug || it._id,
+          name: it.name || it.slug || it._id,
+        }));
+        setPlantGroups(mapped);
+      }
+    } catch (err) {
+      console.warn("Could not fetch plant groups:", err?.message || err);
+    }
+  };
 
   const fetchTemplate = async () => {
     try {
@@ -63,6 +95,11 @@ const PlantTemplateDetail = () => {
     }
   };
 
+  const getPlantGroupName = (slug) => {
+    const found = plantGroups.find((g) => g.slug === slug);
+    return found ? found.name : slug;
+  };
+
   const getPriorityBadge = (priority) => {
     const badges = {
       high: { label: "Cao", class: "priority-high" },
@@ -109,33 +146,16 @@ const PlantTemplateDetail = () => {
 
   return (
     <div className="template-detail-container">
-      {/* Header */}
-      <div className="detail-header">
-        <button className="btn-back" onClick={() => navigate(-1)}>
-          ← Quay lại
-        </button>
+      <button className="btn-back" onClick={() => navigate(-1)}>
+        ← QUAY LẠI
+      </button>
 
-        <div className="header-content">
-          <div className="header-title-section">
-            <h1>{template.template_name}</h1>
-            <span className={`badge ${getStatusBadgeClass(template.status)}`}>
-              {getStatusLabel(template.status)}
-            </span>
-          </div>
-          <p className="header-group">🌱 {template.plant_group}</p>
-          <p className="header-description">{template.group_description}</p>
-        </div>
-
-        <div className="header-actions">
-          <button
-            className="btn btn-primary btn-edit"
-            style={{ backgroundColor: "white", color: "black" }}
-            onClick={() => navigate(`/expert/plant-templates/edit/${id}`)}
-          >
-            ✏️ Chỉnh sửa
-          </button>
-        </div>
-      </div>
+      <button
+        className="btn-create"
+        onClick={() => navigate(`/expert/plant-templates/edit/${id}`)}
+      >
+        ✏️ CHỈNH SỬA
+      </button>
 
       {/* Cover Image Section - Below Header */}
       {template.cover_image && (
@@ -154,7 +174,7 @@ const PlantTemplateDetail = () => {
           <div className="stat-icon">📅</div>
           <div className="stat-content">
             <div className="stat-value">{template.stages?.length || 0}</div>
-            <div className="stat-label">Giai đoạn</div>
+            <div className="stat-label">GIAI ĐOẠN</div>
           </div>
         </div>
         <div className="stat-card">
@@ -165,31 +185,40 @@ const PlantTemplateDetail = () => {
                 ? Math.max(...template.stages.map((s) => s.day_end))
                 : 0}
             </div>
-            <div className="stat-label">Tổng ngày</div>
+            <div className="stat-label">TỔNG NGÀY</div>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">📊</div>
-          <div className="stat-content">
-            <div className="stat-value">{template.usage_count || 0}</div>
-            <div className="stat-label">Lượt sử dụng</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">🌿</div>
-          <div className="stat-content">
-            <div className="stat-value">
-              {template.plant_examples?.length || 0}
-            </div>
-            <div className="stat-label">Ví dụ cây</div>
-          </div>
-        </div>
+        {/* Lượt sử dụng removed per UX request */}
       </div>
 
       {/* Examples */}
       {template.plant_examples && template.plant_examples.length > 0 && (
         <div className="examples-section">
-          <h3>🌱 Các loại cây phù hợp</h3>
+          <div className="template-info-card">
+            <div className="info-row">
+              <span className="info-label">TÊN BỘ MẪU:</span>
+              <span className="info-value">{template.template_name}</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">NHÓM CÂY:</span>
+              <span className="info-value">
+                {getPlantGroupName(template.plant_group)}
+              </span>
+            </div>
+            {template.group_description && (
+              <div className="info-row">
+                <span className="info-label">MÔ TẢ:</span>
+                <span className="info-value">{template.group_description}</span>
+              </div>
+            )}
+            <div className="info-row">
+              <span className="info-label">TRẠNG THÁI:</span>
+              <span className={`badge ${getStatusBadgeClass(template.status)}`}>
+                {getStatusLabel(template.status)}
+              </span>
+            </div>
+          </div>
+          <h3>🌱 CÁC LOẠI CÂY PHÙ HỢP</h3>
           <div className="examples-grid">
             {template.plant_examples.map((plant, index) => (
               <div key={index} className="example-item">
@@ -207,13 +236,13 @@ const PlantTemplateDetail = () => {
             className={`tab-btn ${activeTab === "stages" ? "active" : ""}`}
             onClick={() => setActiveTab("stages")}
           >
-            📅 Giai đoạn
+            📅 GIAI ĐOẠN
           </button>
           <button
             className={`tab-btn ${activeTab === "tasks" ? "active" : ""}`}
             onClick={() => setActiveTab("tasks")}
           >
-            ✅ Công việc
+            ✅ CÔNG VIỆC
           </button>
           <button
             className={`tab-btn ${
@@ -221,14 +250,9 @@ const PlantTemplateDetail = () => {
             }`}
             onClick={() => setActiveTab("observations")}
           >
-            👁️ Quan sát
+            👁️ QUAN SÁT
           </button>
-          <button
-            className={`tab-btn ${activeTab === "rules" ? "active" : ""}`}
-            onClick={() => setActiveTab("rules")}
-          >
-            ⚙️ Quy tắc
-          </button>
+          {/* Rules tab removed */}
         </div>
 
         <div className="tabs-content">
@@ -244,10 +268,10 @@ const PlantTemplateDetail = () => {
                       </div>
                       <div className="stage-content">
                         <div className="stage-header">
-                          <h3>{stage.name}</h3>
+                          <h3>{stage.name.toUpperCase()}</h3>
                           <span className="stage-duration">
-                            Ngày {stage.day_start} - {stage.day_end} (
-                            {stage.day_end - stage.day_start + 1} ngày)
+                            NGÀY {stage.day_start} - {stage.day_end} (
+                            {stage.day_end - stage.day_start + 1} NGÀY)
                           </span>
                         </div>
                         <p className="stage-description">{stage.description}</p>
@@ -261,7 +285,7 @@ const PlantTemplateDetail = () => {
                         {stage.autogenerated_tasks &&
                           stage.autogenerated_tasks.length > 0 && (
                             <div className="stage-tasks">
-                              <h4>🔧 Công việc tự động:</h4>
+                              <h4>🔧 CÔNG VIỆC TỰ ĐỘNG:</h4>
                               <ul>
                                 {stage.autogenerated_tasks.map((task, idx) => (
                                   <li key={idx}>
@@ -287,7 +311,7 @@ const PlantTemplateDetail = () => {
                         {stage.observation_required &&
                           stage.observation_required.length > 0 && (
                             <div className="stage-observations">
-                              <h4>👁️ Điểm quan sát:</h4>
+                              <h4>👁️ ĐIỂM QUAN SÁT:</h4>
                               <div className="observations-list">
                                 {stage.observation_required.map((obs, idx) => (
                                   <div key={idx} className="observation-badge">
@@ -302,7 +326,7 @@ const PlantTemplateDetail = () => {
                   ))}
                 </div>
               ) : (
-                <div className="empty-message">Chưa có giai đoạn nào</div>
+                <div className="empty-message">CHƯA CÓ GIAI ĐOẠN NÀO</div>
               )}
             </div>
           )}
@@ -314,7 +338,7 @@ const PlantTemplateDetail = () => {
                 template.stages.map((stage, stageIdx) => (
                   <div key={stageIdx} className="stage-tasks-group">
                     <h3>
-                      Giai đoạn {stageIdx + 1}: {stage.name}
+                      GIAI ĐOẠN {stageIdx + 1}: {stage.name.toUpperCase()}
                     </h3>
                     {stage.autogenerated_tasks &&
                     stage.autogenerated_tasks.length > 0 ? (
@@ -345,12 +369,12 @@ const PlantTemplateDetail = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="empty-message">Chưa có công việc</p>
+                      <p className="empty-message">CHƯA CÓ CÔNG VIỆC</p>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="empty-message">Chưa có công việc nào</div>
+                <div className="empty-message">CHƯA CÓ CÔNG VIỆC NÀO</div>
               )}
             </div>
           )}
@@ -362,7 +386,7 @@ const PlantTemplateDetail = () => {
                 template.stages.map((stage, stageIdx) => (
                   <div key={stageIdx} className="stage-observations-group">
                     <h3>
-                      Giai đoạn {stageIdx + 1}: {stage.name}
+                      GIAI ĐOẠN {stageIdx + 1}: {stage.name.toUpperCase()}
                     </h3>
                     {stage.observation_required &&
                     stage.observation_required.length > 0 ? (
@@ -371,80 +395,22 @@ const PlantTemplateDetail = () => {
                           <div key={obsIdx} className="observation-card">
                             <h4>{obs.label}</h4>
                             {obs.description && <p>{obs.description}</p>}
-                            <div className="observation-key">
-                              Key: <code>{obs.key}</code>
-                            </div>
+                            <div className="observation-key"></div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="empty-message">Chưa có điểm quan sát</p>
+                      <p className="empty-message">CHƯA CÓ ĐIỂM QUAN SÁT</p>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="empty-message">Chưa có quan sát nào</div>
+                <div className="empty-message">CHƯA CÓ QUAN SÁT NÀO</div>
               )}
             </div>
           )}
 
-          {/* Rules Tab */}
-          {activeTab === "rules" && (
-            <div className="rules-tab">
-              <div className="rules-section">
-                <h3>⚙️ Quy tắc chung</h3>
-                <div className="rules-cards">
-                  <div className="rule-card">
-                    <div className="rule-icon">⏰</div>
-                    <div className="rule-content">
-                      <h4>Cho phép trễ hạn</h4>
-                      <p className="rule-value">
-                        {template.rules?.safe_delay_days || 0} ngày
-                      </p>
-                      <p className="rule-desc">
-                        Nông dân được phép hoàn thành task muộn trong khoảng
-                        thời gian này
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rule-card">
-                    <div className="rule-icon">🔄</div>
-                    <div className="rule-content">
-                      <h4>Tự động chuyển giai đoạn</h4>
-                      <p className="rule-value">
-                        {template.rules?.auto_skip ? "BẬT ✅" : "TẮT ❌"}
-                      </p>
-                      <p className="rule-desc">
-                        Tự động chuyển sang giai đoạn tiếp theo khi quá thời
-                        gian cho phép
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* <div className="rule-card">
-                    <div className="rule-icon">⚠️</div>
-                    <div className="rule-content">
-                      <h4>Cảnh báo trước</h4>
-                      <p className="rule-value">
-                        {template.rules?.warning_days || 0} ngày
-                      </p>
-                      <p className="rule-desc">
-                        Hệ thống sẽ cảnh báo trước khi task sắp hết hạn
-                      </p>
-                    </div>
-                  </div> */}
-                </div>
-              </div>
-
-              {template.notes && (
-                <div className="rules-section">
-                  <h3>📝 Ghi chú bổ sung</h3>
-                  <div className="notes-content">{template.notes}</div>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Rules Tab removed: rules (safe_delay_days / auto_skip) deprecated */}
         </div>
       </div>
     </div>

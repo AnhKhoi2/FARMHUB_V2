@@ -19,19 +19,49 @@ const userSchema = new mongoose.Schema(
         return this.provider === "local";
       },
     },
+
     avatar: { type: String, default: "" },
     provider: { type: String, enum: ["local", "google"], default: "local" },
     googleId: { type: String, default: null },
+
     role: {
       type: String,
       enum: ["user", "expert", "moderator", "admin"],
       default: "user",
     },
+
     isVerified: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
-    // mark a user as banned by admin (cannot create posts / login etc. checks elsewhere)
-    isBanned: { type: Boolean, default: false },
+
     refreshTokens: { type: [String], default: [] },
+
+    // 🟦 FIELD MỚI – GIỚI HẠN SỐ LẦN GỬI XÁC THỰC
+    verifyEmailCount: { type: Number, default: 0 }, // số lần gửi mail
+    lastVerifyEmailAt: { type: Date, default: null }, // lần gửi gần nhất
+
+    // ✅ Lưu việc người dùng đã đồng ý điều khoản
+    acceptedTerms: { type: Boolean, default: false },
+    acceptedTermsAt: { type: Date, default: null },
+
+    // 🟢 SUBSCRIPTION FIELDS
+    subscriptionPlan: {
+      type: String,
+      enum: ["free", "smart", "vip", "pro"],
+      default: "free",
+    },
+    subscriptionExpires: { type: Date, default: null },
+
+    // giới hạn dùng aiTextDiagnose theo gói
+    aiTextDiagnoseUsage: {
+      monthKey: { type: String, default: null }, // dạng '2025-12'
+      count: { type: Number, default: 0 }, // số lần đã dùng trong tháng đó
+    },
+
+    // 🆕 giới hạn dùng chẩn đoán bằng ảnh theo gói
+    aiImageDiagnoseUsage: {
+      monthKey: { type: String, default: null }, // dạng '2025-12'
+      count: { type: Number, default: 0 }, // số lần đã dùng trong tháng đó
+    },
   },
   { timestamps: true }
 );

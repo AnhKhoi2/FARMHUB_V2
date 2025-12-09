@@ -20,8 +20,8 @@ const notebookApi = {
   permanentDeleteNotebook: (id) => api.delete(`/notebooks/${id}/permanent`),
 
   // Search & Filter
-  searchNotebooks: (keyword) =>
-    api.get("/notebooks/search", { params: { keyword } }),
+  searchNotebooks: (keyword, status) =>
+    api.get("/notebooks/search", { params: { keyword, status } }),
 
   filterNotebooks: (filters) =>
     api.get("/notebooks/filter", { params: filters }),

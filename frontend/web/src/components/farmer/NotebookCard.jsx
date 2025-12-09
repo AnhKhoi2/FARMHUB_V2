@@ -22,7 +22,11 @@ const NotebookCard = ({
     : 0;
 
   return (
-    <div className="notebook-card" onClick={() => onView && onView(notebook)}>
+    <div
+      className="notebook-card"
+      onClick={() => !showDeleted && onView && onView(notebook)}
+      style={showDeleted ? { cursor: "default" } : {}}
+    >
       <div className="card-cover">
         <img src={cover} alt={title} />
       </div>
@@ -86,7 +90,7 @@ const NotebookCard = ({
                   onPermanentDelete && onPermanentDelete(notebook._id)
                 }
               >
-                💀 Xóa vĩnh viễn
+                Xóa
               </button>
             </>
           )}

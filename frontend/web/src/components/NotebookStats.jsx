@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import notebookApi from "../api/farmer/notebookApi";
+import "./NotebookStats.css";
 
 const COLORS = [
-  "#60a5fa",
-  "#34d399",
-  "#f97316",
-  "#f472b6",
-  "#f87171",
-  "#a78bfa",
+  "#10b981",
+  "#3b82f6",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#ec4899",
 ];
 
 const NotebookStats = () => {
@@ -30,7 +31,14 @@ const NotebookStats = () => {
     }
   };
 
-  if (loading || !stats) return <div>Đang tải thống kê...</div>;
+  if (loading || !stats) {
+    return (
+      <div className="stats-loading">
+        <div className="loading-spinner"></div>
+        <p>Đang tải thống kê...</p>
+      </div>
+    );
+  }
 
   const types = Object.entries(stats.byType || {});
   const total = types.reduce((s, [, c]) => s + c, 0) || 1;
@@ -50,135 +58,133 @@ const NotebookStats = () => {
   const conic = stops.length ? `conic-gradient(${stops.join(", ")})` : "#eee";
 
   return (
-    <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-      <div style={{ width: 220, height: 220, position: "relative" }}>
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            borderRadius: "50%",
-            background: conic,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: "50%",
-              background: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "column",
-            }}
-          >
-            <div style={{ fontSize: 18, fontWeight: 700 }}>
-              {stats.progressAvg || 0}%
+    <div className="notebook-stats-container">
+      {/* Main Stats Grid */}
+      <div className="stats-grid">
+        {/* Progress Chart Card */}
+        <div className="stat-card chart-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <span className="icon">📊</span>
+              Tiến Độ Trung Bình
+            </h3>
+          </div>
+          <div className="chart-container">
+            <div className="donut-chart" style={{ background: conic }}>
+              <div className="donut-inner">
+                <div className="progress-value">{stats.progressAvg || 0}%</div>
+                <div className="progress-label">Hoàn thành</div>
+              </div>
             </div>
-            <div style={{ fontSize: 12, color: "#6b7280" }}>
-              Progress trung bình
-            </div>
+          </div>
+        </div>
+
+        {/* Plant Types Card */}
+        <div className="stat-card types-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <span className="icon">🌱</span>
+              Thống Kê Theo Loại Cây
+            </h3>
+          </div>
+          <div className="types-list">
+            {segments.map((s) => (
+              <div key={s.name} className="type-item">
+                <div className="type-color" style={{ background: s.color }} />
+                <div className="type-info">
+                  <div className="type-name">{s.name}</div>
+                  <div className="type-stats">
+                    {s.count} sổ tay • {s.pct}%
+                  </div>
+                </div>
+                <div className="type-badge">{s.count}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <div style={{ flex: 1 }}>
-        <h3>Thống kê theo loại cây</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {segments.map((s) => (
-            <div
-              key={s.name}
-              style={{ display: "flex", alignItems: "center", gap: 12 }}
-            >
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  background: s.color,
-                  borderRadius: 3,
-                }}
-              />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600 }}>{s.name}</div>
-                <div style={{ fontSize: 12, color: "#6b7280" }}>
-                  {s.count} notebooks • {s.pct}%
-                </div>
+      {/* Secondary Stats Grid */}
+      <div className="stats-grid-2">
+        {/* Plant Groups Card */}
+        <div className="stat-card groups-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <span className="icon">🌿</span>
+              Phân Nhóm Cây Trồng
+            </h3>
+          </div>
+          <div className="groups-grid">
+            {Object.entries(stats.byGroup || {}).map(([g, c]) => (
+              <div key={g} className="group-item">
+                <div className="group-count">{c}</div>
+                <div className="group-name">{g}</div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        <hr style={{ margin: "16px 0" }} />
-
-        <h4>Phân nhóm</h4>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {Object.entries(stats.byGroup || {}).map(([g, c]) => (
-            <div
-              key={g}
-              style={{
-                background: "#fff",
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: "1px solid #eef2ff",
-              }}
-            >
-              <div style={{ fontWeight: 700 }}>{c}</div>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>{g}</div>
-            </div>
-          ))}
-        </div>
-
-        <hr style={{ margin: "16px 0" }} />
-
-        <h4>Phân phối tiến độ</h4>
-        <div style={{ display: "flex", gap: 12 }}>
-          {Object.entries(stats.progressDistribution || {}).map(
-            ([range, c], i) => {
-              const pct = Math.round((c / (total || 1)) * 100);
-              return (
-                <div key={range} style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: "#6b7280" }}>{range}</div>
-                  <div
-                    style={{
-                      height: 10,
-                      background: "#f3f4f6",
-                      borderRadius: 6,
-                      marginTop: 6,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${pct}%`,
-                        height: "100%",
-                        background: "#60a5fa",
-                        borderRadius: 6,
-                      }}
-                    />
+        {/* Progress Distribution Card */}
+        <div className="stat-card distribution-card">
+          <div className="card-header">
+            <h3 className="card-title">
+              <span className="icon">📈</span>
+              Phân Phối Tiến Độ
+            </h3>
+          </div>
+          <div className="distribution-bars">
+            {Object.entries(stats.progressDistribution || {}).map(
+              ([range, c]) => {
+                const pct = Math.round((c / (total || 1)) * 100);
+                return (
+                  <div key={range} className="distribution-item">
+                    <div className="distribution-label">{range}%</div>
+                    <div className="distribution-bar-container">
+                      <div
+                        className="distribution-bar"
+                        style={{ width: `${pct}%` }}
+                      >
+                        <span className="bar-value">{c}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 12, color: "#374151", marginTop: 6 }}>
-                    {c} notebooks
-                  </div>
-                </div>
-              );
-            }
-          )}
+                );
+              }
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Info Cards */}
+      <div className="info-cards">
+        <div className="info-card">
+          <div className="info-icon">⏱️</div>
+          <div className="info-content">
+            <div className="info-label">Thời gian trồng trung bình</div>
+            <div className="info-value">
+              {stats.avgGrowDays
+                ? `${stats.avgGrowDays} ngày`
+                : "Chưa có dữ liệu"}
+            </div>
+          </div>
         </div>
 
-        <hr style={{ margin: "16px 0" }} />
-
-        <h4>Thời gian trồng trung bình</h4>
-        <div style={{ fontSize: 16, fontWeight: 700 }}>
-          {stats.avgGrowDays ? `${stats.avgGrowDays} ngày` : "Chưa có dữ liệu"}
+        <div className="info-card">
+          <div className="info-icon">🏆</div>
+          <div className="info-content">
+            <div className="info-label">Loại cây phổ biến nhất</div>
+            <div className="info-value">
+              {stats.mostPopularType || "Không xác định"}
+            </div>
+          </div>
         </div>
 
-        <hr style={{ margin: "16px 0" }} />
-
-        <div>
-          <strong>Loại cây phổ biến nhất:</strong>{" "}
-          {stats.mostPopularType || "Không xác định"}
+        <div className="info-card">
+          <div className="info-icon">📚</div>
+          <div className="info-content">
+            <div className="info-label">Tổng số sổ tay</div>
+            <div className="info-value">{total}</div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,16 +1,104 @@
 import Guide from "../models/Guide.js";
+import PlantGroup from "../models/PlantGroup.js";
 import { ok } from "../utils/ApiResponse.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import mongoose from 'mongoose';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Dynamic mapping from normalized display labels -> plant_group slug.
+// We'll populate this lazily from the PlantGroup collection so it stays in-sync
+// with database entries and supports localized names automatically.
+let LABEL_TO_SLUG = {};
+let LABELS_LOADED = false;
+let LABELS_LOADING = null; // promise in-flight to avoid concurrent DB loads
+
+async function ensureLabelToSlugMapping() {
+  if (LABELS_LOADED) return;
+  if (LABELS_LOADING) return LABELS_LOADING;
+
+  LABELS_LOADING = (async () => {
+    try {
+      const docs = await PlantGroup.find().lean();
+      const map = {};
+      for (const d of docs || []) {
+        const slug = d?.slug;
+        const name = d?.name || '';
+        if (!slug) continue;
+
+        // normalized name and slug keys
+        const nName = normalizeLabelForMapping(name);
+        const nSlug = normalizeLabelForMapping(slug);
+        if (nName) map[nName] = slug;
+        if (nSlug) map[nSlug] = slug;
+
+        // also include raw lowercase forms
+        try {
+          if (name) map[String(name).toLowerCase()] = slug;
+          if (slug) map[String(slug).toLowerCase()] = slug;
+        } catch (e) {
+          // ignore
+        }
+
+        // include stripped-prefix variants (e.g. remove common Vietnamese prefixes)
+        try {
+          const stripped = String(name || '').toLowerCase().replace(/^nh[oó]m\s+c[âa]y\s+/i, '').trim();
+          if (stripped) map[normalizeLabelForMapping(stripped)] = slug;
+        } catch (e) {}
+
+        // include each plant entry name so a plant label can map to its group
+        if (Array.isArray(d.plants)) {
+          for (const p of d.plants) {
+            try {
+              const pname = p && p.name ? String(p.name) : null;
+              if (pname) {
+                map[normalizeLabelForMapping(pname)] = slug;
+                map[String(pname).toLowerCase()] = slug;
+              }
+            } catch (e) {
+              // ignore individual plant entry errors
+            }
+          }
+        }
+      }
+
+      LABEL_TO_SLUG = map;
+      LABELS_LOADED = true;
+      if (process.env.NODE_ENV !== 'production') console.log('[update-guide] built LABEL_TO_SLUG mapping from PlantGroup docs, entries=', Object.keys(LABEL_TO_SLUG).length);
+    } catch (e) {
+      console.warn('[update-guide] failed to build LABEL_TO_SLUG mapping:', e?.message || e);
+    } finally {
+      LABELS_LOADING = null;
+    }
+  })();
+
+  return LABELS_LOADING;
+}
+
+function normalizeLabelForMapping(s) {
+  if (!s) return '';
+  try {
+    // remove diacritics, collapse whitespace and lowercase
+    return String(s)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  } catch (e) {
+    return String(s).toLowerCase();
+  }
+}
+
 // GET /guides?page=1&limit=10&search=abc&tag=foo
 export const getGuides = async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
-  const limit = Math.max(1, parseInt(req.query.limit) || 10);
+  // support returning all guides when client passes `all=true`
+  const wantAll = String(req.query.all || '').toLowerCase() === 'true';
+  const limit = wantAll ? 0 : Math.max(1, parseInt(req.query.limit) || 10);
   const search = req.query.search || ""; // generic text search
   const plant = (req.query.plant || "").trim(); // search by plant name (title or plantTags)
   const category = req.query.category || req.query.tag || req.query.plantTag; // filter by plant type
@@ -36,25 +124,49 @@ export const getGuides = async (req, res) => {
     filter.$or.push({ title: plantRegexOp }, { plantTags: plantRegexOp });
   }
 
-  // filter by explicit category / plantTag
+  // filter by explicit category / plantTag OR plant_group slug
   if (category) {
-    // allow comma-separated list
-    const vals = typeof category === 'string' ? category.split(',').map(s=>s.trim()).filter(Boolean) : category;
-    if (Array.isArray(vals)) {
-      filter.plantTags = { $in: vals };
-    } else {
-      filter.plantTags = vals;
+    // if category matches a plantgroup slug or name, prefer filtering by plant_group
+    try {
+      const pg = await PlantGroup.findOne({ $or: [{ slug: category }, { name: category }] }).lean();
+      if (pg && pg.slug) {
+        filter.plant_group = pg.slug;
+      } else {
+        // allow comma-separated list
+        const vals = typeof category === 'string' ? category.split(',').map(s=>s.trim()).filter(Boolean) : category;
+        if (Array.isArray(vals)) {
+          filter.plantTags = { $in: vals };
+        } else {
+          filter.plantTags = vals;
+        }
+      }
+    } catch (e) {
+      // fallback to plantTags filtering on error
+      const vals = typeof category === 'string' ? category.split(',').map(s=>s.trim()).filter(Boolean) : category;
+      if (Array.isArray(vals)) filter.plantTags = { $in: vals };
+      else filter.plantTags = vals;
     }
   }
 
-  const skip = (page - 1) * limit;
   // use lean() to get plain JS objects we can normalize
-  const [total, rawGuides] = await Promise.all([
-    Guide.countDocuments(filter),
-    Guide.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-  ]);
+  let total = await Guide.countDocuments(filter);
+  let rawGuides;
+  if (wantAll) {
+    // return all matching guides (no pagination)
+    rawGuides = await Guide.find(filter).sort({ createdAt: -1 }).lean();
+    // override page/limit to reflect full set
+  } else {
+    const skip = (page - 1) * limit;
+    rawGuides = await Guide.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+  }
 
   // Normalize image field: if document has `image` use it; otherwise try `images` array (first element)
+  // Build a map of plant_group slug -> display name for category labeling
+  const slugs = Array.from(new Set(rawGuides.map(r => r.plant_group).filter(Boolean)));
+  const pgDocs = slugs.length ? await PlantGroup.find({ slug: { $in: slugs } }).lean() : [];
+  const slugToName = {};
+  pgDocs.forEach(p => { if (p && p.slug) slugToName[p.slug] = p.name; });
+
   const guides = rawGuides.map((g) => {
     const out = { ...g };
     if (!out.image) {
@@ -89,32 +201,10 @@ export const getGuides = async (req, res) => {
         // ignore filesystem errors
       }
     }
-    // Ensure a `category` field is present for the frontend. Priority:
-    // 1) explicit `category` in DB
-    // 2) tag prefixed with 'Loại:' (e.g. 'Loại:Trồng trong chung cư')
-    // 3) a matching value from `plantTags` that the frontend expects
-    try {
-      let cat = out.category || "";
-      if (!cat && Array.isArray(out.tags)) {
-        const tag = out.tags.find(t => typeof t === 'string' && t.startsWith('Loại:'));
-        if (tag) cat = String(tag).replace(/^Loại:/, '').trim();
-      }
-      if (!cat && Array.isArray(out.plantTags)) {
-        const candidates = [
-          "Rau củ dễ chăm",
-          "Trái cây ngắn hạn",
-          "Cây gia vị",
-          "Trồng trong chung cư",
-          "Ít thời gian chăm sóc",
-          "Cây leo nhỏ",
-        ];
-        const found = out.plantTags.find(pt => candidates.includes(pt));
-        if (found) cat = found;
-      }
-      out.category = cat || "";
-    } catch (e) {
-      out.category = out.category || "";
-    }
+    // Note: do not set `category` here — frontend will use `plantTags` / `plant_group`.
+    // Provide a convenient `category` display field (human-readable)
+    out.category = slugToName[out.plant_group] || (out.plantTags && out.plantTags.length ? out.plantTags[0] : null);
+    out.category_slug = out.plant_group || null;
     return out;
   });
 
@@ -133,7 +223,7 @@ export const createGuide = async (req, res) => {
   } catch (e) {
     console.warn('[upload-debug] failed to log createGuide request', e);
   }
-  const { title, description, content, tags, plantTags, expert_id } = req.body;
+  const { title, description, content, tags, plantTags, expert_id, plant_name, plant_group } = req.body;
   console.log(req.files);
   
   const guideData = { title, description, content };
@@ -142,6 +232,24 @@ export const createGuide = async (req, res) => {
   }
   if (plantTags !== undefined) {
     try { guideData.plantTags = typeof plantTags === 'string' ? JSON.parse(plantTags) : plantTags; } catch(e) { guideData.plantTags = plantTags; }
+  }
+  if (plant_name) guideData.plant_name = plant_name;
+  if (plant_group) guideData.plant_group = plant_group;
+
+  // Prevent duplicate guide entries by plant_name globally (case-insensitive)
+  try {
+    if (guideData.plant_name) {
+      const esc = String(guideData.plant_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const dup = await Guide.findOne({
+        plant_name: { $regex: `^${esc}$`, $options: 'i' },
+        deleted: { $ne: true }
+      }).lean();
+      if (dup) {
+        return res.status(409).json({ success: false, message: `Hướng dẫn cho "${guideData.plant_name}" đã tồn tại.` });
+      }
+    }
+  } catch (e) {
+    console.warn('Duplicate check failed', e?.message || e);
   }
   if (expert_id) guideData.expert_id = expert_id;
 
@@ -283,29 +391,19 @@ export const getGuideById = async (req, res) => {
 
   // debug log - remove in production
   console.log("[guides] returning guide id=", id, "image=", guide.image);
-
-  // Ensure `category` is present on single guide responses as well
+  // Provide a convenient `category` display field when possible
   try {
-    let cat = guide.category || "";
-    if (!cat && Array.isArray(guide.tags)) {
-      const tag = guide.tags.find(t => typeof t === 'string' && t.startsWith('Loại:'));
-      if (tag) cat = String(tag).replace(/^Loại:/, '').trim();
+    let pg = null;
+    if (guide.plant_group_id) {
+      pg = await PlantGroup.findById(guide.plant_group_id).lean();
     }
-    if (!cat && Array.isArray(guide.plantTags)) {
-      const candidates = [
-        "Rau củ dễ chăm",
-        "Trái cây ngắn hạn",
-        "Cây gia vị",
-        "Trồng trong chung cư",
-        "Ít thời gian chăm sóc",
-        "Cây leo nhỏ",
-      ];
-      const found = guide.plantTags.find(pt => candidates.includes(pt));
-      if (found) cat = found;
+    if (!pg && guide.plant_group) {
+      pg = await PlantGroup.findOne({ slug: guide.plant_group }).lean();
     }
-    guide.category = cat || "";
+    guide.category = pg?.name || (guide.plantTags && guide.plantTags.length ? guide.plantTags[0] : null);
+    guide.category_slug = pg?.slug || guide.plant_group || null;
   } catch (e) {
-    guide.category = guide.category || "";
+    // ignore category lookup errors
   }
 
   return ok(res, guide);
@@ -409,11 +507,37 @@ export const updateGuide = async (req, res) => {
     })) || "No files");
     console.log("Body keys:", Object.keys(req.body));
 
+    // Write a minimal debug snapshot to backend/tmp/last_upload_debug.json to aid troubleshooting
+    try {
+      const dbg = {
+        ts: new Date().toISOString(),
+        route: 'updateGuide',
+        id: req.params.id,
+        files: Array.isArray(req.files) ? req.files.map(f => ({ field: f.fieldname, originalname: f.originalname, filename: f.filename, size: f.size })) : null,
+        bodyKeys: Object.keys(req.body || {}),
+        plant_group: req.body?.plant_group || null,
+      };
+      const dbgPath = path.join(__dirname, '..', 'tmp', 'last_upload_debug.json');
+      try { fs.mkdirSync(path.dirname(dbgPath), { recursive: true }); } catch(e) {}
+      fs.writeFileSync(dbgPath, JSON.stringify(dbg, null, 2), 'utf8');
+      console.log('[upload-debug] wrote debug snapshot to', dbgPath);
+    } catch (e) {
+      console.warn('[upload-debug] failed to write debug snapshot', e?.message || e);
+    }
+
     const updates = {};
+
+    // validate id early to give clearer error
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid guide id' });
+    }
 
     // Cập nhật các field text
     if (req.body.title) updates.title = req.body.title.trim();
     if (req.body.description !== undefined) updates.description = req.body.description;
+    // plant_group and plant_name (if provided)
+    if (req.body.plant_group) updates.plant_group = req.body.plant_group;
+    if (req.body.plant_name) updates.plant_name = req.body.plant_name;
 
     // plantTags
     if (req.body.plantTags) {
@@ -433,36 +557,189 @@ export const updateGuide = async (req, res) => {
     }
     // Nếu không có file mới → giữ nguyên ảnh cũ (không làm gì cả)
 
+    // If we have a new main image file, persist it immediately so the image
+    // is stored on the document even if later parts of the update fail.
+    if (updates.image) {
+      try {
+        await Guide.findByIdAndUpdate(req.params.id, { $set: { image: updates.image, images: [updates.image] } });
+        if (process.env.NODE_ENV !== 'production') console.log('[update-guide] persisted main image early:', updates.image);
+      } catch (e) {
+        console.warn('[update-guide] failed to persist main image early:', e?.message || e);
+        // don't abort the request; continue with the normal update flow
+      }
+    }
+
+    // === PERSIST STEP IMAGES EARLY ===
+    // If there are per-step files uploaded (stepImage_0, stepImage_1, ...),
+    // persist their image paths immediately on the document so that the
+    // uploaded files are not lost even if the later full update fails.
+    try {
+      if (Array.isArray(req.files) && req.files.length) {
+        const stepFiles = req.files.filter(f => /^stepImage_\d+$/.test(f.fieldname));
+        for (const sf of stepFiles) {
+          const m = sf.fieldname.match(/^stepImage_(\d+)$/);
+          if (!m) continue;
+          const idx = Number(m[1]);
+          const relPath = `/uploads/guides/${sf.filename}`;
+          try {
+            // set the specific array element's image property
+            const setObj = {};
+            setObj[`steps.${idx}.image`] = relPath;
+            await Guide.findByIdAndUpdate(req.params.id, { $set: setObj });
+            if (process.env.NODE_ENV !== 'production') console.log('[update-guide] persisted step image early:', req.params.id, idx, relPath);
+          } catch (e) {
+            console.warn('[update-guide] failed to persist step image early for', req.params.id, idx, e?.message || e);
+          }
+        }
+      }
+    } catch (e) {
+      // ignore errors in early persistence; continue
+      console.warn('[update-guide] error while persisting step images early:', e?.message || e);
+    }
+
     // === CÁC BƯỚC HƯỚNG DẪN ===
     if (req.body.steps) {
-      let steps = typeof req.body.steps === "string" 
-        ? JSON.parse(req.body.steps) 
-        : req.body.steps;
+      let stepsRaw = req.body.steps;
+      let steps = null;
+      try {
+        steps = typeof stepsRaw === "string" ? JSON.parse(stepsRaw) : stepsRaw;
+      } catch (e) {
+        console.error("Failed to parse steps JSON:", e?.message || e, "raw:", stepsRaw);
+        return res.status(400).json({ success: false, message: "Invalid steps format (JSON parse error)" });
+      }
+
+      if (!Array.isArray(steps)) {
+        return res.status(400).json({ success: false, message: "Invalid steps format: expected an array" });
+      }
 
       // Map lại từng bước + thay ảnh nếu có file mới
-      steps = steps.map((step, idx) => {
+      const mappedSteps = steps.map((step, idx) => {
         const stepFile = req.files?.find(f => f.fieldname === `stepImage_${idx}`);
 
         return {
-          title: step.title?.trim() || "",
-          text: step.text?.trim() || "",
+          title: (step.title || "").toString().trim(),
+          text: (step.text || "").toString().trim(),
           // Nếu có file mới → dùng file mới
           // Nếu không → giữ nguyên URL cũ (nếu có)
-          image: stepFile && stepFile.size > 0 
-            ? `/uploads/guides/${stepFile.filename}` 
+          image: stepFile && stepFile.size > 0
+            ? `/uploads/guides/${stepFile.filename}`
             : (step.image || null),
         };
       });
 
-      updates.steps = steps;
+      // Merge with existing guide steps to avoid accidentally wiping previously
+      // persisted step images (early persistence writes `steps.<i>.image`).
+      // This preserves images/titles/text for steps not provided by the client.
+      try {
+        const existing = await Guide.findById(req.params.id).lean();
+        if (existing && Array.isArray(existing.steps)) {
+          const maxLen = Math.max(existing.steps.length, mappedSteps.length);
+          const merged = [];
+          for (let i = 0; i < maxLen; i++) {
+            const newStep = mappedSteps[i] || null;
+            const oldStep = existing.steps[i] || null;
+            const mergedStep = {
+              title: newStep && newStep.title !== undefined ? newStep.title : (oldStep ? oldStep.title : ""),
+              text: newStep && newStep.text !== undefined ? newStep.text : (oldStep ? oldStep.text : ""),
+              image: (newStep && newStep.image) ? newStep.image : (oldStep ? oldStep.image : null),
+            };
+            merged.push(mergedStep);
+          }
+          updates.steps = merged;
+        } else {
+          updates.steps = mappedSteps;
+        }
+      } catch (e) {
+        // On error, fall back to the mapped steps (do not abort the request)
+        console.warn('[update-guide] failed merging existing steps, falling back:', e?.message || e);
+        updates.steps = mappedSteps;
+      }
+    }
+
+    // === Normalize plant_group slug server-side to avoid Mongoose enum errors ===
+    if (updates.plant_group) {
+      const pgCandidateRaw = String(updates.plant_group || '').trim();
+      const normalized = normalizeLabelForMapping(pgCandidateRaw);
+      // Ensure mapping is loaded from DB if it's not already
+      try {
+        console.log('[update-guide] ensureLabelToSlugMapping start for:', pgCandidateRaw);
+        await ensureLabelToSlugMapping();
+        console.log('[update-guide] ensureLabelToSlugMapping done; entries=', Object.keys(LABEL_TO_SLUG).length);
+      } catch (e) {
+        console.warn('[update-guide] ensureLabelToSlugMapping error:', e?.message || e);
+      }
+
+      // 1) Try direct mapping from known labels
+      if (normalized && LABEL_TO_SLUG[normalized]) {
+        updates.plant_group = LABEL_TO_SLUG[normalized];
+        if (process.env.NODE_ENV !== 'production') console.log('[update-guide] mapped label->slug via LABEL_TO_SLUG:', pgCandidateRaw, '->', updates.plant_group);
+      } else {
+        // 2) Try quick exact slug/name lookups as a safe fallback wrapped in try/catch
+        try {
+          console.log('[update-guide] fallback lookup for plant_group:', pgCandidateRaw);
+          // prefer exact slug
+          let pgDoc = await PlantGroup.findOne({ slug: pgCandidateRaw }).lean();
+          if (!pgDoc) {
+            const esc = String(pgCandidateRaw).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+            const exactRe = new RegExp(`^${esc}$`, 'i');
+            pgDoc = await PlantGroup.findOne({ $or: [{ slug: exactRe }, { name: exactRe }] }).lean();
+          }
+          if (pgDoc && pgDoc.slug) updates.plant_group = pgDoc.slug;
+          else {
+            // final safe heuristic: if normalized contains known keywords
+            if (normalized && (normalized.includes('gia vi') || normalized.includes('herb'))) {
+              updates.plant_group = 'herb';
+            } else {
+              // drop field to avoid Mongoose enum errors
+              delete updates.plant_group;
+              if (process.env.NODE_ENV !== 'production') console.warn('[update-guide] plant_group could not be normalized; dropping field for:', pgCandidateRaw);
+            }
+          }
+        } catch (e) {
+          // On unexpected errors, drop the field to avoid crashing the update
+          delete updates.plant_group;
+          console.warn('[update-guide] plant_group normalization encountered error, dropping field:', e?.message || e);
+        }
+      }
     }
 
     // Cập nhật vào DB
-    const guide = await Guide.findByIdAndUpdate(
-      req.params.id,
-      { $set: updates },
-      { new: true, runValidators: true }
-    ).populate("expert_id", "username fullname avatar");
+    // Before updating, ensure we don't create a duplicate by plant_name globally (exclude self)
+    if (updates.plant_name) {
+      try {
+        const esc = String(updates.plant_name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const conflict = await Guide.findOne({
+          _id: { $ne: req.params.id },
+          plant_name: { $regex: `^${esc}$`, $options: 'i' },
+          deleted: { $ne: true }
+        }).lean();
+        if (conflict) {
+          return res.status(409).json({ success: false, message: `Đã tồn tại hướng dẫn cho "${updates.plant_name}".` });
+        }
+      } catch (e) {
+        console.warn('Duplicate check (update) failed', e?.message || e);
+      }
+    }
+
+    // Log updates payload for diagnostics (remove or lower in production)
+    console.log('[update-guide] updates payload:', JSON.stringify(updates));
+
+    let guide;
+    try {
+      guide = await Guide.findByIdAndUpdate(
+        req.params.id,
+        { $set: updates },
+        { new: true, runValidators: true }
+      ).populate("expert_id", "username fullname avatar");
+    } catch (dbErr) {
+      console.error('[update-guide] DB update error:', dbErr);
+      // Mongoose validation / cast errors should return 400 with details
+      if (dbErr.name === 'ValidationError' || dbErr.name === 'CastError') {
+        return res.status(400).json({ success: false, message: dbErr.message, details: dbErr.errors || null });
+      }
+      // otherwise rethrow to outer catch
+      throw dbErr;
+    }
 
     if (!guide) {
       return res.status(404).json({ success: false, message: "Không tìm thấy hướng dẫn" });

@@ -1,12 +1,34 @@
-/* Màu sắc chủ đạo: Xanh lá (Green: #3A8C3A) và Nền trắng ngà (#FAFAFA) */
 
-.forecast-cards {
-  row-gap: 16px;
+:root {
+  --emerald-700: #047857;
+  --emerald-600: #059669;
+  --emerald-300: #6ee7b7; /* added */
+  --emerald-200: #a7f3d0; /* added */
+  --emerald-100: #d1fae5;
+  --emerald-50:  #f0fdf4;
+
+  --amber-50: #fffbeb;
+
+  --gray-900: #111827;
+  --gray-700: #374151;
+  --gray-600: #4b5563;
+  --gray-500: #6b7280;
+  --gray-400: #9ca3af;
+  --gray-300: #d1d5db;
+  --gray-200: #e5e7eb;
+  --gray-100: #f3f4f6;
+
+  --red-500: #ef4444;
+  --white: #ffffff;
+}
+.weather-page-root {
+  min-height: 100vh;
+  padding: 24px 0 32px;
 }
 
-/* Thêm màu nền tổng thể dịu mắt hơn */
-body {
-    background-color: #FAFAFA; /* Off-white background to reduce strain */
+/* Đảm bảo container chính nổi trên nền */
+.weather-page-root .container {
+  max-width: 1120px;
 }
 
 /* Hiệu ứng chuyển động cơ bản cho các card khi tải */
@@ -21,137 +43,378 @@ body {
   }
 }
 
-/* Áp dụng styling chung cho tất cả các card */
-.card {
-  animation: fade-in-slide 0.5s ease-out;
-  border: 1px solid #E0E0E0; /* Border mềm mại hơn */
-  background-color: #FFFFFF; /* Nền trắng sạch */
-  border-radius: 8px;
+/* Áp gradient cho toàn bộ tài liệu + #root để tránh bị "chia làm 2" bởi phần tử gốc có nền trắng */
+html, body, #root {
+  height: 100%;
+  min-height: 100vh;
+  background: linear-gradient(90deg, rgb(232, 245, 233), rgb(227, 242, 253));
+  background-color: #FAFAFA; /* fallback */
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
-/* Tiêu đề chung cho các card */
-.card-title {
-  color: #3A8C3A; /* Xanh lá chủ đạo */
+/* Nếu app có container gốc đặt nền trắng, đảm bảo nó trong suốt */
+.App, .app-root, #app, .main-container {
+  background: transparent !important;
+}
+
+/* ===== Card hiện đại (override Bootstrap .card trong trang này) ===== */
+.weather-page-root .card {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  /* overflow: hidden; */
+}
+
+/* Header card */
+.weather-page-root .card-body > h5 {
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0f172a;
+}
+
+/* Tiêu đề trang */
+.weather-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+.weather-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  max-width: 800px;
+}
+
+/* ===== Form tìm kiếm + vị trí: gọn, hiện đại ===== */
+.weather-search-row .form-control {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+.weather-search-row .form-control:focus {
+  border-color: rgba(34, 197, 94, 0.8);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
+}
+
+/* Buttons chính */
+.btn-weather-primary {
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #16a34a, #16a34a);
+  color: #f9fafb;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 14px 30px rgba(22, 163, 74, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+.btn-weather-primary:hover {
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+  box-shadow: 0 20px 45px rgba(22, 163, 74, 0.4);
+}
+
+.btn-weather-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.3);
+}
+
+.btn-weather-outline {
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.6);
+  background: #ecfdf3;
+  color: #166534;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+
+.btn-weather-outline:hover {
+  background: #dcfce7;
+  transform: translateY(-1px);
+}
+
+/* Input tên cây */
+.weather-plant-input .form-control {
+  border-radius: 12px;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.weather-plant-input {
+  margin-top: 4px;
+}
+
+.plant-input-card {
+  border-radius: 14px;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: linear-gradient(135deg, #ecfdf3, #f9fafb);
+  padding: 10px 12px;
+  box-shadow: 0 10px 28px rgba(22, 163, 74, 0.15);
+}
+
+.plant-input-label {
+  font-size: 13px;
   font-weight: 700;
-  border-bottom: 2px solid #E8F5E9; /* Đường kẻ dưới nhạt */
-  padding-bottom: 8px;
-  margin-bottom: 16px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #166534;
 }
 
-/* Thẻ dự báo: màu nền và border nhẹ nhàng hơn */
+.plant-input-sub {
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.plant-input-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plant-input-icon {
+  font-size: 18px;
+  margin-right: 4px;
+}
+
+.plant-input-control {
+  border-radius: 999px;
+  border-color: rgba(34, 197, 94, 0.5);
+  padding-left: 14px;
+}
+
+.plant-input-control:focus {
+  border-color: rgba(22, 163, 74, 0.9);
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.35);
+}
+
+.plant-input-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.plant-advice-btn {
+  height: 44px;
+  font-size: 14px;
+}
+
+/* ===== Thời tiết hiện tại: hiển thị lớn, rõ ===== */
+.main-weather-info .temp-val {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.main-weather-info .detail-val {
+  font-weight: 600;
+  color: #111827;
+}
+
+.main-weather-info small {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ===== Progress bar độ ẩm / gió ===== */
+.visual-progress {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: #e5e7eb;
+}
+
+.visual-progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease-out;
+}
+
+.bg-info {
+  background-color: #0ea5e9 !important;
+}
+.bg-success {
+  background-color: #22c55e !important;
+}
+
+/* ===== AQI Badge & legend ===== */
+.aqi-badge {
+  border-radius: 999px;
+  padding: 6px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #f9fafb;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
+}
+
+.aqi-badge-main {
+  font-size: 14px;
+}
+
+.aqi-legend-chip {
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+/* AQI card hiện đại */
+.aqi-card-modern {
+  border-radius: 16px;
+}
+
+/* Badge lớn ở góc phải */
+.aqi-badge-modern {
+  border-radius: 12px;
+  padding: 6px 10px;
+  min-width: 110px;
+  text-align: right;
+  color: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.aqi-badge-number {
+  font-size: 11px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.aqi-badge-number span {
+  font-size: 16px;
+  font-weight: 800;
+  margin-left: 3px;
+}
+
+.aqi-badge-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Màu đã có class aqi-good / ... trong file, có thể giữ nguyên hoặc tinh chỉnh */
+.aqi-good {
+  background-color: #22c55e;
+}
+.aqi-fair {
+  background-color: #84cc16;
+}
+.aqi-moderate {
+  background-color: #f59e0b;
+}
+.aqi-poor {
+  background-color: #f97316;
+}
+.aqi-very-poor {
+  background-color: #ef4444;
+}
+.aqi-unknown {
+  background-color: #6b7280;
+}
+
+/* Thanh scale AQI */
+.aqi-scale {
+  margin-top: 6px;
+}
+
+.aqi-scale-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.aqi-scale-bar > div {
+  height: 100%;
+}
+
+.aqi-scale-good {
+  background-color: #22c55e;
+}
+.aqi-scale-fair {
+  background-color: #84cc16;
+}
+.aqi-scale-moderate {
+  background-color: #f59e0b;
+}
+.aqi-scale-poor {
+  background-color: #f97316;
+}
+.aqi-scale-very-poor {
+  background-color: #ef4444;
+}
+
+.aqi-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #6b7280;
+}
+
+/* Dòng metric chi tiết */
+.aqi-metric {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.aqi-metric .label {
+  color: #4b5563;
+}
+
+.aqi-metric .value {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ===== Forecast cards ===== */
+.forecast-cards {
+  row-gap: 16px;
+}
+
 .forecast-card {
-  background: #F7F7F7; 
-  border: 1px solid #E0E0E0;
-  transition: transform 0.2s, box-shadow 0.2s;
-  animation: fade-in-slide 0.3s ease-out;
-  /* Thêm khoảng cách giữa các thẻ con */
-  margin: 4px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s;
 }
 
 .forecast-card:hover {
-  transform: translateY(-2px); /* Hiệu ứng nhấc lên nhẹ */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
-  border-color: #3A8C3A; /* Nổi bật hơn khi hover */
-  z-index: 10;
+  transform: translateY(-3px);
+  border-color: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
 }
 
 @media (max-width: 576px) {
   .forecast-card {
-    min-width: 100px;
+    min-width: 120px;
   }
 }
 
-/* Các chỉ số chính (nhiệt độ, độ ẩm, gió) */
-.main-weather-info .temp-val {
-  font-size: 4rem; /* Nhiệt độ lớn hơn */
-  font-weight: 700;
-  color: #3A8C3A; 
-  text-shadow: 1px 1px 2px rgba(58, 140, 58, 0.2); /* Thêm shadow nhẹ */
-  transition: color 0.3s;
-}
-
-.main-weather-info:hover .temp-val {
-  color: #4CAF50; 
-}
-
-
-.main-weather-info .detail-val {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333333; 
-}
-
-/* --- AQI Badges & Legends --- */
-.aqi-badge {
-  border-radius: 999px;
-  padding: 8px 16px; 
-  display: inline-flex;
-  align-items: center;
-  font-weight: 700;
-  color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-}
-
-.aqi-badge:hover {
-  transform: scale(1.05); /* Hiệu ứng "nhảy" nhẹ */
-}
-
-.aqi-badge-main {
-  font-size: 16px; 
-}
-
-/* Legend chip nhỏ */
-.aqi-legend-chip {
-  border-radius: 999px;
-  padding: 4px 10px;
-  color: #fff;
-  font-weight: 500;
-  font-size: 0.8rem;
-}
-
-/* Màu AQI */
-.aqi-good {
-  background-color: #4CAF50; 
-}
-
-.aqi-fair {
-  background-color: #8BC34A; 
-}
-
-.aqi-moderate {
-  background-color: #FFC107; 
-  color: #333333;
-}
-
-.aqi-poor {
-  background-color: #FF9800; 
-}
-
-.aqi-very-poor {
-  background-color: #F44336; 
-}
-
-.aqi-unknown {
-  background-color: #9E9E9E; 
-}
-
-/* --- Bảng lịch sử --- */
+/* ===== Lịch sử thời tiết ===== */
 .history-table-wrapper {
   max-height: 260px;
   overflow-y: auto;
-  border: 1px solid #E0E0E0;
-  border-radius: 0.3rem;
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.03); 
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
 }
-/* Header của bảng - Luôn dính ở trên */
+
 .history-table-wrapper table thead th {
   position: sticky;
   top: 0;
-  background-color: #E8F5E9; /* Nền xanh lá nhạt mềm mại */
-  z-index: 10;
+  background-color: #ecfdf3;
+  z-index: 5;
   font-weight: 600;
-  color: #3A8C3A;
+  color: #166534;
 }
 
 /* Hiệu ứng Zebra stripes và Hover */
@@ -163,36 +426,48 @@ body {
   cursor: pointer;
 }
 
-/* Gợi ý chăm sóc cây (Phần quan trọng nhất) */
+/* ===== Gợi ý chăm sóc cây ===== */
 .plant-advice-card-wow {
-  border: 2px solid #3A8C3A; 
-  background-color: #F8FFF8; /* Nền rất nhạt */
-  box-shadow: 0 6px 15px rgba(58, 140, 58, 0.2); /* Shadow nổi bật */
-  transition: transform 0.3s;
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  background: linear-gradient(135deg, #ecfdf3, #f9fafb);
+  box-shadow: 0 22px 60px rgba(22, 163, 74, 0.25);
 }
 
-.plant-advice-card-wow:hover {
-  transform: translateY(-5px); /* Hiệu ứng nhấc lên rõ ràng */
+/* ===== Error / status text ===== */
+.weather-status-error {
+  color: #b91c1c;
+  font-size: 14px;
 }
 
-/* Progress bar cho trực quan hóa */
-.visual-progress {
-  height: 8px;
-  border-radius: 4px;
-  overflow: hidden;
-  background-color: #E0E0E0;
+.weather-status-loading {
+  color: #15803d;
+  font-size: 14px;
 }
 
-/* Màu thanh Progress bar */
-.visual-progress-bar {
-  height: 100%;
-  transition: width 0.5s ease-out; 
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .weather-title {
+    font-size: 20px;
+  }
 }
 
-/* Tùy chỉnh màu Bootstrap */
-.bg-info {
-    background-color: #46B6CC !important; /* Xanh nước biển dịu hơn cho độ ẩm */
+/* Bên trong .aqi-badge-modern */
+.aqi-badge-chip {
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: rgba(15, 23, 42, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
 }
-.bg-success {
-    background-color: #3A8C3A !important; /* Xanh lá chủ đạo cho gió */
+
+.aqi-badge-chip .chip-icon {
+  font-size: 13px;
+}
+
+.aqi-badge-chip .chip-text {
+  opacity: 0.9;
 }

@@ -36,7 +36,7 @@ const NotebookEdit = () => {
       });
     } catch (err) {
       console.error("Error fetching notebook:", err);
-      alert("Không thể tải nhật ký");
+      alert("KHÔNG THỂ TẢI NHẬT KÝ");
       navigate("/farmer/notebooks");
     } finally {
       setLoading(false);
@@ -62,18 +62,18 @@ const NotebookEdit = () => {
     e.preventDefault();
 
     if (!formData.notebook_name.trim()) {
-      alert("Vui lòng nhập tên nhật ký");
+      alert("VUI LÒNG NHẬP TÊN NHẬT KÝ");
       return;
     }
 
     try {
       setSaving(true);
       await notebookApi.updateNotebook(id, formData);
-      alert("Cập nhật nhật ký thành công!");
+      alert("CẬP NHẬT NHẬT KÝ THÀNH CÔNG!");
       navigate(`/farmer/notebooks/${id}`);
     } catch (err) {
       console.error("Error updating notebook:", err);
-      alert("Không thể cập nhật nhật ký. Vui lòng thử lại.");
+      alert("KHÔNG THỂ CẬP NHẬT NHẬT KÝ. VUI LÒNG THỬ LẠI.");
     } finally {
       setSaving(false);
     }
@@ -81,7 +81,7 @@ const NotebookEdit = () => {
 
   const handleCancel = () => {
     if (
-      window.confirm("Bạn có chắc muốn hủy? Các thay đổi sẽ không được lưu.")
+      window.confirm("BẠN CÓ CHẮC MUỐN HỦY? CÁC THAY ĐỔI SẼ KHÔNG ĐƯỢC LƯU.")
     ) {
       navigate(`/farmer/notebooks/${id}`);
     }
@@ -92,7 +92,7 @@ const NotebookEdit = () => {
       <div className="notebook-form-container">
         <div className="loading-container">
           <div className="spinner"></div>
-          <p>Đang tải...</p>
+          <p>ĐANG TẢI...</p>
         </div>
       </div>
     );
@@ -102,7 +102,7 @@ const NotebookEdit = () => {
     return (
       <div className="notebook-form-container">
         <div className="alert alert-error">
-          <span>⚠️</span> Không tìm thấy nhật ký
+          <span>⚠️</span> KHÔNG TÌM THẤY NHẬT KÝ
         </div>
       </div>
     );
@@ -112,16 +112,16 @@ const NotebookEdit = () => {
     <div className="notebook-form-container">
       <div className="form-header">
         <button className="btn-back" onClick={handleCancel}>
-          ← Quay lại
+          ← QUAY LẠI
         </button>
-        <h1>Chỉnh Sửa Nhật Ký</h1>
+        <h1>CHỈNH SỬA NHẬT KÝ</h1>
       </div>
 
       <div className="form-card">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="notebook_name">
-              Tên Nhật Ký <span className="required">*</span>
+              TÊN NHẬT KÝ <span className="required">*</span>
             </label>
             <input
               type="text"
@@ -129,63 +129,63 @@ const NotebookEdit = () => {
               name="notebook_name"
               value={formData.notebook_name}
               onChange={handleInputChange}
-              placeholder="Ví dụ: Vườn rau nhà tôi"
+              placeholder="VÍ DỤ: VƯỜN RAU NHÀ TÔI"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Mô Tả</label>
+            <label htmlFor="description">MÔ TẢ</label>
             <textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              placeholder="Ghi chú về cây trồng của bạn..."
+              placeholder="GHI CHÚ VỀ CÂY TRỒNG CỦA BẠN..."
               rows={4}
             />
           </div>
 
           {/* Image Uploader Component */}
           <ImageUploader
-            label="Ảnh Bìa"
+            label="ẢNH BÌA"
             currentImage={formData.cover_image}
             onImageSelect={handleImageSelect}
           />
 
           <div className="form-group">
-            <label htmlFor="status">Trạng Thái</label>
+            <label htmlFor="status">TRẠNG THÁI</label>
             <select
               id="status"
               name="status"
               value={formData.status}
               onChange={handleInputChange}
             >
-              <option value="active">Đang trồng</option>
-              <option value="archived">Đã lưu trữ</option>
+              <option value="active">ĐANG TRỒNG</option>
+              <option value="archived">ĐÃ LƯU TRỮ</option>
             </select>
             <p className="form-hint">
-              Lưu trữ nhật ký khi bạn đã thu hoạch hoặc không theo dõi nữa
+              LƯU TRỮ NHẬT KÝ KHI BẠN ĐÃ THU HOẠCH HOẶC KHÔNG THEO DÕI NỮA
             </p>
           </div>
 
           {/* Non-editable Info */}
           <div className="info-section">
-            <h3>Thông Tin Không Thể Chỉnh Sửa</h3>
+            <h3>THÔNG TIN KHÔNG THỂ CHỈNH SỬA</h3>
             <div className="info-grid">
               <div className="info-item">
-                <span className="info-label">Loại cây trồng:</span>
+                <span className="info-label">LOẠI CÂY TRỒNG:</span>
                 <span className="info-value">🌿 {notebook.plant_type}</span>
               </div>
               <div className="info-item">
-                <span className="info-label">Ngày trồng:</span>
+                <span className="info-label">NGÀY TRỒNG:</span>
                 <span className="info-value">
                   📅 {formatVietnamLocale(notebook.planted_date)}
                 </span>
               </div>
               {notebook.template_id && (
                 <div className="info-item">
-                  <span className="info-label">Bộ mẫu:</span>
+                  <span className="info-label">BỘ MẪU:</span>
                   <span className="info-value">
                     🌱 {notebook.template_id.template_name || "N/A"}
                   </span>
@@ -193,8 +193,8 @@ const NotebookEdit = () => {
               )}
             </div>
             <p className="info-note">
-              ℹ️ Loại cây, ngày trồng và bộ mẫu không thể thay đổi vì ảnh hưởng
-              đến tính toán giai đoạn
+              ℹ️ LOẠI CÂY, NGÀY TRỒNG VÀ BỘ MẪU KHÔNG THỂ THAY ĐỔI VÌ ẢNH HƯỞNG
+              ĐẾN TÍNH TOÁN GIAI ĐOẠN
             </p>
           </div>
 
@@ -205,10 +205,10 @@ const NotebookEdit = () => {
               onClick={handleCancel}
               disabled={saving}
             >
-              Hủy
+              HỦY
             </button>
             <button type="submit" className="btn btn-submit" disabled={saving}>
-              {saving ? "Đang lưu..." : "💾 Lưu Thay Đổi"}
+              {saving ? "ĐANG LƯU..." : "💾 LƯU THAY ĐỔI"}
             </button>
           </div>
         </form>
@@ -216,16 +216,16 @@ const NotebookEdit = () => {
 
       {/* Info Card */}
       <div className="info-card">
-        <h3>💡 Lưu Ý</h3>
+        <h3>💡 LƯU Ý</h3>
         <ul>
-          <li>Bạn chỉ có thể chỉnh sửa tên, mô tả, ảnh bìa và trạng thái</li>
-          <li>Loại cây trồng và ngày trồng không thể thay đổi</li>
+          <li>BẠN CHỈ CÓ THỂ CHỈNH SỬA TÊN, MÔ TẢ, ẢNH BÌA VÀ TRẠNG THÁI</li>
+          <li>LOẠI CÂY TRỒNG VÀ NGÀY TRỒNG KHÔNG THỂ THAY ĐỔI</li>
           <li>
-            Bộ mẫu đã gán không thể thay đổi vì ảnh hưởng đến lịch chăm sóc
+            BỘ MẪU ĐÃ GÁN KHÔNG THỂ THAY ĐỔI VÌ ẢNH HƯỞNG ĐẾN LỊCH CHĂM SÓC
           </li>
           <li>
-            Để thêm/xóa hình ảnh hoặc cập nhật ghi chú, vào tab "Nhật Ký & Hình
-            Ảnh"
+            ĐỂ THÊM/XÓA HÌNH ẢNH HOẶC CẬP NHẬT GHI CHÚ, VÀO TAB "NHẬT KÝ & HÌNH
+            ẢNH"
           </li>
         </ul>
       </div>

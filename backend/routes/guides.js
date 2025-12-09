@@ -41,7 +41,20 @@ router.delete('/:id/permanent', permanentDeleteGuide);
 
 // Create guide (for dev/testing) - in production protect with auth
 // accept multipart/form-data for main image and per-step images
-router.post("/", upload.any(), createGuide);
+// Wrap multer so we can handle upload errors (file too large, invalid file, etc.)
+const multerHandler = (mw) => (req, res, next) => {
+	mw(req, res, (err) => {
+		if (err) {
+			console.error('[upload-error] multer error:', err);
+			const isMulter = err && err.name === 'MulterError';
+			const message = isMulter ? err.message : (err.message || 'Upload failed');
+			return res.status(400).json({ success: false, message: `Upload failed: ${message}` });
+		}
+		next();
+	});
+};
+
+router.post("/", multerHandler(upload.any()), createGuide);
 
 // Single guide
 router.get("/:id", getGuideById);
@@ -49,7 +62,7 @@ router.get("/:id", getGuideById);
 // Update guide (with optional main image upload and multiple step images)
 // accept 'image' (single) and 'stepImages' (multiple files for steps)
 // use upload.any() so frontend can send per-step files with field names like 'stepImage_0'
-router.put('/:id', upload.any(), updateGuide);
+router.put('/:id', multerHandler(upload.any()), updateGuide);
 
 // Delete guide (dev) - protect in production
 router.delete("/:id", deleteGuide);

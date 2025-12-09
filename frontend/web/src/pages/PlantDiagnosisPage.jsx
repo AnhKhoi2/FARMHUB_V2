@@ -1,9 +1,10 @@
 // src/pages/PlantDiagnosisPage.jsx
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import plantApi from "../api/plantApi"; // chỉnh lại path nếu khác
+import plantApi from "../api/plantApi";
 import Header from "../components/shared/Header";
 import Footer from "../components/shared/Footer";
+
 // Mapping “vấn đề sức khỏe” -> tiếng Việt + hướng dẫn
 const mapIssueToVi = (name) => {
   if (!name) {
@@ -88,7 +89,11 @@ const mapIssueToVi = (name) => {
     };
   }
 
-  if (key.includes("fungi") || key.includes("fungus") || key.includes("fungal")) {
+  if (
+    key.includes("fungi") ||
+    key.includes("fungus") ||
+    key.includes("fungal")
+  ) {
     return {
       viTitle: "Nấm bệnh (Fungi)",
       viAdvice:
@@ -107,15 +112,146 @@ const mapIssueToVi = (name) => {
 const PlantDiagnosisPage = () => {
   const user = useSelector((state) => state.auth?.user);
 
-  const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [base64, setBase64] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
- void file;
+  const [symptomText, setSymptomText] = useState("");
+  const [textResult, setTextResult] = useState(null);
+  const [textLoading, setTextLoading] = useState(false);
 
-  // ✅ CÓ CHECK SIZE 4MB
+  // tab chế độ: “image” | “text”
+  const [mode, setMode] = useState("image");
+
+  const plan = user?.subscriptionPlan || user?.plan || "basic";
+  const isFreePlan = plan === "basic" || plan === "free";
+  // ============================
+  //  Giới hạn 3 lần / tháng (TEXT + IMAGE)
+  // ============================
+  const MONTHLY_LIMIT = 3;
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(
+    now.getMonth() + 1
+  ).padStart(2, "0")}`;
+
+  const makeInitialUsage = (raw) => {
+    if (!raw || raw.monthKey !== currentMonthKey) {
+      return {
+        monthKey: currentMonthKey,
+        used: 0,
+        limit: MONTHLY_LIMIT,
+      };
+    }
+    const used = typeof raw.count === "number" ? raw.count : 0;
+    return {
+      monthKey: raw.monthKey,
+      used,
+      limit: MONTHLY_LIMIT,
+    };
+  };
+
+  const [textUsage, setTextUsage] = useState(
+    makeInitialUsage(user?.aiTextDiagnoseUsage)
+  );
+  const [imageUsage, setImageUsage] = useState(
+    makeInitialUsage(user?.aiImageDiagnoseUsage)
+  );
+
+  const [textLimitReached, setTextLimitReached] = useState(
+    textUsage.used >= textUsage.limit
+  );
+  const [imageLimitReached, setImageLimitReached] = useState(
+    imageUsage.used >= imageUsage.limit
+  );
+
+  const textRemaining = Math.max(textUsage.limit - textUsage.used, 0);
+  const imageRemaining = Math.max(imageUsage.limit - imageUsage.used, 0);
+
+  const isTextOutOfQuota = textLimitReached || textRemaining <= 0;
+  const isImageOutOfQuota = imageLimitReached || imageRemaining <= 0;
+
+  // ============================
+  //  HANDLER MÔ TẢ BẰNG CHỮ
+  // ============================
+  const handleTextDiagnose = async (e) => {
+    e.preventDefault();
+
+    if (!symptomText.trim()) {
+      setError("Vui lòng nhập mô tả triệu chứng trước khi phân tích bằng AI.");
+      return;
+    }
+
+    // Hết lượt phân tích mô tả trong tháng
+    if (isTextOutOfQuota) {
+      setError(
+        "Bạn đã sử dụng 3/3 lượt phân tích mô tả bằng AI trong tháng này."
+      );
+      return;
+    }
+
+    try {
+      setTextLoading(true);
+      setError("");
+      setTextResult(null);
+
+      const payload = {
+        description: symptomText,
+        userId: user?._id,
+      };
+
+      const res = await plantApi.aiTextDiagnose(payload);
+
+      // BE trả về: { success, provider, aiAdvice, usage? }
+      if (res.data?.usage) {
+        const u = {
+          monthKey: res.data.usage.monthKey || currentMonthKey,
+          used:
+            typeof res.data.usage.used === "number"
+              ? res.data.usage.used
+              : textUsage.used,
+          limit: res.data.usage.limit || MONTHLY_LIMIT,
+        };
+        setTextUsage(u);
+        if (u.used >= u.limit) {
+          setTextLimitReached(true);
+        }
+      }
+
+      setTextResult(res.data);
+    } catch (err) {
+      console.error(err);
+
+      // Nếu BE trả 429 kèm usage
+      if (err?.response?.status === 429 && err?.response?.data?.usage) {
+        const u = {
+          monthKey:
+            err.response.data.usage.monthKey ||
+            textUsage.monthKey ||
+            currentMonthKey,
+          used:
+            typeof err.response.data.usage.used === "number"
+              ? err.response.data.usage.used
+              : textUsage.used,
+          limit: err.response.data.usage.limit || MONTHLY_LIMIT,
+        };
+        setTextUsage(u);
+        setTextLimitReached(true);
+      }
+
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Có lỗi xảy ra khi phân tích mô tả. Vui lòng thử lại.";
+      setError(msg);
+    } finally {
+      setTextLoading(false);
+    }
+  };
+
+  // ============================
+  //  HANDLER ẢNH
+  // ============================
   const handleFileChange = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -123,14 +259,12 @@ const PlantDiagnosisPage = () => {
     const MAX_SIZE = 4 * 1024 * 1024; // 4MB
     if (f.size > MAX_SIZE) {
       setError("Ảnh quá lớn (>4MB). Vui lòng chọn ảnh dung lượng nhỏ hơn.");
-      setFile(null);
       setPreviewUrl("");
       setBase64("");
       setResult(null);
       return;
     }
 
-    setFile(f);
     setError("");
     setResult(null);
 
@@ -152,6 +286,12 @@ const PlantDiagnosisPage = () => {
       return;
     }
 
+    // Hết lượt chẩn đoán bằng ảnh trong tháng
+    if (isImageOutOfQuota) {
+      setError("Bạn đã sử dụng 3/3 lượt chẩn đoán bằng ảnh trong tháng này.");
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
@@ -163,16 +303,49 @@ const PlantDiagnosisPage = () => {
       };
 
       const res = await plantApi.diagnose(payload);
+
+      // BE mới: { success, provider, diagnosisId, data, aiAdvice, usageImage? }
+      if (res.data?.usageImage) {
+        const u = {
+          monthKey: res.data.usageImage.monthKey || currentMonthKey,
+          used:
+            typeof res.data.usageImage.used === "number"
+              ? res.data.usageImage.used
+              : imageUsage.used,
+          limit: res.data.usageImage.limit || MONTHLY_LIMIT,
+        };
+        setImageUsage(u);
+        if (u.used >= u.limit) {
+          setImageLimitReached(true);
+        }
+      }
+
       setResult(res.data);
     } catch (err) {
       console.error(err);
 
-      // ✅ BẮT RIÊNG LỖI 413
       if (err?.response?.status === 413) {
         setError(
           "Ảnh quá lớn, máy chủ không thể xử lý (413). Vui lòng chọn ảnh dung lượng nhỏ hơn hoặc giảm độ phân giải rồi thử lại."
         );
         return;
+      }
+
+      // Nếu BE trả 429 cho chẩn đoán ảnh
+      if (err?.response?.status === 429 && err?.response?.data?.usageImage) {
+        const u = {
+          monthKey:
+            err.response.data.usageImage.monthKey ||
+            imageUsage.monthKey ||
+            currentMonthKey,
+          used:
+            typeof err.response.data.usageImage.used === "number"
+              ? err.response.data.usageImage.used
+              : imageUsage.used,
+          limit: err.response.data.usageImage.limit || MONTHLY_LIMIT,
+        };
+        setImageUsage(u);
+        setImageLimitReached(true);
       }
 
       const msg =
@@ -185,12 +358,13 @@ const PlantDiagnosisPage = () => {
     }
   };
 
-  // Dữ liệu thô từ Plant.id
+  // ============================
+  //  DỮ LIỆU KẾT QUẢ ẢNH
+  // ============================
   const apiData = result?.data || {};
   const suggestions = apiData.suggestions || [];
   const health = apiData.health_assessment;
 
-  // Xác định có phải cây không
   const isPlantFlag =
     typeof apiData.is_plant === "boolean" ? apiData.is_plant : null;
   const plantProb =
@@ -203,17 +377,20 @@ const PlantDiagnosisPage = () => {
     (plantProb !== null && plantProb < 0.5 && suggestions.length === 0);
 
   const renderHealthIssues = () => {
-    if (!health || !Array.isArray(health.diseases) || health.diseases.length === 0) {
+    if (
+      !health ||
+      !Array.isArray(health.diseases) ||
+      health.diseases.length === 0
+    ) {
       return (
         <p className="text-muted">
-          Chưa ghi nhận vấn đề sức khỏe rõ ràng từ hình ảnh này. Bạn vẫn nên quan sát thêm lá, thân
-          và giá thể để kịp thời phát hiện bất thường.
+          Chưa ghi nhận vấn đề sức khỏe rõ ràng từ hình ảnh này. Bạn vẫn nên
+          quan sát thêm lá, thân và giá thể để kịp thời phát hiện bất thường.
         </p>
       );
     }
 
     return (
-      // Sử dụng list-unstyled để loại bỏ bullet point mặc định
       <ul className="list-unstyled">
         {health.diseases.map((d, idx) => {
           const { viTitle, viAdvice } = mapIssueToVi(d.name);
@@ -222,24 +399,24 @@ const PlantDiagnosisPage = () => {
               ? (d.probability * 100).toFixed(1)
               : null;
 
-          // === THIẾT KẾ MỚI: Dùng màu sắc cảnh báo ===
-          let colorClass = "text-warning-emphasis"; // Mặc định
+          let colorClass = "text-warning-emphasis";
           let borderColor = "border-warning-subtle";
 
           if (prob !== null) {
             const p = parseFloat(prob);
             if (p > 70) {
-              colorClass = "text-danger"; // Nguy cơ cao -> Đỏ
+              colorClass = "text-danger";
               borderColor = "border-danger-subtle";
             } else if (p > 50) {
-              colorClass = "text-warning"; // Nguy cơ vừa -> Cam
+              colorClass = "text-warning";
               borderColor = "border-warning-subtle";
             } else {
-              colorClass = "text-success"; // Nguy cơ thấp/khác -> Xanh
+              colorClass = "text-success";
               borderColor = "border-success-subtle";
             }
           }
-          // ===========================================
+
+          const treatment = d?.disease_details?.treatment || null;
 
           return (
             <li
@@ -252,10 +429,85 @@ const PlantDiagnosisPage = () => {
                   {prob && ` (${prob}%)`}
                 </span>
               </h6>
-              <p className="mb-0 small text-dark">
+
+              {/* Lời khuyên tổng quát của FarmHub */}
+              <p className="mb-1 small text-dark">
                 <i className="bi bi-lightbulb-fill me-1"></i>
                 {viAdvice}
               </p>
+
+              {/* Gợi ý xử lý cụ thể từ Plant.id */}
+              {treatment && (
+                <div className="mt-2">
+                  <h6 className="fw-bold text-primary mb-1">
+                    <i className="bi bi-tools me-2"></i>
+                    Gợi ý xử lý từ Plant.id
+                  </h6>
+                  <ul className="small mb-0">
+                    {Array.isArray(treatment.chemical) &&
+                      treatment.chemical.length > 0 && (
+                        <li>
+                          <strong className="text-danger">🧪 Hóa học:</strong>
+                          <ul className="mb-1">
+                            {treatment.chemical.map((t, i) => (
+                              <li key={i}>{t}</li>
+                            ))}
+                          </ul>
+                        </li>
+                      )}
+
+                    {Array.isArray(treatment.biological) &&
+                      treatment.biological.length > 0 && (
+                        <li>
+                          <strong className="text-success">🧫 Sinh học:</strong>
+                          <ul className="mb-1">
+                            {treatment.biological.map((t, i) => (
+                              <li key={i}>{t}</li>
+                            ))}
+                          </ul>
+                        </li>
+                      )}
+
+                    {Array.isArray(treatment.organic) &&
+                      treatment.organic.length > 0 && (
+                        <li>
+                          <strong className="text-warning">🌱 Hữu cơ:</strong>
+                          <ul className="mb-1">
+                            {treatment.organic.map((t, i) => (
+                              <li key={i}>{t}</li>
+                            ))}
+                          </ul>
+                        </li>
+                      )}
+
+                    {Array.isArray(treatment.cultural) &&
+                      treatment.cultural.length > 0 && (
+                        <li>
+                          <strong className="text-info">🪴 Canh tác:</strong>
+                          <ul className="mb-1">
+                            {treatment.cultural.map((t, i) => (
+                              <li key={i}>{t}</li>
+                            ))}
+                          </ul>
+                        </li>
+                      )}
+
+                    {Array.isArray(treatment.prevention) &&
+                      treatment.prevention.length > 0 && (
+                        <li>
+                          <strong className="text-primary">
+                            🛡 Phòng ngừa:
+                          </strong>
+                          <ul className="mb-1">
+                            {treatment.prevention.map((t, i) => (
+                              <li key={i}>{t}</li>
+                            ))}
+                          </ul>
+                        </li>
+                      )}
+                  </ul>
+                </div>
+              )}
             </li>
           );
         })}
@@ -266,219 +518,498 @@ const PlantDiagnosisPage = () => {
   return (
     <>
       <Header />
-      <div className="container mt-4 mb-5">
-        {/* === THIẾT KẾ MỚI: Tiêu đề trực quan === */}
-        <h2 className="mb-3">
-          <span className="me-2">🌿</span>
-          Chẩn Đoán Sức Khỏe Cây Trồng
-        </h2>
-        <p className="text-muted">
-          Chụp hoặc tải ảnh lá, thân cây để AI nhận diện bệnh và đưa ra hướng dẫn
-          xử lý kịp thời.
-        </p>
-        {/* ======================================= */}
-
-        <div className="row">
-          {/* Cột upload */}
-          <div className="col-md-4">
-            {/* === THIẾT KẾ MỚI: Card nổi bật === */}
-            <div className="card shadow-sm border-success">
-              <div className="card-body">
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-3">
-                    <label className="form-label fw-bold text-success">
-                      1. Chọn ảnh cây trồng
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="form-control"
-                      onChange={handleFileChange}
-                    />
-                  </div>
-
-                  {previewUrl && (
-                    <div className="mb-3 text-center">
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="img-fluid rounded shadow-sm"
-                        style={{ maxHeight: 250, objectFit: "cover" }}
-                      />
-                    </div>
-                  )}
-
-                  {error && (
-                    <div className="alert alert-danger py-2">{error}</div>
-                  )}
-
-                  {/* === THIẾT KẾ MỚI: Nút lớn, nổi bật === */}
-                  <button
-                    type="submit"
-                    className="btn btn-lg btn-success w-100 fw-bold"
-                    disabled={loading || !base64}
-                  >
-                    {loading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2"></span>
-                        Đang phân tích ảnh...
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-search me-2"></i>CHẨN ĐOÁN NGAY
-                      </>
-                    )}
-                  </button>
-                  {/* ======================================= */}
-                </form>
-              </div>
+      <div
+        className="py-4"
+        style={{ background: "linear-gradient(90deg,#e8f5e9,#e3f2fd)" }}
+      >
+        <div className="container">
+          {/* Tiêu đề & mô tả ngắn */}
+          <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4">
+            <div className="mb-3 mb-md-0">
+              <h1 style={{ fontWeight: 700, fontSize: "26px" }}>Chẩn Đoán Sức Khỏe Cây Trồng</h1>
+              <p className="text-muted mb-0">
+                Tải ảnh lá/thân cây hoặc mô tả triệu chứng để FarmHub AI hỗ trợ
+                nhận diện bệnh và gợi ý cách xử lý cụ thể.
+              </p>
+            </div>
+            <div className="text-md-end small text-muted">
+              <span className="badge bg-success-subtle text-success me-2">
+                <i className="bi bi-cpu me-1"></i>AI Diagnosis
+              </span>
+              <span className="badge bg-primary-subtle text-primary">
+                <i className="bi bi-shield-check me-1"></i>Cho người trồng
+              </span>
             </div>
           </div>
 
-          {/* Cột kết quả */}
-          <div className="col-md-8 mt-4 mt-md-0">
-            <div className="card h-100 shadow-sm">
-              <div className="card-body">
-                <h4 className="mb-3 text-primary">
-                  <i className="bi bi-bar-chart-line-fill me-2"></i>
-                  Kết quả chẩn đoán
-                </h4>
+          <div className="row g-4">
+            {/* Khối bên trái: Form */}
+            <div className="col-md-5">
+              <div className="card shadow-sm border-0">
+                <div className="card-header bg-white border-0 pb-0">
+                  {/* Tabs chọn chế độ */}
+                  <ul className="nav nav-pills nav-fill small fw-semibold">
+                    <li className="nav-item">
+                      <button
+                        type="button"
+                        className={
+                          "nav-link d-flex align-items-center justify-content-center " +
+                          (mode === "image" ? "active" : "")
+                        }
+                        onClick={() => setMode("image")}
+                      >
+                        <i className="bi bi-image me-1"></i> CHẨN ĐOÁN BẰNG ẢNH
+                      </button>
+                    </li>
+                    <li className="nav-item">
+                      <button
+                        type="button"
+                        className={
+                          "nav-link d-flex align-items-center justify-content-center " +
+                          (mode === "text" ? "active" : "")
+                        }
+                        onClick={() => setMode("text")}
+                      >
+                        <i className="bi bi-chat-text me-1"></i> MÔ TẢ BẰNG CHỮ
+                      </button>
+                    </li>
+                  </ul>
+                </div>
 
-                {!result && (
-                  <p className="text-muted">
-                    Vui lòng tải ảnh và bấm{" "}
-                    <strong>
-                      <span className="text-success">CHẨN ĐOÁN NGAY</span>
-                    </strong>{" "}
-                    để xem kết quả.
-                  </p>
-                )}
+                <div className="card-body">
+                  {/* Thông báo lỗi chung */}
+                  {error && (
+                    <div className="alert alert-danger py-2 small">
+                      <i className="bi bi-exclamation-octagon me-1"></i>
+                      {error}
+                    </div>
+                  )}
 
-                {result && (
-                  <>
-                    {/* TH: không phải cây */}
-                    {notPlant && (
-                      <div className="alert alert-warning">
-                        <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                        <strong>
-                          Có vẻ đối tượng trong ảnh không phải là cây trồng.
-                        </strong>
-                        <br />
-                        Vui lòng chụp rõ cây (lá, thân, cành) và tránh nền phức
-                        tạp rồi thử lại.
-                      </div>
-                    )}
+                  {/* FORM ẢNH */}
+                  {mode === "image" && (
+                    <>
+                      <p className="small text-muted mb-2">
+                        <i className="bi bi-info-circle me-1"></i>
+                        Gợi ý: chụp rõ lá/bộ phận bị bệnh, hạn chế nền phức tạp,
+                        tránh bị ngược sáng.
+                      </p>
 
-                    {/* Thông tin nhận diện cây */}
-                    {!notPlant && (
-                      <>
-                        <h5 className="border-bottom pb-2 text-info">
-                          <i className="bi bi-flower1 me-2"></i>
-                          Nhận diện cây
-                        </h5>
-                        {suggestions.length === 0 && (
-                          <p className="text-muted">
-                            Không tìm thấy gợi ý loài cây phù hợp từ hình ảnh
-                            này.
-                          </p>
+                      <form onSubmit={handleSubmit}>
+                        <div className="mb-3">
+                          <label className="form-label fw-semibold text-success">
+                            1. CHỌỌN ẢNH CÂY TRỒNG
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="form-control"
+                            onChange={handleFileChange}
+                          />
+                          <div className="form-text">
+                            Dung lượng tối đa 4MB • Hỗ trợ: JPG, PNG...
+                          </div>
+                        </div>
+
+                        {previewUrl && (
+                          <div className="mb-3 text-center">
+                            <div className="rounded overflow-hidden border">
+                              <img
+                                src={previewUrl}
+                                alt="Preview"
+                                className="img-fluid"
+                                style={{ maxHeight: 260, objectFit: "cover" }}
+                              />
+                            </div>
+                            <small className="text-muted d-block mt-1">
+                              Xem lại ảnh trước khi gửi cho AI phân tích.
+                            </small>
+                          </div>
                         )}
 
-                        {suggestions.length > 0 && (
-                          <ul className="list-group mb-4">
-                            {suggestions.map((sugg, idx) => {
-                              const prob =
-                                typeof sugg.probability === "number"
-                                  ? (sugg.probability * 100).toFixed(1)
-                                  : null;
-                              const commonNames =
-                                sugg.common_names && sugg.common_names.length > 0
-                                  ? sugg.common_names.join(", ")
-                                  : null;
+                        <button
+                          type="submit"
+                          className="btn btn-success w-100 fw-bold"
+                          disabled={loading || !base64 || isImageOutOfQuota}
+                        >
+                          {loading ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2"></span>
+                              Đang phân tích ảnh...
+                            </>
+                          ) : isImageOutOfQuota ? (
+                            <>
+                              <i className="bi bi-lock-fill me-2"></i>
+                              ĐÃ HẾT 3 LẦN TRONG THÁNG
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-search me-2"></i>
+                              CHẨN ĐOÁN NGAY
+                            </>
+                          )}
+                        </button>
 
-                              // === THIẾT KẾ MỚI: Bố cục List Item ===
-                              return (
-                                <li
-                                  key={sugg.id || idx}
-                                  className="list-group-item list-group-item-action"
-                                >
-                                  <div className="d-flex justify-content-between align-items-start">
-                                    <div className="me-2">
-                                      <h6 className="mb-0 text-success fw-bold">
-                                        {sugg.plant_name || "Không rõ tên cây"}
-                                      </h6>
-                                      {commonNames && (
-                                        <div className="text-muted small">
-                                          Tên thường gọi: {commonNames}
+                        {/* Chỉ 1 dòng thông tin – đổi màu theo trạng thái */}
+                        {/* Chỉ hiển thị nếu FREE/BASIC */}
+                        {isFreePlan && (
+                          <>
+                            {!isImageOutOfQuota && (
+                              <p className="mt-2 small text-muted text-center mb-0">
+                                Bạn đã sử dụng{" "}
+                                <strong>
+                                  {imageUsage.used}/{imageUsage.limit}
+                                </strong>{" "}
+                                lượt chẩn đoán bằng ảnh trong tháng này.
+                              </p>
+                            )}
+
+                            {isImageOutOfQuota && (
+                              <p className="mt-2 small text-danger text-center mb-0">
+                                Bạn đã sử dụng{" "}
+                                <strong>
+                                  {imageUsage.used}/{imageUsage.limit}
+                                </strong>{" "}
+                                lượt chẩn đoán bằng ảnh trong tháng này.
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </form>
+                    </>
+                  )}
+
+                  {/* FORM MÔ TẢ BẰNG CHỮ */}
+                  {mode === "text" && (
+                    <>
+                      <p className="small text-muted mb-2">
+                        Mô tả tình trạng cây: màu lá, vết đốm, tình trạng
+                        tưới/nắng, sâu hại nhìn thấy được, thời gian xuất
+                        hiện...
+                      </p>
+                      <form onSubmit={handleTextDiagnose}>
+                        <div className="mb-3">
+                          <label className="form-label fw-semibold text-primary">
+                            MÔ TẢ TRIỆU CHỨNG
+                          </label>
+                          <textarea
+                            className="form-control"
+                            rows={5}
+                            placeholder="Ví dụ: Cây rau thơm trồng chậu, lá bị vàng từ mép vào, một số lá có đốm nâu, tưới mỗi ngày 2 lần..."
+                            value={symptomText}
+                            onChange={(e) => setSymptomText(e.target.value)}
+                          />
+                        </div>
+
+                        <button
+                          type="submit"
+                          className="btn btn-outline-primary w-100 fw-semibold"
+                          disabled={
+                            textLoading ||
+                            !symptomText.trim() ||
+                            isTextOutOfQuota
+                          }
+                        >
+                          {textLoading ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2"></span>
+                              Đang phân tích mô tả...
+                            </>
+                          ) : isTextOutOfQuota ? (
+                            <>
+                              <i className="bi bi-lock-fill me-1"></i>
+                              ĐÃ HẾT 3 LẦN TRONG THÁNG
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-stars me-1"></i>
+                              PHÂN TÍCH MÔ TẢ BẰNG AI
+                            </>
+                          )}
+                        </button>
+
+                        {/* Chỉ hiển thị nếu FREE/BASIC */}
+                        {isFreePlan && (
+                          <>
+                            {!isTextOutOfQuota && (
+                              <p className="mt-2 small text-muted text-center mb-0">
+                                Bạn đã sử dụng{" "}
+                                <strong>
+                                  {textUsage.used}/{textUsage.limit}
+                                </strong>{" "}
+                                lượt phân tích mô tả bằng AI trong tháng này.
+                              </p>
+                            )}
+
+                            {isTextOutOfQuota && (
+                              <p className="mt-2 small text-danger text-center mb-0">
+                                Bạn đã sử dụng{" "}
+                                <strong>
+                                  {textUsage.used}/{textUsage.limit}
+                                </strong>{" "}
+                                lượt phân tích mô tả bằng AI trong tháng này.
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </form>
+                    </>
+                  )}
+                </div>
+
+                <div className="card-footer bg-light border-0 small text-muted">
+                  <i className="bi bi-shield-lock me-1"></i>
+                  Hình ảnh & mô tả chỉ dùng để AI gợi ý chăm sóc, không chia sẻ
+                  công khai.
+                </div>
+              </div>
+            </div>
+
+            {/* Khối bên phải: Kết quả */}
+            <div className="col-md-7">
+              <div className="card shadow-sm border-0 h-100">
+                <div className="card-body">
+                  <div className="d-flex align-items-center justify-content-between mb-3">
+                    <h6 className="mb-0 text-primary">
+                      <i className="bi bi-bar-chart-line-fill me-1"></i>
+                      KẾT QUẢ CHẨN ĐOÁN
+                    </h6>
+                    <span className="badge bg-light text-secondary small">
+                      Real-time từ Plant.id &amp; FarmHub AI
+                    </span>
+                  </div>
+
+                  {/* Nếu chưa có kết quả ảnh + mô tả */}
+                  {!result && !textResult && (
+                    <div className="text-center text-muted py-4">
+                      <i className="bi bi-search-heart fs-1 mb-2 d-block"></i>
+                      <p className="mb-1 fw-bold">
+                        HÃY CHỌN 1 TRONG 2 CHẾ ĐỘ BÊN TRÁI ĐỂ BẮT ĐẦU CHẨN
+                        ĐOÁN.
+                      </p>
+                      <small className="fw-bold">
+                        • ẢNH: PHÙ HỢP KHI BẠN MUỐN AI (TRÍ TUỆ  NHÂN TẠO) NHẬN DIỆN BỆNH THEO HÌNH
+                        ẢNH.
+                        <br />• MÔ TẢ: DÙNG KHI BẠN CHƯA KỊP CHỤP ẢNH HOẶC CẦN
+                        HIỂU NHANH.
+                      </small>
+                    </div>
+                  )}
+
+                  {/* Kết quả từ ảnh */}
+                  {result && (
+                    <>
+                      {notPlant && (
+                        <div className="alert alert-warning small">
+                          <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                          <strong>
+                            Có vẻ đối tượng trong ảnh không phải là cây trồng.
+                          </strong>
+                          <br />
+                          Vui lòng chụp rõ cây (lá, thân, cành) và tránh nền
+                          phức tạp rồi thử lại.
+                        </div>
+                      )}
+
+                      {!notPlant && (
+                        <>
+                          {/* Nhận diện cây */}
+                          <section className="mb-3">
+                            <h5 className="border-bottom pb-2 text-info d-flex align-items-center">
+                              <i className="bi bi-flower1 me-2"></i>
+                              NHẬN DIỆN CÂY
+                            </h5>
+
+                            {suggestions.length === 0 && (
+                              <p className="text-muted small mb-0">
+                                Không tìm thấy gợi ý loài cây phù hợp từ hình
+                                ảnh này.
+                              </p>
+                            )}
+
+                            {suggestions.length > 0 && (
+                              <ul className="list-group list-group-flush">
+                                {suggestions.map((sugg, idx) => {
+                                  const prob =
+                                    typeof sugg.probability === "number"
+                                      ? (sugg.probability * 100).toFixed(1)
+                                      : null;
+                                  const commonNames =
+                                    sugg.common_names &&
+                                    sugg.common_names.length > 0
+                                      ? sugg.common_names.join(", ")
+                                      : null;
+
+                                  return (
+                                    <li
+                                      key={sugg.id || idx}
+                                      className="list-group-item px-0"
+                                    >
+                                      <div className="d-flex justify-content-between align-items-start">
+                                        <div className="me-2">
+                                          <h6 className="mb-0 text-success fw-bold">
+                                            {sugg.plant_name ||
+                                              "Không rõ tên cây"}
+                                          </h6>
+                                          {commonNames && (
+                                            <div className="text-muted small">
+                                              Tên thường gọi: {commonNames}
+                                            </div>
+                                          )}
                                         </div>
-                                      )}
-                                    </div>
-                                    {prob && (
-                                      <span className="badge bg-success-subtle text-success py-2 px-3">
-                                        {prob}%
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {/* Ảnh tương tự */}
-                                  {Array.isArray(sugg.similar_images) &&
-                                    sugg.similar_images.length > 0 && (
-                                      <div className="mt-2 d-flex flex-wrap gap-2">
-                                        {sugg.similar_images
-                                          .slice(0, 4)
-                                          .map((img, i) => (
-                                            <img
-                                              key={i}
-                                              src={img.url}
-                                              alt={
-                                                img.similarity || "similar"
-                                              }
-                                              className="rounded border"
-                                              style={{
-                                                width: 80,
-                                                height: 80,
-                                                objectFit: "cover",
-                                              }}
-                                            />
-                                          ))}
+                                        {prob && (
+                                          <span className="badge bg-success-subtle text-success py-1 px-2">
+                                            {prob}%
+                                          </span>
+                                        )}
                                       </div>
-                                    )}
 
-                                  {sugg.plant_details?.wiki_description?.value && (
-                                    <p className="mt-2 mb-0 small text-dark">
-                                      {
-                                        sugg.plant_details.wiki_description
-                                          .value
-                                      }
-                                    </p>
+                                      {Array.isArray(sugg.similar_images) &&
+                                        sugg.similar_images.length > 0 && (
+                                          <div className="mt-2 d-flex flex-wrap gap-2">
+                                            {sugg.similar_images
+                                              .slice(0, 4)
+                                              .map((img, i) => (
+                                                <img
+                                                  key={i}
+                                                  src={img.url}
+                                                  alt={
+                                                    img.similarity || "similar"
+                                                  }
+                                                  className="rounded border"
+                                                  style={{
+                                                    width: 72,
+                                                    height: 72,
+                                                    objectFit: "cover",
+                                                  }}
+                                                />
+                                              ))}
+                                          </div>
+                                        )}
+
+                                      {/* {sugg.plant_details?.wiki_description
+                                        ?.value && (
+                                        <p className="mt-2 mb-0 small text-dark">
+                                          {
+                                            sugg.plant_details.wiki_description
+                                              .value
+                                          }
+                                        </p>
+                                      )} */}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
+                          </section>
+
+                          {/* Đánh giá sức khỏe & bệnh hại */}
+                          <section className="mt-3">
+                            <h5 className="border-bottom pb-2 text-danger d-flex align-items-center">
+                              <i className="bi bi-virus me-2"></i>
+                              ĐÁNH GIÁ SỨC KHỎE & BỆNH HẠI
+                            </h5>
+                            {renderHealthIssues()}
+                          </section>
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  {/* Kết quả từ mô tả bằng chữ */}
+                  {(textResult || mode === "text") && (
+                    <section className="mt-4">
+                      <h5 className="border-bottom pb-2 text-secondary d-flex align-items-center">
+                        <i className="bi bi-chat-square-text me-2"></i>
+                        KẾT QUẢ MÔ TẢ (AI)
+                      </h5>
+
+                      {!textResult && (
+                        <p className="text-muted small mb-0">
+                          Bạn có thể nhập mô tả triệu chứng ở tab{" "}
+                          <strong>“Mô tả bằng chữ”</strong> bên trái để AI phân
+                          tích mà không cần ảnh.
+                        </p>
+                      )}
+
+                      {textResult?.aiAdvice && (
+                        <div className="mt-2">
+                          {textResult.aiAdvice.summaryVi && (
+                            <p className="small text-dark">
+                              {textResult.aiAdvice.summaryVi}
+                            </p>
+                          )}
+
+                          {Array.isArray(
+                            textResult.aiAdvice.possibleDiseases
+                          ) &&
+                            textResult.aiAdvice.possibleDiseases.length > 0 && (
+                              <div className="mb-2">
+                                <h6 className="fw-bold text-danger mb-1">
+                                  <i className="bi bi-bug me-1"></i>
+                                  CÁC KHẢ NĂNG BỆNH:
+                                </h6>
+                                <ul className="small mb-1">
+                                  {textResult.aiAdvice.possibleDiseases.map(
+                                    (d, i) => (
+                                      <li key={i}>
+                                        <strong>{d.name}</strong>{" "}
+                                        {d.likelihood && (
+                                          <span>({d.likelihood})</span>
+                                        )}
+                                        {d.reason && <> – {d.reason}</>}
+                                      </li>
+                                    )
                                   )}
-                                </li>
-                              );
-                              // =======================================
-                            })}
-                          </ul>
-                        )}
-                      </>
-                    )}
+                                </ul>
+                              </div>
+                            )}
 
-                    {/* Đánh giá sức khỏe & bệnh hại */}
-                    {!notPlant && (
-                      <div className="mt-3">
-                        <h5 className="border-bottom pb-2 text-danger">
-                          <i className="bi bi-virus me-2"></i>
-                          Đánh giá sức khỏe & bệnh hại
-                        </h5>
-                        {/* renderHealthIssues đã được sửa đổi bên trên */}
-                        {renderHealthIssues()}
-                      </div>
-                    )}
-                  </>
-                )}
+                          {textResult.aiAdvice.actions && (
+                            <div className="mb-2">
+                              <h6 className="fw-bold text-success mb-1">
+                                <i className="bi bi-list-check me-1"></i>
+                                VIỆC NÊN LÀM:
+                              </h6>
+                              <ul className="small mb-1">
+                                {textResult.aiAdvice.actions.today && (
+                                  <li>
+                                    <strong>HÔM NAY:</strong>{" "}
+                                    {textResult.aiAdvice.actions.today}
+                                  </li>
+                                )}
+                                {textResult.aiAdvice.actions.next_3_7_days && (
+                                  <li>
+                                    <strong>3–7 NGÀY TỚI:</strong>{" "}
+                                    {textResult.aiAdvice.actions.next_3_7_days}
+                                  </li>
+                                )}
+                                {textResult.aiAdvice.actions.monitor && (
+                                  <li>
+                                    <strong>CẦN THEO DÕI:</strong>{" "}
+                                    {textResult.aiAdvice.actions.monitor}
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+
+                          {textResult.aiAdvice.warning && (
+                            <div className="alert alert-warning py-2 small mb-0">
+                              <i className="bi bi-exclamation-triangle-fill me-1"></i>
+                              {textResult.aiAdvice.warning}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </section>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <Footer /> 
+      <Footer />
     </>
   );
 };

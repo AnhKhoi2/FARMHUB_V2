@@ -174,7 +174,10 @@ const drawCurrentStage = (doc, notebook, template, yPos) => {
   doc.setFont("NotoSans", "bold");
   doc.setFontSize(14);
   doc.setTextColor(34, 139, 34);
-  const stageTitle = encodeVietnameseText("GIAI ĐOẠN HIỆN TẠI: NẢY MẦM");
+  // Use the current stage name from the notebook's template data
+  const stageName =
+    currentStageData.name || `Giai doan ${notebook.current_stage || ""}`;
+  const stageTitle = encodeVietnameseText(`GIAI ĐOẠN HIỆN TẠI: ${stageName}`);
   doc.text(stageTitle, 20, yPos);
 
   yPos += 10;
@@ -290,8 +293,9 @@ const drawDailyTasks = (doc, notebook, yPos) => {
 /**
  * Vẽ tất cả các giai đoạn
  */
-const drawAllStages = (doc, template, yPos) => {
+const drawAllStages = (doc, notebook, template, yPos) => {
   const pageHeight = doc.internal.pageSize.getHeight();
+  const pageWidth = doc.internal.pageSize.getWidth();
 
   if (!template || !template.stages || template.stages.length === 0) {
     return yPos;
@@ -318,11 +322,54 @@ const drawAllStages = (doc, template, yPos) => {
       yPos = 20;
     }
 
-    // Tên giai đoạn
+    // Prepare stage name
+    const stageName = encodeVietnameseText(`${index + 1}. ${stage.name}`);
+
+    // Status label (Hoàn thành / Đang tiến hành / Chưa bắt đầu)
+    const stageIndex = index + 1;
+    let statusLabel = "Chưa bắt đầu";
+    let statusColor = [150, 150, 150];
+    if (notebook && notebook.current_stage) {
+      const current = Number(notebook.current_stage || 0);
+      const completion = Number(notebook.stage_completion || 0);
+
+      if (stageIndex < current) {
+        statusLabel = "Hoàn thành";
+        statusColor = [34, 139, 34];
+      } else if (stageIndex === current) {
+        if (completion >= 100) {
+          statusLabel = "Hoàn thành";
+          statusColor = [34, 139, 34];
+        } else if (completion > 0) {
+          statusLabel = "Đang tiến hành";
+          statusColor = [255, 140, 0];
+        } else {
+          statusLabel = "Chưa bắt đầu";
+          statusColor = [150, 150, 150];
+        }
+      } else {
+        statusLabel = "Chưa bắt đầu";
+        statusColor = [150, 150, 150];
+      }
+    }
+
+    // Draw stage title using green color when completed, otherwise black
     doc.setFont("NotoSans", "bold");
     doc.setFontSize(12);
-    const stageName = encodeVietnameseText(`${index + 1}. ${stage.name}`);
+    if (statusLabel === "Hoàn thành") {
+      doc.setTextColor(34, 139, 34);
+    } else {
+      doc.setTextColor(0, 0, 0);
+    }
     doc.text(stageName, 25, yPos);
+
+    // Draw status label on the right
+    doc.setFont("NotoSans", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...statusColor);
+    doc.text(encodeVietnameseText(statusLabel), pageWidth - 25, yPos, {
+      align: "right",
+    });
 
     yPos += 7;
 
@@ -338,13 +385,13 @@ const drawAllStages = (doc, template, yPos) => {
 
     yPos += 6;
 
-    // Mô tả
-    if (stage.description) {
-      const description = encodeVietnameseText(stage.description);
-      const splitDescription = doc.splitTextToSize(description, 150);
-      doc.text(splitDescription, 30, yPos);
-      yPos += splitDescription.length * 5 + 3;
-    }
+    // Mô tả (hiện tạm ẩn để tránh hiển thị thừa dưới phần Thời gian)
+    // if (stage.description) {
+    //   const description = encodeVietnameseText(stage.description);
+    //   const splitDescription = doc.splitTextToSize(description, 150);
+    //   doc.text(splitDescription, 30, yPos);
+    //   yPos += splitDescription.length * 5 + 3;
+    // }
 
     yPos += 5;
   });
@@ -464,8 +511,9 @@ export const generateNotebookPDF = async (notebook, template) => {
     yPos = drawHeader(doc, notebook);
     yPos = drawOverview(doc, notebook, yPos);
     yPos = drawCurrentStage(doc, notebook, template, yPos);
-    yPos = drawDailyTasks(doc, notebook, yPos);
-    yPos = drawAllStages(doc, template, yPos);
+    // Skip drawing the 'TIẾN TRÌNH TRỒNG TRỌT' (daily tasks) section per request
+    // yPos = drawDailyTasks(doc, notebook, yPos);
+    yPos = drawAllStages(doc, notebook, template, yPos);
     yPos = drawJournal(doc, notebook, yPos);
 
     // Vẽ footer cho tất cả các trang

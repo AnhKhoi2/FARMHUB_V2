@@ -15,8 +15,8 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ⭐ Chỉ dùng username
-  const [username, setUsername] = useState("");
+  // ⭐ Dùng chung cho username hoặc email
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
 
   const { status, error } = useSelector((s) => s.auth);
@@ -63,19 +63,16 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const cleanedUsername = username.trim();
-    if (!cleanedUsername || !password) return;
+    const cleanedLoginId = loginId.trim();
 
-    // loginThunk của bạn trả về { success, role }
     const result = await dispatch(
       loginThunk({
-        username: cleanedUsername,
+        emailOrUsername: cleanedLoginId, // ✅ BE sẽ tự hiểu là username hoặc email
         password,
       })
     );
 
     const { success, role } = result || {};
-
     if (success) {
       await afterLogin(role || "user");
     }
@@ -103,7 +100,7 @@ const Login = () => {
       <div className="wrapper">
         <div className="form-box login">
           <h2>Đăng nhập</h2>
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} noValidate>
             {/* Thông báo phiên hết hạn */}
             {sessionExpired && (
               <div className="error-message" style={{ marginBottom: "10px" }}>
@@ -120,19 +117,19 @@ const Login = () => {
               </span>
               <input
                 type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={loginId}
+                placeholder=" "
+                onChange={(e) => setLoginId(e.target.value)}
               />
-              <label>Tên đăng nhập</label>
+              <label>Tên đăng nhập hoặc Email</label>
             </div>
 
             <div className="input-box" style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder=" "
               />
 
               {/* Nút toggle icon */}

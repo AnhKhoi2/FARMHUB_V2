@@ -1,3 +1,4 @@
+// backend/server.js
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -12,7 +13,6 @@ import publicDiseases from "./routes/publicDiseases.js";
 import publicDiseaseCategories from "./routes/publicDiseaseCategories.js";
 import streakRoutes from "./routes/streaks.js";
 import aiRoutes from "./routes/ai.js";
-import weatherRoutes from "./routes/weather.js";
 import testRoute from "./routes/test.js";
 import guidesRoute from "./routes/guides.js";
 import notebooksRoute from "./routes/notebooks.js";
@@ -21,10 +21,13 @@ import usersRoute from "./routes/users.js";
 import expertRoutes from "./routes/expert.routes.js";
 import plantTemplateRoutes from "./routes/plantTemplates.js";
 import uploadRoutes from "./routes/upload.js";
+import plantGroupsRoute from "./routes/plantGroups.js";
+import PlantGroup from "./models/PlantGroup.js";
 import collectionsRoute from "./routes/collections.js";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
-import modelsRoutes from "./routes/models.js";
+
 import layoutsRoutes from "./routes/layouts.js";
 import postRoutes from "./routes/post.js";
 import expertApplicationsRouter from "./routes/expertApplications.js";
@@ -32,23 +35,46 @@ import expertRatingRoutes from "./routes/expertRating.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import notificationRoutes from "./routes/notifications.js";
 import vnpayRoutes from "./routes/vnpay.js";
+import subscriptionRoutes from "./routes/subscription.js";
 import { startStageMonitoringJob } from "./jobs/stageMonitoringJob.js";
 import { startTaskReminderJob } from "./jobs/taskReminderJob.js";
 import { startDailyTasksNotificationJob } from "./jobs/dailyTasksNotificationJob.js";
+import { startObservationNotificationJob } from "./jobs/observationNotificationJob.js";
 import pino from "pino-http";
 import ApiError, { NotFound } from "./utils/ApiError.js";
 import geocodeRoute from "./routes/geocode.js";
 import weatherRoute from "./routes/weather_v2.js";
 import airRoute from "./routes/air.js";
+import cloudinaryUploadRoutes from "./routes/cloudinaryUpload.js";
 
-import tilesRoute from "./routes/tiles.js";
 import plantRoute from "./routes/plant.js";
+import plantsRoute from "./routes/plants.js";
 import plantAdviceRoutes from "./routes/plantAdviceRoutes.js";
+import adminTransactionsRoute from "./routes/adminTransactions.js";
+import dashboardRoute from "./routes/dashboard.js";
+import urbanFarmingRoutes from "./routes/farmingRoutes.js";
+import pesticideInfoRoutes from "./routes/pesticideInfoRoutes.js";
 const PORT = process.env.PORT || 5000;
 
 const app = express();
 
 connectDB();
+
+// Ensure default "other" plant group exists so frontend can offer a fallback option
+(async () => {
+  try {
+    const slug = 'other';
+    const name = 'NHÓM CÂY KHÁC';
+    // Only run if PlantGroup model is available (DB connected)
+    const existing = await PlantGroup.findOne({ slug }).lean().exec();
+    if (!existing) {
+      await PlantGroup.create({ slug, name, description: 'Nhóm cây chưa phân loại / khác' });
+      console.log(`Created default PlantGroup: ${slug} - ${name}`);
+    }
+  } catch (e) {
+    console.warn('Failed to ensure default PlantGroup exists:', e?.message || e);
+  }
+})();
 
 // Middleware
 // Allow the frontend dev server (supports multiple dev ports and an env override)
@@ -72,7 +98,10 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+
+// 🔧 TĂNG LIMIT JSON – tránh 413 khi có body lớn (ngoài upload file)
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 app.use(cookieParser());
 
 // app.use(express.json({ limit: "10mb" }));
@@ -84,7 +113,7 @@ app.use("/api/geocode", geocodeRoute);
 app.use("/api/weather", weatherRoute);
 app.use("/api/air", airRoute);
 app.use("/api/plant", plantRoute);
-app.use("/api/ow/tiles", tilesRoute);
+app.use("/api/plants", plantsRoute);
 app.use("/auth", authRoute);
 app.use("/profile", profileRoute);
 app.use("/admin/diseases", diseaseRoutes);
@@ -94,7 +123,6 @@ app.use("/diseases", publicDiseases);
 app.use("/disease-categories", publicDiseaseCategories);
 app.use("/admin/streaks", streakRoutes);
 app.use("/ai", aiRoutes);
-app.use("/admin/weather", weatherRoutes);
 app.use("/test", testRoute);
 app.use("/guides", guidesRoute);
 app.use("/notebooks", notebooksRoute);
@@ -102,35 +130,84 @@ app.use("/notebooks", notebooksRoute);
 app.use("/api/notebooks", notebooksRoute);
 app.use("/admin/users", usersRoute);
 // app.use("/api/expert-applications", expertApplicationRoutes);
-
+// ⭐ API upload dùng Cloudinary (mới tạo)
+app.use("/api/cloudinary-upload", cloudinaryUploadRoutes);
 app.use("/api/expert-applications", expertApplicationsRouter);
-app.use("/api/experts", expertRatingRoutes);
+app.use("/api/experts", expertRatingRoutes); 
 app.use("/api/chat", chatRoutes);
 app.use("/api/experts", expertRoutes);
 app.use("/api/plant-templates", plantTemplateRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/plant-groups", plantGroupsRoute);
 // Legacy/compatibility: some frontends post to /upload (no /api prefix)
 app.use("/upload", uploadRoutes);
 app.use("/api/collections", collectionsRoute);
-app.use("/admin/models", modelsRoutes);
 app.use("/layouts", layoutsRoutes);
 // new primary path
 app.use("/admin/managerpost", postRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/admin/transactions", adminTransactionsRoute);
+app.use("/admin/dashboard", dashboardRoute);
 
 // (legacy alias removed) '/admin/managerpost' is the canonical path for post management
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/vnpay", vnpayRoutes);
+app.use("/api/subscription", subscriptionRoutes);
 
+app.use("/api/urban-farming", urbanFarmingRoutes);
+app.use("/api/pesticides", pesticideInfoRoutes);
 // Serve uploaded files from /uploads (make sure you save images there)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Global error handlers to capture crashes that may cause connection resets
+try {
+  const tmpDir = path.join(__dirname, '..', 'tmp');
+  fs.mkdirSync(tmpDir, { recursive: true });
+} catch (e) {
+  // ignore
+}
+
+process.on('uncaughtException', (err) => {
+  try {
+    const out = {
+      ts: new Date().toISOString(),
+      type: 'uncaughtException',
+      message: err?.message,
+      stack: err?.stack,
+    };
+    const p = path.join(__dirname, '..', 'tmp', 'uncaught_error.json');
+    fs.writeFileSync(p, JSON.stringify(out, null, 2), 'utf8');
+    console.error('[uncaughtException] wrote', p);
+  } catch (e) {
+    console.error('Failed writing uncaughtException file', e);
+  }
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  try {
+    const out = {
+      ts: new Date().toISOString(),
+      type: 'unhandledRejection',
+      reason: typeof reason === 'object' ? (reason && reason.message) : String(reason),
+      details: typeof reason === 'object' ? (reason && reason.stack) : null,
+    };
+    const p = path.join(__dirname, '..', 'tmp', 'uncaught_error.json');
+    fs.writeFileSync(p, JSON.stringify(out, null, 2), 'utf8');
+    console.error('[unhandledRejection] wrote', p);
+  } catch (e) {
+    console.error('Failed writing unhandledRejection file', e);
+  }
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // 🔄 Khởi chạy cron jobs
-startStageMonitoringJob(); // Chạy hàng ngày lúc 8:00 sáng - kiểm tra stage status
-startTaskReminderJob(); // Chạy hàng ngày lúc 9:00 sáng - nhắc nhở tasks chưa hoàn thành
-startDailyTasksNotificationJob(); // Chạy hàng ngày lúc 7:00 sáng VN - thông báo tasks đã được sinh
+startStageMonitoringJob(); // Chạy hàng ngày lúc 08:00 VN (01:00 UTC) - kiểm tra stage status
+startTaskReminderJob(); // Chạy hàng ngày lúc 07:00 UTC - nhắc nhở tasks chưa hoàn thành
+startDailyTasksNotificationJob(); // Chạy hàng ngày lúc 07:00 UTC - thông báo tasks đã được sinh
+startObservationNotificationJob(); // Chạy hàng ngày lúc 07:00 UTC - thông báo yêu cầu quan sát
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);

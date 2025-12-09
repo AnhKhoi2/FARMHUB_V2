@@ -1,17 +1,5 @@
 {
-  "name": "frontend-meta",
-  "private": true,
-  "version": "1.0.0",
-  "description": "Convenience scripts to run the web app from the frontend folder",
-  "scripts": {
-    "dev": "npm --prefix web run dev",
-    "build": "npm --prefix web run build",
-    "preview": "npm --prefix web run preview",
-    "lint": "npm --prefix web run lint",
-    "install:web": "npm --prefix web install"
-  },
   "dependencies": {
-    "leaflet": "^1.9.4",
-    "react-leaflet": "^5.0.0"
+    "react-toastify": "^11.0.5"
   }
 }

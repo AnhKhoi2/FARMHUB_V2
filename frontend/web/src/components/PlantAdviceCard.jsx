@@ -1,84 +1,124 @@
+// src/components/PlantAdviceCard.jsx
 import React from "react";
-import { FaLeaf, FaCloudRain, FaSun, FaWind } from "react-icons/fa";
+import "../css/PlantAdviceCard.css"; // nếu bạn chưa có file css này thì có thể bỏ dòng này
+
+const Section = ({ title, icon, children }) => {
+  if (!children) return null;
+  if (Array.isArray(children) && children.length === 0) return null;
+
+  return (
+    <div className="mb-3">
+      <h6 className="fw-bold mb-1">
+        <span className="me-1">{icon}</span>
+        {title}
+      </h6>
+      {Array.isArray(children) ? (
+        <ul className="mb-0 ps-3 small">
+          {children.map((item, idx) => (
+            <li key={idx}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mb-0 small">{children}</p>
+      )}
+    </div>
+  );
+};
 
 const PlantAdviceCard = ({ data }) => {
   if (!data) return null;
 
-  const { summary, tips, extraNotes, conditions } = data;
+  const {
+    plantName,
+    location,
+    summaryVi,
+    weatherImpact,
+    today,
+    next_3_7_days,
+    watering,
+    fertilizer,
+    pestAndDiseaseRisk,
+    warning,
+  } = data;
+
+  const todayList = Array.isArray(today) ? today : [];
+  console.log(today);
+  console.log(watering);
+  console.log(fertilizer);
+  
+  const nextDaysList = Array.isArray(next_3_7_days) ? next_3_7_days : [];
 
   return (
-    <div className="advice-wrapper" style={styles.card}>
-      <h3 style={styles.title}>🌱 Gợi ý chăm sóc cây hôm nay</h3>
-
-      <p style={styles.summary}>{summary}</p>
-
-      <div style={styles.conditionBox}>
-        <p><FaSun /> Nhiệt độ: <b>{conditions.temp}°C</b></p>
-        <p><FaLeaf /> Độ ẩm: <b>{conditions.humidity}%</b></p>
-        <p><FaCloudRain /> Lượng mưa 1h: <b>{conditions.rain1h} mm</b></p>
-        {conditions.uvi !== null && (
-          <p><FaSun /> UV: <b>{conditions.uvi}</b></p>
-        )}
-        <p><FaWind /> AQI: <b>{conditions.aqi_label}</b></p>
+    <div className="plant-advice-wrapper">
+      {/* Header */}
+      <div className="plant-advice-header">
+        <div>
+          <div className="plant-advice-tag">GỢI Ý CHĂM SÓC</div>
+          <h5 className="plant-advice-title">
+            {plantName || "Cây trồng của bạn"}
+          </h5>
+          {location && (
+            <div className="plant-advice-location">
+              <span className="label">Khu vực:</span>{" "}
+              <span className="value">{location}</span>
+            </div>
+          )}
+        </div>
+        <div className="plant-advice-icon-pill">🌱</div>
       </div>
 
-      <h4 style={styles.subTitle}>✔️ Các việc nên làm</h4>
-      <ul>
-        {tips.map((item, idx) => (
-          <li key={idx} style={styles.tipItem}>{item}</li>
-        ))}
-      </ul>
+      {/* Tóm tắt chung */}
+      {summaryVi && (
+        <div className="plant-advice-summary">
+          {summaryVi}
+        </div>
+      )}
 
-      {extraNotes?.length > 0 && (
-        <>
-          <h4 style={styles.subTitle}>ℹ️ Ghi chú thêm</h4>
-          {extraNotes.map((note, idx) => (
-            <p key={idx} style={styles.extraNote}>{note}</p>
-          ))}
-        </>
+      {/* Nội dung chia 2 cột */}
+      <div className="plant-advice-grid">
+        <div>
+          {/* Ảnh hưởng thời tiết */}
+          <Section title="Ảnh hưởng của thời tiết" icon="🌤️">
+            {weatherImpact}
+          </Section>
+
+          {/* Việc cần làm hôm nay */}
+          <Section title="Việc nên làm hôm nay" icon="📅">
+            {todayList}
+          </Section>
+
+          {/* Việc 3–7 ngày tới */}
+          <Section title="Trong 3–7 ngày tới" icon="⏭️">
+            {nextDaysList}
+          </Section>
+        </div>
+
+        <div>
+          {/* Tưới nước */}
+          <Section title="Tưới nước" icon="💧">
+            {watering}
+          </Section>
+
+          {/* Bón phân */}
+          <Section title="Bón phân" icon="🧪">
+            {fertilizer}
+          </Section>
+
+          {/* Rủi ro sâu bệnh */}
+          <Section title="Rủi ro sâu bệnh" icon="🐛">
+            {pestAndDiseaseRisk}
+          </Section>
+        </div>
+      </div>
+
+      {/* Cảnh báo */}
+      {warning && (
+        <div className="plant-advice-warning">
+          <strong>⚠️ Lưu ý:</strong> {warning}
+        </div>
       )}
     </div>
   );
 };
 
 export default PlantAdviceCard;
-
-const styles = {
-  card: {
-    padding: "18px",
-    background: "white",
-    borderRadius: "12px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-    marginTop: "16px",
-  },
-  title: {
-    margin: 0,
-    marginBottom: "10px",
-    fontSize: "20px",
-    fontWeight: 600,
-  },
-  summary: {
-    background: "#f2f7f2",
-    padding: "10px",
-    borderRadius: "8px",
-    marginBottom: "12px",
-  },
-  conditionBox: {
-    background: "#fafafa",
-    padding: "12px",
-    borderRadius: "10px",
-    marginBottom: "16px",
-  },
-  subTitle: {
-    marginTop: "10px",
-    marginBottom: "6px",
-    fontWeight: 600,
-  },
-  tipItem: {
-    marginBottom: "6px",
-  },
-  extraNote: {
-    fontSize: "14px",
-    color: "#555",
-  },
-};

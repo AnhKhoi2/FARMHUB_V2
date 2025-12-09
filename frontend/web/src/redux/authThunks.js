@@ -4,7 +4,7 @@ import authApi from "../api/shared/authApi.js";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 // =========================
-// LOGIN – chỉ dùng username
+// LOGIN – username hoặc email
 // =========================
 export const loginThunk = (credentials) => async (dispatch) => {
   try {
@@ -32,20 +32,21 @@ export const loginThunk = (credentials) => async (dispatch) => {
 
     return { success: true, role: user.role };
   } catch (err) {
-    console.error("Login error:", err?.response?.data || err);
+  console.error("Login error:", err?.response?.data || err);
 
-    const data = err?.response?.data;
-    const backendMessage =
-      data?.message ||
-      data?.error?.message ||
-      data?.errorMessage ||
-      data?.errors?.[0]?.msg ||
-      err.message ||
-      "Đăng nhập thất bại. Vui lòng thử lại.";
+  const data = err?.response?.data;
 
-    dispatch(loginFailure(backendMessage));
-    return { success: false };
-  }
+  const backendMessage =
+    data?.message ||               // BE dùng message
+    data?.error?.message ||        // fallback (nếu BE trả kiểu khác)
+    data?.errors?.[0]?.msg ||      // Joi style
+    "Đăng nhập thất bại. Vui lòng thử lại.";
+
+  dispatch(loginFailure(backendMessage));
+
+  return { success: false, message: backendMessage };
+}
+
 };
 
 // =========================
@@ -64,36 +65,51 @@ export const logoutThunk = () => async (dispatch) => {
   dispatch(logout());
   localStorage.removeItem("user");
   localStorage.removeItem("accessToken");
+  try {
+    sessionStorage.removeItem("modelSuggestionShownAtLogin");
+  } catch (e) {}
 };
-
 // =========================
-// REGISTER – dùng lại logic cũ của bạn
+// REGISTER – bản nâng cấp HOÀN CHỈNH
 // =========================
 export const registerThunk = (formData) => async () => {
   try {
     const res = await authApi.registerApi(formData);
 
-    const data = res?.data;
+    const data = res?.data || {};
     const message =
-      data?.message ||
-      data?.msg ||
+      data.message ||
+      data.msg ||
       "Đăng ký thành công! Vui lòng kiểm tra email xác nhận.";
 
-    return { success: true, message };
+    return {
+      success: true,
+      message,
+      data,
+      code: data.code || null,
+      status: res.status,
+    };
   } catch (err) {
     console.error("Register error:", err?.response?.data || err);
 
-    const data = err?.response?.data;
-    const uiMessage =
-      data?.message ||
-      data?.error?.message ||
-      data?.errorMessage ||
-      data?.errors?.[0]?.msg ||
+    const data = err?.response?.data || {};
+
+    const message =
+      data.message ||
+      data.error?.message ||
+      data.errorMessage ||
+      data.errors?.[0]?.msg ||
       "Đăng ký thất bại. Vui lòng thử lại.";
 
-    return { success: false, message: uiMessage };
+    return {
+      success: false,
+      message,
+      code: data.code || null,          // ⬅ lấy đúng error code từ BE
+      status: err?.response?.status || null, // ⬅ lấy status (429, 400, 409…)
+    };
   }
 };
+
 
 // =========================
 /* GOOGLE LOGIN */

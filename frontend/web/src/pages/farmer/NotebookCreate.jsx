@@ -9,11 +9,16 @@ const NotebookCreate = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [guides, setGuides] = useState([]);
+  const [plants, setPlants] = useState([]);
+  const [plantGroups, setPlantGroups] = useState([]);
+  const [loadingPlantGroups, setLoadingPlantGroups] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [formData, setFormData] = useState({
     notebook_name: "",
     guide_id: "",
     plant_type: "",
+    plant_group: "",
+    selected_plant_id: "",
     description: "",
     planted_date: new Date().toISOString().split("T")[0],
     cover_image: "",
@@ -23,17 +28,16 @@ const NotebookCreate = () => {
   const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
 
   useEffect(() => {
-    fetchGuides();
+    fetchGuidesAndPlants();
     fetchTemplates();
   }, []);
 
-  const fetchGuides = async () => {
+  const fetchGuidesAndPlants = async () => {
     try {
-      // Request with a large limit so frontend gets all published guides
-      const response = await axiosClient.get("/guides", {
+      const guidesRes = await axiosClient.get("/guides", {
         params: { limit: 1000, page: 1 },
       });
-      const guidesData = response.data?.data || response.data || [];
+      const guidesData = guidesRes.data?.data || guidesRes.data || [];
       setGuides(
         Array.isArray(guidesData)
           ? guidesData.filter((g) => g.status === "published")
@@ -41,6 +45,58 @@ const NotebookCreate = () => {
       );
     } catch (err) {
       console.error("Error fetching guides:", err);
+    }
+
+    try {
+      const plantsRes = await axiosClient.get("/api/plants", {
+        params: { limit: 1000 },
+      });
+      const plantsData = plantsRes.data?.data || plantsRes.data || [];
+      setPlants(Array.isArray(plantsData) ? plantsData : []);
+    } catch (err) {
+      console.error("Error fetching plants:", err);
+    }
+
+    // Fetch plant groups for notebook UI (same mapping as PlantTemplateForm)
+    try {
+      setLoadingPlantGroups(true);
+      let base = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      base = base.replace(/\/+$/, "");
+      const apiBase = base.endsWith("/api")
+        ? base
+        : base.replace(/\/api\/?$/, "").concat("/api");
+      const endpoint = `${apiBase}/plant-groups`;
+      const res = await axiosClient.get(endpoint.replace(/\/api\/api/, "/api"));
+      const items = res.data?.data || res.data || [];
+
+      const iconMap = {
+        leaf_vegetable: "🥬",
+        root_vegetable: "🥕",
+        fruit_short_term: "🥒",
+        fruit_long_term: "🍊",
+        bean_family: "🫘",
+        herb: "🌿",
+        flower_vegetable: "🥦",
+      };
+
+      const mapped = Array.isArray(items)
+        ? items.map((it) => ({
+            // keep original plants array (if any) so frontend can show types per group
+            value: it.slug || it._id,
+            label: it.name || it.slug || it._id,
+            icon: iconMap[it.slug] || "🌱",
+            plants: Array.isArray(it.plants) ? it.plants : [],
+          }))
+        : [];
+
+      setPlantGroups(mapped);
+    } catch (err) {
+      console.warn(
+        "Could not fetch plant groups for notebook:",
+        err?.message || err
+      );
+    } finally {
+      setLoadingPlantGroups(false);
     }
   };
 
@@ -87,7 +143,7 @@ const NotebookCreate = () => {
       return;
     }
 
-    if (!formData.guide_id) {
+    if (!formData.guide_id && !formData.plant_type) {
       alert("Vui lòng chọn loại cây trồng");
       return;
     }
@@ -96,12 +152,19 @@ const NotebookCreate = () => {
       setLoading(true);
 
       // Backend will auto-assign template based on guide_id → plant_group
+      // If there is no guide_id but we have a selected plant, send plant_type and plant_group
       const notebookData = {
         notebook_name: formData.notebook_name,
-        guide_id: formData.guide_id,
+        guide_id: formData.guide_id || undefined,
         planted_date: formData.planted_date,
         description: formData.description,
         cover_image: formData.cover_image,
+        ...(formData.guide_id
+          ? {}
+          : {
+              plant_type: formData.plant_type,
+              plant_group: formData.plant_group,
+            }),
       };
 
       console.log("📤 Creating notebook with data:", notebookData);
@@ -160,31 +223,158 @@ const NotebookCreate = () => {
           </div>
 
           <div className="form-group">
+            <label>
+              Nhóm cây <span className="required">*</span>
+            </label>
+            <div className="plant-groups-grid">
+              {plantGroups.map((group) => (
+                <div
+                  key={group.value}
+                  className={`group-card ${
+                    formData.plant_group === group.value ? "selected" : ""
+                  }`}
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      plant_group: group.value,
+                      // reset plant selection when group changes
+                      selected_plant_id: "",
+                      guide_id: "",
+                      plant_type: "",
+                    }))
+                  }
+                >
+                  <div className="group-icon">{group.icon}</div>
+                  <div className="group-label">{group.label}</div>
+                </div>
+              ))}
+            </div>
+
             <label htmlFor="guide_id">
               Chọn Loại Cây <span className="required">*</span>
             </label>
             <select
               id="guide_id"
               name="guide_id"
-              value={formData.guide_id}
+              value={formData.selected_plant_id || ""}
               onChange={(e) => {
-                const selectedGuide = guides.find(
-                  (g) => g._id === e.target.value
+                const plantId = e.target.value;
+
+                // First try to find a plant by its _id in global plants
+                const selectedPlant = plants.find(
+                  (p) => String(p._id) === String(plantId)
                 );
-                setFormData((prev) => ({
-                  ...prev,
-                  guide_id: e.target.value,
-                  plant_type: selectedGuide ? selectedGuide.plant_name : "",
-                }));
+
+                // If not found, try to resolve from the selected plant group's embedded plants
+                let selectedGroupPlant = null;
+                if (!selectedPlant && formData.plant_group) {
+                  const group = plantGroups.find(
+                    (g) => String(g.value) === String(formData.plant_group)
+                  );
+                  if (group && Array.isArray(group.plants)) {
+                    selectedGroupPlant = group.plants.find(
+                      (pp) =>
+                        String(pp.slug) === String(plantId) ||
+                        String(pp.name) === String(plantId)
+                    );
+                  }
+                }
+
+                // Try to find a published guide that matches this plant name (case-insensitive)
+                const plantNameForGuide =
+                  (selectedPlant && selectedPlant.name) ||
+                  (selectedGroupPlant && selectedGroupPlant.name) ||
+                  "";
+
+                const matchedGuide = guides.find(
+                  (g) =>
+                    g.plant_name &&
+                    plantNameForGuide &&
+                    String(g.plant_name).toLowerCase() ===
+                      String(plantNameForGuide).toLowerCase()
+                );
+
+                if (matchedGuide) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    guide_id: matchedGuide._id,
+                    plant_type: matchedGuide.plant_name || matchedGuide.title,
+                    selected_plant_id: plantId,
+                    plant_group:
+                      (selectedPlant &&
+                        (selectedPlant.plant_group_slug ||
+                          selectedPlant.plant_group)) ||
+                      formData.plant_group ||
+                      "",
+                  }));
+                } else if (selectedPlant) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    guide_id: "",
+                    plant_type: selectedPlant.name,
+                    plant_group:
+                      selectedPlant.plant_group_slug ||
+                      selectedPlant.plant_group ||
+                      "",
+                    selected_plant_id: plantId,
+                  }));
+                } else if (selectedGroupPlant) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    guide_id: "",
+                    plant_type: selectedGroupPlant.name,
+                    plant_group: formData.plant_group || "",
+                    selected_plant_id: plantId,
+                  }));
+                } else {
+                  setFormData((prev) => ({
+                    ...prev,
+                    guide_id: "",
+                    plant_type: "",
+                    plant_group: "",
+                    selected_plant_id: "",
+                  }));
+                }
               }}
               required
             >
               <option value="">-- Chọn loại cây --</option>
-              {guides.map((guide) => (
-                <option key={guide._id} value={guide._id}>
-                  {guide.plant_name || guide.title}
-                </option>
-              ))}
+
+              {/* If current plant group provides an embedded list, render those first */}
+              {formData.plant_group &&
+                (() => {
+                  const group = plantGroups.find(
+                    (g) => String(g.value) === String(formData.plant_group)
+                  );
+                  if (
+                    group &&
+                    Array.isArray(group.plants) &&
+                    group.plants.length
+                  ) {
+                    return group.plants.map((pp) => (
+                      <option
+                        key={pp.slug || pp.name}
+                        value={pp.slug || pp.name}
+                      >
+                        {pp.name}
+                      </option>
+                    ));
+                  }
+
+                  // Fallback: use global plants filtered by group
+                  return plants
+                    .filter((p) =>
+                      formData.plant_group
+                        ? (p.plant_group_slug || p.plant_group) ===
+                          formData.plant_group
+                        : true
+                    )
+                    .map((p) => (
+                      <option key={p._id} value={p._id}>
+                        {p.name}
+                      </option>
+                    ));
+                })()}
             </select>
             <p className="form-hint">
               🌱 Hệ thống sẽ tự động gán bộ mẫu chăm sóc dựa trên loại cây bạn
@@ -250,8 +440,6 @@ const NotebookCreate = () => {
         <h3>💡 Gợi Ý</h3>
         <ul>
           <li>Nhập tên dễ nhớ để quản lý nhiều nhật ký</li>
-          <li>Chọn bộ mẫu phù hợp với loại cây bạn trồng</li>
-          <li>Ngày trồng giúp hệ thống tính toán giai đoạn tự động</li>
           <li>Bạn có thể thêm hình ảnh và ghi chú sau khi tạo</li>
         </ul>
       </div>

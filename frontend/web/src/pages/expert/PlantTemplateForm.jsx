@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import plantTemplateApi from "../../api/expert/plantTemplateApi";
 import guidesApi from "../../api/shared/guidesApi";
+import HeaderExpert from "../../components/shared/HeaderExpert";
 import "../../css/expert/PlantTemplateForm.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -21,10 +22,6 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     plant_examples: [],
     cover_image: null,
     stages: [],
-    rules: {
-      safe_delay_days: 1,
-      auto_skip: true,
-    },
     status: "draft",
     notes: "",
   });
@@ -32,10 +29,11 @@ const PlantTemplateForm = ({ mode = "create" }) => {
   const [tempInput, setTempInput] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
   const [availableGuides, setAvailableGuides] = useState([]);
+  const [availablePlants, setAvailablePlants] = useState([]);
   const [loadingGuides, setLoadingGuides] = useState(false);
   const [showPlantDropdown, setShowPlantDropdown] = useState(false);
 
-  const plantGroups = [
+  const [plantGroups, setPlantGroups] = useState([
     { value: "leaf_vegetable", label: "Rau ăn lá", icon: "🥬" },
     { value: "root_vegetable", label: "Cây củ", icon: "🥕" },
     { value: "fruit_short_term", label: "Rau/quả ngắn ngày", icon: "🥒" },
@@ -44,14 +42,15 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     { value: "herb", label: "Cây gia vị", icon: "🌿" },
     { value: "flower_vegetable", label: "Rau ăn hoa", icon: "🥦" },
     { value: "other", label: "Khác", icon: "🌱" },
-  ];
+  ]);
+  const [loadingPlantGroups, setLoadingPlantGroups] = useState(false);
 
   const steps = [
     { number: 1, title: "Thông tin cơ bản", icon: "📝" },
     { number: 2, title: "Giai đoạn phát triển", icon: "🌱" },
-    { number: 3, title: "Nhiệm vụ tự động", icon: "✅" },
+    { number: 3, title: "NHIỆM VỤ TỰ ĐỘNG", icon: "✅" },
     { number: 4, title: "Điều kiện quan sát", icon: "👁️" },
-    { number: 5, title: "Quy tắc & Xác nhận", icon: "⚙️" },
+    { number: 5, title: "Xác nhận", icon: "⚙️" },
   ];
 
   useEffect(() => {
@@ -59,33 +58,83 @@ const PlantTemplateForm = ({ mode = "create" }) => {
       loadTemplate();
     }
     fetchAvailableGuides();
+    fetchPlantGroupsFromApi();
   }, [mode, id]);
 
+  const fetchPlantGroupsFromApi = async () => {
+    try {
+      setLoadingPlantGroups(true);
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+      // Build endpoint robustly: allow API_URL to be either with or without trailing '/api'
+      let base = API_URL || "http://localhost:5000";
+      base = base.replace(/\/+$/, "");
+      const apiBase = base.endsWith("/api") ? base : `${base}/api`;
+      const endpoint = `${apiBase}/plant-groups`;
+
+      const res = await axios.get(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      const items = res.data?.data || [];
+
+      // Map API objects { _id, name, slug } to expected { value, label, icon }
+      const iconMap = {
+        leaf_vegetable: "🥬",
+        root_vegetable: "🥕",
+        fruit_short_term: "🥒",
+        fruit_long_term: "🍊",
+        bean_family: "🫘",
+        herb: "🌿",
+        flower_vegetable: "🥦",
+      };
+
+      if (items.length > 0) {
+        const mapped = items.map((it) => ({
+          value: it.slug || it._id,
+          label: it.name || it.slug || it._id,
+          icon: iconMap[it.slug] || "🌱",
+          plants: Array.isArray(it.plants) ? it.plants : [],
+        }));
+        setPlantGroups(mapped);
+      }
+    } catch (err) {
+      console.warn(
+        "Could not fetch plant groups, using defaults:",
+        err?.message || err
+      );
+    } finally {
+      setLoadingPlantGroups(false);
+    }
+  };
+
   const fetchAvailableGuides = async () => {
+    // We now source plant examples from the plants collection via /api/plants
     try {
       setLoadingGuides(true);
-      console.log("🔍 Fetching guides from API...");
-      const response = await guidesApi.getAllGuides({ limit: 1000 });
-      console.log("📦 API Response:", response);
 
-      // API trả về { success: true, data: [...], meta: {...} }
-      const guides = response.data?.data || [];
-      console.log("📋 Guides array:", guides);
-      console.log("📊 Total guides:", guides.length);
+      let base = API_URL || "http://localhost:5000";
+      base = base.replace(/\/+$/, "");
+      const apiBase = base.endsWith("/api") ? base : `${base}/api`;
+      const endpoint = `${apiBase}/plants?limit=1000`;
 
-      // Extract unique plant names from guides
-      const plantNames = guides
-        .map((guide) => guide.plant_name)
-        .filter((name) => name && name.trim())
-        .filter((name, index, self) => self.indexOf(name) === index)
+      console.log("🔍 Fetching plants from API...", endpoint);
+      const res = await axios.get(endpoint);
+      const plants = res.data?.data || [];
+      console.log("📦 Plants response count:", plants.length);
+
+      // keep full plant objects for filtering by group
+      setAvailablePlants(Array.isArray(plants) ? plants : []);
+
+      const plantNames = (Array.isArray(plants) ? plants : [])
+        .map((p) => p.name)
+        .filter((n) => n && n.toString().trim())
+        .filter((v, i, a) => a.indexOf(v) === i)
         .sort();
-
-      console.log("🌱 Plant names extracted:", plantNames);
-      console.log("✅ Total unique plants:", plantNames.length);
 
       setAvailableGuides(plantNames);
     } catch (err) {
-      console.error("❌ Error fetching guides:", err);
+      console.error("❌ Error fetching plants:", err);
     } finally {
       setLoadingGuides(false);
     }
@@ -104,14 +153,13 @@ const PlantTemplateForm = ({ mode = "create" }) => {
           plant_examples: template.plant_examples || [],
           cover_image: template.cover_image || null,
           stages: template.stages || [],
-          rules: template.rules || formData.rules,
           status: template.status || "draft",
           notes: template.notes || "",
         });
       }
     } catch (err) {
       console.error("Error loading template:", err);
-      setError("Không thể tải template");
+      setError("Không thể tải bộ mẫu");
     } finally {
       setLoading(false);
     }
@@ -121,12 +169,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleRuleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      rules: { ...prev.rules, [field]: value },
-    }));
-  };
+  // rules were removed from template model; no rule-change handler required
 
   const handleCoverImageUpload = async (file) => {
     if (!file) return;
@@ -342,7 +385,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
     switch (step) {
       case 1:
         if (!formData.template_name.trim()) {
-          setError("Vui lòng nhập tên template");
+          setError("Vui lòng nhập tên bộ mẫu");
           return false;
         }
         if (!formData.plant_group) {
@@ -352,7 +395,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
         break;
       case 2:
         if (formData.stages.length < 3) {
-          setError("Template phải có ít nhất 3 giai đoạn");
+          setError("Bộ mẫu phải có ít nhất 3 giai đoạn");
           return false;
         }
         for (let stage of formData.stages) {
@@ -398,16 +441,16 @@ const PlantTemplateForm = ({ mode = "create" }) => {
 
       if (mode === "edit") {
         await plantTemplateApi.updateTemplate(id, formData);
-        alert("Cập nhật template thành công!");
+        alert("Cập nhật bộ mẫu thành công!");
       } else {
         await plantTemplateApi.createTemplate(formData);
-        alert("Tạo template thành công!");
+        alert("Tạo bộ mẫu thành công!");
       }
 
       navigate("/expert/plant-templates");
     } catch (err) {
       console.error("Error saving template:", err);
-      setError(err.response?.data?.message || "Không thể lưu template");
+      setError(err.response?.data?.message || "Không thể lưu bộ mẫu");
     } finally {
       setLoading(false);
     }
@@ -415,140 +458,150 @@ const PlantTemplateForm = ({ mode = "create" }) => {
 
   if (loading && mode === "edit") {
     return (
-      <div className="plant-template-form">
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Đang tải...</p>
+      <>
+        <HeaderExpert />
+        <div className="plant-template-form">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Đang tải...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="plant-template-form">
-      <div className="form-container">
-        <div className="form-header">
-          <button className="btn-back" onClick={() => navigate(-1)}>
-            ← Quay lại
-          </button>
-          <h1>{mode === "edit" ? "Chỉnh sửa" : "Tạo mới"} Bộ mẫu cây trồng</h1>
-        </div>
+    <>
+      <HeaderExpert />
+      <div className="plant-template-form">
+        <div className="form-container">
+          <div className="form-header">
+            <button className="btn-back" onClick={() => navigate(-1)}>
+              ← Quay lại
+            </button>
+            <h1>
+              {mode === "edit"
+                ? "CHỈNH SỬA BỘ MẪU CÂY TRỒNG"
+                : "Tạo mới Bộ mẫu cây trồng"}
+            </h1>
+          </div>
 
-        {/* Steps Progress */}
-        <div className="steps-progress">
-          {steps.map((step) => (
-            <div
-              key={step.number}
-              className={`step-item ${
-                currentStep === step.number ? "active" : ""
-              } ${currentStep > step.number ? "completed" : ""}`}
-            >
-              <div className="step-number">
-                {currentStep > step.number ? "✓" : step.icon}
+          {/* Steps Progress */}
+          <div className="steps-progress">
+            {steps.map((step) => (
+              <div
+                key={step.number}
+                className={`step-item ${
+                  currentStep === step.number ? "active" : ""
+                } ${currentStep > step.number ? "completed" : ""}`}
+              >
+                <div className="step-number">
+                  {currentStep > step.number ? "✓" : step.icon}
+                </div>
+                <div className="step-title">{step.title}</div>
               </div>
-              <div className="step-title">{step.title}</div>
+            ))}
+          </div>
+
+          {error && (
+            <div className="alert alert-error">
+              <span className="icon">⚠️</span>
+              {error}
             </div>
-          ))}
-        </div>
-
-        {error && (
-          <div className="alert alert-error">
-            <span className="icon">⚠️</span>
-            {error}
-          </div>
-        )}
-
-        {/* Step Content */}
-        <div className="step-content">
-          {currentStep === 1 && (
-            <Step1BasicInfo
-              formData={formData}
-              handleInputChange={handleInputChange}
-              plantGroups={plantGroups}
-              tempInput={tempInput}
-              setTempInput={setTempInput}
-              addPlantExample={addPlantExample}
-              removePlantExample={removePlantExample}
-              uploadingCover={uploadingCover}
-              handleCoverImageUpload={handleCoverImageUpload}
-              availableGuides={availableGuides}
-              loadingGuides={loadingGuides}
-              showPlantDropdown={showPlantDropdown}
-              setShowPlantDropdown={setShowPlantDropdown}
-              addPlantExampleFromDropdown={addPlantExampleFromDropdown}
-            />
           )}
 
-          {currentStep === 2 && (
-            <Step2Stages
-              stages={formData.stages}
-              addStage={addStage}
-              updateStage={updateStage}
-              removeStage={removeStage}
-            />
-          )}
+          {/* Step Content */}
+          <div className="step-content">
+            {currentStep === 1 && (
+              <Step1BasicInfo
+                formData={formData}
+                handleInputChange={handleInputChange}
+                plantGroups={plantGroups}
+                tempInput={tempInput}
+                setTempInput={setTempInput}
+                addPlantExample={addPlantExample}
+                removePlantExample={removePlantExample}
+                uploadingCover={uploadingCover}
+                handleCoverImageUpload={handleCoverImageUpload}
+                availableGuides={availableGuides}
+                loadingGuides={loadingGuides}
+                showPlantDropdown={showPlantDropdown}
+                setShowPlantDropdown={setShowPlantDropdown}
+                addPlantExampleFromDropdown={addPlantExampleFromDropdown}
+              />
+            )}
 
-          {currentStep === 3 && (
-            <Step3Tasks
-              stages={formData.stages}
-              addTaskToStage={addTaskToStage}
-              updateTask={updateTask}
-              removeTask={removeTask}
-            />
-          )}
+            {currentStep === 2 && (
+              <Step2Stages
+                stages={formData.stages}
+                addStage={addStage}
+                updateStage={updateStage}
+                removeStage={removeStage}
+              />
+            )}
 
-          {currentStep === 4 && (
-            <Step4Observations
-              stages={formData.stages}
-              addObservationToStage={addObservationToStage}
-              updateObservation={updateObservation}
-              removeObservation={removeObservation}
-            />
-          )}
+            {currentStep === 3 && (
+              <Step3Tasks
+                stages={formData.stages}
+                addTaskToStage={addTaskToStage}
+                updateTask={updateTask}
+                removeTask={removeTask}
+              />
+            )}
 
-          {currentStep === 5 && (
-            <Step5Review
-              formData={formData}
-              handleRuleChange={handleRuleChange}
-              handleInputChange={handleInputChange}
-            />
-          )}
-        </div>
+            {currentStep === 4 && (
+              <Step4Observations
+                stages={formData.stages}
+                addObservationToStage={addObservationToStage}
+                updateObservation={updateObservation}
+                removeObservation={removeObservation}
+              />
+            )}
 
-        {/* Navigation Buttons */}
-        <div className="form-navigation">
-          <button
-            className="btn btn-secondary"
-            onClick={prevStep}
-            disabled={currentStep === 1 || loading}
-          >
-            ← Quay lại
-          </button>
-
-          <div className="nav-info">
-            Bước {currentStep} / {steps.length}
+            {currentStep === 5 && (
+              <Step5Review
+                formData={formData}
+                handleInputChange={handleInputChange}
+                plantGroups={plantGroups}
+              />
+            )}
           </div>
 
-          {currentStep < 5 ? (
-            <button className="btn btn-primary" onClick={nextStep}>
-              Tiếp theo →
-            </button>
-          ) : (
+          {/* Navigation Buttons */}
+          <div className="form-navigation">
             <button
-              className="btn btn-success"
-              onClick={handleSubmit}
-              disabled={loading}
+              className="btn btn-secondary"
+              onClick={prevStep}
+              disabled={currentStep === 1 || loading}
             >
-              {loading
-                ? "Đang lưu..."
-                : mode === "edit"
-                ? "Cập nhật"
-                : "Tạo template"}
+              ← QUAY LẠI
             </button>
-          )}
+
+            <div className="nav-info">
+              BƯỚC {currentStep} / {steps.length}
+            </div>
+
+            {currentStep < 5 ? (
+              <button className="btn btn-primary" onClick={nextStep}>
+                TIẾP THEO →
+              </button>
+            ) : (
+              <button
+                className="btn btn-success"
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {loading
+                  ? "Đang lưu..."
+                  : mode === "edit"
+                  ? "Cập nhật"
+                  : "Tạo template"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -570,16 +623,19 @@ const Step1BasicInfo = ({
   addPlantExampleFromDropdown,
 }) => (
   <div className="step-basic-info">
-    <h2>Thông tin cơ bản</h2>
+    <h5>THÔNG TIN CƠ BẢN</h5>
 
     <div className="form-group">
       <label>
-        Tên Bộ mẫu <span className="required">*</span>
+        TÊN BỘ MẪU <span className="required">*</span>
       </label>
+      <p className="hint">
+        Đặt tên cho bộ mẫu này (ví dụ: Rau ăn lá cơ bản, Cà chua trồng ban công)
+      </p>
       <input
         type="text"
         className="form-input"
-        placeholder="Ví dụ: Rau ăn lá cơ bản"
+        placeholder="Nhập tên bộ mẫu..."
         value={formData.template_name}
         onChange={(e) => handleInputChange("template_name", e.target.value)}
       />
@@ -587,8 +643,11 @@ const Step1BasicInfo = ({
 
     <div className="form-group">
       <label>
-        Nhóm cây <span className="required">*</span>
+        NHÓM CÂY <span className="required">*</span>
       </label>
+      <p className="hint">
+        Chọn nhóm cây phù hợp với bộ mẫu này (nhấn vào ô để chọn)
+      </p>
       <div className="plant-groups-grid">
         {plantGroups.map((group) => (
           <div
@@ -606,19 +665,25 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>Mô tả nhóm cây</label>
+      <label>MÔ TẢ CHI TIẾT</label>
+      <p className="hint">
+        Mô tả ngắn gọn về bộ mẫu này, đặc điểm nổi bật và lưu ý khi sử dụng
+      </p>
       <textarea
         className="form-textarea"
         rows="3"
-        placeholder="Mô tả về nhóm cây này..."
+        placeholder="Ví dụ: Bộ mẫu dành cho người mới bắt đầu trồng rau ăn lá, phù hợp với điều kiện ban công..."
         value={formData.group_description}
         onChange={(e) => handleInputChange("group_description", e.target.value)}
       />
     </div>
 
     <div className="form-group">
-      <label>🌱 Các loại cây phù hợp</label>
-      <p className="hint">Chọn các loại cây từ danh sách guides có sẵn</p>
+      <label>🌱 CÁC LOẠI CÂY PHÙ HỢP</label>
+      <p className="hint">
+        Chọn các loại cây cụ thể có thể sử dụng bộ mẫu này (ví dụ: Cải xanh, Rau
+        muống, Xà lách...)
+      </p>
 
       <div className="plant-selector">
         <button
@@ -627,7 +692,7 @@ const Step1BasicInfo = ({
           onClick={() => setShowPlantDropdown(!showPlantDropdown)}
           disabled={loadingGuides}
         >
-          {loadingGuides ? "Đang tải..." : "➕ Chọn cây từ danh sách"}
+          {loadingGuides ? "ĐANG TẢI..." : "➕ CHỌN CÂY TỪ DANH SÁCH"}
         </button>
 
         {showPlantDropdown && (
@@ -652,32 +717,94 @@ const Step1BasicInfo = ({
               </button>
             </div>
             <div className="plant-dropdown-list">
-              {availableGuides.length === 0 ? (
-                <div className="plant-dropdown-empty">
-                  Không có dữ liệu cây từ guides
-                </div>
-              ) : (
-                availableGuides
-                  .filter((plant) =>
-                    plant.toLowerCase().includes(tempInput.toLowerCase())
+              {(() => {
+                // If current plant group provides embedded plants, use them
+                if (formData.plant_group) {
+                  const group = plantGroups.find(
+                    (g) => String(g.value) === String(formData.plant_group)
+                  );
+                  if (
+                    group &&
+                    Array.isArray(group.plants) &&
+                    group.plants.length
+                  ) {
+                    const filtered = group.plants
+                      .map((pp) => pp.name)
+                      .filter(
+                        (n) =>
+                          n &&
+                          n
+                            .toString()
+                            .toLowerCase()
+                            .includes(tempInput.toLowerCase())
+                      );
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="plant-dropdown-empty">
+                          Không có cây thuộc nhóm này
+                        </div>
+                      );
+                    }
+                    return filtered.map((plant, index) => (
+                      <div
+                        key={index}
+                        className={`plant-dropdown-item ${
+                          formData.plant_examples.includes(plant)
+                            ? "selected"
+                            : ""
+                        }`}
+                        onClick={() => addPlantExampleFromDropdown(plant)}
+                      >
+                        <span>{plant}</span>
+                        {formData.plant_examples.includes(plant) && (
+                          <span className="check-icon">✓</span>
+                        )}
+                      </div>
+                    ));
+                  }
+                }
+
+                // Fallback: use global availablePlants filtered by group (if any)
+                const pool =
+                  Array.isArray(availablePlants) && availablePlants.length
+                    ? availablePlants
+                    : [];
+                const poolFiltered = pool
+                  .filter((p) =>
+                    tempInput && tempInput.trim()
+                      ? p.name.toLowerCase().includes(tempInput.toLowerCase())
+                      : true
                   )
-                  .map((plant, index) => (
-                    <div
-                      key={index}
-                      className={`plant-dropdown-item ${
-                        formData.plant_examples.includes(plant)
-                          ? "selected"
-                          : ""
-                      }`}
-                      onClick={() => addPlantExampleFromDropdown(plant)}
-                    >
-                      <span>{plant}</span>
-                      {formData.plant_examples.includes(plant) && (
-                        <span className="check-icon">✓</span>
-                      )}
+                  .filter((p) =>
+                    formData.plant_group
+                      ? (p.plant_group_slug || p.plant_group) ===
+                        formData.plant_group
+                      : true
+                  );
+
+                if (poolFiltered.length === 0) {
+                  return (
+                    <div className="plant-dropdown-empty">
+                      Không có dữ liệu cây từ guides
                     </div>
-                  ))
-              )}
+                  );
+                }
+
+                return poolFiltered.map((p, index) => (
+                  <div
+                    key={p._id || index}
+                    className={`plant-dropdown-item ${
+                      formData.plant_examples.includes(p.name) ? "selected" : ""
+                    }`}
+                    onClick={() => addPlantExampleFromDropdown(p.name)}
+                  >
+                    <span>{p.name}</span>
+                    {formData.plant_examples.includes(p.name) && (
+                      <span className="check-icon">✓</span>
+                    )}
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         )}
@@ -702,7 +829,7 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>📸 Ảnh bìa Template</label>
+      <label>📸 ẢNH BÌA BỘ MẪU</label>
       <div className="upload-area">
         <label className="upload-label">
           {uploadingCover ? (
@@ -741,7 +868,7 @@ const Step1BasicInfo = ({
               <div className="upload-icon">🖼️</div>
               <div className="upload-text">
                 <strong>Click để chọn ảnh bìa</strong>
-                <span>Ảnh này sẽ hiển thị trong danh sách template</span>
+                <span>Ảnh này sẽ hiển thị trong danh sách bộ mẫu</span>
               </div>
               <div className="upload-hint">PNG, JPG, JPEG (tối đa 5MB)</div>
             </div>
@@ -839,10 +966,10 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
   return (
     <div className="step-stages">
       <div className="step-header">
-        <h2>🌱 Giai đoạn phát triển</h2>
+        <h2>🌱 GIAI ĐOẠN PHÁT TRIỂN</h2>
         <p className="hint">
-          Bộ mẫu cần có ít nhất 3 giai đoạn. Bạn có thể upload ảnh mẫu cho mỗi
-          giai đoạn.
+          BỘ MẪU CẦN CÓ ÍT NHẤT 3 GIAI ĐOẠN. BẠN CÓ THỂ UPLOAD ẢNH MẪU CHO MỖI
+          GIAI ĐOẠN.
         </p>
       </div>
 
@@ -857,7 +984,7 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
                 // Nếu xóa sẽ khiến tổng giai đoạn < 3 thì cảnh báo người dùng
                 if (stages.length <= 3) {
                   const confirmDelete = window.confirm(
-                    "Bạn sắp xóa giai đoạn. Lưu ý: Template cần ít nhất 3 giai đoạn để lưu. Bạn vẫn muốn xóa?"
+                    "Bạn sắp xóa giai đoạn. Lưu ý: Bộ mẫu cần ít nhất 3 giai đoạn để lưu. Bạn vẫn muốn xóa?"
                   );
                   if (!confirmDelete) return;
                 }
@@ -873,12 +1000,12 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
           <div className="form-row">
             <div className="form-group flex-1">
               <label>
-                Tên giai đoạn <span className="required">*</span>
+                TÊN GIAI ĐOẠN <span className="required">*</span>
               </label>
               <input
                 type="text"
                 className="form-input"
-                placeholder="Ví dụ: Nảy mầm"
+                placeholder="Ví dụ: Nảy mầm, Phát triển lá, Thu hoạch..."
                 value={stage.name}
                 onChange={(e) => updateStage(index, "name", e.target.value)}
               />
@@ -886,11 +1013,14 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
           </div>
 
           <div className="form-group">
-            <label>Mô tả giai đoạn</label>
+            <label>MÔ TẢ GIAI ĐOẠN</label>
+            <p className="hint">
+              Mô tả những gì xảy ra trong giai đoạn này và cần làm gì
+            </p>
             <textarea
               className="form-textarea"
               rows="2"
-              placeholder="Mô tả chi tiết về giai đoạn này..."
+              placeholder="Ví dụ: Cây bắt đầu nảy mầm, xuất hiện lá đầu tiên. Cần giữ ẩm và tránh ánh sáng mặt trời trực tiếp..."
               value={stage.description}
               onChange={(e) =>
                 updateStage(index, "description", e.target.value)
@@ -901,8 +1031,11 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
           <div className="form-row">
             <div className="form-group">
               <label>
-                Ngày bắt đầu <span className="required">*</span>
+                NGÀY BẮT ĐẦU <span className="required">*</span>
               </label>
+              <p className="hint">
+                Ngày thứ mấy bắt đầu giai đoạn này (kể từ khi gieo hạt)
+              </p>
               <input
                 type="number"
                 className="form-input"
@@ -916,8 +1049,9 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
 
             <div className="form-group">
               <label>
-                Ngày kết thúc <span className="required">*</span>
+                NGÀY KẾT THÚC <span className="required">*</span>
               </label>
+              <p className="hint">Ngày thứ mấy kết thúc giai đoạn này</p>
               <input
                 type="number"
                 className="form-input"
@@ -930,15 +1064,15 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
             </div>
 
             <div className="form-group">
-              <label>Tổng ngày</label>
+              <label>TỔNG NGÀY</label>
               <div className="form-static">
-                {stage.day_end - stage.day_start + 1} ngày
+                {stage.day_end - stage.day_start + 1} NGÀY
               </div>
             </div>
           </div>
 
           <div className="form-group">
-            <label>📸 Ảnh mẫu giai đoạn</label>
+            <label>📸 ẢNH MẪU GIAI ĐOẠN</label>
             <div className="upload-area">
               <div className="upload-icon">🖼️</div>
               <label className="upload-label">
@@ -1058,9 +1192,11 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
   return (
     <div className="step-tasks">
       <div className="step-header">
-        <h2>✅ Nhiệm vụ tự động</h2>
+        <h2>✅ NHIỆM VỤ TỰ ĐỘNG</h2>
         <p className="hint">
-          Các nhiệm vụ này sẽ được tự động sinh ra cho người dùng mỗi ngày
+          Tạo danh sách công việc cho người dùng làm hàng ngày (VD: Tưới nước,
+          Bón phân, Kiểm tra sâu bệnh). Hệ thống sẽ tự động tạo nhiệm vụ theo
+          lịch bạn đặt.
         </p>
       </div>
 
@@ -1068,28 +1204,28 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
         <div key={stageIndex} className="stage-section">
           <div className="stage-section-header">
             <h3>
-              Giai đoạn {stage.stage_number}: {stage.name}
+              GIAI ĐOẠN {stage.stage_number}: {stage.name.toUpperCase()}
             </h3>
             <span className="badge">
-              {stage.autogenerated_tasks?.length || 0} nhiệm vụ
+              {stage.autogenerated_tasks?.length || 0} NHIỆM VỤ
             </span>
           </div>
 
           {stage.autogenerated_tasks?.map((task, taskIndex) => (
             <div key={taskIndex} className="task-card">
               <div className="task-card-header">
-                <span className="task-number">Nhiệm vụ {taskIndex + 1}</span>
+                <span className="task-number">NHIỆM VỤ {taskIndex + 1}</span>
                 <button
                   type="button"
                   className="btn-icon btn-sm"
                   onClick={() => {
                     const confirmDelete = window.confirm(
-                      "Bạn có chắc muốn xóa nhiệm vụ này? Hành động này không thể hoàn tác."
+                      "BẠN CÓ CHẮC MUỐN XÓA NHIỆM VỤ NÀY? HÀNH ĐỘNG NÀY KHÔNG THỂ HOÀN TÁC."
                     );
                     if (!confirmDelete) return;
                     removeTask(stageIndex, taskIndex);
                   }}
-                  title="Xóa nhiệm vụ"
+                  title="XÓA NHIỆM VỤ"
                 >
                   ×
                 </button>
@@ -1097,11 +1233,11 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
 
               <div className="form-row">
                 <div className="form-group flex-2">
-                  <label>Tên nhiệm vụ</label>
+                  <label>TÊN NHIỆM VỤ</label>
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Ví dụ: Tưới nước"
+                    placeholder="VÍ DỤ: TƯỚI NƯỚC"
                     value={task.task_name}
                     onChange={(e) =>
                       updateTask(
@@ -1115,7 +1251,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                 </div>
 
                 <div className="form-group flex-1">
-                  <label>Tần suất</label>
+                  <label>TẦN SUẤT</label>
                   <select
                     className="form-select"
                     value={task.frequency}
@@ -1128,16 +1264,16 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                       )
                     }
                   >
-                    <option value="daily">Hàng ngày</option>
-                    <option value="every_2_days">2 ngày/lần</option>
-                    <option value="every_3_days">3 ngày/lần</option>
-                    <option value="weekly">Hàng tuần</option>
-                    <option value="once">Một lần (chỉ xuất hiện 1 lần)</option>
+                    <option value="daily">HÀNG NGÀY</option>
+                    <option value="every_2_days">2 NGÀY/LẦN</option>
+                    <option value="every_3_days">3 NGÀY/LẦN</option>
+                    <option value="weekly">HÀNG TUẦN</option>
+                    <option value="once">MỘT LẦN (CHỈ XUẤT HIỆN 1 LẦN)</option>
                   </select>
                 </div>
 
                 <div className="form-group flex-1">
-                  <label>Độ ưu tiên</label>
+                  <label>ĐỘ ƯU TIÊN</label>
                   <select
                     className="form-select"
                     value={task.priority}
@@ -1150,19 +1286,19 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                       )
                     }
                   >
-                    <option value="low">Thấp</option>
-                    <option value="medium">Trung bình</option>
-                    <option value="high">Cao</option>
+                    <option value="low">THẤP</option>
+                    <option value="medium">TRUNG BÌNH</option>
+                    <option value="high">CAO</option>
                   </select>
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Mô tả</label>
+                <label>MÔ TẢ</label>
                 <textarea
                   className="form-textarea"
                   rows="2"
-                  placeholder="Mô tả chi tiết nhiệm vụ..."
+                  placeholder="MÔ TẢ CHI TIẼT NHIỆM VỤ..."
                   value={task.description}
                   onChange={(e) =>
                     updateTask(
@@ -1176,13 +1312,13 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
               </div>
 
               <div className="form-group">
-                <label>📸 Ảnh minh họa nhiệm vụ</label>
+                <label>📸 ẢNH MINH HỌA NHIỆM VỤ</label>
                 <div className="upload-area upload-area-sm">
                   <label className="upload-label">
                     {uploadingTask === `${stageIndex}-${taskIndex}` ? (
                       <div className="uploading">
                         <div className="spinner-upload"></div>
-                        <span>Đang upload...</span>
+                        <span>ĐANG UPLOAD...</span>
                       </div>
                     ) : task.illustration_image ? (
                       <div className="image-uploaded">
@@ -1203,7 +1339,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                                 .click();
                             }}
                           >
-                            🔄 Thay đổi
+                            🔄 THAY ĐỔI
                           </button>
                           <button
                             type="button"
@@ -1218,7 +1354,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                               );
                             }}
                           >
-                            🗑️ Xóa
+                            🗑️ XÓA
                           </button>
                         </div>
                       </div>
@@ -1226,7 +1362,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                       <div className="upload-placeholder upload-placeholder-sm">
                         <div className="upload-icon">📁</div>
                         <div className="upload-text">
-                          <strong>Click để chọn ảnh</strong>
+                          <strong>CLICK ĐỂ CHỌN ẢNH</strong>
                         </div>
                       </div>
                     )}
@@ -1256,7 +1392,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
               className="btn btn-outline btn-sm"
               onClick={() => addTaskToStage(stageIndex)}
             >
-              + Thêm nhiệm vụ
+              + THÊM NHIỆM VỤ
             </button>
 
             <button
@@ -1267,14 +1403,14 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                 if (tasks.length === 0) return;
                 const lastIndex = tasks.length - 1;
                 const confirmDelete = window.confirm(
-                  "Bạn sắp xóa nhiệm vụ vừa thêm. Bạn có chắc chắn?"
+                  "BẠN SẮP XÓA NHIỆM VỤ VỪA THÊM. BẠN CÓ CHẮC CHẮN?"
                 );
                 if (!confirmDelete) return;
                 removeTask(stageIndex, lastIndex);
               }}
-              title="Xóa nhiệm vụ cuối"
+              title="XÓA NHIỆM VỤ CUỐI"
             >
-              ⤺ Hoàn tác
+              ⤺ HOÀN TÁC
             </button>
           </div>
         </div>
@@ -1292,9 +1428,10 @@ const Step4Observations = ({
 }) => (
   <div className="step-observations">
     <div className="step-header">
-      <h2>👁️ Điều kiện quan sát</h2>
+      <h2>👁️ ĐIỀU KIỆN QUAN SÁT</h2>
       <p className="hint">
-        Các điều kiện quan sát để theo dõi tiến độ phát triển của cây
+        Tạo các câu hỏi để người dùng ghi nhận tiến trình phát triển của cây
+        (VD: Đã nảy mầm?, Có mấy lá?, Chiều cao bao nhiêu cm?)
       </p>
     </div>
 
@@ -1302,17 +1439,17 @@ const Step4Observations = ({
       <div key={stageIndex} className="stage-section">
         <div className="stage-section-header">
           <h3>
-            Giai đoạn {stage.stage_number}: {stage.name}
+            GIAI ĐOẠN {stage.stage_number}: {stage.name.toUpperCase()}
           </h3>
           <span className="badge">
-            {stage.observation_required?.length || 0} điều kiện
+            {stage.observation_required?.length || 0} ĐIỀU KIỆN
           </span>
         </div>
 
         {stage.observation_required?.map((obs, obsIndex) => (
           <div key={obsIndex} className="observation-card">
             <div className="observation-card-header">
-              <span className="obs-number">Điều kiện {obsIndex + 1}</span>
+              <span className="obs-number">ĐIỀU KIỆN {obsIndex + 1}</span>
               <button
                 type="button"
                 className="btn-icon btn-sm"
@@ -1331,11 +1468,11 @@ const Step4Observations = ({
 
             <div className="form-row">
               <div className="form-group flex-1">
-                <label>Key (định danh)</label>
+                <label>MÃ ĐỊNH DANH (KEY)</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Ví dụ: has_sprout"
+                  placeholder="Ví dụ: has_sprout, leaf_count"
                   value={obs.key}
                   onChange={(e) =>
                     updateObservation(
@@ -1346,15 +1483,18 @@ const Step4Observations = ({
                     )
                   }
                 />
-                <small className="hint">Dùng snake_case, không dấu</small>
+                <small className="hint">
+                  Mã để lưu trữ (dùng chữ thường, gạch dưới, không dấu). VD:
+                  has_sprout, leaf_count
+                </small>
               </div>
 
               <div className="form-group flex-1">
-                <label>Câu hỏi hiển thị</label>
+                <label>CÂU HỎI HIỂN THỊ</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Ví dụ: Đã nảy mầm?"
+                  placeholder="Ví dụ: Đã nảy mầm?, Có bao nhiêu lá?"
                   value={obs.label}
                   onChange={(e) =>
                     updateObservation(
@@ -1369,11 +1509,11 @@ const Step4Observations = ({
             </div>
 
             <div className="form-group">
-              <label>Mô tả</label>
+              <label>MÔ TẢ CHI TIẾT</label>
               <input
                 type="text"
                 className="form-input"
-                placeholder="Mô tả chi tiết để user dễ quan sát"
+                placeholder="Nhập mô tả thêm về điều kiện quan sát..."
                 value={obs.description}
                 onChange={(e) =>
                   updateObservation(
@@ -1420,69 +1560,35 @@ const Step4Observations = ({
   </div>
 );
 
-// Step 5: Rules & Review
-const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
+// Step 5: Review (confirmation)
+const Step5Review = ({ formData, handleInputChange, plantGroups }) => (
   <div className="step-review">
     <div className="step-header">
-      <h2>⚙️ Quy tắc & Xác nhận</h2>
-      <p className="hint">
-        Cấu hình quy tắc xử lý và xem lại toàn bộ template trước khi lưu
-      </p>
+      <h2>🔎 XÁC NHẬN</h2>
+      <p className="hint">XEM LẠI TOÀN BỘ MẪU TRƯỚC KHI LƯU</p>
     </div>
 
     <div className="section">
-      <h3>🕒 Quy tắc xử lý trễ hạn</h3>
+      <h3>📋 TRẠNG THÁI & GHI CHÚ</h3>
 
       <div className="form-group">
-        <label>🔒 Số ngày cho phép trễ (safe_delay_days)</label>
-        <input
-          type="number"
-          className="form-input"
-          min="0"
-          value={formData.rules.safe_delay_days}
-          onChange={(e) =>
-            handleRuleChange("safe_delay_days", parseInt(e.target.value))
-          }
-        />
-        <small className="hint">
-          Số ngày cho phép user trễ trước khi hệ thống tự động chuyển giai đoạn
-          hoặc đánh dấu quá hạn
-        </small>
-      </div>
-
-      <div className="form-group">
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={formData.rules.auto_skip}
-            onChange={(e) => handleRuleChange("auto_skip", e.target.checked)}
-          />
-          <span>Tự động chuyển giai đoạn khi quá trễ</span>
-        </label>
-      </div>
-    </div>
-
-    <div className="section">
-      <h3>📋 Trạng thái & Ghi chú</h3>
-
-      <div className="form-group">
-        <label>Trạng thái</label>
+        <label>TRẠNG THÁI</label>
         <select
           className="form-select"
           value={formData.status}
           onChange={(e) => handleInputChange("status", e.target.value)}
         >
-          <option value="draft">Nháp (Draft)</option>
-          <option value="active">Hoạt động (Active)</option>
+          <option value="draft">NHÁP (DRAFT)</option>
+          <option value="active">HOẠT ĐỘNG (ACTIVE)</option>
         </select>
       </div>
 
       <div className="form-group">
-        <label>Ghi chú</label>
+        <label>GHI CHÚ</label>
         <textarea
           className="form-textarea"
           rows="3"
-          placeholder="Ghi chú thêm về template này..."
+          placeholder="GHI CHÚ THÊM VỀ BỘ MẪU NÀY..."
           value={formData.notes}
           onChange={(e) => handleInputChange("notes", e.target.value)}
         />
@@ -1490,22 +1596,25 @@ const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
     </div>
 
     <div className="section">
-      <h3>📊 Tổng quan Template</h3>
+      <h3>📊 TỔNG QUAN BỘ MẪU</h3>
       <div className="summary-grid">
         <div className="summary-item">
-          <div className="summary-label">Tên template</div>
+          <div className="summary-label">TÊN BỘ MẪU</div>
           <div className="summary-value">{formData.template_name}</div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Nhóm cây</div>
-          <div className="summary-value">{formData.plant_group}</div>
+          <div className="summary-label">NHÓM CÂY</div>
+          <div className="summary-value">
+            {plantGroups.find((g) => g.value === formData.plant_group)?.label ||
+              formData.plant_group}
+          </div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Số giai đoạn</div>
+          <div className="summary-label">SỐ GIAI ĐOẠN</div>
           <div className="summary-value">{formData.stages.length}</div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Tổng ngày</div>
+          <div className="summary-label">TỔNG NGÀY</div>
           <div className="summary-value">
             {formData.stages.length > 0
               ? Math.max(...formData.stages.map((s) => s.day_end))
@@ -1514,7 +1623,7 @@ const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
           </div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Tổng nhiệm vụ</div>
+          <div className="summary-label">TỔNG NHIỆM VỤ</div>
           <div className="summary-value">
             {formData.stages.reduce(
               (sum, stage) => sum + (stage.autogenerated_tasks?.length || 0),
@@ -1523,7 +1632,7 @@ const Step5Review = ({ formData, handleRuleChange, handleInputChange }) => (
           </div>
         </div>
         <div className="summary-item">
-          <div className="summary-label">Tổng điều kiện</div>
+          <div className="summary-label">TỔNG ĐIỀU KIỆN</div>
           <div className="summary-value">
             {formData.stages.reduce(
               (sum, stage) => sum + (stage.observation_required?.length || 0),

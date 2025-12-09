@@ -5,9 +5,14 @@
     /* Move spacing from external margin into internal padding so
        the footer background covers the visual gap and no underlying
        element shows through as a dark strip. */
-    padding: 6rem 0 1rem;
+    padding:3px;
     margin-top: 0;
     width: 100%;
+}
+
+/* Inner wrapper to control horizontal spacing for content */
+.footer .footer-inner {
+    padding: 2rem 2rem 1.5rem 4rem; /* top right bottom left */
 }
 
 .headfooter {
@@ -108,6 +113,10 @@
         margin-top: 0;
     }
 
+    .footer .footer-inner {
+        padding: 2rem 1rem; /* smaller horizontal padding on tablet */
+    }
+
     .headfooter {
         text-align: center;
     }
@@ -133,6 +142,10 @@
 @media (max-width: 576px) {
     .footer {
         padding: 4rem 0 1rem;
+    }
+
+    .footer .footer-inner {
+        padding: 1.5rem 0.75rem; /* tighter on very small screens */
     }
 
     .footer .col-md-4,

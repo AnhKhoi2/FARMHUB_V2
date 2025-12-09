@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import guidesApi from "../../api/shared/guidesApi";
-import { Card, Row, Col, Typography, Spin, message, Input, Pagination, Select } from "antd";
+import axiosClient from "../../api/shared/axiosClient";
+import { Card, Row, Col, Typography, Spin, Input, Pagination, Select, Button, Tag } from "antd";
+import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
+import getColorForKey from "../../utils/colorUtils";
 
 const { Title } = Typography;
 
@@ -12,6 +16,7 @@ export default function Guides() {
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [categories, setCategories] = useState([]);
+  const [availablePlantTags, setAvailablePlantTags] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(18);
@@ -43,6 +48,7 @@ export default function Guides() {
       const totalCount = Number(meta.total || payload.totalDocs || payload.total || items.length) || 0;
 
       setGuides(items);
+
       setTotal(totalCount);
       setPage(Number(pageParam));
 
@@ -59,15 +65,51 @@ export default function Guides() {
       }
     } catch (err) {
       console.error("Failed to load guides", err);
-      message.error("Không thể tải hướng dẫn");
+      toast.error("Không thể tải hướng dẫn");
     } finally {
       setLoading(false);
     }
   };
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
   useEffect(() => {
-    fetchGuides(q, 1, pageSize, selectedCategory);
+    // Read `category` and `page` from query params on mount so
+    // visiting `/guides?category=leaf_vegetable&page=1` loads filtered results.
+    const params = new URLSearchParams(location.search);
+    const initialCategory = params.get("category") || "";
+    const initialPage = Number(params.get("page") || 1);
+    setSelectedCategory(initialCategory);
+    setPage(initialPage);
+    fetchGuides(q, initialPage, pageSize, initialCategory);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  // fetch plant groups from backend API and normalize to { label, value }
+  const fetchPlantGroups = async () => {
+    try {
+      const res = await axiosClient.get("/api/plant-groups");
+      const data = res.data?.data || [];
+
+      const items = (data || [])
+        .map((d) => {
+          if (!d) return null;
+          if (typeof d === "string") return { label: d, value: d };
+          const name = d.name || d.slug || d._id;
+          const value = d.slug || d._id || name;
+          return { label: name, value };
+        })
+        .filter(Boolean);
+      const withAll = [{ label: "TẤT CẢ", value: "" }, ...items];
+      setAvailablePlantTags(withAll);
+    } catch (e) {
+      console.warn("Failed to load plant groups", e?.message || e);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlantGroups();
   }, []);
 
   const onSearch = (val) => {
@@ -85,47 +127,65 @@ export default function Guides() {
     setSelectedCategory(val);
     // when category changes, fetch page 1
     fetchGuides(q, 1, pageSize, val);
+    // update url so the back button / direct links preserve the selected category
+    try {
+      const search = new URLSearchParams(location.search);
+      if (val) search.set("category", val);
+      else search.delete("category");
+      search.set("page", "1");
+      navigate(`/guides?${search.toString()}`, { replace: true });
+    } catch (e) {
+      // ignore
+    }
   };
 
-    return (
-      <>
-        <Header />
-        <div className="container-fluid" style={{ padding: 24 }}>
-          {/* Header & Search */}
-          <div
-            style={{
-              marginBottom: 24,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-            }}
-          >
-            <div>
-              <Title level={3} style={{ margin: 0 }}>
-                Hướng dẫn trồng trọt
-              </Title>
-            </div>
-            <div style={{ flexGrow: 1, maxWidth: 520, marginTop: 8, display: 'flex', gap: 8 }}>
-              <Select
-                value={selectedCategory}
-                onChange={onCategoryChange}
-                placeholder="Tất cả danh mục"
-                style={{ minWidth: 160 }}
-                options={[{ label: 'Tất cả', value: '' }, ...(categories || []).map((c) => ({ label: c, value: c }))]}
-                allowClear
-              />
-              <Input.Search
-                placeholder="Tìm rau/cây trồng..."
-                allowClear
-                enterButton
-                onSearch={onSearch}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                style={{ flex: 1 }}
-              />
-            </div>
+  return (
+    <>
+      <Header />
+      <div className="container-fluid" style={{ padding: 24 }}>
+        {/* Header & Search */}
+        <div
+          style={{
+            marginBottom: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <Title level={3} style={{ margin: 0 }}>
+              HƯỚNG DẪN TRỒNG TRỌT
+            </Title>
           </div>
+          <div style={{ flexGrow: 1, maxWidth: 520, marginTop: 8, display: 'flex', gap: 8 }}>
+            <Select
+              value={selectedCategory}
+              onChange={onCategoryChange}
+              placeholder="Tất cả danh mục"
+              style={{ minWidth: 160 }}
+              options={availablePlantTags.length ? availablePlantTags : [{ label: 'TẤT CẢ', value: '' }]}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              dropdownMatchSelectWidth={false}
+              dropdownStyle={{ maxHeight: 400, overflow: 'auto', zIndex: 2000 }}
+              getPopupContainer={(trigger) => document.body}
+              onDropdownVisibleChange={(open) => {
+                if (open) fetchPlantGroups();
+              }}
+            />
+            <Input.Search
+              placeholder="Tìm rau/cây trồng..."
+              allowClear
+              enterButton
+              onSearch={onSearch}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              style={{ flex: 1 }}
+            />
+          </div>
+        </div>
 
         {/* Content */}
         {loading ? (
@@ -144,16 +204,47 @@ export default function Guides() {
                     cover={
                       <img
                         src={g.image || "/default-plant.png"}
-                        alt={g.title}
+                        alt={(g.title || "").toUpperCase()}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/default-plant.png";
+                        }}
                         style={{ height: 140, objectFit: "cover", borderRadius: "8px 8px 0 0" }}
                       />
                     }
                     style={{ borderRadius: 8, overflow: "hidden", textAlign: "center" }}
-                    bodyStyle={{ padding: "12px 8px" }}
+                    bodyStyle={{ padding: "12px 8px", minHeight: 140, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
                   >
-                    <Title level={5} style={{ margin: 0 }}>
-                      {g.title}
-                    </Title>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <div style={{ flex: '1 1 auto' }}>
+                          <Title level={5} style={{ margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {(g.title || "").toUpperCase()}
+                          </Title>
+                      </div>
+
+                      {g.plantTags ? (
+                        <div style={{ marginTop: 10 }}>
+                          <Tag
+                            style={{
+                              margin: 0,
+                              fontSize: 12,
+                              color: getColorForKey(g.plantTags),
+                              display: "inline-block",
+                              width: "100%",
+                              textAlign: "center",
+                              padding: "6px 8px",
+                              borderRadius: 6,
+                              boxSizing: "border-box",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {g.plantTags}
+                          </Tag>
+                        </div>
+                      ) : null}
+                    </div>
                   </Card>
                 </Link>
               </Col>
@@ -166,6 +257,7 @@ export default function Guides() {
                   pageSize={pageSize}
                   total={total}
                   onChange={onPageChange}
+                  showSizeChanger={false}
                   style={{ display: 'inline-block' }}
                 />
               </Col>
@@ -173,7 +265,7 @@ export default function Guides() {
           </Row>
         )}
       </div>
-      <Footer /> 
+      <Footer />
     </>
   );
 }

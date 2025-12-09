@@ -158,39 +158,67 @@ export async function create(req, res) {
     if (!user) {
       return res.status(404).json({ error: "Không tìm thấy user" });
     }
-
+    
     const {
       full_name,
       expertise_area,
       experience_years = 0,
       description = "",
-      phone_number = "",
-      certificates = [],
+      phone_number,
+      certificates, // may be undefined / string / array
     } = req.body || {};
+const expertiseStr = expertise_area ? String(expertise_area).trim() : "";
+    const phoneStr = phone_number ? String(phone_number).trim() : "";
+    // --- Normalize certificates so it always becomes an array of non-empty strings.
+    // Accept uploaded file paths like "/uploads/..." and text links like "http://..."
+    let rawCertificates = certificates;
+    if (rawCertificates === null || rawCertificates === undefined || rawCertificates === "") {
+      rawCertificates = [];
+    } else if (!Array.isArray(rawCertificates)) {
+      // client may send single string
+      rawCertificates = [rawCertificates];
+    }
 
-    // --- Validate body ---
+    // Trim items and remove empties; accept any string (no URI validation)
+    const certs = rawCertificates
+      .map((x) => (typeof x === "string" ? x.trim() : ""))
+      .filter(Boolean);
+
+    // --- Validate other fields (keep minimal checks) ---
     const errors = {};
 
     if (!full_name || !String(full_name).trim()) {
       errors.full_name = "Họ tên là bắt buộc";
+    } else if (String(full_name).trim().length > 50) {
+      errors.full_name = "Họ tên tối đa 50 ký tự";
     }
 
-    if (!expertise_area || !String(expertise_area).trim()) {
+      // LĨNH VỰC CHUYÊN MÔN (giới hạn 50 ký tự)
+    if (!expertiseStr) {
       errors.expertise_area = "Lĩnh vực là bắt buộc";
+    } else if (expertiseStr.length > 50) {
+      errors.expertise_area = "Lĩnh vực tối đa 50 ký tự";
     }
 
     const expNum = Number(experience_years);
-    if (Number.isNaN(expNum) || expNum < 0) {
+    if (Number.isNaN(expNum) || expNum <= 0) {
       errors.experience_years =
-        "Số năm kinh nghiệm phải là số không âm (>= 0).";
+        "Số năm kinh nghiệm phải là số không âm (> 0).";
     }
 
-    if (phone_number && typeof phone_number !== "string") {
-      errors.phone_number = "Số điện thoại phải là chuỗi.";
+   if (!phoneStr) {
+      errors.phone_number = "Số điện thoại là bắt buộc.";
+    } else {
+      // 0 + 9 số  HOẶC  +84/84 + 9 số
+      const vnPhoneRegex = /^(0\d{9}|(\+84|84)\d{9})$/;
+      if (!vnPhoneRegex.test(phoneStr)) {
+        errors.phone_number =
+          "Số điện thoại không đúng định dạng Việt Nam (10 số, bắt đầu bằng 0 hoặc +84/84).";
+      }
     }
 
-    if (!Array.isArray(certificates)) {
-      errors.certificates = "Certificates phải là một mảng.";
+    if (description && String(description).trim().length > 250) {
+      errors.description = "Giới thiệu tối đa 250 ký tự";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -199,6 +227,22 @@ export async function create(req, res) {
         errors,
       });
     }
+    // =======================
+// Kiểm tra trùng số điện thoại
+// =======================
+if (phone_number && String(phone_number).trim()) {
+  const existPhone = await ExpertApplication.findOne({
+    phone_number: phone_number.trim(),
+    status: { $in: ["pending", "approved"] }, // approved rồi thì cũng không cho người khác dùng số này
+  });
+
+  if (existPhone) {
+    return res.status(409).json({
+      message: "Số điện thoại này đã được sử dụng cho một hồ sơ Expert khác.",
+      field: "phone_number",
+    });
+  }
+}
 
     // Kiểm tra pending theo field user
     const existing = await ExpertApplication.findOne({
@@ -211,12 +255,6 @@ export async function create(req, res) {
         .status(409)
         .json({ message: "Bạn đã có đơn đang chờ duyệt." });
     }
-
-    const certs = Array.isArray(certificates)
-      ? certificates
-          .map((x) => (typeof x === "string" ? x.trim() : ""))
-          .filter(Boolean)
-      : [];
 
     // Tạo mới
     const app = await ExpertApplication.create({
@@ -271,9 +309,6 @@ export async function create(req, res) {
 // ===============================
 // Approve: PATCH /api/expert-applications/:id/approve
 // ===============================
-// ===============================
-// Approve: PATCH /api/expert-applications/:id/approve
-// ===============================
 export async function approve(req, res) {
   try {
     const { id } = req.params;
@@ -283,89 +318,90 @@ export async function approve(req, res) {
       return res.status(400).json({ error: "Invalid application ID" });
     }
 
-    // Lấy đơn (chỉ cần dữ liệu → dùng lean cho nhẹ)
     const app = await ExpertApplication.findById(id);
-
-    if (!app) {
-      return res.status(404).json({ error: "Application not found" });
+    if (!app) return res.status(404).json({ error: "Application not found" });
+    if (app.status !== "pending") {
+      return res.status(400).json({ error: "Only pending applications can be approved" });
     }
 
-    if (app.status && app.status !== "pending") {
-      return res
-        .status(400)
-        .json({ error: "Only pending applications can be approved" });
-    }
-
+    // ⭐ Payload chuyên gia mới
     const payload = {
       user: app.user,
       full_name: app.full_name,
-      phone_number: app.phone_number || null,
+      phone_number: app.phone_number,
       expertise_area: app.expertise_area,
       experience_years: app.experience_years || 0,
+    
       certificates: Array.isArray(app.certificates)
-        ? app.certificates.map((c) =>
-            typeof c === "string" ? { url: c } : c
-          )
+        ? app.certificates.map(c => (typeof c === "string" ? { url: c } : c))
         : [],
+    
       description: app.description || "",
+      avatar: app.avatar || null,  // avatar từ đơn mới nhất
+    
+      // ⭐ BẮT BUỘC ĐỂ EXPERTLIST HIỂN THỊ
       review_status: "approved",
-      is_public: !!activate_expert,
-      review_notes: review_notes || "",
+      is_public: true,   // thay vì !!activate_expert (Admin đâu bật tắt gì trong approve)
+      is_deleted: false,
+      is_active: true,
+    
+      // ⭐ RẤT QUAN TRỌNG (thiếu là ExpertList không nhận expert mới)
+      created_at: new Date(),
+      updated_at: new Date(),
+    
+      deleted_at: null
     };
+    
 
-    // Tạo / cập nhật Expert + cập nhật role user CHẠY SONG SONG
-    const [expert, updatedUser] = await Promise.all([
-      Expert.findOneAndUpdate(
-        { user: app.user, is_deleted: false },
-        { $set: payload },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      ),
-      User.findByIdAndUpdate(
-        app.user,
-        { role: "expert" },
-        { new: true }
-      ),
-    ]);
+    // ⭐ Tạo / cập nhật expert
+    const expert = await Expert.findOneAndUpdate(
+      { user: app.user },
+      { $set: payload },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
-    // Xoá đơn sau khi duyệt
-// Cập nhật trạng thái đơn sang "approved" thay vì xoá
-app.status = "approved";
-app.review_notes = review_notes || "";
-await app.save();
+    // ⭐ Cập nhật role user + avatar mới
+    const updatedUser = await User.findByIdAndUpdate(
+      app.user,
+      { 
+        role: "expert",
+        avatar: expert?.avatar || null    // ⭐ RẤT QUAN TRỌNG
+      },
+      { new: true }
+    );
 
+    // Cập nhật đơn
+    app.status = "approved";
+    app.review_notes = review_notes;
+    await app.save();
 
-    // ✅ Trả response CHO FE NGAY → UI không bị khựng vì chờ gửi mail
     res.status(200).json({
-      message:
-        "Application approved, expert profile created, and user role updated to expert.",
+      message: "Application approved successfully",
       expert,
+      user: updatedUser
     });
 
-    // 📧 Gửi mail THÊM, fire-and-forget, không chặn response
     if (updatedUser?.email) {
-      sendMail({
-        to: updatedUser.email,
-        subject: "FarmHub - Đơn đăng ký Expert đã được duyệt",
-        html: `
-          <p>Xin chào ${
-            updatedUser.fullName || updatedUser.username || "bạn"
-          },</p>
-          <p>Chúc mừng! Đơn đăng ký trở thành Expert của bạn đã được duyệt 🎉</p>
-          <p>Bạn có thể đăng nhập lại để bắt đầu sử dụng quyền Expert.</p>
-          <p>— FarmHub Team</p>
-        `,
-      }).catch((e) => {
-        console.warn("sendMail USER failed:", e?.message);
-      });
-    }
+  sendMail({
+    to: updatedUser.email,
+    subject: "FarmHub - Expert Approved",
+    html: `
+      <p>Xin chúc mừng! Đơn đăng ký Expert của bạn trên hệ thống <strong>FarmHub</strong> đã được xét duyệt thành công.</p>
+      <p>Bây giờ bạn đã có thể truy cập vào các chức năng dành riêng cho Expert, bao gồm quản lý hồ sơ chuyên môn, tư vấn người dùng và tham gia đóng góp nội dung chuyên sâu.</p>
+      <p>Nếu bạn cần hỗ trợ thêm, vui lòng liên hệ đội ngũ FarmHub để được hỗ trợ kịp thời.</p>
+      <p>Trân trọng,<br/>FarmHub Team</p>
+    `
+  }).catch(() => {});
+}
+
+
   } catch (err) {
     console.error("Approve application error:", err);
-    return res.status(500).json({
-      error: "Failed to approve application",
-      detail: err.message,
-    });
+    res.status(500).json({ error: "Failed to approve", detail: err.message });
   }
 }
+
+
 
 
 // ===============================

@@ -1,0 +1,49 @@
+/* NotebookStatsPage.css - light emerald background and layout */
+
+.notebook-stats-page {
+    background: linear-gradient(180deg, #e6f9f1 0%, #def6ea 100%);
+    /* light emerald */
+    min-height: calc(100vh - 140px);
+    /* leave room for header/footer */
+    padding: 20px 0 60px 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+.stats-heading {
+    margin-bottom: 24px;
+    color: #154a2b;
+    /* darker green for heading */
+    font-size: 1.75rem;
+    font-weight: 800;
+}
+
+/* Make sure NotebookStats inner cards keep spacing on this background */
+.notebook-stats-page .notebook-stats-root {
+    padding: 16px;
+}
+
+/* Back button for stats page */
+.stats-back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(21, 74, 43, 0.06);
+    color: #154a2b;
+    border: 1px solid rgba(21, 74, 43, 0.12);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    margin-bottom: 16px;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.stats-back-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(21, 74, 43, 0.06);
+}

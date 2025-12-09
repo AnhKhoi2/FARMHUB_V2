@@ -1,26 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {
-  FaCloudSun,
-  FaBook,
-  FaStethoscope,
-  FaBug,
-} from "react-icons/fa";
+import { FaCloudSun, FaBook, FaStethoscope, FaBug } from "react-icons/fa";
 import Header from "../../components/shared/Header";
 import Footer from "../../components/shared/Footer";
 import axiosClient from "../../api/shared/axiosClient";
 import "../../css/farmer/Home.css";
 
-// Toạ độ mặc định (TP.HCM)
-const DEFAULT_LAT = 10.7769;
-const DEFAULT_LON = 106.7009;
+// Toạ độ mặc định (Cần Thơ)
+const DEFAULT_LAT = 10.0452;
+const DEFAULT_LON = 105.7469;
 
 // API mới – lấy từ POST
 const API_LATEST_POSTS = "/api/posts/public";
 
 const Home = () => {
   const user = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const guidesRef = useRef(null);
 
   const [recentVisited, setRecentVisited] = useState([]);
 
@@ -84,10 +82,7 @@ const Home = () => {
             raw.main?.feels_like ??
             null,
           humidity:
-            raw.humidity ??
-            raw.current?.humidity ??
-            raw.main?.humidity ??
-            null,
+            raw.humidity ?? raw.current?.humidity ?? raw.main?.humidity ?? null,
           condition:
             raw.condition ||
             raw.description ||
@@ -120,27 +115,59 @@ const Home = () => {
 
   // ⭐ Lấy 3 bài post từ PostController
   useEffect(() => {
-    const fetchLatestPosts = async () => {
+    const fetchOnePerCategory = async () => {
+      // Use actual category labels used across the app. "Bán" posts are labeled
+      // under "Nông sản" in the category list, so request that label.
+      const groups = ["Trao đổi", "Cho tặng", "Thiết bị"];
+
       try {
         setPostsLoading(true);
         setPostsError(null);
 
-        const res = await axiosClient.get(API_LATEST_POSTS, {
-          params: { page: 1, limit: 3 },
-          headers: { Authorization: "" }, // ép public, tránh verifyToken
-        });
+        const promises = groups.map((label) =>
+          axiosClient
+            .get(API_LATEST_POSTS, {
+              params: { page: 1, limit: 1, category: label },
+              headers: { Authorization: "" },
+            })
+            .then((res) => {
+              const raw = res.data;
+              const items = raw?.data?.items ?? raw?.items ?? raw?.data ?? [];
+              const first =
+                Array.isArray(items) && items.length ? items[0] : null;
+              if (first && !first.category) first.category = label;
+              return first;
+            })
+            .catch((e) => {
+              // Return null on failure for this category
+              console.warn(
+                `Failed fetching post for category ${label}:`,
+                e?.message || e
+              );
+              return null;
+            })
+        );
 
-        const raw = res.data;
+        const results = await Promise.all(promises);
+        const items = results.filter(Boolean);
 
-        let items =
-          raw?.data?.items ??
-          raw?.items ??
-          raw?.data ??
-          [];
-
-        setLatestPosts(Array.isArray(items) ? items.slice(0, 3) : []);
+        if (items.length === 0) {
+          // fallback to latest 3 posts if none found for the categories
+          const res = await axiosClient.get(API_LATEST_POSTS, {
+            params: { page: 1, limit: 3 },
+            headers: { Authorization: "" },
+          });
+          const raw = res.data;
+          const fallback = raw?.data?.items ?? raw?.items ?? raw?.data ?? [];
+          setLatestPosts(Array.isArray(fallback) ? fallback.slice(0, 3) : []);
+        } else {
+          setLatestPosts(items);
+        }
       } catch (err) {
-        console.error("Latest posts error:", err?.response || err);
+        console.error(
+          "Error fetching posts by category:",
+          err?.response || err
+        );
         setPostsError("Không tải được bài đăng.");
         setLatestPosts([]);
       } finally {
@@ -148,10 +175,25 @@ const Home = () => {
       }
     };
 
-    fetchLatestPosts();
+    fetchOnePerCategory();
   }, []);
   // 3 bài hướng dẫn
   useEffect(() => {
+    // If navigated here with a request to scroll to guides, do it.
+    try {
+      const s =
+        location?.state?.scrollTo ||
+        (location?.state?.fromHome ? "guides" : null);
+      if (s === "guides" && guidesRef.current) {
+        setTimeout(() => {
+          guidesRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 80);
+      }
+    } catch (e) {}
+
     const fetchGuides = async () => {
       try {
         setGuidesLoading(true);
@@ -159,7 +201,7 @@ const Home = () => {
 
         const res = await axiosClient.get("/guides", {
           params: { page: 1, limit: 3 },
-          headers: { Authorization: "" } // ép public
+          headers: { Authorization: "" }, // ép public
         });
 
         const items = res.data?.data || []; // backend trả thẳng array
@@ -203,61 +245,166 @@ const Home = () => {
     <>
       <Header />
       <div className="homepage user-home-page">
-
         {/* ---------- HERO ---------- */}
         <section className="hero-section">
-          <div id="heroCarousel" className="carousel slide" data-bs-ride="carousel">
+          <div
+            id="heroCarousel"
+            className="carousel slide"
+            data-bs-ride="carousel"
+          >
             <div className="carousel-indicators">
-              <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" className="active"></button>
-              <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-              <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+              <button
+                type="button"
+                data-bs-target="#heroCarousel"
+                data-bs-slide-to="0"
+                className="active"
+              ></button>
+              <button
+                type="button"
+                data-bs-target="#heroCarousel"
+                data-bs-slide-to="1"
+              ></button>
+              <button
+                type="button"
+                data-bs-target="#heroCarousel"
+                data-bs-slide-to="2"
+              ></button>
+              <button
+                type="button"
+                data-bs-target="#heroCarousel"
+                data-bs-slide-to="3"
+              ></button>
+              <button
+                type="button"
+                data-bs-target="#heroCarousel"
+                data-bs-slide-to="4"
+              ></button>
             </div>
 
             <div className="carousel-inner">
               <div className="carousel-item active" data-bs-interval="3000">
                 <div className="carousel-overlay"></div>
-                <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1200" className="d-block w-100" />
+                <img
+                  src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1200"
+                  className="d-block w-100"
+                />
                 <div className="carousel-caption">
-                  <h2 className="display-4 fw-bold">Sống Xanh Bắt Đầu Từ Đây</h2>
+                  <h2 className="display-4 fw-bold">
+                    Trồng Rau Đô Thị Dễ Dàng
+                  </h2>
                   <p className="fs-5">
-                    Trồng rau sạch tại nhà dễ dàng với FarmHub. <br />
-                    Hướng dẫn chi tiết, công nghệ AI hỗ trợ, cộng đồng kết nối.
+                    Hỗ trợ người dân đô thị trồng rau sạch ngay tại nhà (sân
+                    thượng, ban công, căn hộ). <br />
                   </p>
-                  <Link to="/guides" className="btn btn-success btn-lg mt-3">Khám Phá Ngay</Link>
+                  <Link to="/guides" className="btn btn-success btn-lg mt-3">
+                    Khám Phá Ngay
+                  </Link>
                 </div>
               </div>
 
               <div className="carousel-item" data-bs-interval="3000">
                 <div className="carousel-overlay"></div>
-                <img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200" className="d-block w-100" />
+                <img
+                  src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200"
+                  className="d-block w-100"
+                />
                 <div className="carousel-caption">
-                  <h2 className="display-4 fw-bold">Tươi Sạch, Tiện Lợi</h2>
+                  <h2 className="display-4 fw-bold">
+                    Hướng Dẫn Trồng Cá Nhân Hóa
+                  </h2>
                   <p className="fs-5">
-                    Mua hạt giống, phân bón, dụng cụ chất lượng cao. <br />
-                    Tạo khu vườn xanh ngay tại đô thị.
+                    Quy trình trồng trọt khoa học, trực quan - Theo dõi theo
+                    từng loại cây. <br />
+                    Gợi ý cá nhân hóa theo điều kiện môi trường, vị trí và kinh
+                    nghiệm người dùng.
                   </p>
-                  <Link to="/shop" className="btn btn-success btn-lg mt-3">Mua Sắm Ngay</Link>
+                  <Link to="/guides" className="btn btn-success btn-lg mt-3">
+                    Xem Hướng Dẫn
+                  </Link>
                 </div>
               </div>
 
               <div className="carousel-item" data-bs-interval="3000">
                 <div className="carousel-overlay"></div>
-                <img src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=1200" className="d-block w-100" />
+                <img
+                  src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=1200"
+                  className="d-block w-100"
+                />
                 <div className="carousel-caption">
-                  <h2 className="display-4 fw-bold">Sản Phẩm Hữu Cơ Tươi Sạch</h2>
+                  <h2 className="display-4 fw-bold">
+                    Ghi Chép & Phân Tích Thông Minh
+                  </h2>
                   <p className="fs-5">
-                    Chất lượng tươi sạch, hỗ trợ tận tâm. <br />
-                    Biến ban công thành vườn rau xanh mát.
+                    Sổ tay & Bộ sưu tập - Nhắc nhở tưới nước / bón phân / thu
+                    hoạch. <br />
+                    Phân tích tiến trình trồng trọt, đề xuất cải thiện năng
+                    suất.
                   </p>
-                  <Link to="/my-garden" className="btn btn-success btn-lg mt-3">Bắt Đầu Hành Trình</Link>
+                  <Link
+                    to="/farmer/notebooks"
+                    className="btn btn-success btn-lg mt-3"
+                  >
+                    Quản Lý Nhật Ký
+                  </Link>
+                </div>
+              </div>
+
+              <div className="carousel-item" data-bs-interval="3000">
+                <div className="carousel-overlay"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200"
+                  className="d-block w-100"
+                />
+                <div className="carousel-caption">
+                  <h2 className="display-4 fw-bold">
+                    Chẩn Đoán Bệnh Cây bằng AI
+                  </h2>
+                  <p className="fs-5">
+                    Phát hiện bệnh sớm, gợi ý hướng xử lý đúng cách. <br />
+                    Tăng tỉ lệ sống và năng suất của cây trồng.
+                  </p>
+                  <Link
+                    to="/plant-diagnosis"
+                    className="btn btn-success btn-lg mt-3"
+                  >
+                    Chẩn Đoán Ngay
+                  </Link>
+                </div>
+              </div>
+
+              <div className="carousel-item" data-bs-interval="3000">
+                <div className="carousel-overlay"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1200"
+                  className="d-block w-100"
+                />
+                <div className="carousel-caption">
+                  <h2 className="display-4 fw-bold">Cộng Đồng & Marketplace</h2>
+                  <p className="fs-5">
+                    Kết nối người trồng đô thị, chia sẻ kinh nghiệm. <br />
+                    Trao đổi hạt giống, phân bón, vật phẩm trồng trọt.
+                  </p>
+                  <Link to="/market" className="btn btn-success btn-lg mt-3">
+                    Tham Gia Cộng Đồng
+                  </Link>
                 </div>
               </div>
             </div>
 
-            <button className="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <button
+              className="carousel-control-prev"
+              type="button"
+              data-bs-target="#heroCarousel"
+              data-bs-slide="prev"
+            >
               <span className="carousel-control-prev-icon"></span>
             </button>
-            <button className="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <button
+              className="carousel-control-next"
+              type="button"
+              data-bs-target="#heroCarousel"
+              data-bs-slide="next"
+            >
               <span className="carousel-control-next-icon"></span>
             </button>
           </div>
@@ -272,7 +419,9 @@ const Home = () => {
                   <FaCloudSun className="weather-main-icon" />
                 </div>
                 <div>
-                  <h3 className="weather-title mb-1">Thời tiết cho vườn của bạn</h3>
+                  <h3 className="weather-title mb-1">
+                    Thời tiết cho vườn của bạn
+                  </h3>
 
                   {weatherLoading ? (
                     <p className="text-muted">Đang tải dữ liệu...</p>
@@ -281,7 +430,9 @@ const Home = () => {
                   ) : weather ? (
                     <>
                       <p className="weather-location">{weather.locationName}</p>
-                      <p className="text-muted text-capitalize">{weather.condition}</p>
+                      <p className="text-muted text-capitalize">
+                        {weather.condition}
+                      </p>
                     </>
                   ) : (
                     <p className="text-muted">Chưa có dữ liệu.</p>
@@ -293,8 +444,12 @@ const Home = () => {
                 {weather ? (
                   <>
                     <div className="me-4 text-center">
-                      <div className="weather-temp">{Math.round(weather.tempC)}°C</div>
-                      <div className="text-muted small">Cảm giác như {Math.round(weather.feelsLikeC)}°C</div>
+                      <div className="weather-temp">
+                        {Math.round(weather.tempC)}°C
+                      </div>
+                      <div className="text-muted small">
+                        Cảm giác như {Math.round(weather.feelsLikeC)}°C
+                      </div>
                     </div>
                     <div className="d-flex flex-column align-items-end text-muted small">
                       <div>Độ ẩm: {weather.humidity}%</div>
@@ -303,7 +458,6 @@ const Home = () => {
                         XEM CHI TIẾT
                       </Link>
                     </div>
-
                   </>
                 ) : (
                   <div className="text-muted small">Không có dữ liệu.</div>
@@ -314,86 +468,108 @@ const Home = () => {
         </section>
 
         {/* ---------- LATEST POSTS ---------- */}
-          <section className="container my-5 market-section">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <span className="text-success text-uppercase fw-semibold">Rao vặt</span>
-                <h2 className="h3 fw-bold mb-0">Tin rao vặt mới nhất</h2>
-                
-              </div>
-
+        <section className="container my-5 market-section">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <span className="text-success text-uppercase fw-semibold">
+                Rao vặt
+              </span>
+              <h2 className="h3 fw-bold mb-0">Tin rao vặt mới nhất</h2>
             </div>
+          </div>
 
-            {postsLoading ? (
-              <div className="row g-4">
-                {[1, 2, 3].map((i) => (
-                  <div className="col-md-4" key={i}>
-                    <div className="card shadow-sm skeleton-card">
-                      <div className="skeleton-img mb-3" />
-                      <div className="skeleton-line mb-2" />
-                      <div className="skeleton-line small mb-2" />
-                      <div className="skeleton-line small w-50" />
-                      
-                    </div>
+          {postsLoading ? (
+            <div className="row g-4">
+              {[1, 2, 3].map((i) => (
+                <div className="col-md-4" key={i}>
+                  <div className="card shadow-sm skeleton-card">
+                    <div className="skeleton-img mb-3" />
+                    <div className="skeleton-line mb-2" />
+                    <div className="skeleton-line small mb-2" />
+                    <div className="skeleton-line small w-50" />
                   </div>
-                ))}
-              </div>
-            ) : postsError ? (
-              <p className="text-danger">{postsError}</p>
-            ) : latestPosts.length === 0 ? (
-              <div className="market-empty text-muted">
-                Chưa có bài đăng nào.
-                <Link to="/market">Đi đến chợ nông sản</Link>.
-              </div>
-            ) : (
-              <div className="row g-4">
-                {latestPosts.map((post) => {
-                  const imgUrl = getFirstImage(post.images);
-                  const locationText = getLocationText(post.location);
-                  return (
-                    <div className="col-md-4" key={post._id}>
-                      <div className="card h-100 shadow-sm market-card">
-                        {imgUrl && (
-                          <div className="market-image-wrapper">
-                            <img src={imgUrl} className="market-image" alt={post.title} />
+                </div>
+              ))}
+            </div>
+          ) : postsError ? (
+            <p className="text-danger">{postsError}</p>
+          ) : latestPosts.length === 0 ? (
+            <div className="market-empty text-muted">
+              Chưa có bài đăng nào.
+              <Link to="/market">Đi đến chợ nông sản</Link>.
+            </div>
+          ) : (
+            <div className="row g-4">
+              {latestPosts.map((post) => {
+                const imgUrl = getFirstImage(post.images);
+                const locationText = getLocationText(post.location);
+                return (
+                  <div className="col-md-4" key={post._id}>
+                    <div
+                      className="card h-100 shadow-sm market-card"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => navigate(`/posts/${post._id}`)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") navigate(`/posts/${post._id}`);
+                      }}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {imgUrl && (
+                        <div className="market-image-wrapper">
+                          <img
+                            src={imgUrl}
+                            className="market-image"
+                            alt={post.title}
+                          />
+                        </div>
+                      )}
+
+                      <div className="card-body d-flex flex-column">
+                        <h5 className="card-title fw-bold">{post.title}</h5>
+
+                        {post.category && (
+                          <div className="badge bg-light text-success border mb-2">
+                            {post.category}
                           </div>
                         )}
 
-                        <div className="card-body d-flex flex-column">
-                          <h5 className="card-title fw-bold">{post.title}</h5>
+                        <p className="market-desc text-muted mb-3">
+                          {getShortDescription(post.description, 110)}
+                        </p>
 
-                          {post.category && (
-                            <div className="badge bg-light text-success border mb-2">
-                              {post.category}
+                        {post.price && (
+                          <div className="market-price">{post.price}</div>
+                        )}
+
+                        <div className="market-meta mt-auto">
+                          {locationText && (
+                            <div className="small text-muted">
+                              📍 {locationText}
                             </div>
                           )}
-
-                          <p className="text-muted mb-3">
-                            {getShortDescription(post.description, 110)}
-                          </p>
-
-                          {post.price && <div className="market-price">{post.price}</div>}
-
-                          <div className="market-meta mt-auto">
-                            {locationText && <div className="small text-muted">📍 {locationText}</div>}
-                            {post.userId?.username && (
-                              <div className="small text-muted">👤 {post.userId.username}</div>
-                            )}
-                          </div>
+                          {post.userId?.username && (
+                            <div className="small text-muted">
+                              👤 {post.userId.username}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
         {/* ---------- Guide ---------- */}
         <section className="container my-5">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div>
-              <span className="text-success text-uppercase fw-semibold">Hướng dẫn</span>
-              <h2 className="h3 fw-bold mb-0">Hướng dẫn trồng trọt</h2>
+              <span className="text-success text-uppercase fw-semibold">
+                HƯỚNG DẪN
+              </span>
+              <h2 className="h3 fw-bold mb-0">HƯỚNG DẪN TRỒNG TRỌT</h2>
             </div>
           </div>
 
@@ -402,15 +578,14 @@ const Home = () => {
           ) : guidesError ? (
             <p className="text-danger">{guidesError}</p>
           ) : (
-            <div className="row g-4">
+            <div className="row g-4" ref={guidesRef}>
               {latestGuides.map((g) => (
                 <div className="col-md-4" key={g._id}>
                   <div className="guide-card">
-
                     {g.image ? (
                       <img
                         src={g.image}
-                        alt={g.title}
+                        alt={(g.title || "").toUpperCase()}
                         className="guide-image"
                       />
                     ) : (
@@ -420,19 +595,21 @@ const Home = () => {
                     )}
 
                     <div className="guide-body">
-                      <h5 className="guide-title">{g.title}</h5>
+                      <h5 className="guide-title">
+                        {(g.title || "").toUpperCase()}
+                      </h5>
                       <p className="guide-desc">
                         {g.summary || g.description?.slice(0, 120)}...
                       </p>
 
                       <Link
                         to={`/guides/${g._id}`}
+                        state={{ fromHome: true }}
                         className="btn btn-success guide-btn"
                       >
                         Xem chi tiết
                       </Link>
                     </div>
-
                   </div>
                 </div>
               ))}
@@ -440,66 +617,63 @@ const Home = () => {
           )}
         </section>
 
-
         {/* ---------- SERVICES ---------- */}
         <section className="services-section container my-5 py-5">
-  <div className="text-center mb-5">
-    <span className="text-success text-uppercase fw-semibold">
-      Dịch vụ
-    </span>
-    <h2 className="display-5 fw-bold">Các dịch vụ của chúng tôi</h2>
-  </div>
+          <div className="text-center mb-5">
+            <span className="text-success text-uppercase fw-semibold">
+              Dịch vụ
+            </span>
+            <h2 className="display-5 fw-bold">Các dịch vụ của chúng tôi</h2>
+          </div>
 
-  <div className="row g-4">
-    
-    {/* WEATHER */}
-    <div className="col-md-3">
-      <Link to="/weather" className="text-decoration-none">
-        <div className="card h-100 shadow-sm hover-card text-center p-4">
-          <FaCloudSun size={64} className="text-success mb-3" />
-          <h4 className="fw-bold">Thời tiết</h4>
-          <p className="text-muted">Dự báo thời tiết chuẩn cho cây trồng</p>
-        </div>
-      </Link>
-    </div>
+          <div className="row g-4">
+            {/* WEATHER */}
+            <div className="col-md-3">
+              <Link to="/weather" className="text-decoration-none">
+                <div className="card h-100 shadow-sm hover-card text-center p-4">
+                  <FaCloudSun size={64} className="text-success mb-3" />
+                  <h4 className="fw-bold">Thời tiết</h4>
+                  <p className="text-muted">
+                    Dự báo thời tiết chuẩn cho cây trồng
+                  </p>
+                </div>
+              </Link>
+            </div>
 
-    {/* NHẬT KÝ LÀM VƯỜN */}
-    <div className="col-md-3">
-      <Link to="/farmer/notebooks" className="text-decoration-none">
-        <div className="card h-100 shadow-sm hover-card text-center p-4">
-          <FaBook size={64} className="text-success mb-3" />
-          <h4 className="fw-bold">Nhật ký làm vườn</h4>
-          <p className="text-muted">Theo dõi tiến trình trồng trọt</p>
-        </div>
-      </Link>
-    </div>
+            {/* NHẬT KÝ LÀM VƯỜN */}
+            <div className="col-md-3">
+              <Link to="/farmer/notebooks" className="text-decoration-none">
+                <div className="card h-100 shadow-sm hover-card text-center p-4">
+                  <FaBook size={64} className="text-success mb-3" />
+                  <h4 className="fw-bold">Nhật ký làm vườn</h4>
+                  <p className="text-muted">Theo dõi tiến trình trồng trọt</p>
+                </div>
+              </Link>
+            </div>
 
-    {/* CHUẨN ĐOÁN */}
-    <div className="col-md-3">
-      <Link to="/plant-diagnosis" className="text-decoration-none">
-        <div className="card h-100 shadow-sm hover-card text-center p-4">
-          <FaStethoscope size={64} className="text-success mb-3" />
-          <h4 className="fw-bold">Chuẩn đoán</h4>
-          <p className="text-muted">Sổ khám sức khỏe cây trồng</p>
-        </div>
-      </Link>
-    </div>
+            {/* CHUẨN ĐOÁN */}
+            <div className="col-md-3">
+              <Link to="/plant-diagnosis" className="text-decoration-none">
+                <div className="card h-100 shadow-sm hover-card text-center p-4">
+                  <FaStethoscope size={64} className="text-success mb-3" />
+                  <h4 className="fw-bold">Chuẩn đoán</h4>
+                  <p className="text-muted">Sổ khám sức khỏe cây trồng</p>
+                </div>
+              </Link>
+            </div>
 
-    {/* BỆNH CÂY TRỒNG */}
-    <div className="col-md-3">
-      <Link to="/diseases" className="text-decoration-none">
-        <div className="card h-100 shadow-sm hover-card text-center p-4">
-          <FaBug size={64} className="text-success mb-3" />
-          <h4 className="fw-bold">Bệnh cây trồng</h4>
-          <p className="text-muted">Thông tin bệnh & cách xử lý</p>
-        </div>
-      </Link>
-    </div>
-
-  </div>
-</section>
-
-
+            {/* BỆNH CÂY TRỒNG */}
+            <div className="col-md-3">
+              <Link to="/diseases" className="text-decoration-none">
+                <div className="card h-100 shadow-sm hover-card text-center p-4">
+                  <FaBug size={64} className="text-success mb-3" />
+                  <h4 className="fw-bold">Bệnh cây trồng</h4>
+                  <p className="text-muted">Thông tin bệnh & cách xử lý</p>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </section>
       </div>
       <Footer />
     </>

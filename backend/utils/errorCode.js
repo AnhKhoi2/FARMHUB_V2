@@ -21,6 +21,10 @@ export const ERROR_CODES = {
     message: "Tài khoản chưa được xác thực, vui lòng kiểm tra email.",
     statusCode: 403,
   },
+  ACCOUNT_DELETED: {
+    message: "Tài khoản của bạn đã bị xóa khỏi hệ thống. Nếu bạn nghĩ đây là một hiểu lầm, vui lòng liên hệ với quản trị viên.",
+    statusCode: 403,
+  },
 
   // TOKEN
   TOKEN_EXPIRED: {
@@ -52,7 +56,7 @@ export const ERROR_CODES = {
   },
   INVALID_USERNAME: {
     message:
-      "Tên người dùng chỉ được chứa chữ, số, dấu gạch dưới và từ 3–20 ký tự.",
+      "Tên đăng phải từ 3–20 ký tự, cho phép chữ có dấu, số, gạch dưới và khoảng trắng, không chứa ký tự đặc biệt.",
     statusCode: 400,
   },
 
@@ -75,4 +79,10 @@ export const ERROR_CODES = {
     message: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
     statusCode: 500,
   },
+
+  TERMS_NOT_ACCEPTED: {
+  message: "Bạn phải đồng ý với điều khoản sử dụng trước khi đăng ký.",
+  statusCode: 400,
+},
+
 };

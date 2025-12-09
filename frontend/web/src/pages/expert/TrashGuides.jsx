@@ -13,8 +13,10 @@ import {
   Spin,
   Typography,
   Image,
-  message,
+  Table,
+  Space,
 } from "antd";
+import { toast } from "react-toastify";
 
 import {
   RollbackOutlined,
@@ -23,6 +25,7 @@ import {
 } from "@ant-design/icons";
 
 import placeholderImg from "../../assets/placeholder.svg";
+import HeaderExpert from "../../components/shared/HeaderExpert";
 
 const { Title, Text } = Typography;
 
@@ -49,7 +52,7 @@ export default function TrashGuides() {
         setGuides(docs);
         setTotalPages(meta.pages || 1);
       } catch (e) {
-        message.error("Không thể tải thùng rác.");
+        toast.error("Không thể tải thùng rác.");
       } finally {
         setLoading(false);
       }
@@ -64,17 +67,17 @@ export default function TrashGuides() {
   const onRestore = async (id) => {
     try {
       await axiosClient.post(`/guides/${id}/restore`);
-      message.success("Đã khôi phục.");
+      toast.success("Đã khôi phục.");
       fetchTrash(page);
     } catch (e) {
-      message.error("Khôi phục thất bại");
+      toast.error("Khôi phục thất bại");
     }
   };
 
   const onPermanentDelete = async (id) => {
     try {
       await axiosClient.delete(`/guides/${id}/permanent`);
-      message.success("Đã xóa vĩnh viễn");
+      toast.success("Đã xóa vĩnh viễn");
 
       const remaining = guides.length - 1;
       if (remaining <= 0 && page > 1) {
@@ -83,11 +86,14 @@ export default function TrashGuides() {
         fetchTrash(page);
       }
     } catch (e) {
-      message.error("Xóa vĩnh viễn thất bại");
+      toast.error("Xóa vĩnh viễn thất bại");
     }
   };
 
   return (
+    <>
+          <HeaderExpert />
+    
     <div style={{ padding: 24 }}>
       {/* --- Header --- */}
       <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
@@ -119,53 +125,61 @@ export default function TrashGuides() {
           style={{ marginTop: 80 }}
         />
       ) : (
-        <Row gutter={[16, 16]}>
-          {guides.map((g) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={g._id}>
-              <Card
-                hoverable
-                cover={
-                  <Image
-                    src={g.image || placeholderImg}
-                    alt="thumbnail"
-                    height={160}
-                    style={{ objectFit: "cover" }}
-                    preview={false}
-                  />
-                }
-                actions={[
+        <Table
+          rowKey={(r) => r._id}
+          dataSource={guides}
+          pagination={false}
+          bordered
+          columns={[
+            {
+              title: "Ảnh",
+              dataIndex: "image",
+              key: "image",
+              width: 140,
+              render: (val) => (
+                <Image
+                  src={val || placeholderImg}
+                  alt="thumb"
+                  width={120}
+                  height={80}
+                  preview={false}
+                  style={{ objectFit: "cover", borderRadius: 6 }}
+                />
+              ),
+            },
+            {
+              title: "Tiêu đề",
+              dataIndex: "title",
+              key: "title",
+              render: (t, r) => <Text strong>{t}</Text>,
+            },
+            {
+              title: "Mô tả",
+              dataIndex: "description",
+              key: "description",
+              render: (d) => <Text type="secondary">{d || "Không có mô tả"}</Text>,
+            },
+            {
+              title: "Hành động",
+              key: "actions",
+              width: 160,
+              align: "center",
+              render: (_t, record) => (
+                <Space>
                   <Popconfirm
                     title="Khôi phục?"
                     okText="Có"
                     cancelText="Không"
-                    onConfirm={() => onRestore(g._id)}
+                    onConfirm={() => onRestore(record._id)}
                   >
-                    <RollbackOutlined style={{ color: "#1890ff" }} />
-                  </Popconfirm>,
+                    <Button type="link">Khôi phục</Button>
+                  </Popconfirm>
 
-                  <Popconfirm
-                    title="Xóa vĩnh viễn? Không thể khôi phục."
-                    okText="Xóa"
-                    cancelText="Hủy"
-                    okType="danger"
-                    onConfirm={() => onPermanentDelete(g._id)}
-                  >
-                    <DeleteOutlined style={{ color: "red" }} />
-                  </Popconfirm>,
-                ]}
-              >
-                <Card.Meta
-                  title={g.title}
-                  description={
-                    <Text type="secondary">
-                      {g.description || g.summary || "Không có mô tả"}
-                    </Text>
-                  }
-                />
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                </Space>
+              ),
+            },
+          ]}
+        />
       )}
 
       {/* --- Pagination --- */}
@@ -178,5 +192,7 @@ export default function TrashGuides() {
         showSizeChanger={false}
       />
     </div>
+        </>
+
   );
 }

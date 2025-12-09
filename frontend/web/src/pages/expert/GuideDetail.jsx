@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
 import {
   Card,
@@ -11,6 +11,7 @@ import {
   Divider,
   Row,
   Col,
+  Modal,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -18,14 +19,19 @@ import {
   UnorderedListOutlined,
 } from "@ant-design/icons";
 import placeholderImg from "../../assets/placeholder.svg";
+import DetailFooter from "../../components/shared/DetailFooter";
 
 const { Title, Text } = Typography;
 
 export default function GuideDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stepModalVisible, setStepModalVisible] = useState(false);
+  const [activeStep, setActiveStep] = useState(null);
 
   useEffect(() => {
     axiosClient
@@ -56,25 +62,45 @@ export default function GuideDetail() {
 
       {/* HEADER */}
       <Flex justify="space-between" align="center">
-        <Button
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(-1)}
-        >
-          Quay lại
-        </Button>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => {
+              // If current URL has search params, go back to manager list with those params
+              const qs = location.search || (searchParams.toString() ? `?${searchParams.toString()}` : '');
+              if (qs) {
+                navigate(`/managerguides${qs}`);
+                return;
+              }
+
+              // Prefer navigation state if present
+              if (location.state && (location.state.page || location.state.category)) {
+                navigate('/managerguides', { state: location.state });
+                return;
+              }
+
+              // Otherwise, infer category from guide and go to page 1
+              const inferredCategory = guide?.plant_group || (Array.isArray(guide?.plantTags) && guide.plantTags[0]) || '';
+              const params = [];
+              if (inferredCategory) params.push(`category=${encodeURIComponent(inferredCategory)}`);
+              params.push('page=1');
+              navigate(`/managerguides?${params.join('&')}`);
+            }}
+          >
+            Quay lại
+          </Button>
 
         <Flex gap={10}>
           <Button
             type="primary"
             icon={<EditOutlined />}
-            onClick={() => navigate(`/managerguides/edit/${guide._id}`)}
+            onClick={() => navigate(`/managerguides/edit/${guide._id}`, { state: location.state || {} })}
           >
             Chỉnh sửa
           </Button>
 
           <Button
             icon={<UnorderedListOutlined />}
-            onClick={() => navigate("/managerguides")}
+            onClick={() => navigate("/managerguides", { state: location.state || {} })}
           >
             Danh sách
           </Button>
@@ -85,7 +111,7 @@ export default function GuideDetail() {
       <Card bordered>
 
         <Flex vertical gap={10}>
-          <Title level={2}>{guide.title}</Title>
+          <Title level={2}>{(guide.title || "").toUpperCase()}</Title>
 
           <Flex gap={8} wrap>
             <Text>
@@ -135,15 +161,23 @@ export default function GuideDetail() {
           {/* STEPS */}
           {guide.steps?.length > 0 && (
             <Flex vertical gap={16}>
-              <Title level={3}>Các bước thực hiện</Title>
+              <Title level={3}>CÁC BƯỚC THỰC HIỆN</Title>
 
               <Row gutter={[16, 16]}>
                 {guide.steps.map((s, idx) => (
-                  <Col xs={24} sm={12} md={8} key={idx}>
-                    <Card hoverable>
+                  <Col xs={24} sm={12} md={8} key={idx} style={{ display: "flex" }}>
+                    <Card
+                      hoverable
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                      }}
+                    >
 
-                      <Flex vertical gap={12}>
-                        <Title level={5}>Bước {idx + 1}</Title>
+                      <Flex vertical gap={12} style={{ flex: 1 }}>
+                        <Title level={5}>{`BƯỚC ${idx + 1}`}</Title>
 
                         <img
                           src={s.image || placeholderImg}
@@ -156,13 +190,32 @@ export default function GuideDetail() {
                         />
 
                         <Text strong>
-                          {s.title || `Bước ${idx + 1}`}
+                          {(s.title || `BƯỚC ${idx + 1}`).toUpperCase()}
                         </Text>
 
                         <div
-                          dangerouslySetInnerHTML={{
-                            __html: s.text || "",
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            setActiveStep(s);
+                            setStepModalVisible(true);
                           }}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              setActiveStep(s);
+                              setStepModalVisible(true);
+                            }
+                          }}
+                          style={{
+                            // clamp to single line with ellipsis
+                            display: "-webkit-box",
+                            WebkitLineClamp: 1,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            cursor: "pointer",
+                          }}
+                          dangerouslySetInnerHTML={{ __html: s.text || "" }}
                         />
                       </Flex>
 
@@ -174,6 +227,29 @@ export default function GuideDetail() {
           )}
         </Flex>
       </Card>
+      {/* Step detail modal */}
+      <Modal
+        title={activeStep ? (<span style={{ fontWeight: 700 }}>{(activeStep.title || 'BƯỚC').toUpperCase()}</span>) : "CHI TIẾT BƯỚC"}
+        open={stepModalVisible}
+        onCancel={() => setStepModalVisible(false)}
+        footer={null}
+        width={720}
+      >
+        {activeStep ? (
+          <div>
+            {activeStep.image && (
+              <div style={{ marginBottom: 12 }}>
+                <img src={activeStep.image} alt={activeStep.title} style={{ width: "100%", borderRadius: 6 }} />
+              </div>
+            )}
+            <div dangerouslySetInnerHTML={{ __html: activeStep.text || activeStep.description || "" }} />
+          </div>
+        ) : (
+          <p>Không có nội dung</p>
+        )}
+      </Modal>
+      {/* Detail-only footer */}
+      <DetailFooter />
     </Flex>
   );
 }

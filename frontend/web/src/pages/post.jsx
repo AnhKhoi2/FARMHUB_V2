@@ -176,7 +176,7 @@ export default function Post() {
             marginBottom: 20,
           }}
         >
-          <h1 style={{ fontWeight: 700, fontSize: 26 }}>Chợ Nông Sản</h1>
+          <h1 style={{ fontWeight: 700, fontSize: 26 }}>GIAO LƯU & TRAO ĐỔI</h1>
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -217,39 +217,52 @@ export default function Post() {
               <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
                 <Card
                   hoverable
+                  style={{ height: '100%' }}
+                  bodyStyle={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: 16 }}
                   cover={
                     <img
-                      src={item.image}
+                      src={item.image || '/default-plant.png'}
                       alt=""
-                      style={{ height: 180, objectFit: "cover" }}
+                      style={{ height: 180, objectFit: 'cover', width: '100%' }}
+                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/default-plant.png'; }}
                     />
                   }
                   onClick={() => navigate(`/posts/${item.id}`)}
                 >
-                  <Tag color="green">{item.category}</Tag>
+                  <Tag
+                    color="green"
+                    style={{
+                      padding: '0 6px',
+                      margin: 0,
+                      fontSize: 12,
+                      alignSelf: 'flex-start',
+                      height: 22,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      borderRadius: 6,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.category}
+                  </Tag>
 
-                  <h3 style={{ fontWeight: 700, fontSize: 16 }}>
+                  <h3 className="clamp-2" style={{ fontWeight: 700, fontSize: 16 }}>
                     {item.title}
                   </h3>
 
-                  <p style={{ margin: "6px 0", fontWeight: 600, color: "#059669" }}>
-                    {item.price ? `${item.price} VNĐ` : "Giá liên hệ"}
+                  <p className="market-card-price" style={{ margin: '6px 0', fontWeight: 600, color: '#059669' }}>
+                    {item.price ? `${item.price} VNĐ` : 'Giá liên hệ'}
                   </p>
 
-                  <p>{item.location}</p>
+                  <p className="clamp-2" style={{ margin: 0 }}>{item.location}</p>
 
-                  <Divider style={{ margin: "8px 0" }} />
+                  <div style={{ marginTop: 'auto' }}>
+                    <Divider style={{ margin: '8px 0' }} />
 
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontSize: 13,
-                      color: "#666",
-                    }}
-                  >
-                    <span>{item.seller}</span>
-                    <span>{item.createdAt}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#666' }}>
+                      <span>{item.seller}</span>
+                      <span>{item.createdAt}</span>
+                    </div>
                   </div>
                 </Card>
               </Col>

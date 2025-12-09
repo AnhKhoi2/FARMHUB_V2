@@ -1,5 +1,6 @@
 import React from "react";
 import PortalModal from "./PortalModal";
+import "./StreakPopup.css";
 
 export default function StreakPopup({ streak, onClose }) {
   if (!streak) return null;
@@ -7,25 +8,25 @@ export default function StreakPopup({ streak, onClose }) {
   const { current_streak, pointsAwarded, milestone, total_points, badgesAwarded } = streak;
 
   return (
-    <PortalModal onClose={onClose}>
-      <div className="modal-header">
-        <h5 className="modal-title">Chúc mừng!</h5>
+    <PortalModal onClose={onClose} maxWidth={500} dialogClass="modal-dialog-centered">
+      <div className="modal-header streak-header">
+        <h5 className="modal-title streak-title">🌱 Chuỗi Siêng Năng</h5>
         <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
       </div>
-      <div className="modal-body text-center">
-        <p>Bạn đã đăng nhập {current_streak} ngày liên tiếp 🎉</p>
+      <div className="modal-body text-center streak-body">
+        <p className="streak-main-text">Bạn đã đăng nhập liên tiếp <span className="streak-count-inline">{current_streak}</span> ngày 🎉</p>
         {milestone && (
-          <div className="mb-2">
-            <strong>Đạt mốc: {milestone.replace(/_/g, " ")}</strong>
+          <div className="streak-milestone mb-3">
+            <strong>🏆 Đạt mốc: {milestone.replace(/_/g, " ")}</strong>
           </div>
         )}
         {pointsAwarded > 0 && (
-          <div className="alert alert-success">Bạn nhận được +{pointsAwarded} điểm!</div>
+          <div className="streak-points">✨ Bạn nhận được +{pointsAwarded} điểm!</div>
         )}
 
         {Array.isArray(badgesAwarded) && badgesAwarded.length > 0 && (
-          <div className="mt-2">
-            <strong>Bạn vừa nhận được danh hiệu:</strong>
+          <div className="streak-badges mt-3">
+            <strong>🎖️ Bạn vừa nhận được danh hiệu:</strong>
             <ul className="streak-badges-list">
               {badgesAwarded.map((b) => (
                 <li key={b}>{
@@ -47,10 +48,10 @@ export default function StreakPopup({ streak, onClose }) {
             </ul>
           </div>
         )}
-        <div>Tổng điểm hiện tại: <strong>{total_points}</strong></div>
+        <div className="streak-total-points">Tổng điểm hiện tại: <strong>{total_points}</strong></div>
       </div>
-      <div className="modal-footer">
-        <button className="btn btn-sm btn-primary" onClick={onClose}>OK</button>
+      <div className="modal-footer streak-footer">
+        <button className="btn btn-sm streak-btn" onClick={onClose}>OK</button>
       </div>
     </PortalModal>
   );
