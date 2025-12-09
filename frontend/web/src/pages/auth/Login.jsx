@@ -31,7 +31,7 @@ const Login = () => {
   const sessionExpired = params.get("expired") === "1";
 
   const nextRouteByRole = (role) => {
-    if (role === "admin") return "/admin";
+    if (role === "admin") return "/admin/dashboard";
     if (role === "moderator") return "/moderator";
     if (role === "expert") return "/expert/home";
     return "/";
