@@ -133,22 +133,24 @@ const Diseases = () => {
 
         <div className="container my-5">
           {/* Search and Filter Bar */}
-          <div className="card shadow-sm mb-4" style={{ 
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+          <div className="card shadow-sm mb-3" style={{ 
+            borderRadius: '6px',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+            border: '1px solid rgba(0, 0, 0, 0.08)'
           }}>
             <div className="card-body" style={{ 
-              padding: '1rem 1.25rem'
+              padding: '0.1rem 0.1rem'
             }}>
-              <div className="row g-3" style={{
-                '--bs-gutter-x': '0.75rem',
-                '--bs-gutter-y': '0.5rem'
+              <div className="row g-2" style={{
+                '--bs-gutter-x': '0.5rem',
+                '--bs-gutter-y': '0.25rem'
               }}>
                 <div className="col-md-5">
                   <div className="input-group">
                     <span className="input-group-text bg-white" style={{
-                      padding: '0.5rem 0.75rem',
-                      fontSize: '0.85rem'
+                      padding: '0.4rem 0.6rem',
+                      fontSize: '0.8rem',
+                      minHeight: '32px'
                     }}>
                       <FaSearch />
                     </span>
@@ -159,9 +161,9 @@ const Diseases = () => {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       style={{
-                        padding: '0.5rem 0.75rem',
-                        fontSize: '0.9rem',
-                        minHeight: '38px'
+                        padding: '0.4rem 0.6rem',
+                        fontSize: '0.85rem',
+                        minHeight: '32px'
                       }}
                     />
                   </div>
@@ -172,9 +174,9 @@ const Diseases = () => {
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     style={{
-                      padding: '0.5rem 0.75rem',
-                      fontSize: '0.9rem',
-                      minHeight: '38px'
+                      padding: '0.4rem 0.6rem',
+                      fontSize: '0.85rem',
+                      minHeight: '32px'
                     }}
                   >
                     <option value="all">Tất cả danh mục</option>
@@ -189,9 +191,9 @@ const Diseases = () => {
                     value={selectedSeverity}
                     onChange={(e) => setSelectedSeverity(e.target.value)}
                     style={{
-                      padding: '0.5rem 0.75rem',
-                      fontSize: '0.9rem',
-                      minHeight: '38px'
+                      padding: '0.4rem 0.6rem',
+                      fontSize: '0.85rem',
+                      minHeight: '32px'
                     }}
                   >
                     <option value="all">Mức độ nghiêm trọng</option>
