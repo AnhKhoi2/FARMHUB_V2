@@ -12,6 +12,7 @@ import {
 } from "antd";
 import axiosClient from "../../api/shared/axiosClient";
 import Header from "../../components/shared/Header";
+import Footer from "../../components/shared/Footer";
 import { useSelector } from "react-redux";
 import { FireFilled, TrophyFilled } from "@ant-design/icons"; // Thêm icon
 
@@ -93,6 +94,20 @@ export default function StreakScreen() {
     );
 
   const currentStreak = Number(streakInfo.current_streak || 0);
+  // Some backends may expose a numeric points/score field in the streak object.
+  const points = Number(
+    // prefer explicit total_points returned by some endpoints
+    streakInfo?.total_points ??
+      streakInfo?.totalPoints ??
+      streakInfo?.total_score ??
+      // fallback to other common names
+      streakInfo?.points ??
+      streakInfo?.point ??
+      streakInfo?.score ??
+      streakInfo?.current_points ??
+      streakInfo?.current_score ??
+      0
+  );
   const maxStreak = streakLevels[streakLevels.length - 1].point;
   const currentLevel = getStreakLevel(currentStreak);
   const nextLevelIndex = streakLevels.findIndex(
@@ -169,6 +184,11 @@ export default function StreakScreen() {
                   ngày
                 </span>
               </Title>
+              {/* Hiển thị số điểm nếu có */}
+              <div style={{ marginTop: 8 }}>
+                <Text strong style={{ fontSize: 16, color: '#333' }}>Số điểm: </Text>
+                <Text style={{ fontSize: 16, color: CHOTOT_GREEN, marginLeft: 6 }}>{points || 0}</Text>
+              </div>
               <Text type="secondary" style={{ display: "block", marginTop: 10 }}>
                 Kỷ lục cá nhân: **{streakInfo.max_streak || 0} ngày**
               </Text>
@@ -290,7 +310,7 @@ export default function StreakScreen() {
           </Row>
         </Card>
       </div>
-      
+      <Footer />
     </>
   );
 }
