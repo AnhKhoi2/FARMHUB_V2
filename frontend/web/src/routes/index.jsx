@@ -35,6 +35,7 @@ import AdminModels from "../pages/admin/Models";
 import AdminPost from "../pages/admin/AdminPost";
 import AdminGuides from "../pages/admin/AdminGuides";
 import AdminGuideEdit from "../pages/admin/AdminGuideEdit";
+import AdminTrashGuides from "../pages/admin/TrashGuides";
 
 // lazy load để tránh require() trên browser
 const AdminUsers = React.lazy(() => import("../pages/admin/AdminUsers"));
@@ -274,6 +275,14 @@ export default function AppRoutes() {
           element={
             <AdminRoute>
               <AdminDetailGuides />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/guides/trash"
+          element={
+            <AdminRoute>
+              <AdminTrashGuides />
             </AdminRoute>
           }
         />
