@@ -375,7 +375,7 @@ export default function AdminGuides() {
               icon={<InboxOutlined />}
               // Accent Green
               style={{ color: NATURE_COLORS.darkText, borderColor: NATURE_COLORS.neutralBorder }}
-              onClick={() => navigate("/managerguides/trash")}
+              onClick={() => navigate("/admin/guides/trash")}
             >
               Thùng rác
             </Button>
