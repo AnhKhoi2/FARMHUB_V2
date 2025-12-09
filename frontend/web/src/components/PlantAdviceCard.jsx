@@ -42,66 +42,78 @@ const PlantAdviceCard = ({ data }) => {
   } = data;
 
   const todayList = Array.isArray(today) ? today : [];
+  console.log(today);
+  console.log(watering);
+  console.log(fertilizer);
+  
   const nextDaysList = Array.isArray(next_3_7_days) ? next_3_7_days : [];
 
   return (
     <div className="plant-advice-wrapper">
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-2">
+      <div className="plant-advice-header">
         <div>
-          <div className="small text-muted">Cây trồng</div>
-          <h5 className="mb-0 fw-bold text-success">
+          <div className="plant-advice-tag">GỢI Ý CHĂM SÓC</div>
+          <h5 className="plant-advice-title">
             {plantName || "Cây trồng của bạn"}
           </h5>
           {location && (
-            <div className="small text-muted">
-              Khu vực: <span className="fw-semibold">{location}</span>
+            <div className="plant-advice-location">
+              <span className="label">Khu vực:</span>{" "}
+              <span className="value">{location}</span>
             </div>
           )}
         </div>
-        <div style={{ fontSize: "2rem" }}>🌱</div>
+        <div className="plant-advice-icon-pill">🌱</div>
       </div>
 
       {/* Tóm tắt chung */}
       {summaryVi && (
-        <div className="alert alert-success py-2 mb-3 small">
+        <div className="plant-advice-summary">
           {summaryVi}
         </div>
       )}
 
-      {/* Ảnh hưởng thời tiết */}
-      <Section title="Ảnh hưởng của thời tiết" icon="🌤️">
-        {weatherImpact}
-      </Section>
+      {/* Nội dung chia 2 cột */}
+      <div className="plant-advice-grid">
+        <div>
+          {/* Ảnh hưởng thời tiết */}
+          <Section title="Ảnh hưởng của thời tiết" icon="🌤️">
+            {weatherImpact}
+          </Section>
 
-      {/* Việc cần làm hôm nay */}
-      <Section title="Việc nên làm hôm nay" icon="📅">
-        {todayList}
-      </Section>
+          {/* Việc cần làm hôm nay */}
+          <Section title="Việc nên làm hôm nay" icon="📅">
+            {todayList}
+          </Section>
 
-      {/* Việc 3–7 ngày tới */}
-      <Section title="Trong 3–7 ngày tới" icon="⏭️">
-        {nextDaysList}
-      </Section>
+          {/* Việc 3–7 ngày tới */}
+          <Section title="Trong 3–7 ngày tới" icon="⏭️">
+            {nextDaysList}
+          </Section>
+        </div>
 
-      {/* Tưới nước */}
-      <Section title="Tưới nước" icon="💧">
-        {watering}
-      </Section>
+        <div>
+          {/* Tưới nước */}
+          <Section title="Tưới nước" icon="💧">
+            {watering}
+          </Section>
 
-      {/* Bón phân */}
-      <Section title="Bón phân" icon="🧪">
-        {fertilizer}
-      </Section>
+          {/* Bón phân */}
+          <Section title="Bón phân" icon="🧪">
+            {fertilizer}
+          </Section>
 
-      {/* Rủi ro sâu bệnh */}
-      <Section title="Rủi ro sâu bệnh" icon="🐛">
-        {pestAndDiseaseRisk}
-      </Section>
+          {/* Rủi ro sâu bệnh */}
+          <Section title="Rủi ro sâu bệnh" icon="🐛">
+            {pestAndDiseaseRisk}
+          </Section>
+        </div>
+      </div>
 
       {/* Cảnh báo */}
       {warning && (
-        <div className="alert alert-warning py-2 small mb-0">
+        <div className="plant-advice-warning">
           <strong>⚠️ Lưu ý:</strong> {warning}
         </div>
       )}

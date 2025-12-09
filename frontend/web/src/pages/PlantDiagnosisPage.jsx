@@ -526,10 +526,10 @@ const PlantDiagnosisPage = () => {
           {/* Tiêu đề & mô tả ngắn */}
           <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4">
             <div className="mb-3 mb-md-0">
-              <h2 className="mb-2 fw-bold">CHẨN ĐOÁN SỨC KHỎE CÂY TRỒNG</h2>
+              <h1 style={{ fontWeight: 700, fontSize: "26px" }}>Chẩn Đoán Sức Khỏe Cây Trồng</h1>
               <p className="text-muted mb-0">
-                TẢI ẢNH LÁ/THÂN CÂY HOẶC MÔ TẢ TRIỆU CHỨNG ĐỂ FARMHUB AI HỖ TRỢ
-                NHẬN DIỆN BỆNH VÀ GỢI Ý CÁCH XỬ LÝ CỤ THỂ.
+                Tải ảnh lá/thân cây hoặc mô tả triệu chứng để FarmHub AI hỗ trợ
+                nhận diện bệnh và gợi ý cách xử lý cụ thể.
               </p>
             </div>
             <div className="text-md-end small text-muted">
@@ -769,10 +769,10 @@ const PlantDiagnosisPage = () => {
               <div className="card shadow-sm border-0 h-100">
                 <div className="card-body">
                   <div className="d-flex align-items-center justify-content-between mb-3">
-                    <h4 className="mb-0 text-primary">
-                      <i className="bi bi-bar-chart-line-fill me-2"></i>
+                    <h6 className="mb-0 text-primary">
+                      <i className="bi bi-bar-chart-line-fill me-1"></i>
                       KẾT QUẢ CHẨN ĐOÁN
-                    </h4>
+                    </h6>
                     <span className="badge bg-light text-secondary small">
                       Real-time từ Plant.id &amp; FarmHub AI
                     </span>
@@ -782,15 +782,15 @@ const PlantDiagnosisPage = () => {
                   {!result && !textResult && (
                     <div className="text-center text-muted py-4">
                       <i className="bi bi-search-heart fs-1 mb-2 d-block"></i>
-                      <p className="mb-1">
-                        HÃY CHỌỌN 1 TRONG 2 CHẾ ĐỘ BÊN TRÁI ĐỂ BẮT ĐẦU CHẨN
+                      <p className="mb-1 fw-bold">
+                        HÃY CHỌN 1 TRONG 2 CHẾ ĐỘ BÊN TRÁI ĐỂ BẮT ĐẦU CHẨN
                         ĐOÁN.
                       </p>
-                      <small>
-                        • ẢNH: PHÙ HỢP KHI BẠN MUỐN AI NHẬN DIỆN BỆNH THEO HÌNH
+                      <small className="fw-bold">
+                        • ẢNH: PHÙ HỢP KHI BẠN MUỐN AI (TRÍ TUỆ  NHÂN TẠO) NHẬN DIỆN BỆNH THEO HÌNH
                         ẢNH.
                         <br />• MÔ TẢ: DÙNG KHI BẠN CHƯA KỊP CHỤP ẢNH HOẶC CẦN
-                        HỊI NHANH.
+                        HIỂU NHANH.
                       </small>
                     </div>
                   )}
@@ -920,7 +920,7 @@ const PlantDiagnosisPage = () => {
                     <section className="mt-4">
                       <h5 className="border-bottom pb-2 text-secondary d-flex align-items-center">
                         <i className="bi bi-chat-square-text me-2"></i>
-                        KẾT QUẢ TỪ MÔ TẢ BẰNG CHỮ (AI)
+                        KẾT QUẢ MÔ TẢ (AI)
                       </h5>
 
                       {!textResult && (

@@ -655,3 +655,24 @@ body {
   color: #ffffff;
   margin-left: 3px;
 }
+/* ===== NỀN CHẠY DÀI CHO TIÊU ĐỀ (THEO GÓP Ý THẦY) ===== */
+
+.section-title-wrap {
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-green),
+    var(--color-accent-green)
+  );
+  padding: 12px 20px;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.section-title-wrap .section-title {
+  color: #fff;
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+}

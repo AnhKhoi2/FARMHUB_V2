@@ -86,18 +86,18 @@ export default function ExpertHome({
   }, []);
 
   // ---------------------- LẤY 3 MÔ HÌNH TRỒNG ----------------------
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const res = await axiosClient.get("/admin/models?limit=3");
-        setModels(res.data.data || []);
-      } catch (err) {
-        console.error("Lỗi lấy mô hình:", err);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchModels = async () => {
+  //     try {
+  //       const res = await axiosClient.get("/admin/models?limit=3");
+  //       setModels(res.data.data || []);
+  //     } catch (err) {
+  //       console.error("Lỗi lấy mô hình:", err);
+  //     }
+  //   };
 
-    fetchModels();
-  }, []);
+  //   fetchModels();
+  // }, []);
 
   // ---------------------- LẤY 3 PLANT TEMPLATE ----------------------
   useEffect(() => {
@@ -241,7 +241,7 @@ export default function ExpertHome({
               >
                 <MessageCircle size={20} />
                 {unreadCount > 0 && <span className="chat-badge" />}
-                <span>Trò Chuyện</span>
+                <span>TRÒ CHUYỆN</span>
               </button>
 
               <button
@@ -252,23 +252,23 @@ export default function ExpertHome({
                 }}
               >
                 <Book size={20} />
-                <span>Quản Lý Hướng Dẫn</span>
+                <span>QUẢN LÝ HƯỚNG DẪN</span>
               </button>
 
-              <button
+              {/* <button
                 className="nav-button nav-button-dashboard"
                 onClick={() => navigate("/experthome/models")}
               >
                 <Leaf size={20} />
-                <span>Mô Hình Trồng</span>
-              </button>
+                <span>MÔ HÌNH TRỒNG</span>
+              </button> */}
 
               <button
                 className="nav-button nav-button-template"
                 onClick={() => navigate("/expert/plant-templates")}
               >
                 <TreeDeciduous />
-                <span>Bộ Mẫu Cây Trồng</span>
+                <span>BỘ MẪU CÂY TRỒNG</span>
               </button>
 
 
@@ -333,14 +333,13 @@ export default function ExpertHome({
               <h2 className="welcome-title">
                 Xin Chào, {name.split(" ")[1] || name}! 👋
               </h2>
-              <p className="welcome-subtitle">
-                Quản lý hướng dẫn trồng trọt và trao đổi với người dùng
-              </p>
             </section>
 
             {/* ---------------------- MÔ HÌNH TRỒNG ---------------------- */}
-            <div className="models-section">
-              <h2 className="section-title">🌱 Mô Hình Trồng</h2>
+            {/* <div className="models-section">
+            <div className="section-title-wrap">
+  <h2 className="section-title">🌱 MÔ HÌNH TRỒNG</h2>
+</div>
 
               <div className="card-grid">
                 {models.map((m) => (
@@ -370,11 +369,14 @@ export default function ExpertHome({
               {models.length === 0 && (
                 <p className="subtitle">Chưa có mô hình nào!</p>
               )}
-            </div>
+            </div> */}
 
             {/* ---------------------- HƯỚNG DẪN TRỒNG ---------------------- */}
             <div className="guides-section">
-              <h2 className="section-title">📘 3 Hướng Dẫn Nổi Bật</h2>
+            <div className="section-title-wrap">
+  <h2 className="section-title">📘  HƯỚNG DẪN NỔI BẬT</h2>
+</div>
+
 
               <div className="card-grid">
                 {guides.map((g) => (
@@ -397,20 +399,23 @@ export default function ExpertHome({
                       className="item-btn"
                       onClick={() => navigate(`/guides/${g._id}`)}
                     >
-                      Xem chi tiết
+                      XEM CHI TIẾT
                     </button>
                   </div>
                 ))}
               </div>
 
               {guides.length === 0 && (
-                <p className="subtitle">Chưa có hướng dẫn nào!</p>
+                <p className="subtitle">CHƯA CÓ HƯỚNG DẪN NÀO!</p>
               )}
             </div>
 
             {/* ---------------------- PLANT TEMPLATE ---------------------- */}
             <div className="templates-section">
-              <h2 className="section-title">🧩 3 Bộ Mẫu Cây Trồng</h2>
+            <div className="section-title-wrap">
+  <h2 className="section-title">🧩  BỘ MẪU CÂY TRỒNG</h2>
+</div>
+
 
               <div className="card-grid">
                 {templates.map((t) => (
@@ -451,14 +456,14 @@ export default function ExpertHome({
                         navigate(`/expert/plant-templates/${t._id}`)
                       }
                     >
-                      Xem chi tiết
+                      XEM CHI TIẾT
                     </button>
                   </div>
                 ))}
               </div>
 
               {templates.length === 0 && (
-                <p className="subtitle">Chưa có bộ mẫu nào!</p>
+                <p className="subtitle">CHƯA CÓ BỘ MẪU NÀO!</p>
               )}
             </div>
           </div>

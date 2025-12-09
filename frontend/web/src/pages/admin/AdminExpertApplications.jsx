@@ -97,7 +97,7 @@ export default function AdminExpertApplications() {
 
   const reject = async (id) => {
     const reason = window.prompt(
-      "Nhập lý do từ chối (có thể để trống, bấm Cancel để hủy):"
+      "Nhập lý do từ chối (có thể để trống). Bấm Hủy để hủy thao tác:"
     );
 
     if (reason === null) return;
