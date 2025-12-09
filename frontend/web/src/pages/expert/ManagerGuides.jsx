@@ -370,7 +370,7 @@ export default function ManagerGuides() {
       },
     },
     {
-      title: "Ảnh",
+      title: "ẢNH",
       dataIndex: "image",
       key: "image",
       width: 120,
@@ -386,14 +386,14 @@ export default function ManagerGuides() {
       ),
     },
     {
-      title: "Tiêu đề",
+      title: "TIÊU ĐỀ",
       dataIndex: "title",
       key: "title",
       sorter: (a, b) => a.title.localeCompare(b.title),
       ...getColumnSearchProps("title", "Tìm theo tiêu đề"),
     },
     {
-      title: "Mô tả",
+      title: "MÔ TẢ",
       dataIndex: "description",
       key: "description",
       ellipsis: true,
@@ -401,7 +401,7 @@ export default function ManagerGuides() {
       render: (t) => t || "—",
     },
     {
-      title: "Loại cây",
+      title: "LOẠI CÂY",
       dataIndex: "category",
       key: "category",
       filters: availablePlantTags.map((t) => ({ text: t.label, value: t.value })),
@@ -425,7 +425,7 @@ export default function ManagerGuides() {
       },
     },
     {
-      title: "Ngày tạo",
+      title: "NGÀY TẠO",
       dataIndex: "createdAt",
       key: "createdAt",
       sorter: (a, b) =>
@@ -435,7 +435,7 @@ export default function ManagerGuides() {
         val ? new Date(val).toLocaleDateString("vi-VN") : "—",
     },
     {
-      title: "Hành động",
+      title: "HÀNH ĐỘNG",
       key: "actions",
       width: 160,
       align: "center",
@@ -475,7 +475,7 @@ export default function ManagerGuides() {
             <Row justify="space-between" align="middle">
               <Col>
                 <Title level={3} style={{ margin: 0 }}>
-                  Quản lý hướng dẫn trồng cây
+                  QUẢN LÝ HƯỚNG DẪN TRỒNG CÂY
                 </Title>
               </Col>
               <Col>
@@ -489,7 +489,7 @@ export default function ManagerGuides() {
                       fetchGuides(1, limit);
                     }}
                   >
-                    Làm mới
+                    LÀM MỚI
                   </Button>
                   
                   <Button
@@ -497,7 +497,7 @@ export default function ManagerGuides() {
                     icon={<DeleteOutlined />}
                     onClick={() => navigate("/managerguides/trash")}
                   >
-                    Thùng rác
+                    THÙNG RÁC
                   </Button>
                   <Button
                     type="primary"
@@ -505,7 +505,7 @@ export default function ManagerGuides() {
                     icon={<PlusOutlined />}
                     onClick={onCreate}
                   >
-                    Tạo mới
+                    TẠO MỚI
                   </Button>
                 </Space>
               </Col>

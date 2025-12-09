@@ -151,7 +151,7 @@ const Header = () => {
                   className="dropdown-toggle"
                   onClick={() => window.innerWidth < 992 && toggleSubmenu()}
                 >
-                  Sổ tay
+                  Sổ Tay
                 </span>
 
                 <ul
@@ -160,13 +160,13 @@ const Header = () => {
                   }`}
                 >
                   <li>
-                    <Link to="/farmer/notebooks">Sổ tay cơ bản</Link>
+                    <Link to="/farmer/notebooks">Sổ Tay Cơ Bản</Link>
                   </li>
                   <li>
-                    <Link to="/farmer/notebooks/stats">Thống kê sổ tay</Link>
+                    <Link to="/farmer/notebooks/stats">Thống Kê Sổ Tay</Link>
                   </li>
                   <li>
-                    <Link to="/farmer/collections">Bộ sưu tập</Link>
+                    <Link to="/farmer/collections">Bộ Sưu Tập</Link>
                   </li>
                 </ul>
               </li>
@@ -312,7 +312,7 @@ const Header = () => {
                             <path d="M12 2L15 8H9L12 2Z" fill="#0f7a3b" />
                             <circle cx="12" cy="14" r="6" fill="#0f7a3b" />
                           </svg>
-                          Gợi Ý Mô Hình Trồng Trọt
+                          Gợi Ý Trồng Trọt (AI)
                         </Link>
                       </li>
                           <li>
@@ -343,7 +343,7 @@ const Header = () => {
         strokeLinecap="round"
       />
     </svg>
-    Tra cứu thuốc BVTV
+    Tra Cứu Thuốc BVTV (AI)
   </Link>
 </li>
 

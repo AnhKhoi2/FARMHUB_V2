@@ -411,7 +411,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
       <div className="cw-panel">
         <div className="cw-header">
           <div className="cw-title">
-            <MessageCircle size={18} /> Trò Chuyện
+            <MessageCircle size={18} /> TRÒ CHUYỆN
           </div>
           <div className="cw-actions">
             <button className="cw-icon" onClick={() => onClose?.(false)}>
@@ -423,7 +423,7 @@ export default function ChatWidget({ open, onClose, initialOpenPayload }) {
         <div className="cw-body">
           {/* Danh sách hội thoại */}
           <div className="cw-left">
-            <div className="cw-left-head">Cuộc Trò Chuyện</div>
+            <div className="cw-left-head">CUỘC TRÒ CHUYỆN</div>
             <div className="cw-left-list">
               {conversations.length === 0 ? (
                 <div className="cw-empty">Chưa Có Cuộc Trò Chuyện</div>

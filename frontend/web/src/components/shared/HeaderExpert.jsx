@@ -145,7 +145,7 @@ export default function HeaderExpert({
             title="Trao đổi với người dùng"
           >
             <MessageCircle size={20} />
-            <span>Trò chuyện</span>
+            <span>TRÒ CHUYỆN</span>
           </button>
 
           {/* Component 2: Manage Guides */}
@@ -163,18 +163,18 @@ export default function HeaderExpert({
             title="Quản lý hướng dẫn"
           >
             <Book />
-            <span>Quản lý hướng dẫn</span>
+            <span>QUẢN LÝ HƯỚNG DẪN</span>
           </button>
 
           {/* Component 3: Dashboard */}
-          <button
+          {/* <button
             className="nav-button nav-button-dashboard"
             onClick={() => navigate("/experthome/models")}
             title="Mô hình trồng"
           >
             <Leaf size={20} />
             <span>Mô hình trồng</span>
-          </button>
+          </button> */}
 
           {/* Component 4: Plant Templates */}
           <button
@@ -183,7 +183,7 @@ export default function HeaderExpert({
             title="Plant Templates"
           >
             <TreeDeciduous />
-            <span>Bộ Mẫu Cây Trồng</span>
+            <span>BỘ MẪU CÂY TRỒNG</span>
           </button>
 
           {/* Component 5: Analytics */}
@@ -232,7 +232,7 @@ export default function HeaderExpert({
                   onClick={() => navigate("/expert/profile")}
                 >
                   <User size={18} />
-                  <span>Hồ sơ</span>
+                  <span>Hồ Sơ</span>
                 </button>
 
                 <div className="profile-divider"></div>
@@ -246,7 +246,7 @@ export default function HeaderExpert({
                   }}
                 >
                   <LogOut size={18} />
-                  <span>Đăng xuất</span>
+                  <span>Đăng Xuất</span>
                 </button>
               </div>
             )}

@@ -103,7 +103,7 @@ function ExpertCard({ expert, myScore, onRate, onChat, onView }) {
 
           <span className="ex-dot">•</span>
 
-          <span className="ex-kpi">{expert.experience_years || 0} năm</span>
+          <span className="ex-kpi">{expert.experience_years || 0} Năm</span>
         </div>
 
       </div>
@@ -118,7 +118,7 @@ function ExpertCard({ expert, myScore, onRate, onChat, onView }) {
           }}
         >
           <MessageCircle size={18} />
-          <span>Trò chuyện</span>
+          <span>TRÒ CHUYỆN</span>
         </button>
       </div>
     </div>
@@ -306,7 +306,7 @@ export default function ExpertsList() {
       expertId,
       expert,
       avatar,
-      name: expert.full_name || "Chuyên gia",
+      name: expert.full_name || "Chuyên Gia",
     };
 
     setChatPeer(payload);
@@ -318,9 +318,9 @@ export default function ExpertsList() {
       <Header />
       <div className="ex-page user-expert-page">
         <div className="ex-hero">
-          <h1>Chuyên Gia</h1>
+          <h1>CHUYÊN GIA</h1>
           <p>
-            Tìm kiếm và kết nối với các chuyên gia nông nghiệp đáng tin cậy để được tư vấn.
+            Tìm Kiếm Và Kết Nối Với Các Chuyên Gia Nông Nghiệp Đáng Tin Cậy Để Được Tư Vấn.
           </p>
         </div>
 
@@ -330,8 +330,8 @@ export default function ExpertsList() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Nhập tên chuyên gia cần tìm"
-              aria-label="Tìm kiếm chuyên gia"
+              placeholder="Nhập Tên Chuyên Gia Cần Tìm"
+              aria-label="Tìm Kiếm Chuyên Gia"
             />
           </div>
         </div>
@@ -382,11 +382,11 @@ export default function ExpertsList() {
   <h2 className="ex-info-name">{viewDetail.full_name}</h2>
 
   {/* Lĩnh vực chuyên môn – thêm vào đây */}
-  <p><b>Lĩnh vực:</b> {viewDetail.expertise_area}</p>
+  <p><b>Lĩnh Vực:</b> {viewDetail.expertise_area}</p>
 
   <p><b>Email:</b> {viewDetail.user?.email}</p>
-  <p><b>Số điện thoại:</b> {viewDetail.phone_number}</p>
-  <p><b>Kinh nghiệm:</b> {viewDetail.experience_years} năm</p>
+  <p><b>Số Điện Thoại:</b> {viewDetail.phone_number}</p>
+  <p><b>Kinh Nghiệm:</b> {viewDetail.experience_years} Năm</p>
 </div>
 
 
@@ -401,7 +401,7 @@ export default function ExpertsList() {
 
                 <div className="ex-modal-rating">
                   ⭐ {Number(viewDetail.avg_score || 0).toFixed(1)}
-                  ({viewDetail.total_reviews || 0} đánh giá)
+                  ({viewDetail.total_reviews || 0} Đánh Giá)
                 </div>
               </div>
 
@@ -414,14 +414,14 @@ export default function ExpertsList() {
                   setViewDetail(null);
                 }}
               >
-                Trò chuyện ngay
+                TRÒ CHUYỆN NGAY
               </button>
 
               <button
                 className="ex-btn-close"
                 onClick={() => setViewDetail(null)}
               >
-                Đóng
+                ĐÓNG
               </button>
             </div>
           </div>
