@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import plantTemplateApi from "../../api/expert/plantTemplateApi";
 import guidesApi from "../../api/shared/guidesApi";
+import HeaderExpert from "../../components/shared/HeaderExpert";
 import "../../css/expert/PlantTemplateForm.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -47,7 +48,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
   const steps = [
     { number: 1, title: "Thông tin cơ bản", icon: "📝" },
     { number: 2, title: "Giai đoạn phát triển", icon: "🌱" },
-    { number: 3, title: "Nhiệm vụ tự động", icon: "✅" },
+    { number: 3, title: "NHIỆM VỤ TỰ ĐỘNG", icon: "✅" },
     { number: 4, title: "Điều kiện quan sát", icon: "👁️" },
     { number: 5, title: "Xác nhận", icon: "⚙️" },
   ];
@@ -457,140 +458,150 @@ const PlantTemplateForm = ({ mode = "create" }) => {
 
   if (loading && mode === "edit") {
     return (
-      <div className="plant-template-form">
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Đang tải...</p>
+      <>
+        <HeaderExpert />
+        <div className="plant-template-form">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Đang tải...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="plant-template-form">
-      <div className="form-container">
-        <div className="form-header">
-          <button className="btn-back" onClick={() => navigate(-1)}>
-            ← Quay lại
-          </button>
-          <h1>{mode === "edit" ? "Chỉnh sửa" : "Tạo mới"} Bộ mẫu cây trồng</h1>
-        </div>
+    <>
+      <HeaderExpert />
+      <div className="plant-template-form">
+        <div className="form-container">
+          <div className="form-header">
+            <button className="btn-back" onClick={() => navigate(-1)}>
+              ← Quay lại
+            </button>
+            <h1>
+              {mode === "edit"
+                ? "CHỈNH SỬA BỘ MẪU CÂY TRỒNG"
+                : "Tạo mới Bộ mẫu cây trồng"}
+            </h1>
+          </div>
 
-        {/* Steps Progress */}
-        <div className="steps-progress">
-          {steps.map((step) => (
-            <div
-              key={step.number}
-              className={`step-item ${
-                currentStep === step.number ? "active" : ""
-              } ${currentStep > step.number ? "completed" : ""}`}
-            >
-              <div className="step-number">
-                {currentStep > step.number ? "✓" : step.icon}
+          {/* Steps Progress */}
+          <div className="steps-progress">
+            {steps.map((step) => (
+              <div
+                key={step.number}
+                className={`step-item ${
+                  currentStep === step.number ? "active" : ""
+                } ${currentStep > step.number ? "completed" : ""}`}
+              >
+                <div className="step-number">
+                  {currentStep > step.number ? "✓" : step.icon}
+                </div>
+                <div className="step-title">{step.title}</div>
               </div>
-              <div className="step-title">{step.title}</div>
+            ))}
+          </div>
+
+          {error && (
+            <div className="alert alert-error">
+              <span className="icon">⚠️</span>
+              {error}
             </div>
-          ))}
-        </div>
-
-        {error && (
-          <div className="alert alert-error">
-            <span className="icon">⚠️</span>
-            {error}
-          </div>
-        )}
-
-        {/* Step Content */}
-        <div className="step-content">
-          {currentStep === 1 && (
-            <Step1BasicInfo
-              formData={formData}
-              handleInputChange={handleInputChange}
-              plantGroups={plantGroups}
-              tempInput={tempInput}
-              setTempInput={setTempInput}
-              addPlantExample={addPlantExample}
-              removePlantExample={removePlantExample}
-              uploadingCover={uploadingCover}
-              handleCoverImageUpload={handleCoverImageUpload}
-              availableGuides={availableGuides}
-              loadingGuides={loadingGuides}
-              showPlantDropdown={showPlantDropdown}
-              setShowPlantDropdown={setShowPlantDropdown}
-              addPlantExampleFromDropdown={addPlantExampleFromDropdown}
-            />
           )}
 
-          {currentStep === 2 && (
-            <Step2Stages
-              stages={formData.stages}
-              addStage={addStage}
-              updateStage={updateStage}
-              removeStage={removeStage}
-            />
-          )}
+          {/* Step Content */}
+          <div className="step-content">
+            {currentStep === 1 && (
+              <Step1BasicInfo
+                formData={formData}
+                handleInputChange={handleInputChange}
+                plantGroups={plantGroups}
+                tempInput={tempInput}
+                setTempInput={setTempInput}
+                addPlantExample={addPlantExample}
+                removePlantExample={removePlantExample}
+                uploadingCover={uploadingCover}
+                handleCoverImageUpload={handleCoverImageUpload}
+                availableGuides={availableGuides}
+                loadingGuides={loadingGuides}
+                showPlantDropdown={showPlantDropdown}
+                setShowPlantDropdown={setShowPlantDropdown}
+                addPlantExampleFromDropdown={addPlantExampleFromDropdown}
+              />
+            )}
 
-          {currentStep === 3 && (
-            <Step3Tasks
-              stages={formData.stages}
-              addTaskToStage={addTaskToStage}
-              updateTask={updateTask}
-              removeTask={removeTask}
-            />
-          )}
+            {currentStep === 2 && (
+              <Step2Stages
+                stages={formData.stages}
+                addStage={addStage}
+                updateStage={updateStage}
+                removeStage={removeStage}
+              />
+            )}
 
-          {currentStep === 4 && (
-            <Step4Observations
-              stages={formData.stages}
-              addObservationToStage={addObservationToStage}
-              updateObservation={updateObservation}
-              removeObservation={removeObservation}
-            />
-          )}
+            {currentStep === 3 && (
+              <Step3Tasks
+                stages={formData.stages}
+                addTaskToStage={addTaskToStage}
+                updateTask={updateTask}
+                removeTask={removeTask}
+              />
+            )}
 
-          {currentStep === 5 && (
-            <Step5Review
-              formData={formData}
-              handleInputChange={handleInputChange}
-              plantGroups={plantGroups}
-            />
-          )}
-        </div>
+            {currentStep === 4 && (
+              <Step4Observations
+                stages={formData.stages}
+                addObservationToStage={addObservationToStage}
+                updateObservation={updateObservation}
+                removeObservation={removeObservation}
+              />
+            )}
 
-        {/* Navigation Buttons */}
-        <div className="form-navigation">
-          <button
-            className="btn btn-secondary"
-            onClick={prevStep}
-            disabled={currentStep === 1 || loading}
-          >
-            ← QUAY LẠI
-          </button>
-
-          <div className="nav-info">
-            BƯỚC {currentStep} / {steps.length}
+            {currentStep === 5 && (
+              <Step5Review
+                formData={formData}
+                handleInputChange={handleInputChange}
+                plantGroups={plantGroups}
+              />
+            )}
           </div>
 
-          {currentStep < 5 ? (
-            <button className="btn btn-primary" onClick={nextStep}>
-              TIẾP THEO →
-            </button>
-          ) : (
+          {/* Navigation Buttons */}
+          <div className="form-navigation">
             <button
-              className="btn btn-success"
-              onClick={handleSubmit}
-              disabled={loading}
+              className="btn btn-secondary"
+              onClick={prevStep}
+              disabled={currentStep === 1 || loading}
             >
-              {loading
-                ? "Đang lưu..."
-                : mode === "edit"
-                ? "Cập nhật"
-                : "Tạo template"}
+              ← QUAY LẠI
             </button>
-          )}
+
+            <div className="nav-info">
+              BƯỚC {currentStep} / {steps.length}
+            </div>
+
+            {currentStep < 5 ? (
+              <button className="btn btn-primary" onClick={nextStep}>
+                TIẾP THEO →
+              </button>
+            ) : (
+              <button
+                className="btn btn-success"
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {loading
+                  ? "Đang lưu..."
+                  : mode === "edit"
+                  ? "Cập nhật"
+                  : "Tạo template"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -612,16 +623,19 @@ const Step1BasicInfo = ({
   addPlantExampleFromDropdown,
 }) => (
   <div className="step-basic-info">
-    <h2>THÔNG TIN CƠ BẢN</h2>
+    <h5>THÔNG TIN CƠ BẢN</h5>
 
     <div className="form-group">
       <label>
         TÊN BỘ MẪU <span className="required">*</span>
       </label>
+      <p className="hint">
+        Đặt tên cho bộ mẫu này (ví dụ: Rau ăn lá cơ bản, Cà chua trồng ban công)
+      </p>
       <input
         type="text"
         className="form-input"
-        placeholder="Ví dụ: Rau ăn lá cơ bản"
+        placeholder="Nhập tên bộ mẫu..."
         value={formData.template_name}
         onChange={(e) => handleInputChange("template_name", e.target.value)}
       />
@@ -631,6 +645,9 @@ const Step1BasicInfo = ({
       <label>
         NHÓM CÂY <span className="required">*</span>
       </label>
+      <p className="hint">
+        Chọn nhóm cây phù hợp với bộ mẫu này (nhấn vào ô để chọn)
+      </p>
       <div className="plant-groups-grid">
         {plantGroups.map((group) => (
           <div
@@ -648,11 +665,14 @@ const Step1BasicInfo = ({
     </div>
 
     <div className="form-group">
-      <label>MÔ TẢ</label>
+      <label>MÔ TẢ CHI TIẾT</label>
+      <p className="hint">
+        Mô tả ngắn gọn về bộ mẫu này, đặc điểm nổi bật và lưu ý khi sử dụng
+      </p>
       <textarea
         className="form-textarea"
         rows="3"
-        placeholder="Mô tả"
+        placeholder="Ví dụ: Bộ mẫu dành cho người mới bắt đầu trồng rau ăn lá, phù hợp với điều kiện ban công..."
         value={formData.group_description}
         onChange={(e) => handleInputChange("group_description", e.target.value)}
       />
@@ -660,7 +680,10 @@ const Step1BasicInfo = ({
 
     <div className="form-group">
       <label>🌱 CÁC LOẠI CÂY PHÙ HỢP</label>
-      <p className="hint">CHỎN CÁC LOẠI CÂY TỪ DANH SÁCH CÓ SẴN</p>
+      <p className="hint">
+        Chọn các loại cây cụ thể có thể sử dụng bộ mẫu này (ví dụ: Cải xanh, Rau
+        muống, Xà lách...)
+      </p>
 
       <div className="plant-selector">
         <button
@@ -669,7 +692,7 @@ const Step1BasicInfo = ({
           onClick={() => setShowPlantDropdown(!showPlantDropdown)}
           disabled={loadingGuides}
         >
-          {loadingGuides ? "ĐANG TẢI..." : "➕ CHỎN CÂY TỪ DANH SÁCH"}
+          {loadingGuides ? "ĐANG TẢI..." : "➕ CHỌN CÂY TỪ DANH SÁCH"}
         </button>
 
         {showPlantDropdown && (
@@ -982,7 +1005,7 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
               <input
                 type="text"
                 className="form-input"
-                placeholder="Ví dụ: Nảy mầm"
+                placeholder="Ví dụ: Nảy mầm, Phát triển lá, Thu hoạch..."
                 value={stage.name}
                 onChange={(e) => updateStage(index, "name", e.target.value)}
               />
@@ -991,10 +1014,13 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
 
           <div className="form-group">
             <label>MÔ TẢ GIAI ĐOẠN</label>
+            <p className="hint">
+              Mô tả những gì xảy ra trong giai đoạn này và cần làm gì
+            </p>
             <textarea
               className="form-textarea"
               rows="2"
-              placeholder="Mô tả chi tiết về giai đoạn này..."
+              placeholder="Ví dụ: Cây bắt đầu nảy mầm, xuất hiện lá đầu tiên. Cần giữ ẩm và tránh ánh sáng mặt trời trực tiếp..."
               value={stage.description}
               onChange={(e) =>
                 updateStage(index, "description", e.target.value)
@@ -1007,6 +1033,9 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
               <label>
                 NGÀY BẮT ĐẦU <span className="required">*</span>
               </label>
+              <p className="hint">
+                Ngày thứ mấy bắt đầu giai đoạn này (kể từ khi gieo hạt)
+              </p>
               <input
                 type="number"
                 className="form-input"
@@ -1022,6 +1051,7 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
               <label>
                 NGÀY KẾT THÚC <span className="required">*</span>
               </label>
+              <p className="hint">Ngày thứ mấy kết thúc giai đoạn này</p>
               <input
                 type="number"
                 className="form-input"
@@ -1162,9 +1192,11 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
   return (
     <div className="step-tasks">
       <div className="step-header">
-        <h2>✅ Nhiệm vụ tự động</h2>
+        <h2>✅ NHIỆM VỤ TỰ ĐỘNG</h2>
         <p className="hint">
-          Các nhiệm vụ này sẽ được tự động sinh ra cho người dùng mỗi ngày
+          Tạo danh sách công việc cho người dùng làm hàng ngày (VD: Tưới nước,
+          Bón phân, Kiểm tra sâu bệnh). Hệ thống sẽ tự động tạo nhiệm vụ theo
+          lịch bạn đặt.
         </p>
       </div>
 
@@ -1172,28 +1204,28 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
         <div key={stageIndex} className="stage-section">
           <div className="stage-section-header">
             <h3>
-              Giai đoạn {stage.stage_number}: {stage.name}
+              GIAI ĐOẠN {stage.stage_number}: {stage.name.toUpperCase()}
             </h3>
             <span className="badge">
-              {stage.autogenerated_tasks?.length || 0} nhiệm vụ
+              {stage.autogenerated_tasks?.length || 0} NHIỆM VỤ
             </span>
           </div>
 
           {stage.autogenerated_tasks?.map((task, taskIndex) => (
             <div key={taskIndex} className="task-card">
               <div className="task-card-header">
-                <span className="task-number">Nhiệm vụ {taskIndex + 1}</span>
+                <span className="task-number">NHIỆM VỤ {taskIndex + 1}</span>
                 <button
                   type="button"
                   className="btn-icon btn-sm"
                   onClick={() => {
                     const confirmDelete = window.confirm(
-                      "Bạn có chắc muốn xóa nhiệm vụ này? Hành động này không thể hoàn tác."
+                      "BẠN CÓ CHẮC MUỐN XÓA NHIỆM VỤ NÀY? HÀNH ĐỘNG NÀY KHÔNG THỂ HOÀN TÁC."
                     );
                     if (!confirmDelete) return;
                     removeTask(stageIndex, taskIndex);
                   }}
-                  title="Xóa nhiệm vụ"
+                  title="XÓA NHIỆM VỤ"
                 >
                   ×
                 </button>
@@ -1205,7 +1237,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Ví dụ: Tưới nước"
+                    placeholder="VÍ DỤ: TƯỚI NƯỚC"
                     value={task.task_name}
                     onChange={(e) =>
                       updateTask(
@@ -1286,7 +1318,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                     {uploadingTask === `${stageIndex}-${taskIndex}` ? (
                       <div className="uploading">
                         <div className="spinner-upload"></div>
-                        <span>Đang upload...</span>
+                        <span>ĐANG UPLOAD...</span>
                       </div>
                     ) : task.illustration_image ? (
                       <div className="image-uploaded">
@@ -1307,7 +1339,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                                 .click();
                             }}
                           >
-                            🔄 Thay đổi
+                            🔄 THAY ĐỔI
                           </button>
                           <button
                             type="button"
@@ -1322,7 +1354,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                               );
                             }}
                           >
-                            🗑️ Xóa
+                            🗑️ XÓA
                           </button>
                         </div>
                       </div>
@@ -1330,7 +1362,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                       <div className="upload-placeholder upload-placeholder-sm">
                         <div className="upload-icon">📁</div>
                         <div className="upload-text">
-                          <strong>Click để chọn ảnh</strong>
+                          <strong>CLICK ĐỂ CHỌN ẢNH</strong>
                         </div>
                       </div>
                     )}
@@ -1360,7 +1392,7 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
               className="btn btn-outline btn-sm"
               onClick={() => addTaskToStage(stageIndex)}
             >
-              + Thêm nhiệm vụ
+              + THÊM NHIỆM VỤ
             </button>
 
             <button
@@ -1371,14 +1403,14 @@ const Step3Tasks = ({ stages, addTaskToStage, updateTask, removeTask }) => {
                 if (tasks.length === 0) return;
                 const lastIndex = tasks.length - 1;
                 const confirmDelete = window.confirm(
-                  "Bạn sắp xóa nhiệm vụ vừa thêm. Bạn có chắc chắn?"
+                  "BẠN SẮP XÓA NHIỆM VỤ VỪA THÊM. BẠN CÓ CHẮC CHẮN?"
                 );
                 if (!confirmDelete) return;
                 removeTask(stageIndex, lastIndex);
               }}
-              title="Xóa nhiệm vụ cuối"
+              title="XÓA NHIỆM VỤ CUỐI"
             >
-              ⤺ Hoàn tác
+              ⤺ HOÀN TÁC
             </button>
           </div>
         </div>
@@ -1398,7 +1430,8 @@ const Step4Observations = ({
     <div className="step-header">
       <h2>👁️ ĐIỀU KIỆN QUAN SÁT</h2>
       <p className="hint">
-        CÁC ĐIỀU KIỆN QUAN SÁT ĐỂ THEO DÕI TIẾN ĐỘ PHÁT TRIỂN CỦA CÂY
+        Tạo các câu hỏi để người dùng ghi nhận tiến trình phát triển của cây
+        (VD: Đã nảy mầm?, Có mấy lá?, Chiều cao bao nhiêu cm?)
       </p>
     </div>
 
@@ -1435,11 +1468,11 @@ const Step4Observations = ({
 
             <div className="form-row">
               <div className="form-group flex-1">
-                <label>KEY (ĐỊNH DANH)</label>
+                <label>MÃ ĐỊNH DANH (KEY)</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Ví dụ: has_sprout"
+                  placeholder="Ví dụ: has_sprout, leaf_count"
                   value={obs.key}
                   onChange={(e) =>
                     updateObservation(
@@ -1450,15 +1483,18 @@ const Step4Observations = ({
                     )
                   }
                 />
-                <small className="hint">Dùng snake_case, không dấu</small>
+                <small className="hint">
+                  Mã để lưu trữ (dùng chữ thường, gạch dưới, không dấu). VD:
+                  has_sprout, leaf_count
+                </small>
               </div>
 
               <div className="form-group flex-1">
-                <label>CÂU HỊI HIỂN THỊ</label>
+                <label>CÂU HỎI HIỂN THỊ</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Ví dụ: Đã nảy mầm?"
+                  placeholder="Ví dụ: Đã nảy mầm?, Có bao nhiêu lá?"
                   value={obs.label}
                   onChange={(e) =>
                     updateObservation(
@@ -1473,11 +1509,11 @@ const Step4Observations = ({
             </div>
 
             <div className="form-group">
-              <label>Mô tả</label>
+              <label>MÔ TẢ CHI TIẾT</label>
               <input
                 type="text"
                 className="form-input"
-                placeholder="Mô tả chi tiết để user dễ quan sát"
+                placeholder="Nhập mô tả thêm về điều kiện quan sát..."
                 value={obs.description}
                 onChange={(e) =>
                   updateObservation(
