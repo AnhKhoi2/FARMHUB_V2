@@ -169,9 +169,9 @@ export default function AdminUsers() {
               <th style={{width:60}}>STT</th>
               <th>Tên đăng nhập</th>
               <th>Email</th>
-              <th>Vai trò</th>
-              <th>Trạng thái</th>
-              <th style={{width:150}}>Hành động</th>
+              <th style={{width:120}}>Trạng thái</th>
+              <th style={{width:250}}>Vai trò</th>
+              <th style={{width:70}} className="text-center">Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -188,21 +188,22 @@ export default function AdminUsers() {
                   <button className="btn btn-link btn-sm p-0" onClick={() => openDetail(u._id)}>{u.username}</button>
                 </td>
                 <td className="small">{u.email}</td>
-                <td>
+                <td className="small" style={{width:120}}>
+                  {u.isDeleted ? <span className="badge bg-danger">Đã xóa</span> : <span className="badge bg-success">Hoạt động</span>}
+                </td>
+                <td style={{width:250, minWidth:200}}>
                   <select
-                    className="form-select form-select-sm"
+                    className="form-select"
                     value={u.role}
                     onChange={(e) => changeRole(u._id, e.target.value)}
                     disabled={u.isDeleted}
+                    style={{fontSize: '14px', padding: '6px 12px'}}
                   >
                     {ROLE_OPTIONS.map(r => <option key={r} value={r}>{ROLE_LABELS[r] || r}</option>)}
                   </select>
                 </td>
-                <td className="small">
-                  {u.isDeleted ? <span className="badge bg-danger">Đã xóa</span> : <span className="badge bg-success">Hoạt động</span>}
-                </td>
-                <td>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <td className="text-center align-middle" style={{width:70}}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                     {!u.isDeleted ? (
                       <button
                         className="btn btn-sm btn-link"
@@ -211,7 +212,7 @@ export default function AdminUsers() {
                         aria-label={`delete-${u._id}`}
                         style={{ color: '#FF4D4F', padding: 4, margin: 0, lineHeight: 1 }}
                       >
-                        <FiTrash2 size={16} />
+                        <FiTrash2 size={18} />
                       </button>
                     ) : (
                       <button
@@ -221,7 +222,7 @@ export default function AdminUsers() {
                         aria-label={`restore-${u._id}`}
                         style={{ color: '#1890ff', padding: 4, margin: 0, lineHeight: 1 }}
                       >
-                        <FiRotateCcw size={16} />
+                        <FiRotateCcw size={18} />
                       </button>
                     )}
                   </div>

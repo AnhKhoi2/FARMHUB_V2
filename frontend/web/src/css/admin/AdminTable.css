@@ -1,0 +1,328 @@
+/* 
+ * AdminTable.css - Shared styles for all admin data tables
+ * Enhanced table styling for consistent look across admin pages
+ */
+
+/* Table Container */
+.admin-table-container {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Table Base Styles */
+.admin-table {
+  width: 100%;
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Table Header */
+.admin-table thead {
+  background: linear-gradient(135deg, #f6fbf6 0%, #e8f5e9 100%);
+}
+
+.admin-table thead th {
+  background: #f6fbf6;
+  color: #2e7d32;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 2px solid rgba(46, 125, 50, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Table Body */
+.admin-table tbody tr {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f9fafb;
+  transform: scale(1.002);
+}
+
+.admin-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.admin-table tbody td {
+  padding: 12px 16px;
+  color: #495057;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+/* Zebra Striping (Optional - commented out by default) */
+/* .admin-table tbody tr:nth-child(even) {
+  background-color: #fafafa;
+} */
+
+/* Column Dividers */
+.admin-table.has-dividers th,
+.admin-table.has-dividers td {
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.admin-table.has-dividers th:last-child,
+.admin-table.has-dividers td:last-child {
+  border-right: none;
+}
+
+/* Compact Table Variant */
+.admin-table.table-compact thead th {
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.admin-table.table-compact tbody td {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+/* Status Badges */
+.admin-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.admin-badge.badge-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+}
+
+.admin-badge.badge-danger {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+}
+
+.admin-badge.badge-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  color: #856404;
+}
+
+.admin-badge.badge-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  color: #0c5460;
+}
+
+.admin-badge.badge-primary {
+  background: linear-gradient(135deg, #cfe2ff 0%, #b6d4fe 100%);
+  color: #004085;
+}
+
+/* Action Buttons */
+.admin-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  gap: 6px;
+}
+
+.admin-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-action-btn.btn-edit {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  color: #856404;
+}
+
+.admin-action-btn.btn-delete {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+}
+
+.admin-action-btn.btn-view {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  color: #0c5460;
+}
+
+.admin-action-btn.btn-restore {
+  background: linear-gradient(135deg, #cfe2ff 0%, #b6d4fe 100%);
+  color: #004085;
+}
+
+/* Empty State */
+.admin-table-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #6c757d;
+}
+
+.admin-table-empty-icon {
+  font-size: 48px;
+  color: #dee2e6;
+  margin-bottom: 16px;
+}
+
+.admin-table-empty-text {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.admin-table-empty-subtext {
+  font-size: 14px;
+  color: #adb5bd;
+}
+
+/* Loading State */
+.admin-table-loading {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.admin-table-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #2e7d32;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Pagination */
+.admin-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  margin-top: 16px;
+}
+
+.admin-pagination-info {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.admin-pagination-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.admin-pagination-btn {
+  padding: 6px 12px;
+  border: 1px solid #dee2e6;
+  background: #fff;
+  color: #495057;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-pagination-btn:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.admin-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-pagination-btn.active {
+  background: #2e7d32;
+  color: #fff;
+  border-color: #2e7d32;
+}
+
+/* Search and Filter Bar */
+.admin-filters {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.admin-filters-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.admin-search-input:focus {
+  outline: none;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+.admin-filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-filter-select:focus {
+  outline: none;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-table-container {
+    overflow-x: auto;
+  }
+  
+  .admin-table {
+    min-width: 600px;
+  }
+  
+  .admin-filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .admin-search-input {
+    width: 100%;
+  }
+  
+  .admin-pagination {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
