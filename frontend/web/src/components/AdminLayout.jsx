@@ -159,7 +159,7 @@ export default function AdminLayout({ children }) {
     { to: "/admin/diseases", label: "BỆNH", icon: <FaBug /> },
     { to: "/admin/categories", label: "DANH MỤC", icon: <FaFolderOpen /> },
     // { to: "/admin/weather", label: "Thời tiết", icon: <FaCloudSun /> },
-    { to: "/admin/models", label: "MÔ HÌNH TRỒNG", icon: <FaSeedling /> },
+    // { to: "/admin/models", label: "MÔ HÌNH TRỒNG", icon: <FaSeedling /> }, // Removed plant template management
     { to: "/admin/managerguides", label: "HƯỚNG DẪN", icon: <FaBook /> },
     { to: "/admin/transactions", label: "GIAO DỊCH", icon: <FaShoppingCart /> },
     { to: "/admin/leaderboard", label: "BẢNG XẾP HẠNG", icon: <FaTrophy /> },

@@ -1,6 +1,8 @@
 /* ==========================================
    Expert Applications – Action Buttons
 ========================================== */
+/* Import shared admin table styles */
+@import './AdminTable.css';
 
 .btn-view-detail {
   padding: 3px 10px;
