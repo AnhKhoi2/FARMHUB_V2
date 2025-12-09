@@ -130,9 +130,15 @@ const collectionsApi = {
   searchCollections: async (keyword) => {
     const token = localStorage.getItem("accessToken");
 
+    // Chỉ gửi keyword nếu có giá trị
+    const params = {};
+    if (keyword && keyword.trim()) {
+      params.keyword = keyword.trim();
+    }
+
     return axios.get(`${API_BASE_URL}/api/collections/search`, {
       headers: { Authorization: `Bearer ${token}` },
-      params: { keyword },
+      params,
     });
   },
 };

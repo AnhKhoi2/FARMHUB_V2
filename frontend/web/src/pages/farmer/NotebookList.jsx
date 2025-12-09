@@ -74,7 +74,9 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
 
     try {
       setLoading(true);
-      const response = await notebookApi.searchNotebooks(searchKeyword);
+      // Pass status 'deleted' when searching in deleted notebooks view
+      const status = showDeleted ? "deleted" : undefined;
+      const response = await notebookApi.searchNotebooks(searchKeyword, status);
       const notebooksData = response.data?.data || response.data || [];
       setNotebooks(Array.isArray(notebooksData) ? notebooksData : []);
       setError(null);

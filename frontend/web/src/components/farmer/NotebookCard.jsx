@@ -90,7 +90,7 @@ const NotebookCard = ({
                   onPermanentDelete && onPermanentDelete(notebook._id)
                 }
               >
-                💀 Xóa vĩnh viễn
+                Xóa
               </button>
             </>
           )}

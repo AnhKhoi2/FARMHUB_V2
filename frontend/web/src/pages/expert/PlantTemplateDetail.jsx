@@ -188,13 +188,7 @@ const PlantTemplateDetail = () => {
             <div className="stat-label">TỔNG NGÀY</div>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">📊</div>
-          <div className="stat-content">
-            <div className="stat-value">{template.usage_count || 0}</div>
-            <div className="stat-label">LƯỢT SỬ DỤNG</div>
-          </div>
-        </div>
+        {/* Lượt sử dụng removed per UX request */}
       </div>
 
       {/* Examples */}
