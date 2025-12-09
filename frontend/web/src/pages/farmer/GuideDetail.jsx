@@ -6,7 +6,7 @@ import { ArrowLeftOutlined } from "@ant-design/icons";
 import placeholderImg from "../../assets/placeholder.svg";
 import getColorForKey from "../../utils/colorUtils";
 import Header from "../../components/shared/Header";
-import Footer from "../../components/shared/Footer";
+import DetailFooter from "../../components/shared/DetailFooter";
 import "./guidetail.css";
 const { Title, Text } = Typography;
 
@@ -85,7 +85,7 @@ export default function FarmerGuideDetail() {
 
         <Card bordered>
           <div style={{ padding: 8 }}>
-            <Title level={2}>{guide.title}</Title>
+            <Title level={2}>{(guide.title || "").toUpperCase()}</Title>
 
             <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8 }}>
               <Text>
@@ -113,7 +113,7 @@ export default function FarmerGuideDetail() {
 
             {guide.steps?.length > 0 && (
               <div style={{ marginTop: 20 }}>
-                <Title level={3}>Các bước thực hiện</Title>
+                <Title level={3}>CÁC BƯỚC THỰC HIỆN</Title>
                 <Row gutter={[16, 16]}>
                   {guide.steps.map((s, idx) => (
                     <Col xs={24} sm={12} md={8} key={idx} style={{ display: "flex" }}>
@@ -130,7 +130,7 @@ export default function FarmerGuideDetail() {
                               marginTop: 8,
                             }}
                           >
-                            <p>{s.title || `Bước ${idx + 1}`}</p>
+                            <Text strong style={{ display: 'block' }}>{(s.title || `BƯỚC ${idx + 1}`).toUpperCase()}</Text>
 
                             <div
                               role="button"
@@ -165,7 +165,7 @@ export default function FarmerGuideDetail() {
           </div>
         </Card>
         <Modal
-          title={activeStep ? (activeStep.title || `Bước`) : "Chi tiết bước"}
+          title={activeStep ? (<span style={{ fontWeight: 700 }}>{(activeStep.title || 'BƯỚC').toUpperCase()}</span>) : "CHI TIẾT BƯỚC"}
           open={stepModalVisible}
           onCancel={() => setStepModalVisible(false)}
           footer={null}
@@ -185,7 +185,7 @@ export default function FarmerGuideDetail() {
           )}
         </Modal>
       </div>
-      <Footer />
+      <DetailFooter />
     </>
   );
 }

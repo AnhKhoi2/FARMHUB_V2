@@ -108,7 +108,7 @@ function PesticideAiInfoPage() {
         <div className="pesticide-card">
           {/* ==== HEADER ==== */}
           <div className="pesticide-header">
-            <h2>Tra cứu thông tin thuốc BVTV bằng AI</h2>
+            <h2 style={{ fontWeight: 700, fontSize: "26px" }}>Tra Cứu Thuốc BVTV</h2>
 
             <div className="pesticide-subtitle">
               <div className="subtitle-icon">📄</div>

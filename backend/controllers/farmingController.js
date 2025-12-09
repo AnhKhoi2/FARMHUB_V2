@@ -1,7 +1,7 @@
 // backend/controllers/urbanFarmingController.js
 import asyncHandler from "express-async-handler";
-import { suggestUrbanFarmingPlan } from "../services/aiGemini.js";
-import UrbanFarmingPlan from "../models/UrbanFarmingPlan.js";
+import { suggestFarmingModel } from "../services/aiGemini.js";
+import FarmingModel from "../models/FarmingModel.js";
 
 /**
  * Helper tạo title mặc định nếu user không gửi lên
@@ -33,7 +33,7 @@ function getUserIdOrThrow(req, res) {
  * POST /api/urban-farming/plan
  * Tạo 1 gợi ý mới: gọi AI + lưu vào Mongo
  */
-export const createUrbanFarmingPlan = asyncHandler(async (req, res) => {
+export const createFarmingModel = asyncHandler(async (req, res) => {
   const userId = getUserIdOrThrow(req, res);
   const formInput = req.body || {};
 
@@ -48,9 +48,9 @@ export const createUrbanFarmingPlan = asyncHandler(async (req, res) => {
   // Gọi AI
   let aiResult;
   try {
-    aiResult = await suggestUrbanFarmingPlan(formInput);
+    aiResult = await suggestFarmingModel(formInput);
   } catch (err) {
-    console.error("[createUrbanFarmingPlan] AI error:", err);
+    console.error("[createFarmingModel] AI error:", err);
     return res.status(500).json({
       success: false,
       message:
@@ -65,7 +65,7 @@ export const createUrbanFarmingPlan = asyncHandler(async (req, res) => {
   const title =
     formInput.title?.trim() || buildDefaultTitle(formInput);
 
-  const doc = await UrbanFarmingPlan.create({
+  const doc = await FarmingModel.create({
     userId,
     input: formInput,
     aiResult,
@@ -87,7 +87,7 @@ export const createUrbanFarmingPlan = asyncHandler(async (req, res) => {
  *  - status=active|deleted|all (default: active)
  *  - page, limit (phân trang đơn giản)
  */
-export const listUrbanFarmingPlans = asyncHandler(async (req, res) => {
+export const listFarmingModel = asyncHandler(async (req, res) => {
   const userId = getUserIdOrThrow(req, res);
 
   const status = req.query.status || "active";
@@ -104,7 +104,7 @@ export const listUrbanFarmingPlans = asyncHandler(async (req, res) => {
   }
 
   const [items, total] = await Promise.all([
-    UrbanFarmingPlan.find(filter)
+    FarmingModel.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -112,7 +112,7 @@ export const listUrbanFarmingPlans = asyncHandler(async (req, res) => {
         "title climate_zone_vn main_model_id status createdAt updatedAt"
       )
       .lean(),
-    UrbanFarmingPlan.countDocuments(filter),
+    FarmingModel.countDocuments(filter),
   ]);
 
   return res.json({
@@ -128,11 +128,11 @@ export const listUrbanFarmingPlans = asyncHandler(async (req, res) => {
  * GET /api/urban-farming/plans/:id
  * Lấy chi tiết 1 gợi ý (detail)
  */
-export const getUrbanFarmingPlanById = asyncHandler(async (req, res) => {
+export const getFarmingModelById = asyncHandler(async (req, res) => {
   const userId = getUserIdOrThrow(req, res);
   const { id } = req.params;
 
-  const doc = await UrbanFarmingPlan.findOne({
+  const doc = await FarmingModel.findOne({
     _id: id,
     userId,
   }).lean();
@@ -154,11 +154,11 @@ export const getUrbanFarmingPlanById = asyncHandler(async (req, res) => {
  * DELETE /api/urban-farming/plans/:id
  * Xóa mềm 1 gợi ý (status → deleted)
  */
-export const softDeleteUrbanFarmingPlan = asyncHandler(async (req, res) => {
+export const softDeleteFarmingModel = asyncHandler(async (req, res) => {
   const userId = getUserIdOrThrow(req, res);
   const { id } = req.params;
 
-  const doc = await UrbanFarmingPlan.findOneAndUpdate(
+  const doc = await FarmingModel.findOneAndUpdate(
     { _id: id, userId, status: "active" },
     {
       $set: {
@@ -188,11 +188,11 @@ export const softDeleteUrbanFarmingPlan = asyncHandler(async (req, res) => {
  * PATCH /api/urban-farming/plans/:id/restore
  * Khôi phục (restore) 1 gợi ý đã xóa mềm
  */
-export const restoreUrbanFarmingPlan = asyncHandler(async (req, res) => {
+export const restoreFarmingModel = asyncHandler(async (req, res) => {
   const userId = getUserIdOrThrow(req, res);
   const { id } = req.params;
 
-  const doc = await UrbanFarmingPlan.findOneAndUpdate(
+  const doc = await FarmingModel.findOneAndUpdate(
     { _id: id, userId, status: "deleted" },
     {
       $set: {

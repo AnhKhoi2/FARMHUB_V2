@@ -349,7 +349,7 @@ KHÔNG dùng Markdown, KHÔNG giải thích, chỉ trả về văn bản thuần
  *   ]
  * }
  */
-export async function suggestUrbanFarmingPlan(formInput) {
+export async function suggestFarmingModel(formInput) {
   const jsonInput = JSON.stringify(formInput, null, 2);
 
   const prompt = `
@@ -442,7 +442,7 @@ ${jsonInput}
       return parseJSON(text);
     } catch (parseErr) {
       console.error(
-        "[Gemini] suggestUrbanFarmingPlan JSON parse failed, using fallback object"
+        "[Gemini] suggestFarmingModel JSON parse failed, using fallback object"
       );
 
       // Fallback: trả rawText để FE vẫn hiển thị được gì đó, không crash
@@ -460,7 +460,7 @@ ${jsonInput}
       };
     }
   } catch (err) {
-    console.error("[Gemini] suggestUrbanFarmingPlan error:", err);
+    console.error("[Gemini] suggestFarmingModel error:", err);
 
     if (err.status === 429) {
       throw new Error(

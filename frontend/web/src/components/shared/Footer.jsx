@@ -6,13 +6,13 @@ import "./Footer.css";
 const Footer = () => {
   return (
     <footer className="footer">
-      <div className=" py-4">
-        {/* <div className="row headfooter"> */}
+      <div className="py-4 footer-inner">
+        <div className="row headfooter">
           {/* Về FarmHub */}
-          {/* <div className="col-md-3 mb-3">
+          <div className="col-md-3 mb-3">
             <h5 className="text-warning fw-bold">VỀ FARMHUB</h5>
             <p className="text-white small">
-              Nền tảng công nghệ hỗ trợ nông dân trong việc quản lý cây trồng, 
+              Nền tảng công nghệ hỗ trợ nông dân trong việc quản lý cây trồng,
               theo dõi sức khỏe cây, và kết nối với chuyên gia nông nghiệp.
             </p>
             <p className="text-white small mt-2">
@@ -20,22 +20,22 @@ const Footer = () => {
               <br />
               Áp dụng AI và công nghệ hiện đại vào sản xuất nông nghiệp.
             </p>
-          </div> */}
+          </div>
 
           {/* Tính năng */}
-          {/* <div className="col-md-3 mb-3">
+          <div className="col-md-3 mb-3">
             <h5 className="text-warning fw-bold">TÍNH NĂNG NỔI BẬT</h5>
             <ul className="list-unstyled text-white small">
-              <li className="mb-2"> Sổ tay điện tử theo dõi cây trồng</li>
-              <li className="mb-2"> AI phát hiện bệnh cây trồng</li>
-              <li className="mb-2"> Kết nối với chuyên gia</li>
-              <li className="mb-2"> Thống kê và phân tích dữ liệu</li>
-              <li className="mb-2"> Kho kiến thức nông nghiệp</li>
+              <li className="mb-2">Sổ tay điện tử theo dõi cây trồng</li>
+              <li className="mb-2">AI phát hiện bệnh cây trồng</li>
+              <li className="mb-2">Kết nối với chuyên gia</li>
+              <li className="mb-2">Thống kê và phân tích dữ liệu</li>
+              <li className="mb-2">Kho kiến thức nông nghiệp</li>
             </ul>
-          </div> */}
+          </div>
 
           {/* Hỗ trợ */}
-          {/* <div className="col-md-3 mb-3">
+          <div className="col-md-3 mb-3">
             <h5 className="text-warning fw-bold">HỖ TRỢ & HƯỚNG DẪN</h5>
             <ul className="list-unstyled">
               <li className="mb-2">
@@ -54,20 +54,20 @@ const Footer = () => {
                 </Link>
               </li>
               <li className="mb-2">
-                <span className="text-white small" style={{cursor: 'pointer'}}>
+                <span className="text-white small" style={{ cursor: "pointer" }}>
                   Điều khoản sử dụng
                 </span>
               </li>
               <li className="mb-2">
-                <span className="text-white small" style={{cursor: 'pointer'}}>
+                <span className="text-white small" style={{ cursor: "pointer" }}>
                   Chính sách bảo mật
                 </span>
               </li>
             </ul>
-          </div> */}
+          </div>
 
           {/* Liên hệ */}
-          {/* <div className="col-md-3 mb-3">
+          <div className="col-md-3 mb-3">
             <h5 className="text-warning fw-bold">LIÊN HỆ VỚI CHÚNG TÔI</h5>
             <p className="fs-4 fw-bold text-warning">(HOTLINE) 0763 479 964</p>
             <h6 className="text-warning fw-bold">THEO DÕI CHÚNG TÔI</h6>
@@ -80,6 +80,12 @@ const Footer = () => {
               >
                 <FaFacebookF size={20} />
               </a>
+              <a href="#" className="social-icon">
+                <FaYoutube size={20} />
+              </a>
+              <a href="#" className="social-icon">
+                <FaInstagram size={20} />
+              </a>
             </div>
             <p className="text-white small mt-3">
               📧 Email: support@farmhub.vn
@@ -87,15 +93,14 @@ const Footer = () => {
               📍 TP.Cần Thơ, Việt Nam
             </p>
           </div>
-        </div> */}
-
+        </div>
 
         <div className="text-center mt-3">
           <p className="mb-0 text-white">
             © 2025 <span className="text-warning fw-bold">FarmHub</span>. All
             rights reserved.
           </p>
-          <p className="mb-0 text-white">(HOTLINE) 0763 479 964</p>
+          
         </div>
       </div>
     </footer>
