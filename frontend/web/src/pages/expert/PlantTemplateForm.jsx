@@ -174,6 +174,32 @@ const PlantTemplateForm = ({ mode = "create" }) => {
   const handleCoverImageUpload = async (file) => {
     if (!file) return;
 
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert(
+        `File quá lớn! Kích thước tối đa: 5MB. File của bạn: ${(
+          file.size /
+          1024 /
+          1024
+        ).toFixed(2)}MB`
+      );
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WebP)");
+      return;
+    }
+
     const formDataUpload = new FormData();
     formDataUpload.append("image", file);
 
@@ -182,9 +208,9 @@ const PlantTemplateForm = ({ mode = "create" }) => {
       const token =
         localStorage.getItem("accessToken") || localStorage.getItem("token");
       const baseURL = API_URL.replace("/api", "");
-      const response = await axios.post(`${API_URL}/upload`, formDataUpload, {
+      // ⭐ IMPORTANT: Don't set Content-Type header for FormData - axios will set it automatically with boundary
+      const response = await axios.post(`${baseURL}/upload`, formDataUpload, {
         headers: {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
@@ -198,7 +224,11 @@ const PlantTemplateForm = ({ mode = "create" }) => {
       }
     } catch (error) {
       console.error("Error uploading cover image:", error);
-      alert("Không thể upload ảnh bìa. Vui lòng thử lại.");
+      console.error("Error details:", error.response?.data);
+      const errorMsg =
+        error.response?.data?.message ||
+        "Không thể upload ảnh bìa. Vui lòng thử lại.";
+      alert(errorMsg);
     } finally {
       setUploadingCover(false);
     }
