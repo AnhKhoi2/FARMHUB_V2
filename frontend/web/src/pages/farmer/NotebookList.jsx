@@ -222,7 +222,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
                 navigate("/farmer/notebooks/deleted");
               }}
             >
-              🗑️ Xem sổ tay đã xóa
+              🗑️ XEM SỔ TAY ĐÃ XÓA
             </button>
           ) : (
             <button
