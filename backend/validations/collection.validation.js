@@ -96,9 +96,7 @@ export const removeNotebookValidation = Joi.object({
 
 // Validation cho tìm kiếm collection
 export const searchCollectionValidation = Joi.object({
-  keyword: Joi.string().required().min(1).messages({
-    "string.empty": "Từ khóa tìm kiếm không được để trống",
-    "string.min": "Từ khóa tìm kiếm phải có ít nhất 1 ký tự",
-    "any.required": "Từ khóa tìm kiếm là bắt buộc",
+  keyword: Joi.string().allow("", null).optional().messages({
+    "string.base": "Từ khóa tìm kiếm phải là chuỗi",
   }),
 });

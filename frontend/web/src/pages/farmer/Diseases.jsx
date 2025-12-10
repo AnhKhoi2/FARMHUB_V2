@@ -133,12 +133,25 @@ const Diseases = () => {
 
         <div className="container my-5">
           {/* Search and Filter Bar */}
-          <div className="card shadow-sm mb-4">
-            <div className="card-body">
-              <div className="row g-3">
+          <div className="card shadow-sm mb-3" style={{ 
+            borderRadius: '6px',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+            border: '1px solid rgba(0, 0, 0, 0.08)'
+          }}>
+            <div className="card-body" style={{ 
+              padding: '0.1rem 0.1rem'
+            }}>
+              <div className="row g-2" style={{
+                '--bs-gutter-x': '0.5rem',
+                '--bs-gutter-y': '0.25rem'
+              }}>
                 <div className="col-md-5">
                   <div className="input-group">
-                    <span className="input-group-text bg-white">
+                    <span className="input-group-text bg-white" style={{
+                      padding: '0.4rem 0.6rem',
+                      fontSize: '0.8rem',
+                      minHeight: '32px'
+                    }}>
                       <FaSearch />
                     </span>
                     <input
@@ -147,6 +160,11 @@ const Diseases = () => {
                       placeholder="Tìm kiếm bệnh..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{
+                        padding: '0.4rem 0.6rem',
+                        fontSize: '0.85rem',
+                        minHeight: '32px'
+                      }}
                     />
                   </div>
                 </div>
@@ -155,6 +173,11 @@ const Diseases = () => {
                     className="form-select"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
+                    style={{
+                      padding: '0.4rem 0.6rem',
+                      fontSize: '0.85rem',
+                      minHeight: '32px'
+                    }}
                   >
                     <option value="all">Tất cả danh mục</option>
                     {categories.map(cat => (
@@ -167,6 +190,11 @@ const Diseases = () => {
                     className="form-select"
                     value={selectedSeverity}
                     onChange={(e) => setSelectedSeverity(e.target.value)}
+                    style={{
+                      padding: '0.4rem 0.6rem',
+                      fontSize: '0.85rem',
+                      minHeight: '32px'
+                    }}
                   >
                     <option value="all">Mức độ nghiêm trọng</option>
                     <option value="low">Nhẹ</option>

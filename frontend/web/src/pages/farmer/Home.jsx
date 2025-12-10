@@ -11,7 +11,6 @@ import "../../css/farmer/Home.css";
 const DEFAULT_LAT = 10.0452;
 const DEFAULT_LON = 105.7469;
 
-
 // API mới – lấy từ POST
 const API_LATEST_POSTS = "/api/posts/public";
 
@@ -270,6 +269,16 @@ const Home = () => {
                 data-bs-target="#heroCarousel"
                 data-bs-slide-to="2"
               ></button>
+              <button
+                type="button"
+                data-bs-target="#heroCarousel"
+                data-bs-slide-to="3"
+              ></button>
+              <button
+                type="button"
+                data-bs-target="#heroCarousel"
+                data-bs-slide-to="4"
+              ></button>
             </div>
 
             <div className="carousel-inner">
@@ -281,11 +290,11 @@ const Home = () => {
                 />
                 <div className="carousel-caption">
                   <h2 className="display-4 fw-bold">
-                    Sống Xanh Bắt Đầu Từ Đây
+                    Trồng Rau Đô Thị Dễ Dàng
                   </h2>
                   <p className="fs-5">
-                    Trồng rau sạch tại nhà dễ dàng với FarmHub. <br />
-                    Hướng dẫn chi tiết, công nghệ AI hỗ trợ, cộng đồng kết nối.
+                    Hỗ trợ người dân đô thị trồng rau sạch ngay tại nhà (sân
+                    thượng, ban công, căn hộ). <br />
                   </p>
                   <Link to="/guides" className="btn btn-success btn-lg mt-3">
                     Khám Phá Ngay
@@ -300,14 +309,17 @@ const Home = () => {
                   className="d-block w-100"
                 />
                 <div className="carousel-caption">
-                  <h2 className="display-4 fw-bold">Tươi Sạch, Tiện Lợi</h2>
+                  <h2 className="display-4 fw-bold">
+                    Hướng Dẫn Trồng Cá Nhân Hóa
+                  </h2>
                   <p className="fs-5">
-                    Trao đổi sản phẩm, hạt giống, phân bón, dụng cụ chất lượng
-                    cao. <br />
-                    Tạo khu vườn xanh ngay tại đô thị.
+                    Quy trình trồng trọt khoa học, trực quan - Theo dõi theo
+                    từng loại cây. <br />
+                    Gợi ý cá nhân hóa theo điều kiện môi trường, vị trí và kinh
+                    nghiệm người dùng.
                   </p>
-                  <Link to="/market" className="btn btn-success btn-lg mt-3">
-                    Trải Nghiệm Giao Lưu
+                  <Link to="/guides" className="btn btn-success btn-lg mt-3">
+                    Xem Hướng Dẫn
                   </Link>
                 </div>
               </div>
@@ -320,14 +332,60 @@ const Home = () => {
                 />
                 <div className="carousel-caption">
                   <h2 className="display-4 fw-bold">
-                    Sản Phẩm Hữu Cơ Tươi Sạch
+                    Ghi Chép & Phân Tích Thông Minh
                   </h2>
                   <p className="fs-5">
-                    Chất lượng tươi sạch, hỗ trợ tận tâm. <br />
-                    Biến ban công thành vườn rau xanh mát.
+                    Sổ tay & Bộ sưu tập - Nhắc nhở tưới nước / bón phân / thu
+                    hoạch. <br />
+                    Phân tích tiến trình trồng trọt, đề xuất cải thiện năng
+                    suất.
                   </p>
-                  <Link to="/my-garden" className="btn btn-success btn-lg mt-3">
-                    Bắt Đầu Hành Trình
+                  <Link
+                    to="/farmer/notebooks"
+                    className="btn btn-success btn-lg mt-3"
+                  >
+                    Quản Lý Nhật Ký
+                  </Link>
+                </div>
+              </div>
+
+              <div className="carousel-item" data-bs-interval="3000">
+                <div className="carousel-overlay"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200"
+                  className="d-block w-100"
+                />
+                <div className="carousel-caption">
+                  <h2 className="display-4 fw-bold">
+                    Chẩn Đoán Bệnh Cây bằng AI
+                  </h2>
+                  <p className="fs-5">
+                    Phát hiện bệnh sớm, gợi ý hướng xử lý đúng cách. <br />
+                    Tăng tỉ lệ sống và năng suất của cây trồng.
+                  </p>
+                  <Link
+                    to="/plant-diagnosis"
+                    className="btn btn-success btn-lg mt-3"
+                  >
+                    Chẩn Đoán Ngay
+                  </Link>
+                </div>
+              </div>
+
+              <div className="carousel-item" data-bs-interval="3000">
+                <div className="carousel-overlay"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1200"
+                  className="d-block w-100"
+                />
+                <div className="carousel-caption">
+                  <h2 className="display-4 fw-bold">Cộng Đồng & Marketplace</h2>
+                  <p className="fs-5">
+                    Kết nối người trồng đô thị, chia sẻ kinh nghiệm. <br />
+                    Trao đổi hạt giống, phân bón, vật phẩm trồng trọt.
+                  </p>
+                  <Link to="/market" className="btn btn-success btn-lg mt-3">
+                    Tham Gia Cộng Đồng
                   </Link>
                 </div>
               </div>
@@ -537,7 +595,9 @@ const Home = () => {
                     )}
 
                     <div className="guide-body">
-                      <h5 className="guide-title">{(g.title || "").toUpperCase()}</h5>
+                      <h5 className="guide-title">
+                        {(g.title || "").toUpperCase()}
+                      </h5>
                       <p className="guide-desc">
                         {g.summary || g.description?.slice(0, 120)}...
                       </p>

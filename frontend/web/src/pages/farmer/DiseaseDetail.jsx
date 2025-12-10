@@ -155,7 +155,9 @@ const DiseaseDetail = () => {
                       <p className="text-dark mb-0" style={{ 
                         lineHeight: "1.8", 
                         fontSize: "1rem",
-                        textAlign: "justify" 
+                        textAlign: "justify",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word"
                       }}>
                         {disease.description}
                       </p>
@@ -197,21 +199,21 @@ const DiseaseDetail = () => {
                   <div className="quick-stats">
                     <div className="stat-item mb-3 pb-3 border-bottom">
                       <div className="d-flex justify-content-between align-items-center">
-                        <span className="text-secondary">Tên bệnh:</span>
+                        <span className="text-secondary">Tên bệnh: </span>
                         <strong className="text-dark">{disease.name}</strong>
                       </div>
                     </div>
                     {disease.category && (
                       <div className="stat-item mb-3 pb-3 border-bottom">
                         <div className="d-flex justify-content-between align-items-center">
-                          <span className="text-secondary">Danh mục:</span>
+                          <span className="text-secondary">Danh mục: </span>
                           <strong className="text-dark">{disease.category}</strong>
                         </div>
                       </div>
                     )}
                     <div className="stat-item mb-3 pb-3 border-bottom">
                       <div className="d-flex justify-content-between align-items-center">
-                        <span className="text-secondary">Mức độ:</span>
+                        <span className="text-secondary">Mức độ: </span>
                         <strong className={`text-${severityInfo.class.includes('success') ? 'success' : severityInfo.class.includes('warning') ? 'warning' : 'danger'}`}>
                           {severityInfo.text}
                         </strong>
@@ -220,7 +222,7 @@ const DiseaseDetail = () => {
                     {disease.plantTypes && disease.plantTypes.length > 0 && (
                       <div className="stat-item">
                         <div className="d-flex justify-content-between align-items-center">
-                          <span className="text-secondary">Số cây ảnh hưởng:</span>
+                          <span className="text-secondary">Số cây ảnh hưởng: </span>
                           <strong className="text-dark">{disease.plantTypes.length}</strong>
                         </div>
                       </div>

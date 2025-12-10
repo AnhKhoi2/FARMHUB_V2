@@ -31,7 +31,7 @@ import AdminWeather from "../pages/admin/AdminWeather";
 import AdminExperts from "../pages/admin/AdminExperts";
 import AdminExpertApplications from "../pages/admin/AdminExpertApplications";
 import AdminProfile from "../pages/admin/AdminProfile";
-import AdminModels from "../pages/admin/Models";
+// import AdminModels from "../pages/admin/Models"; // Removed - Plant template management
 import AdminPost from "../pages/admin/AdminPost";
 import AdminGuides from "../pages/admin/AdminGuides";
 import AdminGuideEdit from "../pages/admin/AdminGuideEdit";
@@ -388,14 +388,7 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
-        <Route
-          path="/admin/models"
-          element={
-            <AdminRoute>
-              <AdminModels />
-            </AdminRoute>
-          }
-        />
+        {/* Removed /admin/models route - Plant template management removed */}
         <Route
           path="/admin/managerpost"
           element={
