@@ -67,6 +67,7 @@ export default function AdminGuideEdit() {
   const [createGroupVisible, setCreateGroupVisible] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
   // Load plant groups from backend and map to checkbox options (label/value both = display name)
   const fetchPlantGroups = async () => {
@@ -301,10 +302,15 @@ export default function AdminGuideEdit() {
 
   // ==================== SUBMIT ====================
   const onSubmit = async () => {
-    console.log("ádá");
+    // client-side validation: ensure all required fields are filled
+    const validation = validateAll();
+    if (!validation.ok) {
+      toast.error(validation.messages[0] || 'Vui lòng điền đủ thông tin');
+      setValidationErrors(validation.errors || {});
+      return;
+    }
 
-    if (!title.trim()) return toast.error("Vui lòng nhập tiêu đề!");
-
+    setValidationErrors({});
     setSaving(true);
 
     try {
@@ -388,6 +394,58 @@ export default function AdminGuideEdit() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const validateAll = () => {
+    const errors = {};
+    const messages = [];
+
+    if (!title || !title.trim()) {
+      errors.title = 'Tiêu đề là bắt buộc';
+      messages.push('Vui lòng nhập Tiêu đề');
+    }
+
+    if (!description || !description.trim()) {
+      errors.description = 'Mô tả ngắn là bắt buộc';
+      messages.push('Vui lòng nhập Mô tả ngắn');
+    }
+
+    if (!plantName || !plantName.trim()) {
+      errors.plantName = 'Tên cây là bắt buộc';
+      messages.push('Vui lòng nhập Tên cây');
+    }
+
+    if (!Array.isArray(plantTags) || plantTags.length === 0) {
+      errors.plantTags = 'Vui lòng chọn ít nhất một loại cây';
+      messages.push('Vui lòng chọn Loại cây');
+    }
+
+    if (!imagePreview && !mainFile) {
+      errors.mainImage = 'Ảnh chính là bắt buộc';
+      messages.push('Vui lòng tải lên Ảnh minh họa chính');
+    }
+
+    if (!Array.isArray(steps) || steps.length === 0) {
+      errors.steps = 'Cần ít nhất 1 bước hướng dẫn';
+      messages.push('Vui lòng thêm ít nhất một bước hướng dẫn');
+    } else {
+      const stepErrs = [];
+      steps.forEach((s, idx) => {
+        const se = {};
+        if (!s.title || !s.title.trim()) {
+          se.title = 'Tiêu đề bước là bắt buộc';
+          stepErrs.push(`Bước ${idx + 1}: thiếu tiêu đề`);
+        }
+        if (!s.text || !s.text.trim()) {
+          se.text = 'Mô tả bước là bắt buộc';
+          stepErrs.push(`Bước ${idx + 1}: thiếu mô tả`);
+        }
+        if (Object.keys(se).length) errors[`step_${idx}`] = se;
+      });
+      if (stepErrs.length) messages.push(...stepErrs);
+    }
+
+    return { ok: messages.length === 0, messages, errors };
   };
 
   // ==================== DUPLICATE CHECK (UI WARNING) ====================
@@ -499,7 +557,7 @@ export default function AdminGuideEdit() {
                   bordered
                   style={{ marginBottom: 24, borderRadius: 10 }}
                 >
-                  <Form.Item label="Tiêu đề" required>
+                  <Form.Item label="Tiêu đề" required validateStatus={validationErrors.title ? 'error' : ''} help={validationErrors.title || ''}>
                     <Input
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
@@ -507,7 +565,7 @@ export default function AdminGuideEdit() {
                     />
                   </Form.Item>
 
-                  <Form.Item label="Mô tả ngắn">
+                  <Form.Item label="Mô tả ngắn" required validateStatus={validationErrors.description ? 'error' : ''} help={validationErrors.description || ''}>
                     <TextArea
                       rows={3}
                       value={description}
@@ -516,7 +574,7 @@ export default function AdminGuideEdit() {
                     />
                   </Form.Item>
 
-                  <Form.Item label="Tên cây (tùy chọn)">
+                  <Form.Item label="Tên cây" required validateStatus={validationErrors.plantName ? 'error' : ''} help={validationErrors.plantName || ''}>
                     <Input
                       value={plantName}
                       onChange={(e) => setPlantName(e.target.value)}
@@ -544,11 +602,18 @@ export default function AdminGuideEdit() {
                       </span>
                     }
                   >
-                    <Checkbox.Group
-                      options={availablePlantTags}
-                      value={plantTags}
-                      onChange={setPlantTags}
-                    />
+                    <Form.Item
+                      style={{ margin: 0 }}
+                      required
+                      validateStatus={validationErrors.plantTags ? 'error' : ''}
+                      help={validationErrors.plantTags || ''}
+                    >
+                      <Checkbox.Group
+                        options={availablePlantTags}
+                        value={plantTags}
+                        onChange={setPlantTags}
+                      />
+                    </Form.Item>
                   </Form.Item>
                   {duplicateWarning && (
                     <Alert
@@ -590,7 +655,7 @@ export default function AdminGuideEdit() {
                         }
                         style={{ borderRadius: 8 }}
                       >
-                        <Form.Item label="Tiêu đề bước">
+                        <Form.Item label="Tiêu đề bước" required validateStatus={validationErrors[`step_${idx}`] && validationErrors[`step_${idx}`].title ? 'error' : ''} help={validationErrors[`step_${idx}`] && validationErrors[`step_${idx}`].title ? validationErrors[`step_${idx}`].title : ''}>
                           <Input
                             value={step.title}
                             onChange={(e) =>
@@ -600,7 +665,7 @@ export default function AdminGuideEdit() {
                           />
                         </Form.Item>
 
-                        <Form.Item label="Mô tả chi tiết">
+                        <Form.Item label="Mô tả chi tiết" required validateStatus={validationErrors[`step_${idx}`] && validationErrors[`step_${idx}`].text ? 'error' : ''} help={validationErrors[`step_${idx}`] && validationErrors[`step_${idx}`].text ? validationErrors[`step_${idx}`].text : ''}>
                           <TextArea
                             rows={4}
                             value={step.text}
@@ -721,6 +786,9 @@ export default function AdminGuideEdit() {
                       </div>
                     )}
                   </Upload>
+                  {validationErrors.mainImage && (
+                    <div style={{ color: '#ff4d4f', marginTop: 8 }}>{validationErrors.mainImage}</div>
+                  )}
                 </Card>
 
                 <Card

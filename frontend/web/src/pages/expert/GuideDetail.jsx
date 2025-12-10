@@ -20,6 +20,7 @@ import {
 } from "@ant-design/icons";
 import placeholderImg from "../../assets/placeholder.svg";
 import DetailFooter from "../../components/shared/DetailFooter";
+import HeaderExpert from "../../components/shared/HeaderExpert";
 
 const { Title, Text } = Typography;
 
@@ -58,7 +59,9 @@ export default function GuideDetail() {
     );
 
   return (
-    <Flex vertical gap={20} style={{ padding: 24 }}>
+    <>
+      <HeaderExpert />
+      <Flex vertical gap={20} style={{ padding: 24 }}>
 
       {/* HEADER */}
       <Flex justify="space-between" align="center">
@@ -251,5 +254,6 @@ export default function GuideDetail() {
       {/* Detail-only footer */}
       <DetailFooter />
     </Flex>
+    </>
   );
 }
