@@ -16,6 +16,8 @@ import { ArrowLeftOutlined } from "@ant-design/icons";
 import placeholderImg from "../../assets/placeholder.svg";
 import getColorForKey from "../../utils/colorUtils";
 import Header from "../../components/shared/Header";
+import HeaderExpert from "../../components/shared/HeaderExpert";
+import { useSelector } from "react-redux";
 import DetailFooter from "../../components/shared/DetailFooter";
 import "./guidetail.css";
 const { Title, Text } = Typography;
@@ -28,6 +30,7 @@ export default function FarmerGuideDetail() {
   const [loading, setLoading] = useState(true);
   const [stepModalVisible, setStepModalVisible] = useState(false);
   const [activeStep, setActiveStep] = useState(null);
+  const user = useSelector((state) => state.auth.user);
   // Deterministic color per plant group
   // Use utility so each group has a consistent color across the app
   // import below
@@ -63,7 +66,8 @@ export default function FarmerGuideDetail() {
 
   return (
     <>
-      <Header />
+      {/* Show expert header when an expert user views public guide detail while logged in */}
+      {user && user.role === "expert" ? <HeaderExpert /> : <Header />}
       <div style={{ padding: 24 }}>
         <div
           style={{
