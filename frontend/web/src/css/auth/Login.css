@@ -1,18 +1,23 @@
 .login-page {
-  width: 100vw;
-  height: 100vh;
-  background: url("/img/background1.jpg") no-repeat center center/cover;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background: url("/img/background1.jpg") no-repeat center center/cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
+
 .error-message {
-  color: red;
-  text-align: center;
-  font-size: 14px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  font-weight: 500;
+    color: #000000 !important;
+    background-color: #ff6600 !important;
+    /* màu cam đậm */
+    text-align: center;
+    font-size: 14px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    padding: 10px;
+    border-radius: 6px;
 }
 
 /* ...existing code... */
@@ -21,26 +26,37 @@
     width: 400px;
     /* thay height cố định bằng auto + min-height */
     height: auto;
-    min-height: 440px; /* giá trị mặc định cho login */
-    background: transparent;
-    border: 2px solid rgba(255, 255, 255, .5);
+    min-height: 440px;
+    /* giá trị mặc định cho login */
+    background: rgba(255, 255, 255, 0.15);
+    /* nền trắng mờ trong suốt */
+    /* make the form border thicker and more visible */
+    border: 4px solid rgba(255, 255, 255, 0.95);
     border-radius: 20px;
     backdrop-filter: blur(20px);
-    box-shadow: 0 0 30px rgba(0, 0, 0, .5);
+    /* hiệu ứng mờ glassmorphism */
+    -webkit-backdrop-filter: blur(20px);
+    /* hỗ trợ Safari */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .3);
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color:#e9ecef;
     overflow: hidden;
-    border-bottom-left-radius:20px;
     cursor: pointer;
     z-index: 1;
-    padding: 20px; /* thêm padding để wrapper mở rộng theo nội dung */
+    padding: 20px;
+    /* thêm padding để wrapper mở rộng theo nội dung */
 }
 
 /* modifier cho từng trang nếu cần kích thước khác */
-.wrapper.login { min-height: 440px; }
-.wrapper.register { min-height: 540px; }
+.wrapper.login {
+    min-height: 440px;
+}
+
+.wrapper.register {
+    min-height: 540px;
+}
+
 /* ...existing code... */
 
 .wrapper .form-box.register {
@@ -75,10 +91,12 @@
 .input-box {
     position: relative;
     width: 100%;
-    height: 50px;            /* thêm border-radius riêng */
+    height: 50px;
+    /* thêm border-radius riêng */
     margin: 30px 0;
     border: none;
-    border-bottom: 2px solid #333;
+    /* tăng độ dày đường chân (bottom) và đổi sang trắng gần đặc như trong ảnh */
+    border-bottom: 3.5px solid rgba(255, 255, 255, 0.92);
 }
 
 .input-box label {
@@ -93,9 +111,9 @@
     transition: .5s;
 }
 
-.input-box input:focus ~ label,
-.input-box input:not(:placeholder-shown) ~ label {
-  top: -5px;
+.input-box input:focus~label,
+.input-box input:not(:placeholder-shown)~label {
+    top: -5px;
 }
 
 
@@ -111,12 +129,39 @@
     padding: 0 35px 0 5px;
 }
 
-.input-box .icon{
+.input-box .icon {
     position: absolute;
     right: 8px;
     font-size: 1.2em;
     color: #162938;
     line-height: 57px;
+}
+
+/* Toggle (eye) icon for password visibility */
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    /* always visible on dark backgrounds */
+    z-index: 3;
+    opacity: 0.95;
+}
+
+.toggle-password:hover {
+    color: #f0f0f0;
+    transform: translateY(-50%) scale(1.03);
+}
+
+.toggle-password ion-icon {
+    font-size: 20px;
+    vertical-align: middle;
 }
 
 .remember-forgot {
@@ -144,18 +189,75 @@
 }
 
 
-.btn {
+.btn-login {
     width: 100%;
     height: 45px;
-    background: #162938;
-    border: none;
+    /* make the button background more translucent (higher transparency) */
+    background: rgba(207, 208, 210, 0.18);
+    /* make the border clearly white by default */
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    position: relative;
+    z-index: 0;
     outline: none;
-    border-radius: 6px;
+    border-radius: 8px;
     color: #fff;
     font-size: 1em;
     font-weight: 500;
     cursor: pointer;
-    transition: .3s;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    /* subtle default shadow + light inner border effect */
+    box-shadow: 0 8px 20px rgba(56, 68, 78, 0.12), inset 0 0 0 1px rgba(90, 85, 85, 0.02);
+    padding: 0 18px;
+}
+
+/* Hover / focus states show a brighter glow / ring around the button */
+.wrapper .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 46px rgba(22, 41, 56, 0.22), 0 0 28px rgba(255, 255, 255, 0.03), 0 0 12px rgba(46, 125, 50, 0.06);
+    border-color: rgba(46, 125, 50, 0.95);
+}
+
+.wrapper .btn-login:focus,
+.wrapper .btn-login:focus-visible {
+    outline: none;
+    border-color: rgba(46, 125, 50, 1);
+    box-shadow: 0 6px 26px rgba(22, 41, 56, 0.14), 0 0 0 6px rgba(46, 125, 50, 0.14);
+}
+
+/* Register button - same styling as login button */
+.btn-register {
+    width: 100%;
+    height: 45px;
+    background: rgba(207, 208, 210, 0.18);
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    position: relative;
+    z-index: 0;
+    outline: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    box-shadow: 0 8px 20px rgba(56, 68, 78, 0.12), inset 0 0 0 1px rgba(90, 85, 85, 0.02);
+    padding: 0 18px;
+}
+
+.wrapper .btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 46px rgba(22, 41, 56, 0.22), 0 0 28px rgba(255, 255, 255, 0.03), 0 0 12px rgba(46, 125, 50, 0.06);
+    border-color: rgba(46, 125, 50, 0.95);
+}
+
+.wrapper .btn-register:focus,
+.wrapper .btn-register:focus-visible {
+    outline: none;
+    border-color: rgba(46, 125, 50, 1);
+    box-shadow: 0 6px 26px rgba(22, 41, 56, 0.14), 0 0 0 6px rgba(46, 125, 50, 0.14);
+}
+
+.wrapper .btn-register {
+    color: #ffffff !important;
 }
 
 .login-register {
@@ -177,21 +279,56 @@
 }
 
 .divider {
-  display: flex;
-  align-items: center;
-  justify-content: center;    /* 👈 Căn giữa toàn bộ */
-  gap: 10px;                  /* Khoảng cách 2 line và chữ */
-  margin: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 👈 Căn giữa toàn bộ */
+    gap: 10px;
+    /* Khoảng cách 2 line và chữ */
+    margin: 20px 0;
 }
 
 .divider .line {
-  flex: 1;                    /* 👈 2 đường kẻ dài ra cân đối */
-  height: 1px;
-  background: #ccc;
+    flex: 1;
+    /* 👈 2 đường kẻ dài ra cân đối */
+    height: 1px;
+    background: #ccc;
 }
 
 .divider span {
-  white-space: nowrap;
-  font-size: 14px;
-  color: #666;
+    white-space: nowrap;
+    font-size: 14px;
+    color: #666;
+}
+
+/* Force form text to white except Google button */
+.wrapper .form-box h2,
+.wrapper .form-box label,
+.wrapper .input-box .icon,
+.wrapper .remember-forgot,
+.wrapper .login-register,
+.wrapper .divider span {
+    color: #ffffff !important;
+}
+
+.wrapper .input-box input {
+    color: #ffffff !important;
+}
+
+.wrapper .input-box input::placeholder {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* Ensure links remain readable */
+.wrapper a {
+    color: #ffffff !important;
+}
+
+.wrapper a:hover {
+    text-decoration: underline !important;
+}
+
+/* Keep primary button text white */
+.wrapper .btn-login {
+    color: #ffffff !important;
 }

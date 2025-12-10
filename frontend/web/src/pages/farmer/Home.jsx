@@ -11,7 +11,7 @@ import "../../css/farmer/Home.css";
 const DEFAULT_LAT = 10.0452;
 const DEFAULT_LON = 105.7469;
 
-// API lấy post public
+// API mới – lấy từ POST
 const API_LATEST_POSTS = "/api/posts/public";
 
 // Số card / 1 hàng (1 “slide”)
