@@ -212,9 +212,9 @@ export default function AdminExpertApplications() {
       {/* Table */}
       <div className="card">
         <div className="card-body p-0">
-          <div className="table-responsive">
-            <table className="table table-sm table-hover mb-0">
-              <thead className="table-light">
+          <div className="admin-table-container">
+            <table className="admin-table has-dividers">
+              <thead>
                 <tr>
                   <th>HỌ & TÊN</th>
                   <th>EMAIL</th>
@@ -225,62 +225,27 @@ export default function AdminExpertApplications() {
                   <th>HÀNH ĐỘNG</th>
                 </tr>
               </thead>
+
               <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-3">
-                      Đang Tải...
+                {items.map((it) => (
+                  <tr key={it._id}>
+                    <td>{it.full_name}</td>
+                    <td>{it.email}</td>
+                    <td>{it.phone_number}</td>
+                    <td>{it.expertise_area}</td>
+                    <td>{it.experience_years} Năm</td>
+                    <td>
+                      {renderStatusBadge(it.status)}
+                    </td>
+                    <td>
+                      <div className="ea-action-group"> <button className="ea-btn ea-view" onClick={() => openDetail(it)} > XEM </button> <button className="ea-btn ea-approve" onClick={() => approve(it._id)} disabled={it.status !== "pending"} > DUYỆT </button> <button className="ea-btn ea-reject" onClick={() => reject(it._id)} disabled={it.status !== "pending"} > TỪ CHỐI </button> </div>
                     </td>
                   </tr>
-                ) : items.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-3">
-                      Không có dữ liệu
-                    </td>
-                  </tr>
-                ) : (
-                  items.map((it) => (
-                    <tr key={it._id}>
-                      <td>{it.full_name}</td>
-                      <td className="small">{it.email}</td>
-                      <td className="small">{it.phone_number || "—"}</td>
-                      <td>{it.expertise_area}</td>
-                      <td>{it.experience_years ?? 0} Năm</td>
-                      <td>{renderStatusBadge(it.status)}</td>
-                      <td>
-                        <div className="ea-action-group">
-
-                          <button
-                            className="ea-btn ea-view"
-                            onClick={() => openDetail(it)}
-                          >
-                            XEM
-                          </button>
-
-                          <button
-                            className="ea-btn ea-approve"
-                            onClick={() => approve(it._id)}
-                            disabled={it.status !== "pending"}
-                          >
-                            DUYỆT
-                          </button>
-
-                          <button
-                            className="ea-btn ea-reject"
-                            onClick={() => reject(it._id)}
-                            disabled={it.status !== "pending"}
-                          >
-                            TỪ CHỐI
-                          </button>
-                        </div>
-                      </td>
-
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
+
         </div>
       </div>
 
