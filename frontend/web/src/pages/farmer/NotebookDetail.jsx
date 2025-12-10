@@ -803,6 +803,61 @@ const NotebookDetail = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Daily progress breakdown */}
+                    <div className="stage-progress-details">
+                      <div className="progress-detail-item">
+                        <span className="detail-label">
+                          📅 THỜI GIAN GIAI ĐOẠN:
+                        </span>
+                        <span className="detail-value">
+                          {currentStage
+                            ? `${
+                                currentStage.day_end -
+                                currentStage.day_start +
+                                1
+                              } NGÀY (NGÀY ${currentStage.day_start}-${
+                                currentStage.day_end
+                              })`
+                            : "N/A"}
+                        </span>
+                      </div>
+                      <div className="progress-detail-item">
+                        {!(
+                          notebook &&
+                          (notebook.progress === 100 ||
+                            notebook.progress === "100") &&
+                          Array.isArray(notebook.stages_tracking) &&
+                          notebook.stages_tracking.length > 0 &&
+                          notebook.stages_tracking.every(
+                            (s) => s.status === "completed"
+                          )
+                        ) && (
+                          <>
+                            <span className="detail-label">
+                              ✅ TIẾN ĐỘ HÔM NAY:
+                            </span>
+                            <span className="detail-value">
+                              {notebook.daily_checklist
+                                ? `${
+                                    notebook.daily_checklist.filter(
+                                      (t) => t.is_completed
+                                    ).length
+                                  }/${
+                                    notebook.daily_checklist.length
+                                  } CÔNG VIỆC`
+                                : "0/0"}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {currentStageTracking?.pending_transition === true && (
+                      <p className="completion-note">
+                        🎉 XUẤT SẮC! BẠN ĐÃ HOÀN THÀNH GIAI ĐOẠN NÀY.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

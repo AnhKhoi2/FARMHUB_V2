@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import plantTemplateApi from "../../api/expert/plantTemplateApi";
 import "../../css/expert/PlantTemplateDetail.css";
-
+import HeaderExpert from "../../components/shared/HeaderExpert";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const PlantTemplateDetail = () => {
@@ -145,6 +145,8 @@ const PlantTemplateDetail = () => {
   }
 
   return (
+    <> 
+    <HeaderExpert />
     <div className="template-detail-container">
       <button className="btn-back" onClick={() => navigate(-1)}>
         ← QUAY LẠI
@@ -414,7 +416,9 @@ const PlantTemplateDetail = () => {
         </div>
       </div>
     </div>
+    </>
   );
+  
 };
 
 export default PlantTemplateDetail;

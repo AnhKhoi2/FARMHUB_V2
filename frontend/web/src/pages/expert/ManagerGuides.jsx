@@ -272,7 +272,8 @@ export default function ManagerGuides() {
     return qs.length ? `?${qs.join('&')}` : '';
   };
 
-  const onView = (id) => navigate(`/guides/${id}${currentSearch()}`);
+  // Open expert manager detail view instead of public guide detail
+  const onView = (id) => navigate(`/managerguides/detail/${id}${currentSearch()}`);
   const onEdit = (id) => navigate(`/managerguides/edit/${id}${currentSearch()}`);
 
   const onDelete = async (id) => {

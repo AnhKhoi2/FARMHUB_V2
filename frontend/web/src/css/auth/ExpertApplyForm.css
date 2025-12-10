@@ -128,3 +128,21 @@
   color: #0b6e36;
   transform: scale(1.12);
 }
+.expert-card {
+  position: relative; /* để định vị nút X bên trong */
+}
+
+.expert-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.expert-close-btn:hover {
+  opacity: 1;
+}

@@ -68,7 +68,7 @@
 /* Column Dividers */
 .admin-table.has-dividers th,
 .admin-table.has-dividers td {
-  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .admin-table.has-dividers th:last-child,

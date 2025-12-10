@@ -78,34 +78,34 @@ const PlantAdviceCard = ({ data }) => {
       <div className="plant-advice-grid">
         <div>
           {/* Ảnh hưởng thời tiết */}
-          <Section title="Ảnh hưởng của thời tiết" icon="🌤️">
+          <Section title="ẢNH HƯỞNG CỦA THỜI TIẾT" icon="🌤️">
             {weatherImpact}
           </Section>
 
           {/* Việc cần làm hôm nay */}
-          <Section title="Việc nên làm hôm nay" icon="📅">
+          <Section title="VIỆC NÊN LÀM HÔM NAY" icon="📅">
             {todayList}
           </Section>
 
           {/* Việc 3–7 ngày tới */}
-          <Section title="Trong 3–7 ngày tới" icon="⏭️">
+          <Section title="TRONG 3–7 NGÀY TỚI" icon="⏭️">
             {nextDaysList}
           </Section>
         </div>
 
         <div>
           {/* Tưới nước */}
-          <Section title="Tưới nước" icon="💧">
+          <Section title="TƯỚI NƯỚC" icon="💧">
             {watering}
           </Section>
 
           {/* Bón phân */}
-          <Section title="Bón phân" icon="🧪">
+          <Section title="BÓN PHÂN" icon="🧪">
             {fertilizer}
           </Section>
 
           {/* Rủi ro sâu bệnh */}
-          <Section title="Rủi ro sâu bệnh" icon="🐛">
+          <Section title="RỦI RO SÂU BỆNH" icon="🐛">
             {pestAndDiseaseRisk}
           </Section>
         </div>

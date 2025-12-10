@@ -397,7 +397,7 @@ export default function ExpertHome({
 
                     <button
                       className="item-btn"
-                      onClick={() => navigate(`/guides/${g._id}`)}
+                      onClick={() => navigate(`/managerguides/detail/${g._id}`)}
                     >
                       XEM CHI TIẾT
                     </button>

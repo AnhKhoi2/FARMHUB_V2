@@ -528,7 +528,7 @@ const PlantDiagnosisPage = () => {
             <div className="mb-3 mb-md-0">
               <h1 style={{ fontWeight: 700, fontSize: "26px" }}>Chẩn Đoán Sức Khỏe Cây Trồng</h1>
               <p className="text-muted mb-0">
-                Tải ảnh lá/thân cây hoặc mô tả triệu chứng để FarmHub AI hỗ trợ
+                Tải ảnh lá/thân cây hoặc mô tả triệu chứng để Gemini AI hỗ trợ
                 nhận diện bệnh và gợi ý cách xử lý cụ thể.
               </p>
             </div>
@@ -774,7 +774,7 @@ const PlantDiagnosisPage = () => {
                       KẾT QUẢ CHẨN ĐOÁN
                     </h6>
                     <span className="badge bg-light text-secondary small">
-                      Real-time từ Plant.id &amp; FarmHub AI
+                      Real-time từ Plant.id &amp; Gemini AI
                     </span>
                   </div>
 
