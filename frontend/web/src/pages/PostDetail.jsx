@@ -15,17 +15,17 @@ import {
   Spin,
   Divider,
   Tag,
-  Row, // Import Row
-  Col, // Import Col
-  Avatar, // Import Avatar cho người bán
+  Row,
+  Col,
+  Avatar,
 } from "antd";
 import {
-  EnvironmentOutlined, // Icon địa điểm
-  HeartOutlined, // Icon trái tim cho Lưu tin
-  MessageOutlined, // Icon tin nhắn cho Chat
-  UserOutlined, // Icon người dùng mặc định cho Avatar
-  ClockCircleOutlined, // Icon đồng hồ cho thời gian
-} from "@ant-design/icons"; // Import các icon cần thiết
+  EnvironmentOutlined,
+  HeartOutlined,
+  MessageOutlined,
+  UserOutlined,
+  ClockCircleOutlined,
+} from "@ant-design/icons";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -38,16 +38,19 @@ export default function PostDetail() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
 
+  // index ảnh đang được chọn
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
-        // Lưu ý: Đường dẫn API nên là chuỗi template
         const res = await axiosClient.get(`/admin/managerpost/public/${id}`);
         const payload = res.data?.data || res.data;
         if (!mounted) return;
         setPost(payload);
+        setCurrentImageIndex(0);
       } catch (err) {
         setError(err?.response?.data?.message || "Không tải được bài viết");
       } finally {
@@ -59,7 +62,6 @@ export default function PostDetail() {
 
   const handleReport = async () => {
     try {
-      // Lưu ý: Đường dẫn API nên là chuỗi template
       await axiosClient.post(`/admin/managerpost/${id}/report`, {
         reason: reportReason,
         message: "",
@@ -106,27 +108,52 @@ export default function PostDetail() {
       </>
     );
 
+  if (!post) {
+    return null;
+  }
+
+  // Chuẩn hóa hình: luôn thành mảng
+  const imagesArray = Array.isArray(post.images)
+    ? post.images
+    : post.images
+    ? [post.images]
+    : [];
+
+  const hasImages = imagesArray.length > 0;
+  const safeIndex = hasImages
+    ? Math.min(currentImageIndex, imagesArray.length - 1)
+    : 0;
+
+  const handlePrevImage = () => {
+    if (!hasImages) return;
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? imagesArray.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    if (!hasImages) return;
+    setCurrentImageIndex((prev) =>
+      prev === imagesArray.length - 1 ? 0 : prev + 1
+    );
+  };
+
   return (
     <>
       <Header />
       <div style={{ maxWidth: 1200, margin: "30px auto", padding: "0 16px" }}>
-        {/* Nút quay lại - giữ nguyên */}
+        {/* Nút quay lại */}
         <Button
           type="default"
           onClick={() => navigate(-1)}
           style={{ marginBottom: 16, fontSize: 16, color: "#1890ff" }}
         >
-           Quay lại
+          Quay lại
         </Button>
-
-        {/* Breadcrumb (nếu có, có thể thêm vào đây) */}
-        {/* Ví dụ: <Text type="secondary" style={{marginBottom: 16, display: 'block'}}>Trang chủ > Tủ, Kệ gia đình > Tủ 3 cánh màu xám nhựa Đài Loan</Text> */}
 
         <Row gutter={[24, 24]}>
           {/* Cột trái: Hình ảnh */}
-          <Col xs={24} lg={14}>
-            {" "}
-            {/* Chiếm 14/24 trên màn hình lớn */}
+          <Col xs={24} lg={12}>
             <Card
               style={{
                 borderRadius: 8,
@@ -137,88 +164,158 @@ export default function PostDetail() {
                 display: "flex",
                 height: "100%",
               }}
-              bodyStyle={{ padding: 0 }}
+              bodyStyle={{ padding: 0, width: "100%" }}
             >
-              {/* Ảnh chính */}
-              {post.images && (
-                <div
-                  style={{
-                    width: "100%",
-                  }}
-                >
-                  <Image
-                    src={Array.isArray(post.images) ? post.images[0] : post.images}
-                    alt={`Hình chính của ${post.title}`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                      cursor: "pointer",
-                    }}
-                    preview={true}
-                  />
-                  {/* Số lượng ảnh */}
-                  {/* <div
-                    style={{
-                      position: "absolute",
-                      bottom: 10,
-                      right: 10,
-                      backgroundColor: "rgba(0,0,0,0.5)",
-                      color: "white",
-                      padding: "4px 8px",
-                      borderRadius: 4,
-                      fontSize: 12,
-                    }}
-                  >
-                    1/{post.images?.length || 1}
-                  </div> */}
-                </div>
-              )}
-              {/* Grid ảnh phụ */}
-              {/* {post.images && (
-                <div
-                  style={{
-                    padding: 12,
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
-                    gap: 8,
-                    borderTop: "1px solid #f0f0f0",
-                  }}
-                >
-                  <div
-                    style={{
-                      overflow: "hidden",
-                      borderRadius: 4,
-                      height: 80,
-                      border: "1px solid #f0f0f0",
-                    }}
-                  >
+              {hasImages ? (
+                <Image.PreviewGroup>
+                  <div style={{ width: "100%", position: "relative" }}>
+                    {/* Ảnh lớn hiện tại */}
                     <Image
-                      src={Array.isArray(post.images) ? post.images[0] : post.images}
-                      alt={`Hình ${post.images}`}
+                      src={imagesArray[safeIndex]}
+                      alt={`Hình ${safeIndex + 1} của ${post.title}`}
                       style={{
                         width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
+                        height: 420, // ✨ KHUNG CỐ ĐỊNH
+                        objectFit: "contain", // ✨ Không méo hình, ảnh fit vào khung
+                        backgroundColor: "#f5f5f5", // nền giúp nhìn ảnh nhỏ không thấy trống
                         cursor: "pointer",
                       }}
                       preview={true}
                     />
+
+                    {/* Nút điều hướng ảnh nếu có >1 ảnh */}
+                    {imagesArray.length > 1 && (
+                      <>
+                        {/* Prev */}
+                        <button
+                          type="button"
+                          onClick={handlePrevImage}
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: 12,
+                            transform: "translateY(-50%)",
+                            borderRadius: "999px",
+                            border: "none",
+                            padding: "6px 10px",
+                            cursor: "pointer",
+                            background: "rgba(0,0,0,0.45)",
+                            color: "#fff",
+                            fontSize: 18,
+                            lineHeight: 1,
+                          }}
+                        >
+                          ‹
+                        </button>
+
+                        {/* Next */}
+                        <button
+                          type="button"
+                          onClick={handleNextImage}
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            right: 12,
+                            transform: "translateY(-50%)",
+                            borderRadius: "999px",
+                            border: "none",
+                            padding: "6px 10px",
+                            cursor: "pointer",
+                            background: "rgba(0,0,0,0.45)",
+                            color: "#fff",
+                            fontSize: 18,
+                            lineHeight: 1,
+                          }}
+                        >
+                          ›
+                        </button>
+
+                        {/* Chỉ số ảnh */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: 10,
+                            right: 12,
+                            backgroundColor: "rgba(0,0,0,0.55)",
+                            color: "white",
+                            padding: "4px 10px",
+                            borderRadius: 999,
+                            fontSize: 12,
+                          }}
+                        >
+                          {safeIndex + 1}/{imagesArray.length}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Thumbnails tất cả ảnh */}
+                    {imagesArray.length > 1 && (
+                      <div
+                        style={{
+                          padding: 12,
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(80px, 1fr))",
+                          gap: 8,
+                          borderTop: "1px solid #f0f0f0",
+                          background: "#fafafa",
+                        }}
+                      >
+                        {/* {imagesArray.map((img, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => setCurrentImageIndex(idx)}
+                            style={{
+                              overflow: "hidden",
+                              borderRadius: 4,
+                              height: 80,
+                              border:
+                                idx === safeIndex
+                                  ? "2px solid #1890ff"
+                                  : "1px solid #f0f0f0",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Image
+                              src={img}
+                              alt={`Thumbnail ${idx + 1}`}
+                              preview={false}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          </div>
+                        ))} */}
+                      </div>
+                    )}
                   </div>
+                </Image.PreviewGroup>
+              ) : (
+                <div
+                  style={{
+                    width: "100%",
+                    height: 260,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#999",
+                  }}
+                >
+                  Không có hình ảnh
                 </div>
-              )} */}
+              )}
             </Card>
           </Col>
 
           {/* Cột phải: Thông tin sản phẩm và người bán */}
-          <Col xs={24} lg={10}>
-            {" "}
-            {/* Chiếm 10/24 trên màn hình lớn */}
+          <Col xs={24} lg={12}>
             <Card
               style={{
                 borderRadius: 8,
                 boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                marginBottom: 24, // Khoảng cách với card tiếp theo (nếu có)
+                marginBottom: 24,
               }}
               bodyStyle={{ padding: 24 }}
             >
@@ -238,7 +335,6 @@ export default function PostDetail() {
                     flex: 1,
                     marginRight: 10,
                     color: "#1e3e26ff",
-          
                   }}
                 >
                   {post.title}
@@ -280,13 +376,12 @@ export default function PostDetail() {
 
               <Divider style={{ margin: "16px 0" }} />
 
-              {/* Thông tin người bán */}
+              {/* Thông tin người bán + nút gọi / báo cáo */}
               <Card
                 bordered={false}
                 style={{ backgroundColor: "#f9f9f9", borderRadius: 8 }}
                 bodyStyle={{ padding: 16 }}
               >
-               
                 <Row gutter={8}>
                   <Col span={12}>
                     <Button
@@ -311,25 +406,11 @@ export default function PostDetail() {
                     </Button>
                   </Col>
                   <Col span={12}>
-                    {/* <Button
-                      block
-                      size="large"
-                      icon={<MessageOutlined />}
-                      style={{
-                        backgroundColor: "#FFD333", // Màu vàng đặc trưng của Chợ Tốt
-                        borderColor: "#FFD333",
-                        color: "#333",
-                        borderRadius: 8,
-                        fontWeight: 600,
-                      }}
-                    >
-                      Chat
-                    </Button> */}
                     <Button
                       block
                       size="large"
                       style={{
-                        backgroundColor: "#FFD333", // Màu vàng đặc trưng của Chợ Tốt
+                        backgroundColor: "#FFD333",
                         borderColor: "#FFD333",
                         color: "#333",
                         borderRadius: 8,
@@ -345,10 +426,9 @@ export default function PostDetail() {
                   </Col>
                 </Row>
               </Card>
-
-              {/* Nút Báo cáo */}
             </Card>
-            {/* Card Mô tả chi tiết (tách riêng để có khung riêng) */}
+
+            {/* Card mô tả chi tiết */}
             <Card
               style={{
                 borderRadius: 8,
@@ -408,7 +488,8 @@ export default function PostDetail() {
           }}
         />
       </Modal>
-      <Footer /> 
+
+      <Footer />
     </>
   );
 }

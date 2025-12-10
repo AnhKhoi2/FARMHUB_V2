@@ -3,7 +3,7 @@ import UrbanFarmingApi from "../api/urbanFarmingApi.js"; // ⭐ Dùng API riêng
 import "../css/UrbanFarmingPlansPage.css";
 import Header from "../components/shared/Header";
 import Footer from "../components/shared/Footer";
-import { IoTrashOutline, IoArrowUndoOutline } from "react-icons/io5";
+import { IoArchiveOutline, IoArrowUndoOutline } from "react-icons/io5";
 
 const EXPERIENCE_OPTIONS = [
   { value: "newbie", label: "Mới bắt đầu" },
@@ -29,9 +29,9 @@ const SUN_ORIENT_OPTIONS = [
 ];
 
 const STATUS_FILTER_OPTIONS = [
-  { value: "active", label: "Đang dùng" },
-  { value: "deleted", label: "Đã xóa" },
-  { value: "all", label: "Tất cả" },
+  { value: "active", label: "Hoạt động" },
+  { value: "deleted", label: "Lưu trữ" },
+  // { value: "all", label: "Tất cả" },
 ];
 
 const months = [
@@ -251,10 +251,15 @@ function UrbanFarmingPlansPage() {
       setSuccessMsg("Đã tạo gợi ý mới thành công.");
       setPageError("");
 
-      if (statusFilter === "active" || statusFilter === "all") {
+      // if (statusFilter === "active" || statusFilter === "all") {
+      //   setPlans((prev) => [created, ...prev]);
+      //   setTotal((prev) => prev + 1);
+      // }
+      if (statusFilter === "active") {
         setPlans((prev) => [created, ...prev]);
         setTotal((prev) => prev + 1);
       }
+
       setSelectedPlanId(created._id);
       setSelectedPlanDetail(created);
 
@@ -297,12 +302,21 @@ function UrbanFarmingPlansPage() {
   };
 
   const handleSelectPlan = (planId) => {
+    const found = plans.find((p) => p._id === planId);
+
+    // 🚫 Nếu gợi ý này đang ở trạng thái "deleted" thì không cho xem chi tiết
+    if (found?.status === "deleted") {
+      setSelectedPlanId(null);
+      setSelectedPlanDetail(null);
+      return;
+    }
+
     setSelectedPlanId(planId);
     fetchPlanDetail(planId);
   };
 
   const handleSoftDelete = async (planId) => {
-    if (!window.confirm("Bạn có chắc muốn xóa mềm gợi ý này?")) return;
+    if (!window.confirm("Bạn có chắc muốn lưu trữ gợi ý này?")) return;
     setLoadingSoftDelete(true);
     setPageError("");
     setSuccessMsg("");
@@ -310,7 +324,7 @@ function UrbanFarmingPlansPage() {
       const res = await UrbanFarmingApi.softDelete(planId);
       const updated = res.data.data;
 
-      setSuccessMsg("Đã xóa mềm gợi ý.");
+      setSuccessMsg("Đã lưu trữ gợi ý.");
       setPlans((prev) =>
         prev.map((p) => (p._id === planId ? { ...p, ...updated } : p))
       );
@@ -320,10 +334,10 @@ function UrbanFarmingPlansPage() {
         setTotal((prev) => Math.max(0, prev - 1));
       }
 
+      // 🔴 Nếu đang xem đúng gợi ý vừa xóa → ẩn panel chi tiết
       if (selectedPlanId === planId) {
-        setSelectedPlanDetail((prev) =>
-          prev ? { ...prev, ...updated } : prev
-        );
+        setSelectedPlanId(null);
+        setSelectedPlanDetail(null);
       }
     } catch (err) {
       console.error("[UrbanFarmingPlansPage] softDelete error:", err);
@@ -344,9 +358,18 @@ function UrbanFarmingPlansPage() {
       const updated = res.data.data;
 
       setSuccessMsg("Đã khôi phục gợi ý.");
+
+      // Cập nhật bản ghi trong list hiện tại
       setPlans((prev) =>
         prev.map((p) => (p._id === planId ? { ...p, ...updated } : p))
       );
+
+      // ✅ Nếu đang ở bộ lọc "Đã xóa" thì sau khi khôi phục
+      //   phải xóa item đó khỏi list "Đã xóa"
+      if (statusFilter === "deleted") {
+        setPlans((prev) => prev.filter((p) => p._id !== planId));
+        setTotal((prev) => Math.max(0, prev - 1));
+      }
 
       if (selectedPlanId === planId) {
         setSelectedPlanDetail((prev) =>
@@ -367,9 +390,9 @@ function UrbanFarmingPlansPage() {
   // ------- RENDER HELPERS -------
   const renderStatusBadge = (status) => {
     if (status === "deleted") {
-      return <span className="badge badge-danger">Đã xóa</span>;
+      return <span className="badge badge-danger">Lưu trữ</span>;
     }
-    return <span className="badge badge-success">Đang dùng</span>;
+    return <span className="badge badge-success">Hoạt động</span>;
   };
 
   const formatDateTime = (str) => {
@@ -468,9 +491,9 @@ function UrbanFarmingPlansPage() {
               Gợi Ý Mô Hình Trồng Trọt & Cây Trồng
             </h1>
             <p className="uf-header-subtitle">
-              Không biết bắt đầu từ đâu? AI ( Trí tuệ nhân tạo ) sẽ dựa vào thông tin bạn cung cấp để
-              gợi ý mô hình trồng và danh sách cây phù hợp với không gian của
-              bạn.
+              Không biết bắt đầu từ đâu? AI ( Trí tuệ nhân tạo ) sẽ dựa vào
+              thông tin bạn cung cấp để gợi ý mô hình trồng và danh sách cây phù
+              hợp với không gian của bạn.
             </p>
           </div>
           <button
@@ -575,8 +598,16 @@ function UrbanFarmingPlansPage() {
               <div
                 style={{ padding: "8px 0", fontSize: "13px", color: "#555" }}
               >
-                Chưa có gợi ý nào. Nhấn <strong>“Tạo gợi ý mới”</strong> ở góc
-                trên bên phải để tạo.
+                {statusFilter === "deleted" ? (
+                  <>
+                    <strong>Hiện không có gợi ý nào đã được lưu trữ.</strong>
+                  </>
+                ) : (
+                  <>
+                    Chưa có gợi ý nào. Nhấn <strong>“Tạo gợi ý mới”</strong> ở
+                    góc trên bên phải để tạo.
+                  </>
+                )}
               </div>
             ) : (
               <>
@@ -648,7 +679,7 @@ function UrbanFarmingPlansPage() {
                                 disabled={loadingSoftDelete}
                                 aria-label="Xóa mềm"
                               >
-                                <IoTrashOutline
+                                <IoArchiveOutline
                                   style={{
                                     verticalAlign: "middle",
                                     marginRight: 6,
@@ -934,7 +965,7 @@ function UrbanFarmingPlansPage() {
                       color: "#064e3b",
                     }}
                   >
-                     Tìm Kiếm Mô Hình Trồng Phù Hợp
+                    Tìm Kiếm Mô Hình Trồng Phù Hợp
                   </h3>
                   <p
                     style={{
@@ -1571,10 +1602,13 @@ function UrbanFarmingPlansPage() {
                   <span className="uf-summary-chip">
                     <span>🔍</span> TÓM TẮT THÔNG TIN
                   </span>
-                  <div className="uf-summary-title">Kiểm tra lại trước khi gửi</div>
+                  <div className="uf-summary-title">
+                    Kiểm tra lại trước khi gửi
+                  </div>
                   <div className="uf-summary-subtitle">
-                    Đây là bản tóm tắt thông tin không gian, mục tiêu và ưu tiên của bạn.
-                    Nếu đã đúng, bấm “Gợi ý” để AI ( Trí tuệ nhân tạo ) phân tích và đề xuất mô hình & cây trồng phù hợp.
+                    Đây là bản tóm tắt thông tin không gian, mục tiêu và ưu tiên
+                    của bạn. Nếu đã đúng, bấm “Gợi ý” để AI ( Trí tuệ nhân tạo )
+                    phân tích và đề xuất mô hình & cây trồng phù hợp.
                   </div>
                 </div>
                 <button
@@ -1594,9 +1628,7 @@ function UrbanFarmingPlansPage() {
 
               {/* Lỗi trong modal tổng hợp */}
               {summaryError && (
-                <div className="uf-summary-error">
-                  {summaryError}
-                </div>
+                <div className="uf-summary-error">{summaryError}</div>
               )}
 
               {/* Body: 3 cột thông tin */}

@@ -658,15 +658,19 @@ export default function ProfilePage() {
       if (form.dob) payload.dob = new Date(form.dob).toISOString();
 
       // ⭐ Nếu có chọn avatar mới → upload Cloudinary trước
+      let newAvatarUrl = null;
       if (pendingAvatarFile) {
         try {
           const fd = new FormData();
-          // Dùng key "file" và route cloudinary-upload
           fd.append("file", pendingAvatarFile);
 
-          const upRes = await axiosClient.post("/api/cloudinary-upload", fd, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
+          const upRes = await axiosClient.post(
+            "/api/cloudinary-upload",
+            fd,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            }
+          );
 
           const returnedUrl = upRes?.data?.url;
           if (!returnedUrl) {
@@ -677,44 +681,9 @@ export default function ProfilePage() {
             return;
           }
 
-          // Cloudinary trả URL absolute → gán thẳng vào payload
+          // dùng URL này cho profile payload
+          newAvatarUrl = returnedUrl;
           payload.avatar = returnedUrl;
-
-          // 🔥 Cập nhật ngay form + snapshot để UI đổi ảnh liền
-          setForm((prev) => ({ ...prev, avatar: returnedUrl }));
-          setSnapshot((prev) =>
-            prev ? { ...prev, avatar: returnedUrl } : prev
-          );
-
-          // 🔥 Cập nhật ngay Redux user để Header đổi avatar không cần F5
-          try {
-            const cacheBusted = returnedUrl + "?v=" + Date.now();
-            const currentUser =
-              reduxUser || JSON.parse(localStorage.getItem("user")) || {};
-            const mergedUser = {
-              ...currentUser,
-              profile: {
-                ...(currentUser.profile || {}),
-                avatar: cacheBusted,
-              },
-            };
-            dispatch(setUser(mergedUser));
-
-            // DOM fallback: cập nhật trực tiếp các thẻ img.avatar nếu có
-            try {
-              const domImages = document.querySelectorAll("img.avatar");
-              domImages.forEach((el) => {
-                el.src = cacheBusted;
-                el.dataset.retry = "1";
-              });
-              const headerImg = document.querySelector(".user-menu-header img");
-              if (headerImg) headerImg.src = cacheBusted;
-            } catch (e) {
-              // ignore
-            }
-          } catch (e) {
-            console.log("Redux update avatar error:", e);
-          }
         } catch (err) {
           console.error(err);
           toast.error("Không thể upload avatar lên Cloudinary.");
@@ -734,113 +703,56 @@ export default function ProfilePage() {
       };
 
       setForm(normalized);
-      // update local serverUser if backend returned user info
-      if (raw.user)
-        setServerUser((prev) => ({ ...(prev || {}), ...raw.user }));
       setSnapshot(normalized);
 
-      // If backend returned full user object, set it into Redux so Header updates immediately.
+      // =========================
+      // 3. CẬP NHẬT REDUX USER ĐỂ HEADER THẤY AVATAR MỚI
+      // =========================
       try {
+        // avatar ưu tiên: ảnh mới upload → avatar backend trả → form hiện tại
+        const finalAvatarBase =
+          newAvatarUrl || updatedProfile.avatar || form.avatar || null;
+
         if (raw.user) {
-          // ensure avatar has cache-busting
-          const u = { ...raw.user };
-          if (u.profile?.avatar)
-            u.profile.avatar = u.profile.avatar + "?v=" + Date.now();
-          console.log("[ProfilePage] dispatching setUser:", u);
-          dispatch(setUser(u));
-          console.log(
-            "[ProfilePage] localStorage.user after setUser:",
-            localStorage.getItem("user")
-          );
-          // DOM-level fallback: force update header avatar(s) immediately
-          try {
-            const newAvatar = u.profile?.avatar || u.avatar || null;
-            if (newAvatar) {
-              const els = document.querySelectorAll("img.avatar");
-              els.forEach((el) => {
-                try {
-                  el.src = newAvatar;
-                  el.dataset.retry = "1";
-                } catch (e) {
-                  void e;
-                }
-              });
-              const headerImg = document.querySelector(".user-menu-header img");
-              if (headerImg) headerImg.src = newAvatar;
-            }
-          } catch (e) {
-            // ignore DOM failures
-            void e;
+          // backend trả full user
+          const u = { ...raw.user, profile: { ...(raw.user.profile || {}) } };
+
+          if (finalAvatarBase) {
+            u.profile.avatar = finalAvatarBase + "?v=" + Date.now();
           }
+
+          // nếu backend chưa set tên hiển thị mà profile đã có fullName
+          if (!u.profile.name && normalized.fullName) {
+            u.profile.name = normalized.fullName;
+          }
+
+          dispatch(setUser(u));
         } else {
+          // backend chỉ trả profile, không trả user → dùng updateUserProfile
           const profileUpdate = {};
-          if (normalized.avatar)
-            profileUpdate.avatar = normalized.avatar + "?v=" + Date.now();
-          if (normalized.fullName) profileUpdate.name = normalized.fullName;
+
+          if (finalAvatarBase) {
+            profileUpdate.avatar = finalAvatarBase + "?v=" + Date.now();
+          }
+          if (normalized.fullName) {
+            profileUpdate.name = normalized.fullName;
+          }
 
           if (Object.keys(profileUpdate).length) {
-            console.log(
-              "[ProfilePage] dispatching updateUserProfile (fallback):",
-              profileUpdate
-            );
-            // Try to merge into existing redux user and set full user to ensure Header updates
-            try {
-              const current =
-                reduxUser ||
-                JSON.parse(localStorage.getItem("user")) ||
-                {};
-              const merged = {
-                ...current,
-                profile: {
-                  ...(current.profile || {}),
-                  ...profileUpdate,
-                },
-              };
-              console.log(
-                "[ProfilePage] dispatching setUser(merged):",
-                merged
-              );
-              dispatch(setUser(merged));
-              console.log(
-                "[ProfilePage] localStorage.user after setUser(merged):",
-                localStorage.getItem("user")
-              );
-              // DOM-level fallback for merged user
-              try {
-                const newAvatar =
-                  merged.profile?.avatar || merged.avatar || null;
-                if (newAvatar) {
-                  const els = document.querySelectorAll("img.avatar");
-                  els.forEach((el) => {
-                    try {
-                      el.src = newAvatar;
-                      el.dataset.retry = "1";
-                    } catch (e) {
-                      void e;
-                    }
-                  });
-                  const headerImg = document.querySelector(
-                    ".user-menu-header img"
-                  );
-                  if (headerImg) headerImg.src = newAvatar;
-                }
-              } catch (e) {
-                void e;
-              }
-            } catch (e) {
-              // fallback to updateUserProfile reducer
-              console.log(e);
-              dispatch(updateUserProfile(profileUpdate));
-            }
+            dispatch(updateUserProfile(profileUpdate));
           }
         }
       } catch (e) {
-        // ignore
-        console.log(e);
+        console.log("[ProfilePage] update Redux user failed:", e);
       }
 
       setEditMode(false);
       setPendingAvatarFile(null); // clear file sau khi lưu
+      try {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      } catch {
+        // ignore
+      }
       toast.success("Đã lưu hồ sơ thành công");
     } catch (err) {
       const status = err?.response?.status;
@@ -891,7 +803,7 @@ export default function ProfilePage() {
       setPwForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
       setPwOpen(false);
     } catch (err) {
-      message.error(
+      toast.error(
         err?.response?.data?.message || "Không thể đổi mật khẩu"
       );
     } finally {
@@ -1024,6 +936,20 @@ export default function ProfilePage() {
     );
   }
 
+  // Hàm đổi status hệ thống sang label tiếng Việt
+  const getExpertAppStatusLabel = (status) => {
+    switch (status) {
+      case "pending":
+        return "Đang chờ duyệt";
+      case "approved":
+        return "Đã duyệt";
+      case "rejected":
+        return "Từ chối";
+      default:
+        return status || "";
+    }
+  };
+
   return (
     <>
       <Header />
@@ -1141,56 +1067,52 @@ export default function ProfilePage() {
 
                   <div>
                     <label className="agri-label">ẢNH ĐẠI DIỆN</label>
-                    <div className="flex items-start gap-6">
-                      <div className="flex flex-col items-center">
-                        <div className="avatar-wrapper">
-                          {avatarPreview ? (
-                            <img
-                              src={avatarPreview}
-                              alt="avatar"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full grid place-items-center text-sm text-agri-gray">
-                              Chưa có
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mt-3 flex gap-2">
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleAvatarSelect}
-                            className="hidden"
+                    <div className="flex flex-col items-center">
+                      {/* <div className="avatar-wrapper">
+                        {avatarPreview ? (
+                          <img
+                            src={avatarPreview}
+                            alt="avatar"
+                            className="w-full h-full object-cover"
                           />
-                          {/* Nếu muốn cho phép upload từ đây thì bỏ comment nút dưới */}
-                          {/* <button
-                            type="button"
-                            onClick={() =>
-                              fileInputRef.current &&
-                              fileInputRef.current.click()
-                            }
-                            className="agri-btn-secondary"
-                          >
-                            Tải ảnh lên
-                          </button> */}
-                          <button
-                            type="button"
-                            onClick={clearAvatar}
-                            className="agri-btn-secondary"
-                          >
-                            XÓA
-                          </button>
-                        </div>
-                        {fieldErrors.avatar && (
-                          <p className="text-sm text-red-600 mt-2">
-                            {fieldErrors.avatar}
-                          </p>
+                        ) : (
+                          <div className="w-full h-full grid place-items-center text-sm text-agri-gray">
+                            Chưa có
+                          </div>
                         )}
+                      </div> */}
+
+                      <div className="mt-3 flex gap-2 justify-center">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarSelect}
+                          style={{ display: "none" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            fileInputRef.current && fileInputRef.current.click()
+                          }
+                          className="agri-btn-secondary"
+                        >
+                          TẢI ẢNH LÊN
+                        </button>
+                        <button
+                          type="button"
+                          onClick={clearAvatar}
+                          className="agri-btn-secondary"
+                        >
+                          XÓA
+                        </button>
                       </div>
-                      <div className="flex-1">{/* chừa chỗ cho inputs */}</div>
+
+                      {fieldErrors.avatar && (
+                        <p className="text-sm text-red-600 mt-2 text-center">
+                          {fieldErrors.avatar}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1393,7 +1315,7 @@ export default function ProfilePage() {
                                     : "status-rejected")
                                 }
                               >
-                                {it.status}
+                                {getExpertAppStatusLabel(it.status)}
                               </span>
                             </td>
                           </tr>

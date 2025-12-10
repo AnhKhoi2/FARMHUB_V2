@@ -313,9 +313,9 @@ login: asyncHandler(async (req, res) => {
 
   if (!user) {
     throw new AppError(
-      ERROR_CODES.INVALID_CREDENTIALS.message,
-      ERROR_CODES.INVALID_CREDENTIALS.statusCode,
-      "INVALID_CREDENTIALS"
+      ERROR_CODES.USER_NOT_FOUND.message,
+      ERROR_CODES.USER_NOT_FOUND.statusCode,
+      "USER_NOT_FOUND"
     );
   }
 
