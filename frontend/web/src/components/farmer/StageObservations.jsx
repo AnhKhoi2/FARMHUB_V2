@@ -18,7 +18,17 @@ const StageObservations = ({ notebookId }) => {
   const fetchNotebookInfo = async () => {
     try {
       const response = await notebookApi.getNotebookById(notebookId);
-      setNotebookInfo(response.data?.data || response.data);
+      const notebook = response.data?.data || response.data;
+      setNotebookInfo(notebook);
+
+      // Debug log for stage tracking
+      if (process.env.NODE_ENV !== "production") {
+        console.log("📘 Notebook info:", {
+          current_day: notebook.current_day,
+          current_stage: notebook.current_stage,
+          stages_tracking: notebook.stages_tracking,
+        });
+      }
     } catch (err) {
       setNotebookInfo(null);
     }
@@ -155,18 +165,58 @@ const StageObservations = ({ notebookId }) => {
       </div>
     );
 
+  // Determine if observations should be enabled (only on last day of current stage)
+  const currentDay = notebookInfo?.current_day || 0;
+  const currentStageNum = notebookInfo?.current_stage || 1;
+  const currentStageTracking = notebookInfo?.stages_tracking?.find(
+    (st) => st.stage_number === currentStageNum && st.is_current
+  );
+
+  // Get stage end day from template (via notebookInfo.template_id or fetch separately if needed)
+  // For now, assume backend getCurrentObservations returns stage info or we fetch template
+  // Simpler approach: check if template_id is populated and find stage day_end
+  let stageEndDay = null;
+  if (notebookInfo?.template_id?.stages) {
+    const templateStage = notebookInfo.template_id.stages.find(
+      (s) => s.stage_number === currentStageNum
+    );
+    stageEndDay = templateStage?.day_end;
+  }
+
+  // Enable observations only when current_day === stage_end_day
+  const isLastDayOfStage = stageEndDay && currentDay === stageEndDay;
+  const shouldEnableObservations = isLastDayOfStage;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log("🔍 Observation enable check:", {
+      currentDay,
+      stageEndDay,
+      isLastDayOfStage,
+      shouldEnableObservations,
+    });
+  }
+
   return (
     <div className="stage-observations">
       <div className="observations-header">
         <h3>👁️ Quan sát giai đoạn</h3>
         <p className="observations-hint">
-          Đánh dấu các quan sát để theo dõi sự phát triển của cây
+          {shouldEnableObservations
+            ? "Đánh dấu các quan sát để theo dõi sự phát triển của cây"
+            : `Quan sát sẽ được kích hoạt vào ngày cuối giai đoạn (ngày ${
+                stageEndDay || "..."
+              })${currentDay ? `. Hiện tại: ngày ${currentDay}` : ""}`}
         </p>
       </div>
 
       <div className="observations-list">
         {observations.map((obs, index) => (
-          <div key={index} className="observation-item">
+          <div
+            key={index}
+            className={`observation-item ${
+              !shouldEnableObservations ? "dimmed" : ""
+            }`}
+          >
             <div className="observation-content">
               <h4>{obs.observation_name}</h4>
               {obs.description && (
@@ -182,7 +232,7 @@ const StageObservations = ({ notebookId }) => {
                   onChange={(e) =>
                     handleObservationChange(obs, e.target.checked)
                   }
-                  disabled={saving}
+                  disabled={saving || !shouldEnableObservations}
                 />
                 <span className="toggle-slider"></span>
               </label>

@@ -113,7 +113,7 @@ const Register = () => {
                   transform: "translateY(-50%)",
                   cursor: "pointer",
                   fontSize: "20px",
-                  color: "#666",
+                  color: "#f5f7f8ff",
                 }}
               >
                 <ion-icon name={showPassword ? "eye-off" : "eye"}></ion-icon>
@@ -133,7 +133,7 @@ const Register = () => {
               </label>
             </div>
 
-            <button className="btn" type="submit" disabled={loading}>
+            <button className="btn-register" type="submit" disabled={loading}>
               {loading ? "Đang đăng ký..." : "Đăng ký"}
             </button>
 

@@ -128,15 +128,18 @@ export const sendObservationRequiredNotification = async ({
   requiredKeys = [],
   recordedKeys = [],
 }) => {
-  const title = `👁️ Yêu cầu quan sát: ${notebookName}`;
+  const title = `👁️ Nhắc quan sát cây của bạn`;
 
   const missing = requiredKeys.filter((k) => !recordedKeys.includes(k));
-  const reqList = requiredKeys.length ? requiredKeys.join(", ") : "(none)";
-  const recList = recordedKeys.length ? recordedKeys.join(", ") : "(none)";
 
-  const message = `Giai đoạn "${stageName}" yêu cầu quan sát: ${reqList}. Bạn đã ghi: ${recList}. Thiếu: ${
-    missing.length ? missing.join(", ") : "(không)"
-  }. Vui lòng vào nhật ký để kiểm tra và cập nhật.`;
+  // Tạo message ngắn gọn, dễ hiểu
+  let message = `Đã đến ngày cuối của giai đoạn "${stageName}" trong nhật ký "${notebookName}". `;
+
+  if (missing.length > 0) {
+    message += `Bạn còn thiếu ${missing.length} điều kiện quan sát chưa ghi nhận. `;
+  }
+
+  message += `Vui lòng mở nhật ký để kiểm tra và cập nhật đầy đủ trước khi chuyển giai đoạn.`;
 
   const notification = await Notification.create({
     user_id: userId,

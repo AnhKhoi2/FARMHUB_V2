@@ -53,9 +53,11 @@ const NotebookTimeline = ({ notebookId }) => {
       <div className="timeline-header">
         <h3>🌱 TIẾN TRÌNH TRỒNG TRỌT</h3>
         <div className="timeline-stats">
-          <span>
-            Ngày {timeline.current_day} / {timeline.total_days}
-          </span>
+          <div className="timeline-day-frame">
+            <span>
+              Ngày {timeline.current_day} / {timeline.total_days}
+            </span>
+          </div>
           <span className="progress-badge">{timeline.progress}%</span>
         </div>
       </div>

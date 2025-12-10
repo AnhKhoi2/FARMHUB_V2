@@ -290,7 +290,7 @@ const CollectionDetail = () => {
         {/* Move action buttons here - below the sort/search controls */}
         <div className="header-actions-outside">
           <button className="btn-edit" onClick={openEditModal}>
-            ✏️ CHỈNH SỮA
+            ✏️ CHỈNH SỬA
           </button>
           <button className="btn-add-notebook" onClick={openAddModal}>
             + THÊM SỔ TAY
@@ -364,7 +364,7 @@ const CollectionDetail = () => {
             onClick={() => setShowEditModal(false)}
           >
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h2>CHỈNH SỮA BỘ SƯU TẬP</h2>
+              <h2>CHỈNH SỬA BỘ SƯU TẬP</h2>
               <form onSubmit={handleUpdateCollection}>
                 <div className="form-group">
                   <label>TÊN BỘ SƯU TẬP *</label>

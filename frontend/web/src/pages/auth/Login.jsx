@@ -151,7 +151,7 @@ const Login = () => {
               <label>Mật khẩu</label>
             </div>
 
-            <button type="submit" className="btn" disabled={loading}>
+            <button type="submit" className="btn-login" disabled={loading}>
               {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
 
