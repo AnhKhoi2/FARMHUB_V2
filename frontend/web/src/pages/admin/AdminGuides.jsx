@@ -120,30 +120,12 @@ export default function AdminGuides() {
         setLoading(false);
       }
     },
-    {
-      title: "Người chỉnh sửa",
-      dataIndex: "updatedBy",
-      width: 180,
-      render: (_, record) => {
-        const editor = getEditorName(record);
-        const t = record.updatedAt || record.modifiedAt || record.updated_at || record.modified_at || record.lastModified;
-        return editor ? (
-          <div>
-            <div style={{ fontWeight: 600 }}>{editor}</div>
-            {t ? <div style={{ fontSize: 12, color: NATURE_COLORS.textMuted }}>{new Date(t).toLocaleDateString('vi-VN')}</div> : null}
-          </div>
-        ) : (
-          <span style={{ color: NATURE_COLORS.textMuted }}>—</span>
-        );
-      },
-      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
-    },
-    [limit, searchTerm]
+    [page, limit, searchTerm]
   );
 
   useEffect(() => {
-    fetchGuides(1);
-  }, [searchTerm, fetchGuides]);
+    fetchGuides(1, searchTerm);
+  }, [searchTerm]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa hướng dẫn này?")) return;
@@ -235,6 +217,24 @@ export default function AdminGuides() {
       sorter: (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
       render: (_, record) =>
         record.createdAt ? new Date(record.createdAt).toLocaleDateString("vi-VN") : "—",
+      onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
+    },
+    {
+      title: "Người chỉnh sửa",
+      dataIndex: "updatedBy",
+      width: 180,
+      render: (_, record) => {
+        const editor = getEditorName(record);
+        const t = record.updatedAt || record.modifiedAt || record.updated_at || record.modified_at || record.lastModified;
+        return editor ? (
+          <div>
+            <div style={{ fontWeight: 600 }}>{editor}</div>
+            {t ? <div style={{ fontSize: 12, color: NATURE_COLORS.textMuted }}>{new Date(t).toLocaleDateString('vi-VN')}</div> : null}
+          </div>
+        ) : (
+          <span style={{ color: NATURE_COLORS.textMuted }}>—</span>
+        );
+      },
       onHeaderCell: () => ({ style: { color: NATURE_COLORS.darkText } }),
     },
     {

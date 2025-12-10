@@ -101,8 +101,11 @@ import { ToastContainer } from "react-toastify";
 export default function AppRoutes() {
   function ChatWrapper() {
     const location = useLocation();
-    // don't show chat widget on admin paths
-    if (location.pathname && location.pathname.startsWith("/admin"))
+    // don't show chat widget on admin paths or on the public home page
+    if (
+      location.pathname &&
+      (location.pathname.startsWith("/admin") || location.pathname === "/")
+    )
       return null;
     return <AIChatWidget />;
   }

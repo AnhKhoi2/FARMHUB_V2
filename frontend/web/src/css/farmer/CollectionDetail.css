@@ -175,7 +175,7 @@
 .collection-stats {
     display: flex;
     gap: 2rem;
-    color: #95a5a6;
+    color: #ffffff;
     font-size: 0.95rem;
 }
 
@@ -183,6 +183,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    color: #ffffff;
 }
 
 .header-actions {

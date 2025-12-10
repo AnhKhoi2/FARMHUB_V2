@@ -15,7 +15,7 @@ import DailyActivityChart from "../../components/charts/DailyActivityChart";
 import NotebookStageChart from "../../components/charts/NotebookStageChart";
 import NotebookProgressChart from "../../components/charts/NotebookProgressChart";
 import ActivityHeatmapChart from "../../components/charts/ActivityHeatmapChart";
-import DiseaseCategoryChart from "../../components/charts/DiseaseCategoryChart";
+// import DiseaseCategoryChart from "../../components/charts/DiseaseCategoryChart"; // Removed - data not accurate
 import { Spin } from "antd";
 
 export default function AdminDashboard() {
@@ -45,6 +45,11 @@ export default function AdminDashboard() {
   const [notebookProgress, setNotebookProgress] = useState([]);
   const [activityHeatmap, setActivityHeatmap] = useState({});
   const [diseaseCategoriesDistribution, setDiseaseCategoriesDistribution] = useState([]);
+  
+  // Filter states for interactive controls
+  const [monthsFilter, setMonthsFilter] = useState(6);
+  const [daysFilter, setDaysFilter] = useState(7);
+  const [heatmapDays, setHeatmapDays] = useState(7);
   
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -106,12 +111,12 @@ export default function AdminDashboard() {
           diseaseCatRes
         ] = await Promise.all([
           axiosClient.get("/admin/dashboard/stats"),
-          axiosClient.get("/admin/dashboard/monthly-growth?months=6"),
+          axiosClient.get(`/admin/dashboard/monthly-growth?months=${monthsFilter}`),
           axiosClient.get("/admin/dashboard/notebook-by-status"),
-          axiosClient.get("/admin/dashboard/daily-activity?days=7"),
+          axiosClient.get(`/admin/dashboard/daily-activity?days=${daysFilter}`),
           axiosClient.get("/admin/dashboard/notebook-by-stage"),
           axiosClient.get("/admin/dashboard/notebook-progress"),
-          axiosClient.get("/admin/dashboard/user-activity-heatmap?days=7"),
+          axiosClient.get(`/admin/dashboard/user-activity-heatmap?days=${heatmapDays}`),
           axiosClient.get("/admin/dashboard/disease-categories-distribution"),
         ]);
 
@@ -173,7 +178,7 @@ export default function AdminDashboard() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [monthsFilter, daysFilter, heatmapDays]);
 
   return (
     <AdminLayout>
@@ -182,6 +187,67 @@ export default function AdminDashboard() {
           <div className="col">
             <h1 className="h3">📊 Bảng điều khiển - Phân tích dữ liệu</h1>
             <p className="text-muted">Tổng quan hệ thống qua biểu đồ trực quan</p>
+          </div>
+        </div>
+
+        {/* Interactive Filters */}
+        <div className="card shadow-sm mb-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+          <div className="card-body">
+            <h5 className="mb-3" style={{ fontWeight: 600 }}> Bộ lọc tương tác</h5>
+            <div className="row g-3">
+              {/* Monthly Growth Filter */}
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Tăng trưởng theo tháng</label>
+                <select 
+                  className="form-select" 
+                  value={monthsFilter} 
+                  onChange={(e) => setMonthsFilter(Number(e.target.value))}
+                  style={{ fontWeight: 500 }}
+                >
+                  <option value={3}>3 tháng gần đây</option>
+                  <option value={6}>6 tháng gần đây</option>
+                  <option value={12}>12 tháng gần đây</option>
+                  <option value={24}>24 tháng gần đây</option>
+                </select>
+              </div>
+              
+              {/* Daily Activity Filter */}
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Hoạt động hàng ngày</label>
+                <select 
+                  className="form-select" 
+                  value={daysFilter} 
+                  onChange={(e) => setDaysFilter(Number(e.target.value))}
+                  style={{ fontWeight: 500 }}
+                >
+                  <option value={3}>3 ngày qua</option>
+                  <option value={7}>7 ngày qua</option>
+                  <option value={14}>14 ngày qua</option>
+                  <option value={30}>30 ngày qua</option>
+                </select>
+              </div>
+              
+              {/* Heatmap Filter */}
+              <div className="col-md-4">
+                <label className="form-label fw-bold">Bản đồ nhiệt hoạt động</label>
+                <select 
+                  className="form-select" 
+                  value={heatmapDays} 
+                  onChange={(e) => setHeatmapDays(Number(e.target.value))}
+                  style={{ fontWeight: 500 }}
+                >
+                  <option value={7}>7 ngày qua</option>
+                  <option value={14}>14 ngày qua</option>
+                  <option value={30}>30 ngày qua</option>
+                  <option value={90}>90 ngày qua</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-3 text-end">
+              <small style={{ opacity: 0.9 }}>
+                 Chọn khoảng thời gian để xem dữ liệu chi tiết - Biểu đồ sẽ tự động cập nhật
+              </small>
+            </div>
           </div>
         </div>
 
@@ -217,6 +283,10 @@ export default function AdminDashboard() {
             <div className="row g-3 mb-3">
               <div className="col-12">
                 <div className="card shadow-sm">
+                  <div className="card-header bg-white d-flex justify-content-between align-items-center" style={{ borderBottom: '2px solid #4CAF50' }}>
+                    <h6 className="mb-0 fw-bold">📈 Tăng trưởng theo tháng</h6>
+                    <span className="badge bg-success">{monthsFilter} tháng gần đây</span>
+                  </div>
                   <div className="card-body">
                     <MonthlyGrowthChart 
                       userData={monthlyGrowth.users} 
@@ -253,6 +323,10 @@ export default function AdminDashboard() {
             <div className="row g-3 mb-3">
               <div className="col-12">
                 <div className="card shadow-sm">
+                  <div className="card-header bg-white d-flex justify-content-between align-items-center" style={{ borderBottom: '2px solid #2196F3' }}>
+                    <h6 className="mb-0 fw-bold">📅 Hoạt động hàng ngày</h6>
+                    <span className="badge bg-primary">{daysFilter} ngày qua</span>
+                  </div>
                   <div className="card-body">
                     <DailyActivityChart data={dailyActivity} />
                   </div>
@@ -286,6 +360,10 @@ export default function AdminDashboard() {
             <div className="row g-3 mb-3">
               <div className="col-12">
                 <div className="card shadow-sm">
+                  <div className="card-header bg-white d-flex justify-content-between align-items-center" style={{ borderBottom: '2px solid #FF9800' }}>
+                    <h6 className="mb-0 fw-bold">🔥 Bản đồ nhiệt hoạt động người dùng</h6>
+                    <span className="badge bg-warning text-dark">{heatmapDays} ngày qua</span>
+                  </div>
                   <div className="card-body">
                     <ActivityHeatmapChart data={activityHeatmap} />
                   </div>
@@ -293,16 +371,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Row 10: Disease Categories Distribution */}
-            <div className="row g-3 mb-3">
-              <div className="col-12">
-                <div className="card shadow-sm">
-                  <div className="card-body">
-                    <DiseaseCategoryChart data={diseaseCategoriesDistribution} />
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Disease Categories Distribution - Removed (data not accurate) */}
           </>
         )}
       </div>

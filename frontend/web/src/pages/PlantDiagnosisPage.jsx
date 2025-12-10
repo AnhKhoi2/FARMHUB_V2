@@ -597,7 +597,7 @@ const PlantDiagnosisPage = () => {
                       <form onSubmit={handleSubmit}>
                         <div className="mb-3">
                           <label className="form-label fw-semibold text-success">
-                            1. CHỌỌN ẢNH CÂY TRỒNG
+                            1. CHỌN ẢNH CÂY TRỒNG
                           </label>
                           <input
                             type="file"
@@ -774,7 +774,7 @@ const PlantDiagnosisPage = () => {
                       KẾT QUẢ CHẨN ĐOÁN
                     </h6>
                     <span className="badge bg-light text-secondary small">
-                      Real-time từ Plant.id &amp; FarmHub AI
+                      Real-time từ Plant.id &amp; GEMINI AI
                     </span>
                   </div>
 

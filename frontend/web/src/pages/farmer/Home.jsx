@@ -379,7 +379,7 @@ const Home = () => {
                   className="d-block w-100"
                 />
                 <div className="carousel-caption">
-                  <h2 className="display-4 fw-bold">Cộng Đồng & Marketplace</h2>
+                  <h2 className="display-4 fw-bold">Kết Nối Cộng Đồng</h2>
                   <p className="fs-5">
                     Kết nối người trồng đô thị, chia sẻ kinh nghiệm. <br />
                     Trao đổi hạt giống, phân bón, vật phẩm trồng trọt.

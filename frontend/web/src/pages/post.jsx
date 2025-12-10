@@ -20,6 +20,7 @@ import {
   Empty,
   Segmented,
   Divider,
+  Pagination,
 } from "antd";
 import { PlusOutlined, SearchOutlined, PhoneFilled } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -70,6 +71,9 @@ export default function Post() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tất cả");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const pageSize = 12; // Show 12 items per page
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
@@ -93,23 +97,38 @@ export default function Post() {
   async function fetchListings() {
     setLoading(true);
     try {
+      // Build category filter - send to backend if not "Tất cả"
+      const categoryFilter = selectedCategory !== "Tất cả" ? selectedCategory : undefined;
+      
       const res = await axiosClient.get("/admin/managerpost/public", {
-        params: { q: searchQuery || undefined, limit: 50 },
+        params: { 
+          q: searchQuery || undefined,
+          category: categoryFilter,
+          page: currentPage,
+          limit: pageSize 
+        },
       });
+
+      console.log("API Response:", res?.data); // Debug log
 
       const raw =
         res?.data?.data?.items || res?.data?.data || res?.data || [];
+      
+      // Try multiple paths for total
+      const total = res?.data?.data?.total || 
+                    res?.data?.total || 
+                    res?.data?.data?.meta?.total ||
+                    res?.data?.meta?.total ||
+                    0;
 
+      console.log("Total items:", total, "Current page items:", raw.length); // Debug log
+
+      // Only filter approved posts
       const approved = raw.filter((x) => x?.status === "approved");
-      let items = approved.map(mapAdminPost);
-
-      if (selectedCategory !== "Tất cả") {
-        items = items.filter(
-          (x) => x.category === selectedCategory
-        );
-      }
+      const items = approved.map(mapAdminPost);
 
       setListings(items);
+      setTotalItems(total || items.length);
     } catch (err) {
       console.error(err);
       toast.error("Không tải được danh sách bài đăng.");
@@ -119,18 +138,15 @@ export default function Post() {
   }
 
   useEffect(() => {
-    fetchListings();
-  }, [selectedCategory]);
+    setCurrentPage(1); // Reset to page 1 when category or search changes
+  }, [selectedCategory, searchQuery]);
 
-  const filteredListings = useMemo(() => {
-    if (!searchQuery.trim()) return listings;
-    const q = searchQuery.toLowerCase();
-    return listings.filter(
-      (l) =>
-        l.title.toLowerCase().includes(q) ||
-        l.seller.toLowerCase().includes(q)
-    );
-  }, [searchQuery, listings]);
+  useEffect(() => {
+    fetchListings();
+  }, [selectedCategory, currentPage, searchQuery]);
+
+  // No need for client-side filtering since backend already handles search
+  const filteredListings = listings;
 
   const handleSubmit = async () => {
     try {
@@ -212,62 +228,79 @@ export default function Post() {
         ) : filteredListings.length === 0 ? (
           <Empty description="Không có bài đăng" />
         ) : (
-          <Row gutter={[16, 16]}>
-            {filteredListings.map((item) => (
-              <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
-                <Card
-                  hoverable
-                  style={{ height: '100%' }}
-                  bodyStyle={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: 16 }}
-                  cover={
-                    <img
-                      src={item.image || '/default-plant.png'}
-                      alt=""
-                      style={{ height: 180, objectFit: 'cover', width: '100%' }}
-                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/default-plant.png'; }}
-                    />
-                  }
-                  onClick={() => navigate(`/posts/${item.id}`)}
-                >
-                  <Tag
-                    color="green"
-                    style={{
-                      padding: '0 6px',
-                      margin: 0,
-                      fontSize: 12,
-                      alignSelf: 'flex-start',
-                      height: 22,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      borderRadius: 6,
-                      fontWeight: 600,
-                    }}
+          <>
+            <Row gutter={[16, 16]}>
+              {filteredListings.map((item) => (
+                <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
+                  <Card
+                    hoverable
+                    style={{ height: '100%' }}
+                    bodyStyle={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: 16 }}
+                    cover={
+                      <img
+                        src={item.image || '/default-plant.png'}
+                        alt=""
+                        style={{ height: 180, objectFit: 'cover', width: '100%' }}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/default-plant.png'; }}
+                      />
+                    }
+                    onClick={() => navigate(`/posts/${item.id}`)}
                   >
-                    {item.category}
-                  </Tag>
+                    <Tag
+                      color="green"
+                      style={{
+                        padding: '0 6px',
+                        margin: 0,
+                        fontSize: 12,
+                        alignSelf: 'flex-start',
+                        height: 22,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        borderRadius: 6,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {item.category}
+                    </Tag>
 
-                  <h3 className="clamp-2" style={{ fontWeight: 700, fontSize: 16 }}>
-                    {item.title}
-                  </h3>
+                    <h3 className="clamp-2" style={{ fontWeight: 700, fontSize: 16 }}>
+                      {item.title}
+                    </h3>
 
-                  <p className="market-card-price" style={{ margin: '6px 0', fontWeight: 600, color: '#059669' }}>
-                    {item.price ? `${item.price} VNĐ` : 'Giá liên hệ'}
-                  </p>
+                    <p className="market-card-price" style={{ margin: '6px 0', fontWeight: 600, color: '#059669' }}>
+                      {item.price ? `${item.price} VNĐ` : 'Giá liên hệ'}
+                    </p>
 
-                  <p className="clamp-2" style={{ margin: 0 }}>{item.location}</p>
+                    <p className="clamp-2" style={{ margin: 0 }}>{item.location}</p>
 
-                  <div style={{ marginTop: 'auto' }}>
-                    <Divider style={{ margin: '8px 0' }} />
+                    <div style={{ marginTop: 'auto' }}>
+                      <Divider style={{ margin: '8px 0' }} />
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#666' }}>
-                      <span>{item.seller}</span>
-                      <span>{item.createdAt}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#666' }}>
+                        <span>{item.seller}</span>
+                        <span>{item.createdAt}</span>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+
+            {/* Pagination */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32, marginBottom: 24 }}>
+              <Pagination
+                current={currentPage}
+                total={totalItems}
+                pageSize={pageSize}
+                onChange={(page) => {
+                  setCurrentPage(page);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                showSizeChanger={false}
+                showTotal={(total, range) => `${range[0]}-${range[1]} của ${total} bài đăng`}
+              />
+            </div>
+          </>
         )}
       </div>
 

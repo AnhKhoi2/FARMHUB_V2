@@ -1,7 +1,7 @@
 {
-  "ts": "2025-12-07T16:47:19.076Z",
+  "ts": "2025-12-09T18:02:57.463Z",
   "route": "updateGuide",
-  "id": "6935af8cf431a0f47173d45f",
+  "id": "692ac4ed7d6ab8e6330c703a",
   "files": [],
   "bodyKeys": [
     "title",
@@ -12,5 +12,5 @@
     "plant_group",
     "plant_name"
   ],
-  "plant_group": "bbbb"
+  "plant_group": "flower_vegetable"
 }

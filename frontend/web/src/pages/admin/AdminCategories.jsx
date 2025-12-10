@@ -13,8 +13,10 @@ import { Button, Space, Spin, Typography } from 'antd';
 export default function AdminCategories() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
-  const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10); // show 10 items per page
+  const [total, setTotal] = useState(0);
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [current, setCurrent] = useState(null);
@@ -23,18 +25,35 @@ export default function AdminCategories() {
   // Search state
   const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchItems = async () => {
+  const fetchItems = async (p = page) => {
     setLoading(true);
     try {
       console.log("Fetching categories...");
-      const res = await axiosClient.get("/admin/disease-categories?limit=100");
+      // Fetch all items first, then filter and paginate on frontend
+      const res = await axiosClient.get("/admin/disease-categories?limit=1000");
       console.log("Categories response:", res.data);
       
       // Response structure: { success: true, data: { items: [...], total: ..., page: ..., limit: ... } }
-      const items = res.data?.data?.items || [];
-      console.log("Categories items:", items);
-      setItems(items);
-      setFilteredItems(items);
+      let allItems = res.data?.data?.items || [];
+      console.log("Categories items:", allItems);
+      
+      // Filter by search term
+      if (searchTerm) {
+        allItems = allItems.filter(item => 
+          item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
+      // Pagination on filtered items
+      const tot = allItems.length;
+      const skip = (p - 1) * limit;
+      const paginatedItems = allItems.slice(skip, skip + limit);
+      
+      setItems(paginatedItems);
+      setTotal(tot);
+      setPage(Number(p));
     } catch (err) {
       console.error("Error fetching categories:", err);
       console.error("Error response:", err.response?.data);
@@ -44,21 +63,13 @@ export default function AdminCategories() {
     }
   };
 
-  useEffect(() => { fetchItems(); }, []);
-
-  // Filter items when search term changes
+  useEffect(() => { 
+    setPage(1); // Reset to page 1 when search changes
+  }, [searchTerm]);
+  
   useEffect(() => {
-    if (!searchTerm) {
-      setFilteredItems(items);
-    } else {
-      const filtered = items.filter(item => 
-        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredItems(filtered);
-    }
-  }, [searchTerm, items]);
+    fetchItems(page);
+  }, [page, searchTerm]);
 
   const handleCreate = async (payload) => {
     try {
@@ -91,7 +102,9 @@ export default function AdminCategories() {
       showSuccess('Xóa danh mục thành công');
       setShowConfirm(false);
       setCurrent(null);
-      fetchItems();
+      const totalPages = Math.max(1, Math.ceil((total - 1) / limit));
+      const nextPage = page > totalPages ? totalPages : page;
+      fetchItems(nextPage);
     } catch (err) {
       console.error('Delete category failed', err);
       showError(err, { duration: 6000 });
@@ -100,7 +113,55 @@ export default function AdminCategories() {
 
   return (
     <AdminLayout>
-      <div className="container-fluid">
+      <style>{`
+        #admin-categories-page .table-responsive {
+          background: #ffffff !important;
+          border-radius: 8px !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+          border: 1px solid #e0e0e0 !important;
+        }
+        #admin-categories-page table {
+          margin-bottom: 0 !important;
+        }
+        #admin-categories-page table thead th {
+          background: #f6fbf6 !important;
+          color: #2e7d32 !important;
+          font-weight: 600 !important;
+          padding: 12px 16px !important;
+          border-bottom: 1px solid rgba(0,0,0,0.06) !important;
+          text-align: center !important;
+          vertical-align: middle !important;
+          font-size: 14px !important;
+        }
+        #admin-categories-page table tbody td {
+          padding: 10px 12px !important;
+          vertical-align: middle !important;
+          text-align: center !important;
+          font-size: 14px !important;
+        }
+        #admin-categories-page .pagination {
+          margin-bottom: 0 !important;
+        }
+        #admin-categories-page .pagination .page-link {
+          color: #2e7d32 !important;
+          border: 1px solid #dee2e6 !important;
+          padding: 6px 12px !important;
+        }
+        #admin-categories-page .pagination .page-item.active .page-link {
+          background-color: #4CAF50 !important;
+          border-color: #4CAF50 !important;
+          color: white !important;
+        }
+        #admin-categories-page .pagination .page-item.disabled .page-link {
+          color: #6c757d !important;
+          background-color: #fff !important;
+        }
+        #admin-categories-page .category-icon {
+          font-size: 24px !important;
+          line-height: 1 !important;
+        }
+      `}</style>
+      <div id="admin-categories-page" className="container-fluid">
         <Toaster position="top-right" />
         <div className="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
@@ -171,22 +232,22 @@ export default function AdminCategories() {
                 <th>Biểu tượng</th>
                 <th>Tên</th>
                 <th>Đường dẫn</th>
-                <th style={{width:350}}>Mô tả</th>
-                <th style={{width:120}} className="text-center">Hành động</th>
+                <th style={{width:700}}>Mô tả</th>
+                <th style={{width:60}} className="text-center">Hành động</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr><td colSpan={6} className="text-center py-4">Đang tải...</td></tr>
               )}
-              {!loading && filteredItems.length === 0 && (
+              {!loading && items.length === 0 && (
                 <tr><td colSpan={6} className="text-center py-4">
                   {searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Không có dữ liệu'}
                 </td></tr>
               )}
-              {!loading && filteredItems.map((it, idx) => (
+              {!loading && items.map((it, idx) => (
                 <tr key={it._id}>
-                  <td className="small text-muted">{idx + 1}</td>
+                  <td className="small text-muted">{(page - 1) * limit + idx + 1}</td>
                   <td><div className="category-icon">{it.icon || '🦠'}</div></td>
                   <td>
                     <button className="btn btn-link btn-sm p-0" onClick={() => { setCurrent(it); setShowEdit(true); }}>{it.name}</button>
@@ -222,6 +283,48 @@ export default function AdminCategories() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination controls */}
+        <div className="d-flex justify-content-between align-items-center mt-2">
+          <div className="text-muted small">Tổng: {total} mục</div>
+          <nav>
+            <ul className="pagination pagination-sm mb-0">
+              {(() => {
+                const totalPages = Math.max(1, Math.ceil(total / limit));
+                const pages = [];
+                // window of pages: current-2 ... current+2
+                let start = Math.max(1, page - 2);
+                let end = Math.min(totalPages, page + 2);
+                if (start > 1) {
+                  pages.push(1);
+                  if (start > 2) pages.push('...');
+                }
+                for (let p = start; p <= end; p++) pages.push(p);
+                if (end < totalPages) {
+                  if (end < totalPages - 1) pages.push('...');
+                  pages.push(totalPages);
+                }
+
+                return [
+                  <li key="prev" className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => setPage(page - 1)} disabled={page <= 1}>«</button>
+                  </li>,
+                  ...pages.map((p, i) => {
+                    if (p === '...') return <li key={`ellipsis-${i}`} className="page-item disabled"><span className="page-link">...</span></li>;
+                    return (
+                      <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
+                        <button className="page-link" onClick={() => setPage(p)}>{p}</button>
+                      </li>
+                    );
+                  }),
+                  <li key="next" className={`page-item ${page >= totalPages ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => setPage(page + 1)} disabled={page >= totalPages}>»</button>
+                  </li>
+                ];
+              })()}
+            </ul>
+          </nav>
         </div>
 
         <div className="mt-3">

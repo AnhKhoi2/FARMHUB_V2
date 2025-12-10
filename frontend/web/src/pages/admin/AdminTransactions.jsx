@@ -192,7 +192,71 @@ export default function AdminTransactions() {
         .transactions-page .pagination-info { color: #333; font-weight: 600; }
 
         /* Ensure the table area doesn't show patterned background from parent layers */
-        .transactions-page .card .table-responsive { background: #ffffff; border-radius: 8px; overflow: hidden; }
+        .transactions-page .card .table-responsive { 
+          background: #ffffff; 
+          border-radius: 8px; 
+          overflow-x: auto; /* Enable horizontal scroll */
+          -webkit-overflow-scrolling: touch; /* Smooth scroll on mobile */
+        }
+
+        /* Make table columns more compact to prevent overflow */
+        .transactions-page table {
+          min-width: 100%;
+          table-layout: auto;
+        }
+
+        /* Limit width of transaction ID columns */
+        .transactions-page table td:nth-child(1),
+        .transactions-page table th:nth-child(1) {
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .transactions-page table td:nth-child(2),
+        .transactions-page table th:nth-child(2) {
+          max-width: 150px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* Make date/time column compact */
+        .transactions-page table td:nth-child(3),
+        .transactions-page table th:nth-child(3) {
+          white-space: nowrap;
+          font-size: 13px;
+        }
+
+        /* Limit transaction type column width */
+        .transactions-page table td:nth-child(4),
+        .transactions-page table th:nth-child(4) {
+          max-width: 180px;
+        }
+
+        /* Account name column */
+        .transactions-page table td:nth-child(5),
+        .transactions-page table th:nth-child(5) {
+          max-width: 150px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* Amount column - keep compact */
+        .transactions-page table td:nth-child(6),
+        .transactions-page table th:nth-child(6) {
+          white-space: nowrap;
+          min-width: 100px;
+        }
+
+        /* Status column - keep compact */
+        .transactions-page table td:nth-child(7),
+        .transactions-page table th:nth-child(7) {
+          white-space: nowrap;
+          min-width: 110px;
+        }
       `}</style>
         <div className="mb-3">
           <h2 className="mb-2">Giao dịch</h2>

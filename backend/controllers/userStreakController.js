@@ -10,7 +10,11 @@ export const userStreakController = {
     const userId = req.user.id; // lấy từ token
     
     const data = await UserStreak.findOne({ user: userId })
-      .populate("user", "username email role");
+      .populate({
+        path: 'user',
+        select: 'username email role',
+        match: { isDeleted: false } // Only include non-deleted users
+      });
 
     return ok(res, { item: data });
   }),
@@ -36,11 +40,18 @@ export const userStreakController = {
       ];
     }
 
-    const items = await UserStreak.find(filter)
+    let items = await UserStreak.find(filter)
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limitNum)
-      .populate("user", "username email role");
+      .populate({
+        path: 'user',
+        select: 'username email role',
+        match: { isDeleted: false } // Only include non-deleted users
+      });
+
+    // Filter out items where user is null (deleted users)
+    items = items.filter(item => item.user !== null);
 
     const total = await UserStreak.countDocuments(filter);
     const pages = Math.ceil(total / limitNum || 1);
@@ -49,7 +60,12 @@ export const userStreakController = {
 
   getById: asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const data = await UserStreak.findOne({ user: id });
+    const data = await UserStreak.findOne({ user: id })
+      .populate({
+        path: 'user',
+        select: 'username email role',
+        match: { isDeleted: false } // Only include non-deleted users
+      });
     return ok(res, { item: data });
   }),
   // top leaderboard
@@ -57,10 +73,16 @@ export const userStreakController = {
     const limit = req.query.limit || 10;
     const sortBy = req.query.sortBy || 'total_points';
     const sortField = sortBy === 'current_streak' ? { current_streak: -1 } : { total_points: -1 };
-    const items = await UserStreak.find({})
+    let items = await UserStreak.find({})
       .sort(sortField)
       .limit(Number(limit))
-      .populate('user', 'username email role');
+      .populate({
+        path: 'user',
+        select: 'username email role',
+        match: { isDeleted: false } // Only include non-deleted users
+      });
+    // Filter out items where user is null (deleted users)
+    items = items.filter(item => item.user !== null);
     return ok(res, { items });
   }),
 };

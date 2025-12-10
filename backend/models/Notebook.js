@@ -15,7 +15,7 @@ const DailyChecklistItemSchema = new mongoose.Schema(
     },
     frequency: {
       type: String,
-      enum: ["daily", "every_2_days", "every_3_days", "weekly"],
+      enum: ["daily", "every_2_days", "every_3_days", "weekly", "once"],
       default: "daily",
     },
     status: {

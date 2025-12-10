@@ -103,6 +103,51 @@ export default function AdminUsers() {
   return (
     <AdminLayout>
       <Toaster position="top-right" />
+      <style>{`
+        #admin-users-page .table-responsive {
+          background: #ffffff !important;
+          border-radius: 8px !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+          border: 1px solid #e0e0e0 !important;
+        }
+        #admin-users-page table {
+          margin-bottom: 0 !important;
+        }
+        #admin-users-page table thead th {
+          background: #f6fbf6 !important;
+          color: #2e7d32 !important;
+          font-weight: 600 !important;
+          padding: 12px 16px !important;
+          border-bottom: 1px solid rgba(0,0,0,0.06) !important;
+          text-align: center !important;
+          vertical-align: middle !important;
+          font-size: 14px !important;
+        }
+        #admin-users-page table tbody td {
+          padding: 10px 12px !important;
+          vertical-align: middle !important;
+          text-align: center !important;
+          font-size: 14px !important;
+        }
+        #admin-users-page .pagination {
+          margin-bottom: 0 !important;
+        }
+        #admin-users-page .pagination .page-link {
+          color: #2e7d32 !important;
+          border: 1px solid #dee2e6 !important;
+          padding: 6px 12px !important;
+        }
+        #admin-users-page .pagination .page-item.active .page-link {
+          background-color: #4CAF50 !important;
+          border-color: #4CAF50 !important;
+          color: white !important;
+        }
+        #admin-users-page .pagination .page-item.disabled .page-link {
+          color: #6c757d !important;
+          background-color: #fff !important;
+        }
+      `}</style>
+      <div id="admin-users-page">
       <div className="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <h2 className="h5 mb-0">Người dùng</h2>
@@ -167,11 +212,11 @@ export default function AdminUsers() {
           <thead className="table-light">
             <tr>
               <th style={{width:60}}>STT</th>
-              <th>Tên đăng nhập</th>
-              <th>Email</th>
-              <th style={{width:120}}>Trạng thái</th>
-              <th style={{width:250}}>Vai trò</th>
-              <th style={{width:70}} className="text-center">Hành động</th>
+              <th style={{width:"20%"}}>Tên đăng nhập</th>
+              <th style={{width:"20%"}}>Email</th>
+              <th style={{width:"20%"}}>Trạng thái</th>
+              <th style={{width:"20%"}}>Vai trò</th>
+              <th style={{width:"20%"}} className="text-center">Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -329,6 +374,7 @@ export default function AdminUsers() {
           />
         </PortalModal>
       )}
+      </div>
     </AdminLayout>
   );
 }

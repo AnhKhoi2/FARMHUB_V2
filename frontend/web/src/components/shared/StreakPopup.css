@@ -1,146 +1,337 @@
-/* Streak Popup Styles */
+/* Modern Streak Popup Styles */
 .portal-modal {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  animation: fadeIn 0.3s ease-out;
 }
 
-.streak-header {
-  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-  border-bottom: none;
-  padding: 1.2rem 1.5rem;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
-.streak-title {
-  color: white !important;
-  font-weight: 600;
-  font-size: 1.3rem;
-  margin: 0;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.streak-header .btn-close {
-  filter: brightness(0) invert(1);
-  opacity: 0.9;
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
 }
 
-.streak-header .btn-close:hover {
-  opacity: 1;
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
 }
 
-.streak-body {
-  padding: 2rem 1.5rem;
-  background: white;
+.streak-modal-wrapper {
+  position: relative;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 24px;
+  padding: 40px 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
 }
 
-.streak-main-text {
-  font-size: 1.2rem;
+.streak-modal-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(46, 204, 113, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.streak-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.streak-close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
   color: #333;
+  transform: rotate(90deg);
+}
+
+.streak-celebration-icon {
+  font-size: 72px;
+  text-align: center;
+  margin-bottom: 24px;
+  animation: bounce 0.6s ease-out 0.2s;
+  filter: drop-shadow(0 4px 12px rgba(46, 204, 113, 0.2));
+}
+
+.streak-content {
+  position: relative;
+  z-index: 1;
+}
+
+.streak-title-main {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 28px 0;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.streak-counter-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f0f9f4 100%);
+  border-radius: 20px;
+  padding: 28px;
+  text-align: center;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(46, 204, 113, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(46, 204, 113, 0.1);
+}
+
+.streak-counter-label {
+  font-size: 14px;
+  color: #666;
   font-weight: 500;
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.streak-count-inline {
-  color: #27ae60;
-  font-weight: bold;
-  font-size: 1.5rem;
-  display: inline-block;
-  padding: 0 0.3rem;
+.streak-counter-number {
+  font-size: 72px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin: 8px 0;
+  animation: pulse 2s ease-in-out infinite;
 }
 
-.streak-milestone {
+.streak-counter-unit {
+  font-size: 18px;
+  color: #666;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.streak-milestone-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
-  padding: 0.8rem 1.2rem;
-  border-radius: 8px;
-  border-left: 4px solid #fbc02d;
+  padding: 12px 24px;
+  border-radius: 50px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(251, 192, 45, 0.2);
+  border: 1px solid rgba(251, 192, 45, 0.3);
 }
 
-.streak-milestone strong {
+.streak-milestone-icon {
+  font-size: 20px;
+}
+
+.streak-milestone-text {
   color: #f57f17;
-  font-size: 1.1rem;
+  font-weight: 600;
+  font-size: 15px;
 }
 
-.streak-points {
-  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
-  padding: 0.8rem 1.2rem;
-  border-radius: 8px;
+.streak-reward-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  padding: 20px 24px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.streak-reward-icon {
+  font-size: 32px;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.streak-reward-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.streak-reward-label {
   color: #2e7d32;
   font-weight: 600;
-  font-size: 1.05rem;
-  margin-top: 1rem;
-  border-left: 4px solid #43a047;
+  font-size: 15px;
 }
 
-.streak-badges {
-  background: #f8f9fa;
-  padding: 1rem 1.2rem;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+.streak-reward-value {
+  color: #1b5e20;
+  font-weight: 700;
+  font-size: 20px;
 }
 
-.streak-badges strong {
-  color: #27ae60;
-  font-size: 1rem;
-  display: block;
-  margin-bottom: 0.8rem;
+.streak-badges-section {
+  background: rgba(248, 249, 250, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.streak-badges-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.streak-badges-list li {
-  background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  display: inline-block;
-  margin: 0.3rem;
-  font-weight: 500;
-  font-size: 0.95rem;
-  box-shadow: 0 2px 6px rgba(46, 204, 113, 0.25);
-}
-
-.streak-total-points {
-  margin-top: 1.5rem;
-  padding: 0.8rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  color: #555;
-  font-size: 1rem;
-  border: 1px solid #e0e0e0;
-}
-
-.streak-total-points strong {
-  color: #27ae60;
-  font-size: 1.2rem;
-}
-
-.streak-footer {
-  background: white;
-  border-top: 1px solid #e0e0e0;
-  padding: 1rem 1.5rem;
+.streak-badges-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2ecc71;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 16px;
   justify-content: center;
 }
 
-.streak-btn {
-  background: #6c757d;
+.streak-badges-icon {
+  font-size: 20px;
+}
+
+.streak-badges-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.streak-badge-item {
+  background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.25);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.streak-badge-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 204, 113, 0.35);
+}
+
+.streak-total-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin-bottom: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.streak-total-label {
+  color: #666;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.streak-total-value {
+  color: #2ecc71;
+  font-weight: 700;
+  font-size: 24px;
+}
+
+.streak-action-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
   color: white;
   border: none;
-  padding: 0.6rem 2.5rem;
-  font-weight: 500;
-  font-size: 1rem;
-  border-radius: 6px;
+  padding: 16px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  border-radius: 12px;
+  cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.streak-btn:hover {
-  background: #5a6268;
-  color: white;
+.streak-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
 }
 
-.streak-btn:active {
-  background: #545b62;
+.streak-action-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .streak-modal-wrapper {
+    padding: 32px 24px;
+  }
+
+  .streak-title-main {
+    font-size: 24px;
+  }
+
+  .streak-counter-number {
+    font-size: 56px;
+  }
+
+  .streak-celebration-icon {
+    font-size: 56px;
+  }
 }

@@ -37,18 +37,16 @@ async function sendVerificationEmail(user) {
   const verifyLink = `${process.env.CLIENT_URL}/auth/verify/${verifyToken}`;
 
   await transporter.sendMail({
-    from: `"Auth App" <${process.env.EMAIL_USER}>`,
+    from: `"Farmhub" <${process.env.EMAIL_USER}>`,
     to: user.email,
-    subject: "Kích hoạt tài khoản FARMHUB của bạn",
+    subject: "Xác nhận tài khoản của bạn",
     html: `
       <h2>Chào ${user.username},</h2>
-      <p>Cảm ơn bạn đã đăng ký tài khoản tại Farmhub. Chúng tôi rất vui mừng được chào đón bạn.
-      
-Để đảm bảo an toàn và bắt đầu sử dụng các dịch vụ trên hệ thống, vui lòng xác nhận địa chỉ email của bạn bằng cách nhấn vào đường dẫn bên dưới:</p>
-      <a href="${verifyLink}">Xác nhận tài khoản</a>
-      <p>Lưu ý: Đường dẫn này sẽ hết hạn trong vòng 24 giờ. Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.
-
-Trân trọng, Đội ngũ Farmhub</p>
+      <p>Cảm ơn bạn đã đăng ký tài khoản tại Farmhub. Chúng tôi rất vui mừng được chào đón bạn.</p>
+      <p>Để đảm bảo an toàn và bắt đầu sử dụng các dịch vụ trên hệ thống, vui lòng xác nhận địa chỉ email của bạn bằng cách nhấn vào đường dẫn bên dưới:</p>
+      <p><a href="${verifyLink}" style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Xác nhận tài khoản</a></p>
+      <p><strong>Lưu ý:</strong> Đường dẫn này sẽ hết hạn trong vòng 5 phút. Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
+      <p>Trân trọng,<br>Đội ngũ Farmhub</p>
     `,
   });
 

@@ -9,8 +9,8 @@ const PlantGroupChart = ({ data }) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2 - 30;
-    const radius = Math.min(centerX, centerY) - 20;
+    const centerY = 100; // Move pie chart higher to make room for legend
+    const radius = 80; // Fixed radius for smaller chart
 
     const groupLabels = {
       leaf_vegetable: "Rau ăn lá",
@@ -62,8 +62,8 @@ const PlantGroupChart = ({ data }) => {
 
     // Draw legend
     const legendX = 20;
-    let legendY = canvas.height - 80;
-    const legendItemHeight = 25;
+    let legendY = 200; // Position legend below pie chart
+    const legendItemHeight = 22;
     const itemsPerColumn = 4;
 
     data.forEach((item, index) => {
@@ -92,7 +92,7 @@ const PlantGroupChart = ({ data }) => {
   return (
     <div style={{ textAlign: "center" }}>
       <h6 className="mb-3 fw-bold">Nhóm cây được trồng nhiều nhất</h6>
-      <canvas ref={canvasRef} width={500} height={380} />
+      <canvas ref={canvasRef} width={400} height={300} />
     </div>
   );
 };

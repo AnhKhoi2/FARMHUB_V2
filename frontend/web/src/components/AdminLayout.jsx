@@ -258,10 +258,16 @@ export default function AdminLayout({ children }) {
           font-weight: 600;
           padding: 12px 16px;
           border-bottom: 1px solid rgba(0,0,0,0.06);
-          text-align: left;
+          text-align: center;
           vertical-align: middle;
           font-size: 14px;
           white-space: nowrap;
+        }
+
+        /* Center all table body cells */
+        .admin-main table tbody td {
+          text-align: center;
+          vertical-align: middle;
         }
 
         /* Ant Design specific overrides - ensure AntD tables in admin use the same green header style */
@@ -271,10 +277,18 @@ export default function AdminLayout({ children }) {
           font-weight: 600 !important;
           padding: 12px 16px !important;
           border-bottom: 1px solid rgba(0,0,0,0.06) !important;
+          text-align: center !important;
+          vertical-align: middle !important;
         }
 
         .admin-main .ant-table thead > tr > th .ant-table-cell-scroll {
           background: transparent !important;
+        }
+
+        /* Center Ant Design table body cells */
+        .admin-main .ant-table tbody > tr > td {
+          text-align: center !important;
+          vertical-align: middle !important;
         }
 
         /* Make content area page titles uppercase for admin pages (h1/h2/h3) */
