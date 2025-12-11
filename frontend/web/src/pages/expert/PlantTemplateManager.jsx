@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import plantTemplateApi from "../../api/expert/plantTemplateApi";
 import HeaderExpert from "../../components/shared/HeaderExpert";
+import Footer from "../../components/shared/Footer";
 import "../../css/expert/PlantTemplateManager.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -210,12 +211,16 @@ const PlantTemplateManager = () => {
 
   if (loading) {
     return (
-      <div className="plant-template-manager">
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Đang tải...</p>
+      <>
+        <HeaderExpert />
+        <div className="plant-template-manager">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Đang tải...</p>
+          </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
@@ -527,6 +532,8 @@ const PlantTemplateManager = () => {
           </div>
         )}
       </div>
+
+      <Footer />
     </>
   );
 };

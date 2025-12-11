@@ -36,7 +36,7 @@ const NotebookEdit = () => {
       });
     } catch (err) {
       console.error("Error fetching notebook:", err);
-      alert("KHÔNG THỂ TẢI NHẬT KÝ");
+      alert("KHÔNG THỂ TẢI SỔ TAY");
       navigate("/farmer/notebooks");
     } finally {
       setLoading(false);
@@ -62,18 +62,18 @@ const NotebookEdit = () => {
     e.preventDefault();
 
     if (!formData.notebook_name.trim()) {
-      alert("VUI LÒNG NHẬP TÊN NHẬT KÝ");
+      alert("VUI LÒNG NHẬP TÊN SỔ TAY");
       return;
     }
 
     try {
       setSaving(true);
       await notebookApi.updateNotebook(id, formData);
-      alert("CẬP NHẬT NHẬT KÝ THÀNH CÔNG!");
+      alert("CẬP NHẬT SỔ TAY THÀNH CÔNG!");
       navigate(`/farmer/notebooks/${id}`);
     } catch (err) {
       console.error("Error updating notebook:", err);
-      alert("KHÔNG THỂ CẬP NHẬT NHẬT KÝ. VUI LÒNG THỬ LẠI.");
+      alert("KHÔNG THỂ CẬP NHẬT SỔ TAY. VUI LÒNG THỬ LẠI.");
     } finally {
       setSaving(false);
     }
@@ -102,7 +102,7 @@ const NotebookEdit = () => {
     return (
       <div className="notebook-form-container">
         <div className="alert alert-error">
-          <span>⚠️</span> KHÔNG TÌM THẤY NHẬT KÝ
+          <span>⚠️</span> KHÔNG TÌM THẤY SỔ TAY
         </div>
       </div>
     );
@@ -114,14 +114,14 @@ const NotebookEdit = () => {
         <button className="btn-back" onClick={handleCancel}>
           ← QUAY LẠI
         </button>
-        <h1>CHỈNH SỬA NHẬT KÝ</h1>
+        <h1>CHỈNH SỬA SỔ TAY</h1>
       </div>
 
       <div className="form-card">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="notebook_name">
-              TÊN NHẬT KÝ <span className="required">*</span>
+              TÊN SỔ TAY <span className="required">*</span>
             </label>
             <input
               type="text"
@@ -165,7 +165,7 @@ const NotebookEdit = () => {
               <option value="archived">ĐÃ LƯU TRỮ</option>
             </select>
             <p className="form-hint">
-              LƯU TRỮ NHẬT KÝ KHI BẠN ĐÃ THU HOẠCH HOẶC KHÔNG THEO DÕI NỮA
+              LƯU TRỮ SỔ TAY KHI BẠN ĐÃ THU HOẠCH HOẶC KHÔNG THEO DÕI NỮA
             </p>
           </div>
 
@@ -224,7 +224,7 @@ const NotebookEdit = () => {
             BỘ MẪU ĐÃ GÁN KHÔNG THỂ THAY ĐỔI VÌ ẢNH HƯỞNG ĐẾN LỊCH CHĂM SÓC
           </li>
           <li>
-            ĐỂ THÊM/XÓA HÌNH ẢNH HOẶC CẬP NHẬT GHI CHÚ, VÀO TAB "NHẬT KÝ & HÌNH
+            ĐỂ THÊM/XÓA HÌNH ẢNH HOẶC CẬP NHẬT GHI CHÚ, VÀO TAB "SỔ TAY & HÌNH
             ẢNH"
           </li>
         </ul>

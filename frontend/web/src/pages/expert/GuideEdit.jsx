@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
+import Footer from "../../components/shared/Footer";
 import placeholderImg from "../../assets/placeholder.svg";
 import {
   Form,
@@ -71,15 +72,18 @@ export default function GuideEdit() {
   // Load plant groups from backend and map to checkbox options (label/value both = display name)
   const fetchPlantGroups = async () => {
     try {
-      const res = await axiosClient.get('/api/plant-groups');
+      const res = await axiosClient.get("/api/plant-groups");
       const data = res.data?.data || [];
       const opts = [];
       const s2l = {};
       const l2s = {};
       data.forEach((d) => {
         if (!d) return;
-        const name = typeof d === 'string' ? d : (d.name || d.slug || d._id);
-        const slug = typeof d === 'string' ? d : (d.slug || (d._id && String(d._id)) || name);
+        const name = typeof d === "string" ? d : d.name || d.slug || d._id;
+        const slug =
+          typeof d === "string"
+            ? d
+            : d.slug || (d._id && String(d._id)) || name;
         opts.push({ label: name, value: slug });
         s2l[slug] = name;
         l2s[name] = slug;
@@ -89,7 +93,7 @@ export default function GuideEdit() {
       setLabelToSlugMap(l2s);
       return { opts, s2l, l2s };
     } catch (e) {
-      console.warn('Failed to load plant groups', e?.message || e);
+      console.warn("Failed to load plant groups", e?.message || e);
       return { opts: [], s2l: {}, l2s: {} };
     }
   };
@@ -104,18 +108,16 @@ export default function GuideEdit() {
   };
 
   const createPlantGroup = async () => {
-
     if (!newGroupName || !newGroupName.trim()) {
-      message.error('Vui lòng nhập tên nhóm cây');
+      message.error("Vui lòng nhập tên nhóm cây");
       return;
     }
     try {
       setCreatingGroup(true);
       const payload = { name: newGroupName.trim() };
 
-      const res = await axiosClient.post('/api/plant-groups', payload);
-      toast.success('Đã tạo nhóm cây mới');
- 
+      const res = await axiosClient.post("/api/plant-groups", payload);
+      toast.success("Đã tạo nhóm cây mới");
 
       setCreateGroupVisible(false);
       // refresh available groups and select the created one if slug returned
@@ -127,7 +129,7 @@ export default function GuideEdit() {
         setPlantTags((prev) => Array.from(new Set([slug, ...(prev || [])])));
       }
     } catch (err) {
-      console.error('createPlantGroup', err);
+      console.error("createPlantGroup", err);
     } finally {
       setCreatingGroup(false);
     }
@@ -194,37 +196,37 @@ export default function GuideEdit() {
         // Các bước
         const loadedSteps = Array.isArray(g.steps)
           ? g.steps.map((s) => ({
-            id: Date.now() + Math.random(),
-            title: s.title || "",
-            text: s.text || "",
-            imagePreview: s.image || null,
-            file: null,
-            fileList: s.image
-              ? [
-                {
-                  uid: "-1",
-                  name: "step-image.jpg",
-                  status: "done",
-                  url: s.image,
-                },
-              ]
-              : [],
-          }))
+              id: Date.now() + Math.random(),
+              title: s.title || "",
+              text: s.text || "",
+              imagePreview: s.image || null,
+              file: null,
+              fileList: s.image
+                ? [
+                    {
+                      uid: "-1",
+                      name: "step-image.jpg",
+                      status: "done",
+                      url: s.image,
+                    },
+                  ]
+                : [],
+            }))
           : [];
 
         setSteps(
           loadedSteps.length > 0
             ? loadedSteps
             : [
-              {
-                id: Date.now(),
-                title: "",
-                text: "",
-                imagePreview: null,
-                file: null,
-                fileList: [],
-              },
-            ]
+                {
+                  id: Date.now(),
+                  title: "",
+                  text: "",
+                  imagePreview: null,
+                  file: null,
+                  fileList: [],
+                },
+              ]
         );
       } catch (err) {
         console.error(err);
@@ -305,7 +307,7 @@ export default function GuideEdit() {
     const validation = validateAll();
     if (!validation.ok) {
       // show first error to user
-      toast.error(validation.messages[0] || 'Vui lòng điền đủ thông tin');
+      toast.error(validation.messages[0] || "Vui lòng điền đủ thông tin");
       setValidationErrors(validation.errors || {});
       return;
     }
@@ -333,9 +335,7 @@ export default function GuideEdit() {
       });
 
       // plantTags
-      const labelsToSend = (plantTags || []).map(
-        (s) => slugToLabelMap[s] || s
-      );
+      const labelsToSend = (plantTags || []).map((s) => slugToLabelMap[s] || s);
       formData.append("plantTags", JSON.stringify(labelsToSend));
 
       // plant_group
@@ -384,7 +384,6 @@ export default function GuideEdit() {
           state: { saved: true },
         });
       }, 300);
-
     } catch (err) {
       console.error(err);
       const msg =
@@ -400,45 +399,45 @@ export default function GuideEdit() {
     const messages = [];
 
     if (!title || !title.trim()) {
-      errors.title = 'Tiêu đề là bắt buộc';
-      messages.push('Vui lòng nhập Tiêu đề');
+      errors.title = "Tiêu đề là bắt buộc";
+      messages.push("Vui lòng nhập Tiêu đề");
     }
 
     if (!description || !description.trim()) {
-      errors.description = 'Mô tả ngắn là bắt buộc';
-      messages.push('Vui lòng nhập Mô tả ngắn');
+      errors.description = "Mô tả ngắn là bắt buộc";
+      messages.push("Vui lòng nhập Mô tả ngắn");
     }
 
     if (!plantName || !plantName.trim()) {
-      errors.plantName = 'Tên cây là bắt buộc';
-      messages.push('Vui lòng nhập Tên cây');
+      errors.plantName = "Tên cây là bắt buộc";
+      messages.push("Vui lòng nhập Tên cây");
     }
 
     if (!Array.isArray(plantTags) || plantTags.length === 0) {
-      errors.plantTags = 'Vui lòng chọn ít nhất một loại cây';
-      messages.push('Vui lòng chọn Loại cây');
+      errors.plantTags = "Vui lòng chọn ít nhất một loại cây";
+      messages.push("Vui lòng chọn Loại cây");
     }
 
     // require main image (either existing preview or uploaded file)
     if (!imagePreview && !mainFile) {
-      errors.mainImage = 'Ảnh chính là bắt buộc';
-      messages.push('Vui lòng tải lên Ảnh minh họa chính');
+      errors.mainImage = "Ảnh chính là bắt buộc";
+      messages.push("Vui lòng tải lên Ảnh minh họa chính");
     }
 
     // steps validation: at least one step, each step must have title and text
     if (!Array.isArray(steps) || steps.length === 0) {
-      errors.steps = 'Cần ít nhất 1 bước hướng dẫn';
-      messages.push('Vui lòng thêm ít nhất một bước hướng dẫn');
+      errors.steps = "Cần ít nhất 1 bước hướng dẫn";
+      messages.push("Vui lòng thêm ít nhất một bước hướng dẫn");
     } else {
       const stepErrs = [];
       steps.forEach((s, idx) => {
         const se = {};
         if (!s.title || !s.title.trim()) {
-          se.title = 'Tiêu đề bước là bắt buộc';
+          se.title = "Tiêu đề bước là bắt buộc";
           stepErrs.push(`Bước ${idx + 1}: thiếu tiêu đề`);
         }
         if (!s.text || !s.text.trim()) {
-          se.text = 'Mô tả bước là bắt buộc';
+          se.text = "Mô tả bước là bắt buộc";
           stepErrs.push(`Bước ${idx + 1}: thiếu mô tả`);
         }
         errors[`step_${idx}`] = se;
@@ -460,18 +459,20 @@ export default function GuideEdit() {
     }
 
     // debounce check when title, plantName or plantTags change
-    if (duplicateCheckRef.current.timer) clearTimeout(duplicateCheckRef.current.timer);
+    if (duplicateCheckRef.current.timer)
+      clearTimeout(duplicateCheckRef.current.timer);
     duplicateCheckRef.current.timer = setTimeout(async () => {
       setDuplicateWarning(null);
-      const checkName = (plantName || title || '').trim();
+      const checkName = (plantName || title || "").trim();
       if (!checkName) return;
 
       const params = { plant: checkName, limit: 3 };
-      const primary = Array.isArray(plantTags) && plantTags.length ? plantTags[0] : null;
+      const primary =
+        Array.isArray(plantTags) && plantTags.length ? plantTags[0] : null;
       if (primary) params.category = primary;
 
       try {
-        const res = await axiosClient.get('/guides', { params });
+        const res = await axiosClient.get("/guides", { params });
         const data = res.data || {};
         const docs = data.data || data.docs || data.guides || [];
         if (Array.isArray(docs) && docs.length > 0) {
@@ -479,13 +480,27 @@ export default function GuideEdit() {
           // collect distinct group display names for message
           const groups = Array.from(
             new Set(
-              docs.map((d) => d.category || d.category_slug || (Array.isArray(d.plantTags) && d.plantTags[0]) || "Không rõ")
+              docs.map(
+                (d) =>
+                  d.category ||
+                  d.category_slug ||
+                  (Array.isArray(d.plantTags) && d.plantTags[0]) ||
+                  "Không rõ"
+              )
             )
           );
           if (primary) {
-            setDuplicateWarning(`Đã tồn tại ${count} hướng dẫn tương tự trong nhóm đã chọn (${groups.join(", ")}).`);
+            setDuplicateWarning(
+              `Đã tồn tại ${count} hướng dẫn tương tự trong nhóm đã chọn (${groups.join(
+                ", "
+              )}).`
+            );
           } else {
-            setDuplicateWarning(`Đã tìm thấy ${count} hướng dẫn tương tự trong nhóm: ${groups.join(", ")}.`);
+            setDuplicateWarning(
+              `Đã tìm thấy ${count} hướng dẫn tương tự trong nhóm: ${groups.join(
+                ", "
+              )}.`
+            );
           }
         }
       } catch (e) {
@@ -493,7 +508,8 @@ export default function GuideEdit() {
       }
     }, 600);
     return () => {
-      if (duplicateCheckRef.current.timer) clearTimeout(duplicateCheckRef.current.timer);
+      if (duplicateCheckRef.current.timer)
+        clearTimeout(duplicateCheckRef.current.timer);
     };
   }, [title, plantTags, plantName]);
 
@@ -519,7 +535,11 @@ export default function GuideEdit() {
           borderRadius: 12,
         }}
       >
-        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Row
+          justify="space-between"
+          align="middle"
+          style={{ marginBottom: 16 }}
+        >
           <Col>
             <Space direction="vertical" size={4}>
               <Title level={3} style={{ margin: 0 }}>
@@ -538,7 +558,6 @@ export default function GuideEdit() {
             </Button>
           </Col>
         </Row>
-
 
         <Divider />
 
@@ -566,7 +585,12 @@ export default function GuideEdit() {
                   />
                 </Form.Item>
 
-                <Form.Item label="Mô tả ngắn" required validateStatus={validationErrors.description ? 'error' : ''} help={validationErrors.description || ''}>
+                <Form.Item
+                  label="Mô tả ngắn"
+                  required
+                  validateStatus={validationErrors.description ? "error" : ""}
+                  help={validationErrors.description || ""}
+                >
                   <TextArea
                     rows={3}
                     value={description}
@@ -574,7 +598,12 @@ export default function GuideEdit() {
                     placeholder="Mô tả ngắn gọn về hướng dẫn..."
                   />
                 </Form.Item>
-                <Form.Item label="Tên cây" required validateStatus={validationErrors.plantName ? 'error' : ''} help={validationErrors.plantName || ''}>
+                <Form.Item
+                  label="Tên cây"
+                  required
+                  validateStatus={validationErrors.plantName ? "error" : ""}
+                  help={validationErrors.plantName || ""}
+                >
                   <Input
                     value={plantName}
                     onChange={(e) => setPlantName(e.target.value)}
@@ -602,8 +631,8 @@ export default function GuideEdit() {
                     </span>
                   }
                   required
-                  validateStatus={validationErrors.plantTags ? 'error' : ''}
-                  help={validationErrors.plantTags || ''}
+                  validateStatus={validationErrors.plantTags ? "error" : ""}
+                  help={validationErrors.plantTags || ""}
                 >
                   <Checkbox.Group
                     options={availablePlantTags}
@@ -651,7 +680,22 @@ export default function GuideEdit() {
                       }
                       style={{ borderRadius: 8 }}
                     >
-                      <Form.Item label="Tiêu đề bước" required validateStatus={validationErrors[`step_${idx}`] && validationErrors[`step_${idx}`].title ? 'error' : ''} help={validationErrors[`step_${idx}`] && validationErrors[`step_${idx}`].title ? validationErrors[`step_${idx}`].title : ''}>
+                      <Form.Item
+                        label="Tiêu đề bước"
+                        required
+                        validateStatus={
+                          validationErrors[`step_${idx}`] &&
+                          validationErrors[`step_${idx}`].title
+                            ? "error"
+                            : ""
+                        }
+                        help={
+                          validationErrors[`step_${idx}`] &&
+                          validationErrors[`step_${idx}`].title
+                            ? validationErrors[`step_${idx}`].title
+                            : ""
+                        }
+                      >
                         <Input
                           value={step.title}
                           onChange={(e) =>
@@ -661,7 +705,22 @@ export default function GuideEdit() {
                         />
                       </Form.Item>
 
-                      <Form.Item label="Mô tả chi tiết" required validateStatus={validationErrors[`step_${idx}`] && validationErrors[`step_${idx}`].text ? 'error' : ''} help={validationErrors[`step_${idx}`] && validationErrors[`step_${idx}`].text ? validationErrors[`step_${idx}`].text : ''}>
+                      <Form.Item
+                        label="Mô tả chi tiết"
+                        required
+                        validateStatus={
+                          validationErrors[`step_${idx}`] &&
+                          validationErrors[`step_${idx}`].text
+                            ? "error"
+                            : ""
+                        }
+                        help={
+                          validationErrors[`step_${idx}`] &&
+                          validationErrors[`step_${idx}`].text
+                            ? validationErrors[`step_${idx}`].text
+                            : ""
+                        }
+                      >
                         <TextArea
                           rows={4}
                           value={step.text}
@@ -703,11 +762,11 @@ export default function GuideEdit() {
                               prev.map((s, i) =>
                                 i === idx
                                   ? {
-                                    ...s,
-                                    file: null,
-                                    fileList: [],
-                                    imagePreview: null,
-                                  }
+                                      ...s,
+                                      file: null,
+                                      fileList: [],
+                                      imagePreview: null,
+                                    }
                                   : s
                               )
                             );
@@ -783,7 +842,9 @@ export default function GuideEdit() {
                   )}
                 </Upload>
                 {validationErrors.mainImage && (
-                  <div style={{ color: '#ff4d4f', marginTop: 8 }}>{validationErrors.mainImage}</div>
+                  <div style={{ color: "#ff4d4f", marginTop: 8 }}>
+                    {validationErrors.mainImage}
+                  </div>
                 )}
               </Card>
 
@@ -801,7 +862,14 @@ export default function GuideEdit() {
                   >
                     {saving ? "Đang lưu..." : "Lưu hướng dẫn"}
                   </Button>
-                  <Button onClick={() => navigate("/managerguides", { state: location.state || {} })} size="large">
+                  <Button
+                    onClick={() =>
+                      navigate("/managerguides", {
+                        state: location.state || {},
+                      })
+                    }
+                    size="large"
+                  >
                     Hủy
                   </Button>
                 </Space>
@@ -819,7 +887,7 @@ export default function GuideEdit() {
         okText="Tạo"
         confirmLoading={creatingGroup}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <Input
             placeholder="Tên nhóm (ví dụ: Rau gia vị)"
             value={newGroupName}
@@ -827,6 +895,8 @@ export default function GuideEdit() {
           />
         </div>
       </Modal>
+
+      <Footer />
     </>
   );
 }

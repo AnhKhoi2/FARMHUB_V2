@@ -43,6 +43,16 @@ const DailyChecklist = ({ notebookId, onTaskComplete }) => {
     }
   };
 
+  const getFrequencyLabel = (frequency) => {
+    const labels = {
+      daily: "Hàng ngày",
+      every_2_days: "2 ngày/lần",
+      every_3_days: "3 ngày/lần",
+      weekly: "Hàng tuần",
+    };
+    return labels[frequency] || frequency;
+  };
+
   const handleCompleteTask = async (taskName) => {
     try {
       await NOTEBOOK_TEMPLATE_API.completeTask(notebookId, taskName);
@@ -186,7 +196,9 @@ const DailyChecklist = ({ notebookId, onTaskComplete }) => {
                     {isOverdue() && (
                       <span className="badge overdue-badge">Trễ hạn</span>
                     )}
-                    <span className="badge frequency">{task.frequency}</span>
+                    <span className="badge frequency">
+                      {getFrequencyLabel(task.frequency)}
+                    </span>
                   </div>
                 </div>
 

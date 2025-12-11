@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
+import Footer from "../../components/shared/Footer";
 
 import {
   Card,
@@ -92,107 +93,113 @@ export default function TrashGuides() {
 
   return (
     <>
-          <HeaderExpert />
-    
-    <div style={{ padding: 24 }}>
-      {/* --- Header --- */}
-      <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Thùng rác – Hướng dẫn đã xóa
-        </Title>
+      <HeaderExpert />
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            type="default"
-            onClick={() => navigate(-1)}
-          >
-            Quay lại danh sách
-          </Button>
-        </div>
-      </Row>
+      <div style={{ padding: 24 }}>
+        {/* --- Header --- */}
+        <Row
+          justify="space-between"
+          align="middle"
+          style={{ marginBottom: 20 }}
+        >
+          <Title level={3} style={{ margin: 0 }}>
+            Thùng rác – Hướng dẫn đã xóa
+          </Title>
 
-      {/* --- Loading Spinner --- */}
-      {loading ? (
-        <Spin
-          tip="Đang tải..."
-          size="large"
-          style={{ width: "100%", marginTop: 50 }}
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button
+              icon={<ArrowLeftOutlined />}
+              type="default"
+              onClick={() => navigate(-1)}
+            >
+              Quay lại danh sách
+            </Button>
+          </div>
+        </Row>
+
+        {/* --- Loading Spinner --- */}
+        {loading ? (
+          <Spin
+            tip="Đang tải..."
+            size="large"
+            style={{ width: "100%", marginTop: 50 }}
+          />
+        ) : guides.length === 0 ? (
+          <Empty
+            description="Không có hướng dẫn đã xóa"
+            style={{ marginTop: 80 }}
+          />
+        ) : (
+          <Table
+            rowKey={(r) => r._id}
+            dataSource={guides}
+            pagination={false}
+            bordered
+            columns={[
+              {
+                title: "Ảnh",
+                dataIndex: "image",
+                key: "image",
+                width: 140,
+                render: (val) => (
+                  <Image
+                    src={val || placeholderImg}
+                    alt="thumb"
+                    width={120}
+                    height={80}
+                    preview={false}
+                    style={{ objectFit: "cover", borderRadius: 6 }}
+                  />
+                ),
+              },
+              {
+                title: "Tiêu đề",
+                dataIndex: "title",
+                key: "title",
+                render: (t, r) => <Text strong>{t}</Text>,
+              },
+              {
+                title: "Mô tả",
+                dataIndex: "description",
+                key: "description",
+                render: (d) => (
+                  <Text type="secondary">{d || "Không có mô tả"}</Text>
+                ),
+              },
+              {
+                title: "Hành động",
+                key: "actions",
+                width: 160,
+                align: "center",
+                render: (_t, record) => (
+                  <Space>
+                    <Popconfirm
+                      title="Khôi phục?"
+                      okText="Có"
+                      cancelText="Không"
+                      onConfirm={() => onRestore(record._id)}
+                    >
+                      <Button type="link">Khôi phục</Button>
+                    </Popconfirm>
+                  </Space>
+                ),
+              },
+            ]}
+          />
+        )}
+
+        {/* --- Pagination --- */}
+        <Pagination
+          style={{ marginTop: 24, textAlign: "center" }}
+          current={page}
+          total={totalPages * limit}
+          pageSize={limit}
+          onChange={(p) => setPage(p)}
+          showSizeChanger={false}
         />
-      ) : guides.length === 0 ? (
-        <Empty
-          description="Không có hướng dẫn đã xóa"
-          style={{ marginTop: 80 }}
-        />
-      ) : (
-        <Table
-          rowKey={(r) => r._id}
-          dataSource={guides}
-          pagination={false}
-          bordered
-          columns={[
-            {
-              title: "Ảnh",
-              dataIndex: "image",
-              key: "image",
-              width: 140,
-              render: (val) => (
-                <Image
-                  src={val || placeholderImg}
-                  alt="thumb"
-                  width={120}
-                  height={80}
-                  preview={false}
-                  style={{ objectFit: "cover", borderRadius: 6 }}
-                />
-              ),
-            },
-            {
-              title: "Tiêu đề",
-              dataIndex: "title",
-              key: "title",
-              render: (t, r) => <Text strong>{t}</Text>,
-            },
-            {
-              title: "Mô tả",
-              dataIndex: "description",
-              key: "description",
-              render: (d) => <Text type="secondary">{d || "Không có mô tả"}</Text>,
-            },
-            {
-              title: "Hành động",
-              key: "actions",
-              width: 160,
-              align: "center",
-              render: (_t, record) => (
-                <Space>
-                  <Popconfirm
-                    title="Khôi phục?"
-                    okText="Có"
-                    cancelText="Không"
-                    onConfirm={() => onRestore(record._id)}
-                  >
-                    <Button type="link">Khôi phục</Button>
-                  </Popconfirm>
+      </div>
 
-                </Space>
-              ),
-            },
-          ]}
-        />
-      )}
-
-      {/* --- Pagination --- */}
-      <Pagination
-        style={{ marginTop: 24, textAlign: "center" }}
-        current={page}
-        total={totalPages * limit}
-        pageSize={limit}
-        onChange={(p) => setPage(p)}
-        showSizeChanger={false}
-      />
-    </div>
-        </>
-
+      <Footer />
+    </>
   );
 }

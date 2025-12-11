@@ -107,7 +107,7 @@ const NotebookDetail = () => {
       return notebookData;
     } catch (err) {
       console.error("Error fetching notebook data:", err);
-      setError("Không thể tải dữ liệu nhật ký");
+      setError("Không thể tải dữ liệu sổ tay");
       return null;
     } finally {
       setLoading(false);
@@ -278,13 +278,13 @@ const NotebookDetail = () => {
       const rows = [];
 
       // Header title
-      rows.push([escapeCSV("NHẬT KÝ TRỒNG TRỌT")]);
+      rows.push([escapeCSV("SỔ TAY TRỒNG TRỌT")]);
       rows.push([""]); // empty line
 
       // Notebook overview
-      rows.push([escapeCSV("Thông tin nhật ký")]);
+      rows.push([escapeCSV("Thông tin sổ tay")]);
       rows.push([
-        escapeCSV("Tên nhật ký"),
+        escapeCSV("Tên sổ tay"),
         escapeCSV(notebook.notebook_name || ""),
       ]);
       rows.push([escapeCSV("Loại cây"), escapeCSV(notebook.plant_type || "")]);
@@ -392,15 +392,15 @@ const NotebookDetail = () => {
   };
 
   const handleDeleteNotebook = async () => {
-    if (!window.confirm("Bạn có chắc muốn xóa nhật ký này?")) return;
+    if (!window.confirm("Bạn có chắc muốn xóa sổ tay này?")) return;
 
     try {
       await notebookApi.deleteNotebook(id);
-      alert("Xóa nhật ký thành công!");
+      alert("Xóa sổ tay thành công!");
       navigate("/farmer/notebooks");
     } catch (err) {
       console.error("Error deleting notebook:", err);
-      alert(err?.response?.data?.message || "Không thể xóa nhật ký");
+      alert(err?.response?.data?.message || "Không thể xóa sổ tay");
     }
   };
 
@@ -462,7 +462,7 @@ const NotebookDetail = () => {
         <Header />
         <div className="notebook-detail-container">
           <div className="alert alert-error">
-            <span>⚠️</span> {error || "Không tìm thấy nhật ký"}
+            <span>⚠️</span> {error || "Không tìm thấy sổ tay"}
           </div>
           <button
             className="btn btn-back"
@@ -522,14 +522,14 @@ const NotebookDetail = () => {
             <button
               className="btn-export-pdf"
               onClick={handleExportPDF}
-              title="Xuất nhật ký dưới dạng PDF"
+              title="Xuất sổ tay dưới dạng PDF"
             >
               📄 XUẤT PDF
             </button>
             <button
               className="btn-export-excel"
               onClick={handleExportExcel}
-              title="Xuất nhật ký dưới dạng Excel (CSV)"
+              title="Xuất sổ tay dưới dạng Excel (CSV)"
               style={{ marginLeft: 8 }}
             >
               📥 XUẤT EXCEL
@@ -549,7 +549,7 @@ const NotebookDetail = () => {
             <button
               className="btn-delete"
               onClick={() => handleDeleteNotebook()}
-              title="Xóa nhật ký"
+              title="Xóa sổ tay"
             >
               🗑️ XÓA
             </button>
@@ -625,7 +625,7 @@ const NotebookDetail = () => {
             onClick={() => setActiveTab("journal")}
           >
             {/* <span className="tab-icon">📔</span> */}
-            Nhật Ký & Hình Ảnh
+            Sổ Tay & Hình Ảnh
           </button>
           <button
             className={`tab-btn overdue-tab ${
@@ -804,60 +804,11 @@ const NotebookDetail = () => {
                       )}
                     </div>
 
-                    {/* Daily progress breakdown */}
-                    <div className="stage-progress-details">
-                      <div className="progress-detail-item">
-                        <span className="detail-label">
-                          📅 THỜI GIAN GIAI ĐOẠN:
-                        </span>
-                        <span className="detail-value">
-                          {currentStage
-                            ? `${
-                                currentStage.day_end -
-                                currentStage.day_start +
-                                1
-                              } NGÀY (NGÀY ${currentStage.day_start}-${
-                                currentStage.day_end
-                              })`
-                            : "N/A"}
-                        </span>
-                      </div>
-                      <div className="progress-detail-item">
-                        {!(
-                          notebook &&
-                          (notebook.progress === 100 ||
-                            notebook.progress === "100") &&
-                          Array.isArray(notebook.stages_tracking) &&
-                          notebook.stages_tracking.length > 0 &&
-                          notebook.stages_tracking.every(
-                            (s) => s.status === "completed"
-                          )
-                        ) && (
-                          <>
-                            <span className="detail-label">
-                              ✅ TIẾN ĐỘ HÔM NAY:
-                            </span>
-                            <span className="detail-value">
-                              {notebook.daily_checklist
-                                ? `${
-                                    notebook.daily_checklist.filter(
-                                      (t) => t.is_completed
-                                    ).length
-                                  }/${
-                                    notebook.daily_checklist.length
-                                  } CÔNG VIỆC`
-                                : "0/0"}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {currentStageTracking?.pending_transition === true && (
+                    {/* {currentStageTracking?.pending_transition === true && (
                       <p className="completion-note">
                         🎉 XUẤT SẮC! BẠN ĐÃ HOÀN THÀNH GIAI ĐOẠN NÀY.
                       </p>
-                    )}
+                    )} */}
                   </div>
                 </div>
               )}
