@@ -44,14 +44,15 @@ const Home = () => {
   const [postStartIndex, setPostStartIndex] = useState(0);
   const [guideStartIndex, setGuideStartIndex] = useState(0);
 
-  // Khi dữ liệu thay đổi, reset về 0
-  useEffect(() => {
-    setPostStartIndex(0);
-  }, [latestPosts.length]);
-
+  // Khi dữ liệu hướng dẫn thay đổi, reset về 0
   useEffect(() => {
     setGuideStartIndex(0);
   }, [latestGuides.length]);
+
+  // reset postStartIndex khi tập posts thay đổi
+  useEffect(() => {
+    setPostStartIndex(0);
+  }, [latestPosts.length]);
 
   // Recent visited
   useEffect(() => {
@@ -130,22 +131,23 @@ const Home = () => {
     }
   }, []);
 
-  // ⭐ Lấy tối đa 8 bài post mới nhất
+  // ⭐ Lấy nhiều bài post mới nhất (tăng limit để có thể lấy 3 category khác nhau)
   useEffect(() => {
     const fetchLatestPosts = async () => {
       try {
         setPostsLoading(true);
         setPostsError(null);
 
+        // tăng limit lên 50 để có nhiều biến thể category hơn
         const res = await axiosClient.get(API_LATEST_POSTS, {
-          params: { page: 1, limit: 8 },
+          params: { page: 1, limit: 50 },
           headers: { Authorization: "" }, // public
         });
 
         const raw = res.data;
         const items = raw?.data?.items ?? raw?.items ?? raw?.data ?? [];
 
-        setLatestPosts(Array.isArray(items) ? items.slice(0, 8) : []);
+        setLatestPosts(Array.isArray(items) ? items.slice(0, 50) : []);
       } catch (err) {
         console.error("Error fetching latest posts:", err?.response || err);
         setPostsError("Không tải được bài đăng.");
@@ -224,16 +226,43 @@ const Home = () => {
     return typeof img === "string" ? img : img.url || null;
   };
 
-  // ====== SLIDER POSTS – NỐI TIẾP VÒNG TRÒN ======
+  // Chọn tối đa `PAGE_SIZE` posts từ các category khác nhau.
+  // Nếu không đủ category khác nhau, sẽ điền bằng posts còn lại.
+  const getDistinctCategoryPosts = (posts, count = PAGE_SIZE) => {
+    if (!Array.isArray(posts) || posts.length === 0) return [];
+    const seen = new Set();
+    const result = [];
+
+    for (const p of posts) {
+      const cat = p?.category || "__no_category__";
+      if (!seen.has(cat)) {
+        result.push(p);
+        seen.add(cat);
+        if (result.length === count) break;
+      }
+    }
+
+    if (result.length < count) {
+      for (const p of posts) {
+        if (!result.includes(p)) {
+          result.push(p);
+          if (result.length === count) break;
+        }
+      }
+    }
+
+    return result;
+  };
+
   const totalPosts = latestPosts.length;
 
-  let visiblePosts = latestPosts;
-  if (totalPosts > PAGE_SIZE) {
-    visiblePosts = Array.from({ length: PAGE_SIZE }, (_, i) => {
-      const idx = (postStartIndex + i) % totalPosts;
-      return latestPosts[idx];
-    });
-  }
+  // Xoay mảng bắt đầu từ `postStartIndex` rồi chọn các post khác category
+  const rotatedPosts =
+    totalPosts > 0
+      ? latestPosts.slice(postStartIndex).concat(latestPosts.slice(0, postStartIndex))
+      : [];
+
+  const visiblePosts = getDistinctCategoryPosts(rotatedPosts, PAGE_SIZE);
 
   const handlePostNext = () => {
     if (totalPosts <= PAGE_SIZE) return;
@@ -534,7 +563,7 @@ const Home = () => {
           ) : (
             <div className="position-relative">
               {/* Nút trái/phải đặt 2 bên, không che card */}
-              {latestPosts.length > PAGE_SIZE && (
+              {totalPosts > PAGE_SIZE && (
                 <>
                   <button
                     type="button"
@@ -548,8 +577,8 @@ const Home = () => {
                       borderRadius: "50%",
                       width: 40,
                       height: 40,
-                      backgroundColor: "#D1EAD2", // đổi màu nền
-                      color: "black", // đổi màu mũi tên
+                      backgroundColor: "#D1EAD2",
+                      color: "black",
                       border: "none",
                     }}
                     onClick={handlePostPrev}
@@ -569,8 +598,8 @@ const Home = () => {
                       borderRadius: "50%",
                       width: 40,
                       height: 40,
-                      backgroundColor: "#D1EAD2", // đổi màu nền
-                      color: "black", // đổi màu mũi tên
+                      backgroundColor: "#D1EAD2",
+                      color: "black",
                       border: "none",
                     }}
                     onClick={handlePostNext}
