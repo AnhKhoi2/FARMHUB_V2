@@ -4,6 +4,7 @@ import axios from "axios";
 import plantTemplateApi from "../../api/expert/plantTemplateApi";
 import "../../css/expert/PlantTemplateDetail.css";
 import HeaderExpert from "../../components/shared/HeaderExpert";
+import Footer from "../../components/shared/Footer";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const PlantTemplateDetail = () => {
