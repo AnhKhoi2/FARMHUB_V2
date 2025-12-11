@@ -131,7 +131,7 @@ export default function HeaderExpert({
               letterSpacing: "0.5px",
             }}
           >
-            <span style={{ color: "#0f7a3b" }}>Farm</span>
+            <span style={{ color: "#ffffff" }}>Farm</span>
             <span style={{ color: "#ffffff", marginLeft: 3 }}>Hub</span>
           </span>
         </div>
@@ -159,7 +159,6 @@ export default function HeaderExpert({
               }
               navigate("/managerguides");
             }}
-            
             title="Quản lý hướng dẫn"
           >
             <Book />
@@ -187,13 +186,10 @@ export default function HeaderExpert({
           </button>
 
           {/* Component 5: Analytics */}
-          
         </nav>
 
         {/* Right Section: Notifications & Avatar */}
         <div className="header-right">
-          
-
           {/* Avatar & Profile Menu */}
           <div className="profile-section">
             <button

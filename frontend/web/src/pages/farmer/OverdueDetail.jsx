@@ -167,7 +167,7 @@ const OverdueDetail = () => {
             <h3>Không có công việc quá hạn</h3>
             <p>Tất cả công việc đã được hoàn thành hoặc bỏ qua</p>
             <button onClick={handleGoBack} className="btn-back">
-              Quay lại nhật ký
+              Quay lại sổ tay
             </button>
           </div>
         </div>

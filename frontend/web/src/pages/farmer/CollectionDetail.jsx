@@ -84,7 +84,7 @@ const CollectionDetail = () => {
       fetchCollectionData();
     } catch (err) {
       console.error("Error adding notebook:", err);
-      alert("Không thể thêm nhật ký vào bộ sưu tập");
+      alert("Không thể thêm sổ tay vào bộ sưu tập");
     }
   };
 
@@ -98,7 +98,7 @@ const CollectionDetail = () => {
       fetchCollectionData();
     } catch (err) {
       console.error("Error removing notebook:", err);
-      alert("Không thể xóa nhật ký khỏi bộ sưu tập");
+      alert("Không thể xóa sổ tay khỏi bộ sưu tập");
     }
   };
 
@@ -233,7 +233,7 @@ const CollectionDetail = () => {
                 </p>
               )}
               <div className="collection-stats">
-                <span>📓 {collection.notebook_count} nhật ký</span>
+                <span>📓 {collection.notebook_count} sổ tay</span>
                 <span>
                   📅{" "}
                   {new Date(collection.createdAt).toLocaleDateString("vi-VN")}
@@ -258,7 +258,7 @@ const CollectionDetail = () => {
                 </p>
               )}
               <div className="collection-stats">
-                <span>📓 {collection.notebook_count} NHẬT KÝ</span>
+                <span>📓 {collection.notebook_count} SỔ TAY</span>
                 <span>
                   📅{" "}
                   {new Date(collection.createdAt).toLocaleDateString("vi-VN")}

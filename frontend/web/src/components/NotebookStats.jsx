@@ -65,8 +65,8 @@ const NotebookStats = () => {
         <div className="stat-card chart-card">
           <div className="card-header">
             <h3 className="card-title">
-              <span className="icon">📊</span>
-              Tiến Độ Trung Bình
+              <span className="icon"></span>
+              TIẾN ĐỘ TRUNG BÌNH
             </h3>
           </div>
           <div className="chart-container">
@@ -84,7 +84,7 @@ const NotebookStats = () => {
           <div className="card-header">
             <h3 className="card-title">
               <span className="icon">🌱</span>
-              Thống Kê Theo Loại Cây
+              THỐNG KÊ THEO LOẠI CÂY
             </h3>
           </div>
           <div className="types-list">
@@ -111,7 +111,7 @@ const NotebookStats = () => {
           <div className="card-header">
             <h3 className="card-title">
               <span className="icon">🌿</span>
-              Phân Nhóm Cây Trồng
+              PHÂN NHÓM CÂY TRỒNG
             </h3>
           </div>
           <div className="groups-grid">
@@ -129,7 +129,7 @@ const NotebookStats = () => {
           <div className="card-header">
             <h3 className="card-title">
               <span className="icon">📈</span>
-              Phân Phối Tiến Độ
+              PHÂN PHỐI TIẾN ĐỘ
             </h3>
           </div>
           <div className="distribution-bars">

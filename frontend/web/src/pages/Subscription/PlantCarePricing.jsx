@@ -201,7 +201,7 @@ const PlantCarePricing = () => {
 
               <ul className="features">
                 {plan.features.map((f, i) => (
-                  <li key={i}>✓ {f}</li>
+                  <li key={i}> {f}</li>
                 ))}
               </ul>
 

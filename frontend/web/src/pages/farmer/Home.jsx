@@ -377,7 +377,7 @@ const Home = () => {
                     to="/farmer/notebooks"
                     className="btn btn-success btn-lg mt-3"
                   >
-                    Quản Lý Nhật Ký
+                    Quản Lý Sổ Tay
                   </Link>
                 </div>
               </div>
@@ -759,7 +759,7 @@ const Home = () => {
             <span className="text-success text-uppercase fw-semibold">
               Dịch vụ
             </span>
-            <h2 className="display-5 fw-bold">Các dịch vụ của chúng tôi</h2>
+            <h4 className="display-5 fw-bold">Các dịch vụ của chúng tôi</h4>
           </div>
 
           <div className="row g-4">
@@ -781,7 +781,7 @@ const Home = () => {
               <Link to="/farmer/notebooks" className="text-decoration-none">
                 <div className="card h-100 shadow-sm hover-card text-center p-4">
                   <FaBook size={64} className="text-success mb-3" />
-                  <h4 className="fw-bold">Nhật Lý Làm Vườơn</h4>
+                  <h4 className="fw-bold">Sổ Tay Làm Vườn</h4>
                   <p className="text-muted">Theo dõi tiến trình trồng trọt</p>
                 </div>
               </Link>

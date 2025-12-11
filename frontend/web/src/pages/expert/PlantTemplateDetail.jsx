@@ -145,280 +145,298 @@ const PlantTemplateDetail = () => {
   }
 
   return (
-    <> 
-    <HeaderExpert />
-    <div className="template-detail-container">
-      <button className="btn-back" onClick={() => navigate(-1)}>
-        ← QUAY LẠI
-      </button>
+    <>
+      <HeaderExpert />
+      <div className="template-detail-container">
+        <button className="btn-back" onClick={() => navigate(-1)}>
+          ← QUAY LẠI
+        </button>
 
-      <button
-        className="btn-create"
-        onClick={() => navigate(`/expert/plant-templates/edit/${id}`)}
-      >
-        ✏️ CHỈNH SỬA
-      </button>
+        <button
+          className="btn-create"
+          onClick={() => navigate(`/expert/plant-templates/edit/${id}`)}
+        >
+          ✏️ CHỈNH SỬA
+        </button>
 
-      {/* Cover Image Section - Below Header */}
-      {template.cover_image && (
-        <div className="cover-image-section">
-          <img
-            src={template.cover_image}
-            alt={template.template_name}
-            className="detail-cover-image"
-          />
-        </div>
-      )}
-
-      {/* Stats */}
-      <div className="stats-section">
-        <div className="stat-card">
-          <div className="stat-icon">📅</div>
-          <div className="stat-content">
-            <div className="stat-value">{template.stages?.length || 0}</div>
-            <div className="stat-label">GIAI ĐOẠN</div>
+        {/* Cover Image Section - Below Header */}
+        {template.cover_image && (
+          <div className="cover-image-section">
+            <img
+              src={template.cover_image}
+              alt={template.template_name}
+              className="detail-cover-image"
+            />
           </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">⏱️</div>
-          <div className="stat-content">
-            <div className="stat-value">
-              {template.stages?.length > 0
-                ? Math.max(...template.stages.map((s) => s.day_end))
-                : 0}
-            </div>
-            <div className="stat-label">TỔNG NGÀY</div>
-          </div>
-        </div>
-        {/* Lượt sử dụng removed per UX request */}
-      </div>
+        )}
 
-      {/* Examples */}
-      {template.plant_examples && template.plant_examples.length > 0 && (
-        <div className="examples-section">
-          <div className="template-info-card">
-            <div className="info-row">
-              <span className="info-label">TÊN BỘ MẪU:</span>
-              <span className="info-value">{template.template_name}</span>
+        {/* Stats */}
+        <div className="stats-section">
+          <div className="stat-card">
+            <div className="stat-icon">📅</div>
+            <div className="stat-content">
+              <div className="stat-value">{template.stages?.length || 0}</div>
+              <div className="stat-label">GIAI ĐOẠN</div>
             </div>
-            <div className="info-row">
-              <span className="info-label">NHÓM CÂY:</span>
-              <span className="info-value">
-                {getPlantGroupName(template.plant_group)}
-              </span>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">⏱️</div>
+            <div className="stat-content">
+              <div className="stat-value">
+                {template.stages?.length > 0
+                  ? Math.max(...template.stages.map((s) => s.day_end))
+                  : 0}
+              </div>
+              <div className="stat-label">TỔNG NGÀY</div>
             </div>
-            {template.group_description && (
+          </div>
+          {/* Lượt sử dụng removed per UX request */}
+        </div>
+
+        {/* Examples */}
+        {template.plant_examples && template.plant_examples.length > 0 && (
+          <div className="examples-section">
+            <div className="template-info-card">
               <div className="info-row">
-                <span className="info-label">MÔ TẢ:</span>
-                <span className="info-value">{template.group_description}</span>
+                <span className="info-label">TÊN BỘ MẪU:</span>
+                <span className="info-value">{template.template_name}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">NHÓM CÂY:</span>
+                <span className="info-value">
+                  {getPlantGroupName(template.plant_group)}
+                </span>
+              </div>
+              {template.group_description && (
+                <div className="info-row">
+                  <span className="info-label">MÔ TẢ:</span>
+                  <span className="info-value">
+                    {template.group_description}
+                  </span>
+                </div>
+              )}
+              <div className="info-row">
+                <span className="info-label">TRẠNG THÁI:</span>
+                <span
+                  className={`badge ${getStatusBadgeClass(template.status)}`}
+                >
+                  {getStatusLabel(template.status)}
+                </span>
+              </div>
+            </div>
+            <h3>🌱 CÁC LOẠI CÂY PHÙ HỢP</h3>
+            <div className="examples-grid">
+              {template.plant_examples.map((plant, index) => (
+                <div key={index} className="example-item">
+                  {plant}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="tabs-section">
+          <div className="tabs-nav">
+            <button
+              className={`tab-btn ${activeTab === "stages" ? "active" : ""}`}
+              onClick={() => setActiveTab("stages")}
+            >
+              📅 GIAI ĐOẠN
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "tasks" ? "active" : ""}`}
+              onClick={() => setActiveTab("tasks")}
+            >
+              ✅ CÔNG VIỆC
+            </button>
+            <button
+              className={`tab-btn ${
+                activeTab === "observations" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("observations")}
+            >
+              👁️ QUAN SÁT
+            </button>
+            {/* Rules tab removed */}
+          </div>
+
+          <div className="tabs-content">
+            {/* Stages Tab */}
+            {activeTab === "stages" && (
+              <div className="stages-tab">
+                {template.stages && template.stages.length > 0 ? (
+                  <div className="stages-timeline">
+                    {template.stages.map((stage, index) => (
+                      <div key={index} className="stage-item">
+                        <div className="stage-marker">
+                          <span className="stage-number">{index + 1}</span>
+                        </div>
+                        <div className="stage-content">
+                          <div className="stage-header">
+                            <h3>{stage.name.toUpperCase()}</h3>
+                            <span className="stage-duration">
+                              NGÀY {stage.day_start} - {stage.day_end} (
+                              {stage.day_end - stage.day_start + 1} NGÀY)
+                            </span>
+                          </div>
+                          <p className="stage-description">
+                            {stage.description}
+                          </p>
+
+                          {stage.stage_image && (
+                            <div className="stage-image">
+                              <img src={stage.stage_image} alt={stage.name} />
+                            </div>
+                          )}
+
+                          {stage.autogenerated_tasks &&
+                            stage.autogenerated_tasks.length > 0 && (
+                              <div className="stage-tasks">
+                                <h4>🔧 CÔNG VIỆC TỰ ĐỘNG:</h4>
+                                <ul>
+                                  {stage.autogenerated_tasks.map(
+                                    (task, idx) => (
+                                      <li key={idx}>
+                                        <span className="task-name">
+                                          {task.task_name}
+                                        </span>
+                                        <span
+                                          className={`task-badge ${
+                                            getPriorityBadge(task.priority)
+                                              .class
+                                          }`}
+                                        >
+                                          {
+                                            getPriorityBadge(task.priority)
+                                              .label
+                                          }
+                                        </span>
+                                        <span className="task-frequency">
+                                          {getFrequencyLabel(task.frequency)}
+                                        </span>
+                                      </li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+
+                          {stage.observation_required &&
+                            stage.observation_required.length > 0 && (
+                              <div className="stage-observations">
+                                <h4>👁️ ĐIỂM QUAN SÁT:</h4>
+                                <div className="observations-list">
+                                  {stage.observation_required.map(
+                                    (obs, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="observation-badge"
+                                      >
+                                        {obs.label}
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-message">CHƯA CÓ GIAI ĐOẠN NÀO</div>
+                )}
               </div>
             )}
-            <div className="info-row">
-              <span className="info-label">TRẠNG THÁI:</span>
-              <span className={`badge ${getStatusBadgeClass(template.status)}`}>
-                {getStatusLabel(template.status)}
-              </span>
-            </div>
-          </div>
-          <h3>🌱 CÁC LOẠI CÂY PHÙ HỢP</h3>
-          <div className="examples-grid">
-            {template.plant_examples.map((plant, index) => (
-              <div key={index} className="example-item">
-                {plant}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {/* Tabs */}
-      <div className="tabs-section">
-        <div className="tabs-nav">
-          <button
-            className={`tab-btn ${activeTab === "stages" ? "active" : ""}`}
-            onClick={() => setActiveTab("stages")}
-          >
-            📅 GIAI ĐOẠN
-          </button>
-          <button
-            className={`tab-btn ${activeTab === "tasks" ? "active" : ""}`}
-            onClick={() => setActiveTab("tasks")}
-          >
-            ✅ CÔNG VIỆC
-          </button>
-          <button
-            className={`tab-btn ${
-              activeTab === "observations" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("observations")}
-          >
-            👁️ QUAN SÁT
-          </button>
-          {/* Rules tab removed */}
-        </div>
-
-        <div className="tabs-content">
-          {/* Stages Tab */}
-          {activeTab === "stages" && (
-            <div className="stages-tab">
-              {template.stages && template.stages.length > 0 ? (
-                <div className="stages-timeline">
-                  {template.stages.map((stage, index) => (
-                    <div key={index} className="stage-item">
-                      <div className="stage-marker">
-                        <span className="stage-number">{index + 1}</span>
-                      </div>
-                      <div className="stage-content">
-                        <div className="stage-header">
-                          <h3>{stage.name.toUpperCase()}</h3>
-                          <span className="stage-duration">
-                            NGÀY {stage.day_start} - {stage.day_end} (
-                            {stage.day_end - stage.day_start + 1} NGÀY)
-                          </span>
+            {/* Tasks Tab */}
+            {activeTab === "tasks" && (
+              <div className="tasks-tab">
+                {template.stages && template.stages.length > 0 ? (
+                  template.stages.map((stage, stageIdx) => (
+                    <div key={stageIdx} className="stage-tasks-group">
+                      <h3>
+                        GIAI ĐOẠN {stageIdx + 1}: {stage.name.toUpperCase()}
+                      </h3>
+                      {stage.autogenerated_tasks &&
+                      stage.autogenerated_tasks.length > 0 ? (
+                        <div className="tasks-list">
+                          {stage.autogenerated_tasks.map((task, taskIdx) => (
+                            <div key={taskIdx} className="task-card">
+                              <div className="task-header">
+                                <h4>{task.task_name}</h4>
+                                <div className="task-badges">
+                                  <span
+                                    className={`badge ${
+                                      getPriorityBadge(task.priority).class
+                                    }`}
+                                  >
+                                    {getPriorityBadge(task.priority).label}
+                                  </span>
+                                  <span className="badge frequency">
+                                    {getFrequencyLabel(task.frequency)}
+                                  </span>
+                                </div>
+                              </div>
+                              {task.description && (
+                                <p className="task-description">
+                                  {task.description}
+                                </p>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                        <p className="stage-description">{stage.description}</p>
-
-                        {stage.stage_image && (
-                          <div className="stage-image">
-                            <img src={stage.stage_image} alt={stage.name} />
-                          </div>
-                        )}
-
-                        {stage.autogenerated_tasks &&
-                          stage.autogenerated_tasks.length > 0 && (
-                            <div className="stage-tasks">
-                              <h4>🔧 CÔNG VIỆC TỰ ĐỘNG:</h4>
-                              <ul>
-                                {stage.autogenerated_tasks.map((task, idx) => (
-                                  <li key={idx}>
-                                    <span className="task-name">
-                                      {task.task_name}
-                                    </span>
-                                    <span
-                                      className={`task-badge ${
-                                        getPriorityBadge(task.priority).class
-                                      }`}
-                                    >
-                                      {getPriorityBadge(task.priority).label}
-                                    </span>
-                                    <span className="task-frequency">
-                                      {getFrequencyLabel(task.frequency)}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                        {stage.observation_required &&
-                          stage.observation_required.length > 0 && (
-                            <div className="stage-observations">
-                              <h4>👁️ ĐIỂM QUAN SÁT:</h4>
-                              <div className="observations-list">
-                                {stage.observation_required.map((obs, idx) => (
-                                  <div key={idx} className="observation-badge">
-                                    {obs.label}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                      </div>
+                      ) : (
+                        <p className="empty-message">CHƯA CÓ CÔNG VIỆC</p>
+                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-message">CHƯA CÓ GIAI ĐOẠN NÀO</div>
-              )}
-            </div>
-          )}
+                  ))
+                ) : (
+                  <div className="empty-message">CHƯA CÓ CÔNG VIỆC NÀO</div>
+                )}
+              </div>
+            )}
 
-          {/* Tasks Tab */}
-          {activeTab === "tasks" && (
-            <div className="tasks-tab">
-              {template.stages && template.stages.length > 0 ? (
-                template.stages.map((stage, stageIdx) => (
-                  <div key={stageIdx} className="stage-tasks-group">
-                    <h3>
-                      GIAI ĐOẠN {stageIdx + 1}: {stage.name.toUpperCase()}
-                    </h3>
-                    {stage.autogenerated_tasks &&
-                    stage.autogenerated_tasks.length > 0 ? (
-                      <div className="tasks-list">
-                        {stage.autogenerated_tasks.map((task, taskIdx) => (
-                          <div key={taskIdx} className="task-card">
-                            <div className="task-header">
-                              <h4>{task.task_name}</h4>
-                              <div className="task-badges">
-                                <span
-                                  className={`badge ${
-                                    getPriorityBadge(task.priority).class
-                                  }`}
-                                >
-                                  {getPriorityBadge(task.priority).label}
-                                </span>
-                                <span className="badge frequency">
-                                  {getFrequencyLabel(task.frequency)}
-                                </span>
-                              </div>
+            {/* Observations Tab */}
+            {activeTab === "observations" && (
+              <div className="observations-tab">
+                {template.stages && template.stages.length > 0 ? (
+                  template.stages.map((stage, stageIdx) => (
+                    <div key={stageIdx} className="stage-observations-group">
+                      <h3>
+                        GIAI ĐOẠN {stageIdx + 1}: {stage.name.toUpperCase()}
+                      </h3>
+                      {stage.observation_required &&
+                      stage.observation_required.length > 0 ? (
+                        <div className="observations-grid">
+                          {stage.observation_required.map((obs, obsIdx) => (
+                            <div key={obsIdx} className="observation-card">
+                              <h4>{obs.label}</h4>
+                              {obs.description && <p>{obs.description}</p>}
+                              <div className="observation-key"></div>
                             </div>
-                            {task.description && (
-                              <p className="task-description">
-                                {task.description}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="empty-message">CHƯA CÓ CÔNG VIỆC</p>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="empty-message">CHƯA CÓ CÔNG VIỆC NÀO</div>
-              )}
-            </div>
-          )}
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="empty-message">CHƯA CÓ ĐIỂM QUAN SÁT</p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-message">CHƯA CÓ QUAN SÁT NÀO</div>
+                )}
+              </div>
+            )}
 
-          {/* Observations Tab */}
-          {activeTab === "observations" && (
-            <div className="observations-tab">
-              {template.stages && template.stages.length > 0 ? (
-                template.stages.map((stage, stageIdx) => (
-                  <div key={stageIdx} className="stage-observations-group">
-                    <h3>
-                      GIAI ĐOẠN {stageIdx + 1}: {stage.name.toUpperCase()}
-                    </h3>
-                    {stage.observation_required &&
-                    stage.observation_required.length > 0 ? (
-                      <div className="observations-grid">
-                        {stage.observation_required.map((obs, obsIdx) => (
-                          <div key={obsIdx} className="observation-card">
-                            <h4>{obs.label}</h4>
-                            {obs.description && <p>{obs.description}</p>}
-                            <div className="observation-key"></div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="empty-message">CHƯA CÓ ĐIỂM QUAN SÁT</p>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="empty-message">CHƯA CÓ QUAN SÁT NÀO</div>
-              )}
-            </div>
-          )}
-
-          {/* Rules Tab removed: rules (safe_delay_days / auto_skip) deprecated */}
+            {/* Rules Tab removed: rules (safe_delay_days / auto_skip) deprecated */}
+          </div>
         </div>
       </div>
-    </div>
+
+      <Footer />
     </>
   );
-  
 };
 
 export default PlantTemplateDetail;

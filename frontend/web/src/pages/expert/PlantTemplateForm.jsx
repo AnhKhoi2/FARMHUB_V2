@@ -668,6 +668,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
             <p>Đang tải...</p>
           </div>
         </div>
+        <Footer />
       </>
     );
   }
@@ -684,7 +685,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
             <h1>
               {mode === "edit"
                 ? "CHỈNH SỬA BỘ MẪU CÂY TRỒNG"
-                : "Tạo mới Bộ mẫu cây trồng"}
+                : "TẠO BỘ MẪU CÂY TRỒNG"}
             </h1>
           </div>
 
@@ -803,6 +804,8 @@ const PlantTemplateForm = ({ mode = "create" }) => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </>
   );
 };

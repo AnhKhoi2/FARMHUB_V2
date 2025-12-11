@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import expertApplicationApi from "../../api/expert/expertApplicationApi";
+import Footer from "../../components/shared/Footer";
 import "../../css/auth/Login.css"; // Reuse auth styles
 
 const ApplyExpert = () => {
@@ -431,6 +432,8 @@ const ApplyExpert = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };
