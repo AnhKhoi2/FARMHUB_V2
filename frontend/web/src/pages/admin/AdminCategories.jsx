@@ -171,8 +171,8 @@ export default function AdminCategories() {
                 <th>Biểu tượng</th>
                 <th>Tên</th>
                 <th>Đường dẫn</th>
-                <th>Mô tả</th>
-                <th style={{width:150}}>Hành động</th>
+                <th style={{width:350}}>Mô tả</th>
+                <th style={{width:120}} className="text-center">Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -192,9 +192,11 @@ export default function AdminCategories() {
                     <button className="btn btn-link btn-sm p-0" onClick={() => { setCurrent(it); setShowEdit(true); }}>{it.name}</button>
                   </td>
                   <td className="small">{it.slug}</td>
-                  <td className="small">{it.description || 'Không có mô tả'}</td>
+                  <td className="small" style={{maxWidth:350}}>
+                    {it.description ? (it.description.length > 120 ? it.description.substring(0,120) + '...' : it.description) : 'Không có mô tả'}
+                  </td>
                   <td className="text-center align-middle" style={{width:120}}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                       <button
                         className="btn btn-sm btn-link"
                         title="Chỉnh sửa"

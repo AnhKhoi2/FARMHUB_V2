@@ -84,7 +84,7 @@ const CollectionDetail = () => {
       fetchCollectionData();
     } catch (err) {
       console.error("Error adding notebook:", err);
-      alert("Không thể thêm nhật ký vào bộ sưu tập");
+      alert("Không thể thêm sổ tay vào bộ sưu tập");
     }
   };
 
@@ -98,7 +98,7 @@ const CollectionDetail = () => {
       fetchCollectionData();
     } catch (err) {
       console.error("Error removing notebook:", err);
-      alert("Không thể xóa nhật ký khỏi bộ sưu tập");
+      alert("Không thể xóa sổ tay khỏi bộ sưu tập");
     }
   };
 
@@ -233,7 +233,7 @@ const CollectionDetail = () => {
                 </p>
               )}
               <div className="collection-stats">
-                <span>📓 {collection.notebook_count} nhật ký</span>
+                <span>📓 {collection.notebook_count} sổ tay</span>
                 <span>
                   📅{" "}
                   {new Date(collection.createdAt).toLocaleDateString("vi-VN")}
@@ -258,7 +258,7 @@ const CollectionDetail = () => {
                 </p>
               )}
               <div className="collection-stats">
-                <span>📓 {collection.notebook_count} NHẬT KÝ</span>
+                <span>📓 {collection.notebook_count} SỔ TAY</span>
                 <span>
                   📅{" "}
                   {new Date(collection.createdAt).toLocaleDateString("vi-VN")}
@@ -290,7 +290,7 @@ const CollectionDetail = () => {
         {/* Move action buttons here - below the sort/search controls */}
         <div className="header-actions-outside">
           <button className="btn-edit" onClick={openEditModal}>
-            ✏️ CHỈNH SỮA
+            ✏️ CHỈNH SỬA
           </button>
           <button className="btn-add-notebook" onClick={openAddModal}>
             + THÊM SỔ TAY
@@ -364,7 +364,7 @@ const CollectionDetail = () => {
             onClick={() => setShowEditModal(false)}
           >
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h2>CHỈNH SỮA BỘ SƯU TẬP</h2>
+              <h2>CHỈNH SỬA BỘ SƯU TẬP</h2>
               <form onSubmit={handleUpdateCollection}>
                 <div className="form-group">
                   <label>TÊN BỘ SƯU TẬP *</label>

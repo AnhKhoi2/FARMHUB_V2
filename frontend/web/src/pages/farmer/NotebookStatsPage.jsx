@@ -10,16 +10,16 @@ const NotebookStatsPage = () => {
       <Header />
       <div className="notebook-stats-page">
         <div className="container">
-          <button
+          {/* <button
             type="button"
             className="stats-back-button"
             onClick={() => window.history.back()}
             aria-label="Quay lại"
           >
             ← Quay lại
-          </button>
+          </button> */}
 
-          <h2 className="stats-heading">Thống kê nhật ký làm vườn</h2>
+          <h2 className="stats-heading">THỐNG KÊ SỔ TAY LÀM VƯỜN</h2>
           <NotebookStats />
         </div>
       </div>

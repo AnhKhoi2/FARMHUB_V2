@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import "../../css/expert/ExpertHome.css";
 // Shared header removed: expert page uses its own header markup
 import ChatWidget from "./ChatWidget";
+import Footer from "../../components/shared/Footer";
 import axiosClient from "../../api/shared/axiosClient";
 
 import {
@@ -35,13 +36,11 @@ function getLocalUserFallback() {
             email: u.email || "",
             role: "Chuyên gia nông nghiệp",
             avatar: null,
-
-
           };
         }
       }
     }
-  } catch (_) { }
+  } catch (_) {}
 
   return {
     name: "Expert",
@@ -107,10 +106,7 @@ export default function ExpertHome({
 
         const payload = res.data;
         const list =
-          payload?.templates ||
-          payload?.data?.templates ||
-          payload?.data ||
-          [];
+          payload?.templates || payload?.data?.templates || payload?.data || [];
 
         setTemplates((list || []).slice(0, 3));
       } catch (err) {
@@ -135,7 +131,7 @@ export default function ExpertHome({
 
         // Nếu có tin nhắn MỚI tăng thêm → phát âm thanh
         if (count > prevUnread) {
-          notifySound.play().catch(() => { });
+          notifySound.play().catch(() => {});
         }
 
         setPrevUnread(count);
@@ -170,14 +166,14 @@ export default function ExpertHome({
           if (data.role !== "expert") {
             navigate("/");
             return;
-        }
+          }
           const payload = {
             name: data.name || "Expert",
             email: data.email || "",
             role: data.role || "Chuyên gia nông nghiệp",
             avatar: data.avatar, // luôn là ảnh upload hoặc DiceBear từ BE
           };
-          
+
           setProfile(payload);
 
           // Lưu đồng bộ cho tất cả màn hình dùng chung
@@ -185,7 +181,6 @@ export default function ExpertHome({
           localStorage.removeItem("profile");
           localStorage.setItem("authUser", JSON.stringify(payload));
           localStorage.setItem("profile", JSON.stringify(payload));
-          
 
           setLoading(false);
 
@@ -196,10 +191,8 @@ export default function ExpertHome({
       }
 
       navigate("/login");
-
     })();
   }, []);
-
 
   if (loading) {
     return (
@@ -232,7 +225,6 @@ export default function ExpertHome({
                 <span className="farmhub-logo-hub">Hub</span>
               </span>
             </div>
-
 
             <nav className="header-nav">
               <button
@@ -270,8 +262,6 @@ export default function ExpertHome({
                 <TreeDeciduous />
                 <span>BỘ MẪU CÂY TRỒNG</span>
               </button>
-
-
             </nav>
 
             <div className="header-right">
@@ -373,10 +363,9 @@ export default function ExpertHome({
 
             {/* ---------------------- HƯỚNG DẪN TRỒNG ---------------------- */}
             <div className="guides-section">
-            <div className="section-title-wrap">
-  <h2 className="section-title">📘  HƯỚNG DẪN NỔI BẬT</h2>
-</div>
-
+              <div className="section-title-wrap">
+                <h2 className="section-title">📘 HƯỚNG DẪN NỔI BẬT</h2>
+              </div>
 
               <div className="card-grid">
                 {guides.map((g) => (
@@ -387,17 +376,18 @@ export default function ExpertHome({
                       className="item-image"
                     />
 
-                    <h3 className="item-name">{(g.title || "").toUpperCase()}</h3>
+                    <h3 className="item-name">
+                      {(g.title || "").toUpperCase()}
+                    </h3>
 
                     <p className="item-desc">
-                      {g.summary?.slice(0, 80) ||
-                        g.description?.slice(0, 80)}
+                      {g.summary?.slice(0, 80) || g.description?.slice(0, 80)}
                       ...
                     </p>
 
                     <button
                       className="item-btn"
-                      onClick={() => navigate(`/guides/${g._id}`)}
+                      onClick={() => navigate(`/managerguides/detail/${g._id}`)}
                     >
                       XEM CHI TIẾT
                     </button>
@@ -412,10 +402,9 @@ export default function ExpertHome({
 
             {/* ---------------------- PLANT TEMPLATE ---------------------- */}
             <div className="templates-section">
-            <div className="section-title-wrap">
-  <h2 className="section-title">🧩  BỘ MẪU CÂY TRỒNG</h2>
-</div>
-
+              <div className="section-title-wrap">
+                <h2 className="section-title">🧩 BỘ MẪU CÂY TRỒNG</h2>
+              </div>
 
               <div className="card-grid">
                 {templates.map((t) => (
@@ -428,19 +417,12 @@ export default function ExpertHome({
 
                     <p className="item-meta">
                       {t.plant_group || "Nhóm cây chung"} ·{" "}
-                      {t.total_days ||
-                        t.total_duration ||
-                        t.totalDays ? (
+                      {t.total_days || t.total_duration || t.totalDays ? (
                         <>
-                          {t.total_days ||
-                            t.total_duration ||
-                            t.totalDays}{" "}
-                          ngày
+                          {t.total_days || t.total_duration || t.totalDays} ngày
                         </>
                       ) : (
-                        <>
-                          {t.stages?.length || 0} giai đoạn
-                        </>
+                        <>{t.stages?.length || 0} giai đoạn</>
                       )}
                     </p>
 
@@ -472,8 +454,9 @@ export default function ExpertHome({
 
       {/* Nút chat nổi */}
       <button
-        className={`floating-chat-btn chat-btn-with-badge ${chatOpen ? "hide" : ""
-          }`}
+        className={`floating-chat-btn chat-btn-with-badge ${
+          chatOpen ? "hide" : ""
+        }`}
         onClick={() => {
           setChatOpen(true);
           setUnreadCount(0);
@@ -488,6 +471,8 @@ export default function ExpertHome({
         onClose={() => setChatOpen(false)}
         initialOpenPayload={null}
       />
+
+      <Footer />
     </>
   );
 }

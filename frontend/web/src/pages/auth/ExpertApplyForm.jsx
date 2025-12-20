@@ -282,6 +282,13 @@ export default function ExpertApplyForm() {
       {/* FORM ĐĂNG KÝ EXPERT */}
       <div className="expert-apply-page">
         <form className="expert-card" onSubmit={handleSubmit}>
+          <button
+            type="button"
+            className="btn-close expert-close-btn btn-close"
+            aria-label="Đóng"
+            onClick={() => navigate(-1)}
+          ></button>
+
           <h3 className="mb-3">ĐĂNG KÝ TRỞ THÀNH CHUYÊN GIA</h3>
 
           {/* Họ tên */}
@@ -444,9 +451,16 @@ export default function ExpertApplyForm() {
           style={{ zIndex: 1050 }}
         >
           <div
-            className="bg-white rounded shadow p-4"
+            className="bg-white rounded shadow p-4 position-relative"
             style={{ maxWidth: "480px", width: "100%" }}
           >
+            <button
+              type="button"
+              aria-label="Đóng"
+              className="btn-close position-absolute top-0 end-0 m-2"
+              onClick={() => setSuccessModalOpen(false)}
+            />
+
             <h4 className="mb-3">🎉 Đã gửi đơn đăng ký Chuyên Gia</h4>
             <p className="mb-3">
               Đơn đăng ký của bạn đã được gửi thành công và đang ở trạng thái{" "}
@@ -468,10 +482,10 @@ export default function ExpertApplyForm() {
               </button>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-outline-secondary "
                 onClick={() => {
                   setSuccessModalOpen(false);
-                  navigate(-1); // quay lại trang trước (vd: ProfilePage)
+                  navigate(-1);
                 }}
               >
                 Quay lại

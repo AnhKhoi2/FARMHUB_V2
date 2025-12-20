@@ -1,4 +1,4 @@
-/* Plant Template Form Styles */
+git merge origin/dev /* Plant Template Form Styles */
 .plant-template-form {
     min-height: 100vh;
     background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
@@ -138,6 +138,9 @@
 .upload-icon {
     font-size: 48px;
     margin-bottom: 12px;
+    /* Disable any animation/transform from global styles */
+    animation: none !important;
+    transform: none !important;
 }
 
 .upload-text {
@@ -291,10 +294,25 @@
     /* show normal capitalization */
 }
 
+/* Make the Step 4 header (observations) larger than hint text */
+.step-observations .step-header h2 {
+    font-size: 18px;
+    line-height: 1.2;
+}
+
 .hint {
     color: #7f8c8d;
     font-size: 14px;
     margin: 4px 0 0 0;
+    /* Giới hạn hiển thị 2 dòng */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+    max-height: 2.8em;
+    /* 2 dòng * 1.4 line-height */
 }
 
 /* Form Elements */
@@ -342,11 +360,34 @@
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
+    align-items: flex-start;
+    /* Căn các form-group về phía trên */
 }
 
 .form-row .form-group {
     flex: 1;
     min-width: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Wrapper cho label + hint để có chiều cao đồng đều */
+.form-row .form-group label {
+    min-height: 24px;
+    /* Chiều cao của label */
+}
+
+.form-row .form-group .hint {
+    min-height: 2.8em;
+    /* Đảm bảo luôn có không gian cho 2 dòng */
+    margin-bottom: 8px;
+}
+
+/* Đảm bảo input và form-static căn đều */
+.form-row .form-group .form-input,
+.form-row .form-group .form-static {
+    margin-top: auto;
+    /* Đẩy xuống dưới cùng */
 }
 
 .flex-1 {
@@ -612,6 +653,19 @@
 
 .btn-danger {
     color: #f44336;
+}
+
+/* Specific style for the "Hoàn tác" (undo) button inside tasks-actions-row */
+.plant-template-form .tasks-actions-row .btn-danger {
+    /* dark orange */
+    background: #ff6600 !important;
+    border: 1px solid #ff6600 !important;
+    color: #ffffff !important;
+}
+
+.plant-template-form .tasks-actions-row .btn-danger:hover {
+    background: #e65500 !important;
+    border-color: #e65500 !important;
 }
 
 .btn:disabled {

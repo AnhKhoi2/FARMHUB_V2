@@ -8,6 +8,7 @@ import { logoutThunk } from "../../redux/authThunks";
 import { Mail, User, Shield, ArrowLeft, LogOut, Phone } from "lucide-react";
 import { toast } from "react-toastify";
 import "../../css/expert/expertProfile.css";
+import Footer from "../../components/shared/Footer";
 
 // Fallback: lấy thông tin cơ bản từ localStorage nếu API lỗi
 function getLocalUserFallback() {
@@ -79,10 +80,10 @@ export default function ExpertProfile() {
         const res = await axiosClient.get("/api/experts/me/basic");
         const data = res?.data?.data;
         if (!data || data.role !== "expert") {
-          navigate("/");   // hoặc navigate("/home")
+          navigate("/"); // hoặc navigate("/home")
           return;
         }
-        
+
         if (!data) throw new Error("No data");
 
         const payload = {
@@ -169,8 +170,7 @@ export default function ExpertProfile() {
     const trimmedPhone = form.phone.trim();
 
     if (!trimmedName) newErrors.name = "Họ tên không được để trống";
-    else if (trimmedName.length > 50)
-      newErrors.name = "Họ tên tối đa 50 ký tự";
+    else if (trimmedName.length > 50) newErrors.name = "Họ tên tối đa 50 ký tự";
 
     if (!trimmedEmail) newErrors.email = "Email không được để trống";
     else if (trimmedEmail.length > 50)
@@ -200,32 +200,33 @@ export default function ExpertProfile() {
     try {
       let avatarUrlToSend = null;
 
-// ⭐ Upload ảnh lên Cloudinary nếu có file mới
-if (photoFile) {
-  try {
-    const fd = new FormData();
-    fd.append("file", photoFile);    // 🔥 Cloudinary route cần key "file"
+      // ⭐ Upload ảnh lên Cloudinary nếu có file mới
+      if (photoFile) {
+        try {
+          const fd = new FormData();
+          fd.append("file", photoFile); // 🔥 Cloudinary route cần key "file"
 
-    const upRes = await axiosClient.post("/api/cloudinary-upload", fd, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+          const upRes = await axiosClient.post("/api/cloudinary-upload", fd, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
 
-    const returnedUrl = upRes?.data?.url;
-    if (!returnedUrl) {
-      toast.error("Upload ảnh thất bại: không có URL trả về từ Cloudinary");
-      setSaving(false);
-      return;
-    }
+          const returnedUrl = upRes?.data?.url;
+          if (!returnedUrl) {
+            toast.error(
+              "Upload ảnh thất bại: không có URL trả về từ Cloudinary"
+            );
+            setSaving(false);
+            return;
+          }
 
-    avatarUrlToSend = returnedUrl; // 🔥 Lưu URL Cloudinary vào body
-  } catch (err) {
-    console.error(err);
-    toast.error("Không thể upload ảnh lên Cloudinary.");
-    setSaving(false);
-    return;
-  }
-}
-
+          avatarUrlToSend = returnedUrl; // 🔥 Lưu URL Cloudinary vào body
+        } catch (err) {
+          console.error(err);
+          toast.error("Không thể upload ảnh lên Cloudinary.");
+          setSaving(false);
+          return;
+        }
+      }
 
       const body = {
         name: form.name.trim(),
@@ -268,9 +269,7 @@ if (photoFile) {
       setEditing(false);
     } catch (err) {
       const msg =
-        err?.response?.data?.error ||
-        err?.message ||
-        "Cập nhật hồ sơ thất bại";
+        err?.response?.data?.error || err?.message || "Cập nhật hồ sơ thất bại";
 
       toast.error(msg);
 
@@ -501,13 +500,18 @@ if (photoFile) {
                 TRỞ VỀ TRANG CHUYÊN GIA
               </button>
 
-              <button className="xp-btn outline" onClick={() => setEditing(true)}>
+              <button
+                className="xp-btn outline"
+                onClick={() => setEditing(true)}
+              >
                 CHỈNH SỬA HỒ SƠ
               </button>
             </div>
           )}
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

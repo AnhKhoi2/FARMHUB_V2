@@ -60,7 +60,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
       setError(null);
     } catch (err) {
       console.error("❌ Error fetching notebooks:", err);
-      setError("Không thể tải danh sách nhật ký");
+      setError("Không thể tải danh sách sổ tay");
     } finally {
       setLoading(false);
     }
@@ -92,25 +92,25 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
   // Note: status filtering removed — filtering kept to search and deleted view
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa nhật ký này?")) return;
+    if (!window.confirm("Bạn có chắc muốn xóa sổ tay này?")) return;
 
     try {
       await notebookApi.deleteNotebook(id);
       fetchNotebooks();
-      alert("Xóa nhật ký thành công!");
+      alert("Xóa sổ tay thành công!");
     } catch (err) {
       console.error("Error deleting notebook:", err);
-      alert("Không thể xóa nhật ký");
+      alert("Không thể xóa sổ tay");
     }
   };
 
   const handleRestore = async (id) => {
-    if (!window.confirm("Bạn có muốn khôi phục nhật ký này?")) return;
+    if (!window.confirm("Bạn có muốn khôi phục sổ tay này?")) return;
 
     try {
       await notebookApi.restoreNotebook(id);
       fetchNotebooks();
-      alert("✅ Khôi phục nhật ký thành công!");
+      alert("✅ Khôi phục sổ tay thành công!");
     } catch (err) {
       console.error("Error restoring notebook:", err);
 
@@ -123,20 +123,20 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
         if (
           window.confirm(
             `❌ GIỚI HẠN GÓI MIỄN PHÍ\n\n` +
-              `Bạn đang có ${currentCount}/${maxAllowed} nhật ký đang hoạt động.\n` +
-              `Gói miễn phí chỉ cho phép tối đa 3 nhật ký.\n\n` +
+              `Bạn đang có ${currentCount}/${maxAllowed} sổ tay đang hoạt động.\n` +
+              `Gói miễn phí chỉ cho phép tối đa 3 sổ tay.\n\n` +
               `🌟 Nâng cấp lên gói THÔNG MINH để:\n` +
-              `✓ Khôi phục không giới hạn\n` +
-              `✓ Tạo nhật ký không giới hạn\n` +
-              `✓ Truy cập tính năng AI\n` +
-              `✓ Hỗ trợ ưu tiên\n\n` +
+              ` Khôi phục không giới hạn\n` +
+              ` Tạo sổ tay không giới hạn\n` +
+              ` Truy cập tính năng AI\n` +
+              ` Hỗ trợ ưu tiên\n\n` +
               `Bạn có muốn nâng cấp ngay không?`
           )
         ) {
           navigate("/pricing");
         }
       } else {
-        alert(err?.response?.data?.message || "Không thể khôi phục nhật ký");
+        alert(err?.response?.data?.message || "Không thể khôi phục sổ tay");
       }
     }
   };
@@ -150,7 +150,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
     try {
       await notebookApi.permanentDeleteNotebook(id);
       fetchNotebooks();
-      alert("Đã xóa vĩnh viễn nhật ký!");
+      alert("Đã xóa vĩnh viễn sổ tay!");
     } catch (err) {
       console.error("Error permanently deleting notebook:", err);
       alert("Không thể xóa vĩnh viễn");
@@ -196,6 +196,28 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
     <>
       <Header />
       <div className="notebook-list-container">
+        {/* Search & Filter */}
+        <div className="filters-section">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Tìm kiếm sổ tay..."
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+            />
+            <button className="btn-search" onClick={handleSearch}>
+              🔍 TÌM KIẾM
+            </button>
+          </div>
+
+          {/* Trạng thái filter removed per request */}
+
+          <div className="summary">
+            <strong>{notebooks.length}</strong> SỔ TAY
+          </div>
+        </div>
+
         {/* Action Buttons */}
         <div className="action-buttons">
           <button
@@ -222,7 +244,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
                 navigate("/farmer/notebooks/deleted");
               }}
             >
-              🗑️ Xem sổ tay đã xóa
+              🗑️ XEM SỔ TAY ĐÃ XÓA
             </button>
           ) : (
             <button
@@ -232,31 +254,9 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
                 navigate("/farmer/notebooks");
               }}
             >
-              ↩️ Quay lại sổ tay
+              ↩️ QUAY LẠI SỔ TAY
             </button>
           )}
-        </div>
-
-        {/* Search & Filter */}
-        <div className="filters-section">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sổ tay..."
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <button className="btn-search" onClick={handleSearch}>
-              🔍 TÌM KIẾM
-            </button>
-          </div>
-
-          {/* Trạng thái filter removed per request */}
-
-          <div className="summary">
-            <strong>{notebooks.length}</strong> SỔ TAY
-          </div>
         </div>
 
         {/* Info banner for deleted notebooks page */}
@@ -264,12 +264,12 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
           <div className="alert alert-info">
             <span>ℹ️</span>
             <div>
-              <strong>Khôi phục nhật ký đã xóa</strong>
+              <strong>Khôi phục sổ tay đã xóa</strong>
               <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.9rem" }}>
                 {(user?.subscriptionPlan || user?.plan) === "smart" ||
                 (user?.subscriptionPlan || user?.plan) === "premium"
-                  ? "Gói Thông Minh: Bạn có thể khôi phục không giới hạn nhật ký đã xóa! 🌟"
-                  : "Gói miễn phí chỉ cho phép khôi phục nếu bạn có ít hơn 3 nhật ký đang hoạt động. Nâng cấp lên gói Thông Minh để khôi phục không giới hạn! 🚀"}
+                  ? "Gói Thông Minh: Bạn có thể khôi phục không giới hạn sổ tay đã xóa! 🌟"
+                  : "Gói miễn phí chỉ cho phép khôi phục nếu bạn có ít hơn 3 sổ tay đang hoạt động. Nâng cấp lên gói Thông Minh để khôi phục không giới hạn! 🚀"}
               </p>
             </div>
           </div>
@@ -291,13 +291,13 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
             <div className="nb-modal" onClick={(e) => e.stopPropagation()}>
               <h3 className="mb-3">GIỚI HẠN GÓI MIỄN PHÍ</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Tài khoản miễn phí chỉ được tạo tối đa 3 nhật ký. Để thêm nhật
-                ký mới, bạn có thể xóa 1 trong 3 nhật ký hiện tại hoặc nâng cấp
-                lên gói Thông Minh để tạo không giới hạn.
+                Tài khoản miễn phí chỉ được tạo tối đa 3 sổ tay. Để thêm sổ tay
+                mới, bạn có thể xóa 1 trong 3 sổ tay hiện tại hoặc nâng cấp lên
+                gói Thông Minh để tạo không giới hạn.
               </p>
 
               <div className="mb-4">
-                <h4 className="mb-2">NHẬT KÝ HIỆN TẠI</h4>
+                <h4 className="mb-2">SỔ TAY HIỆN TẠI</h4>
                 <div className="grid grid-cols-1 gap-2 nb-current-list">
                   {notebooks.map((nb) => (
                     <div key={nb._id} className="nb-item">
@@ -319,7 +319,7 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
                             // Confirm deletion
                             if (
                               !window.confirm(
-                                "Bạn có chắc muốn xóa nhật ký này?"
+                                "Bạn có chắc muốn xóa sổ tay này?"
                               )
                             )
                               return;
@@ -366,13 +366,13 @@ const NotebookList = ({ showDeleted: initialShowDeleted = false }) => {
         {notebooks.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📔</div>
-            <h3>Chưa có nhật ký nào</h3>
-            <p>Tạo nhật ký đầu tiên để bắt đầu theo dõi cây trồng của bạn</p>
+            <h3>Chưa có sổ tay nào</h3>
+            <p>Tạo sổ tay đầu tiên để bắt đầu theo dõi cây trồng của bạn</p>
             <button
               className="btn btn-primary"
               onClick={() => navigate("/farmer/notebooks/create")}
             >
-              <span>+</span> Tạo nhật ký mới
+              <span>+</span> Tạo sổ tay mới
             </button>
           </div>
         ) : (

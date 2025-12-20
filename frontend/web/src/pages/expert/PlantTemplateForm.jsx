@@ -4,9 +4,167 @@ import axios from "axios";
 import plantTemplateApi from "../../api/expert/plantTemplateApi";
 import guidesApi from "../../api/shared/guidesApi";
 import HeaderExpert from "../../components/shared/HeaderExpert";
+import Footer from "../../components/shared/Footer";
 import "../../css/expert/PlantTemplateForm.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+// Utility function to generate key from Vietnamese text
+const generateKeyFromLabel = (label) => {
+  if (!label || label.trim() === "") return "";
+
+  // Normalize Vietnamese characters to non-accented equivalents
+  const vietnameseMap = {
+    à: "a",
+    á: "a",
+    ạ: "a",
+    ả: "a",
+    ã: "a",
+    â: "a",
+    ầ: "a",
+    ấ: "a",
+    ậ: "a",
+    ẩ: "a",
+    ẫ: "a",
+    ă: "a",
+    ằ: "a",
+    ắ: "a",
+    ặ: "a",
+    ẳ: "a",
+    ẵ: "a",
+    è: "e",
+    é: "e",
+    ẹ: "e",
+    ẻ: "e",
+    ẽ: "e",
+    ê: "e",
+    ề: "e",
+    ế: "e",
+    ệ: "e",
+    ể: "e",
+    ễ: "e",
+    ì: "i",
+    í: "i",
+    ị: "i",
+    ỉ: "i",
+    ĩ: "i",
+    ò: "o",
+    ó: "o",
+    ọ: "o",
+    ỏ: "o",
+    õ: "o",
+    ô: "o",
+    ồ: "o",
+    ố: "o",
+    ộ: "o",
+    ổ: "o",
+    ỗ: "o",
+    ơ: "o",
+    ờ: "o",
+    ớ: "o",
+    ợ: "o",
+    ở: "o",
+    ỡ: "o",
+    ù: "u",
+    ú: "u",
+    ụ: "u",
+    ủ: "u",
+    ũ: "u",
+    ư: "u",
+    ừ: "u",
+    ứ: "u",
+    ự: "u",
+    ử: "u",
+    ữ: "u",
+    ỳ: "y",
+    ý: "y",
+    ỵ: "y",
+    ỷ: "y",
+    ỹ: "y",
+    đ: "d",
+    À: "A",
+    Á: "A",
+    Ạ: "A",
+    Ả: "A",
+    Ã: "A",
+    Â: "A",
+    Ầ: "A",
+    Ấ: "A",
+    Ậ: "A",
+    Ẩ: "A",
+    Ẫ: "A",
+    Ă: "A",
+    Ằ: "A",
+    Ắ: "A",
+    Ặ: "A",
+    Ẳ: "A",
+    Ẵ: "A",
+    È: "E",
+    É: "E",
+    Ẹ: "E",
+    Ẻ: "E",
+    Ẽ: "E",
+    Ê: "E",
+    Ề: "E",
+    Ế: "E",
+    Ệ: "E",
+    Ể: "E",
+    Ễ: "E",
+    Ì: "I",
+    Í: "I",
+    Ị: "I",
+    Ỉ: "I",
+    Ĩ: "I",
+    Ò: "O",
+    Ó: "O",
+    Ọ: "O",
+    Ỏ: "O",
+    Õ: "O",
+    Ô: "O",
+    Ồ: "O",
+    Ố: "O",
+    Ộ: "O",
+    Ổ: "O",
+    Ỗ: "O",
+    Ơ: "O",
+    Ờ: "O",
+    Ớ: "O",
+    Ợ: "O",
+    Ở: "O",
+    Ỡ: "O",
+    Ù: "U",
+    Ú: "U",
+    Ụ: "U",
+    Ủ: "U",
+    Ũ: "U",
+    Ư: "U",
+    Ừ: "U",
+    Ứ: "U",
+    Ự: "U",
+    Ử: "U",
+    Ữ: "U",
+    Ỳ: "Y",
+    Ý: "Y",
+    Ỵ: "Y",
+    Ỷ: "Y",
+    Ỹ: "Y",
+    Đ: "D",
+  };
+
+  let normalized = label;
+  Object.keys(vietnameseMap).forEach((key) => {
+    normalized = normalized.replace(new RegExp(key, "g"), vietnameseMap[key]);
+  });
+
+  // Convert to lowercase, remove special chars, replace spaces with underscore
+  const slug = normalized
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "") // Remove special characters
+    .trim()
+    .replace(/\s+/g, "_"); // Replace spaces with underscore
+
+  return slug;
+};
 
 const PlantTemplateForm = ({ mode = "create" }) => {
   const navigate = useNavigate();
@@ -174,6 +332,32 @@ const PlantTemplateForm = ({ mode = "create" }) => {
   const handleCoverImageUpload = async (file) => {
     if (!file) return;
 
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert(
+        `File quá lớn! Kích thước tối đa: 5MB. File của bạn: ${(
+          file.size /
+          1024 /
+          1024
+        ).toFixed(2)}MB`
+      );
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WebP)");
+      return;
+    }
+
     const formDataUpload = new FormData();
     formDataUpload.append("image", file);
 
@@ -182,9 +366,9 @@ const PlantTemplateForm = ({ mode = "create" }) => {
       const token =
         localStorage.getItem("accessToken") || localStorage.getItem("token");
       const baseURL = API_URL.replace("/api", "");
-      const response = await axios.post(`${API_URL}/upload`, formDataUpload, {
+      // ⭐ IMPORTANT: Don't set Content-Type header for FormData - axios will set it automatically with boundary
+      const response = await axios.post(`${baseURL}/upload`, formDataUpload, {
         headers: {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
@@ -198,7 +382,11 @@ const PlantTemplateForm = ({ mode = "create" }) => {
       }
     } catch (error) {
       console.error("Error uploading cover image:", error);
-      alert("Không thể upload ảnh bìa. Vui lòng thử lại.");
+      console.error("Error details:", error.response?.data);
+      const errorMsg =
+        error.response?.data?.message ||
+        "Không thể upload ảnh bìa. Vui lòng thử lại.";
+      alert(errorMsg);
     } finally {
       setUploadingCover(false);
     }
@@ -248,7 +436,13 @@ const PlantTemplateForm = ({ mode = "create" }) => {
           day_end: dayStart + 6,
           stage_image: null,
           autogenerated_tasks: [],
-          observation_required: [],
+          observation_required: [
+            {
+              key: "",
+              label: "",
+              description: "",
+            },
+          ],
         },
       ],
     }));
@@ -357,7 +551,16 @@ const PlantTemplateForm = ({ mode = "create" }) => {
           ? {
               ...stage,
               observation_required: stage.observation_required.map((obs, j) =>
-                j === obsIndex ? { ...obs, [field]: value } : obs
+                j === obsIndex
+                  ? {
+                      ...obs,
+                      [field]: value,
+                      // Auto-generate key when label changes
+                      ...(field === "label"
+                        ? { key: generateKeyFromLabel(value) }
+                        : {}),
+                    }
+                  : obs
               ),
             }
           : stage
@@ -466,6 +669,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
             <p>Đang tải...</p>
           </div>
         </div>
+        <Footer />
       </>
     );
   }
@@ -482,7 +686,7 @@ const PlantTemplateForm = ({ mode = "create" }) => {
             <h1>
               {mode === "edit"
                 ? "CHỈNH SỬA BỘ MẪU CÂY TRỒNG"
-                : "Tạo mới Bộ mẫu cây trồng"}
+                : "TẠO BỘ MẪU CÂY TRỒNG"}
             </h1>
           </div>
 
@@ -601,6 +805,8 @@ const PlantTemplateForm = ({ mode = "create" }) => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </>
   );
 };
@@ -865,7 +1071,6 @@ const Step1BasicInfo = ({
             </div>
           ) : (
             <div className="upload-placeholder">
-              <div className="upload-icon">🖼️</div>
               <div className="upload-text">
                 <strong>Click để chọn ảnh bìa</strong>
                 <span>Ảnh này sẽ hiển thị trong danh sách bộ mẫu</span>
@@ -1074,7 +1279,6 @@ const Step2Stages = ({ stages, addStage, updateStage, removeStage }) => {
           <div className="form-group">
             <label>📸 ẢNH MẪU GIAI ĐOẠN</label>
             <div className="upload-area">
-              <div className="upload-icon">🖼️</div>
               <label className="upload-label">
                 {uploadingStage === index ? (
                   <div className="uploading">
@@ -1428,7 +1632,7 @@ const Step4Observations = ({
 }) => (
   <div className="step-observations">
     <div className="step-header">
-      <h2>👁️ ĐIỀU KIỆN QUAN SÁT</h2>
+      <h2>ĐIỀU KIỆN QUAN SÁT</h2>
       <p className="hint">
         Tạo các câu hỏi để người dùng ghi nhận tiến trình phát triển của cây
         (VD: Đã nảy mầm?, Có mấy lá?, Chiều cao bao nhiêu cm?)
@@ -1441,71 +1645,33 @@ const Step4Observations = ({
           <h3>
             GIAI ĐOẠN {stage.stage_number}: {stage.name.toUpperCase()}
           </h3>
-          <span className="badge">
-            {stage.observation_required?.length || 0} ĐIỀU KIỆN
-          </span>
+          <span className="badge">ĐIỀU KIỆN QUAN SÁT</span>
         </div>
 
         {stage.observation_required?.map((obs, obsIndex) => (
           <div key={obsIndex} className="observation-card">
             <div className="observation-card-header">
-              <span className="obs-number">ĐIỀU KIỆN {obsIndex + 1}</span>
-              <button
-                type="button"
-                className="btn-icon btn-sm"
-                onClick={() => {
-                  const confirmDelete = window.confirm(
-                    "Bạn có chắc muốn xóa điều kiện quan sát này? Hành động này không thể hoàn tác."
-                  );
-                  if (!confirmDelete) return;
-                  removeObservation(stageIndex, obsIndex);
-                }}
-                title="Xóa điều kiện"
-              >
-                ×
-              </button>
+              <span className="obs-number">ĐIỀU KIỆN QUAN SÁT</span>
             </div>
 
-            <div className="form-row">
-              <div className="form-group flex-1">
-                <label>MÃ ĐỊNH DANH (KEY)</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Ví dụ: has_sprout, leaf_count"
-                  value={obs.key}
-                  onChange={(e) =>
-                    updateObservation(
-                      stageIndex,
-                      obsIndex,
-                      "key",
-                      e.target.value
-                    )
-                  }
-                />
-                <small className="hint">
-                  Mã để lưu trữ (dùng chữ thường, gạch dưới, không dấu). VD:
-                  has_sprout, leaf_count
-                </small>
-              </div>
-
-              <div className="form-group flex-1">
-                <label>CÂU HỎI HIỂN THỊ</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Ví dụ: Đã nảy mầm?, Có bao nhiêu lá?"
-                  value={obs.label}
-                  onChange={(e) =>
-                    updateObservation(
-                      stageIndex,
-                      obsIndex,
-                      "label",
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
+            <div className="form-group">
+              <label>
+                CÂU HỎI HIỂN THỊ <span className="required">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ví dụ: Đã nảy mầm?, Có bao nhiêu lá?"
+                value={obs.label}
+                onChange={(e) =>
+                  updateObservation(
+                    stageIndex,
+                    obsIndex,
+                    "label",
+                    e.target.value
+                  )
+                }
+              />
             </div>
 
             <div className="form-group">
@@ -1529,31 +1695,36 @@ const Step4Observations = ({
         ))}
 
         <div className="observations-actions-row">
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={() => addObservationToStage(stageIndex)}
-          >
-            + Thêm điều kiện quan sát
-          </button>
+          {(!stage.observation_required ||
+            stage.observation_required.length === 0) && (
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => addObservationToStage(stageIndex)}
+            >
+              + Thêm điều kiện quan sát
+            </button>
+          )}
 
-          <button
-            type="button"
-            className="btn btn-outline btn-sm btn-danger"
-            onClick={() => {
-              const obs = stage.observation_required || [];
-              if (obs.length === 0) return;
-              const lastIndex = obs.length - 1;
-              const confirmDelete = window.confirm(
-                "Bạn sắp xóa điều kiện vừa thêm. Bạn có chắc chắn?"
-              );
-              if (!confirmDelete) return;
-              removeObservation(stageIndex, lastIndex);
-            }}
-            title="Xóa điều kiện cuối"
-          >
-            ⤺ Hoàn tác
-          </button>
+          {stage.observation_required &&
+            stage.observation_required.length > 0 && (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm btn-secondary"
+                onClick={() => {
+                  const confirmReset = window.confirm(
+                    "Bạn có chắc muốn xóa toàn bộ nội dung điều kiện quan sát này?"
+                  );
+                  if (!confirmReset) return;
+                  updateObservation(stageIndex, 0, "key", "");
+                  updateObservation(stageIndex, 0, "label", "");
+                  updateObservation(stageIndex, 0, "description", "");
+                }}
+                title="Xóa nội dung điều kiện"
+              >
+                🔄 Đặt lại
+              </button>
+            )}
         </div>
       </div>
     ))}

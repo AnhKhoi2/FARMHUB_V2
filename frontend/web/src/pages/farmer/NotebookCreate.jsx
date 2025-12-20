@@ -139,7 +139,7 @@ const NotebookCreate = () => {
     e.preventDefault();
 
     if (!formData.notebook_name.trim()) {
-      alert("Vui lòng nhập tên nhật ký");
+      alert("Vui lòng nhập tên Sổ Tay");
       return;
     }
 
@@ -175,13 +175,12 @@ const NotebookCreate = () => {
 
       console.log("✅ Notebook created:", newNotebook);
 
-      alert("Tạo nhật ký thành công!");
+      alert("Tạo Sổ Tay thành công!");
       navigate(`/farmer/notebooks/${notebookId}`);
     } catch (err) {
       console.error("❌ Error creating notebook:", err);
       alert(
-        err.response?.data?.message ||
-          "Không thể tạo nhật ký. Vui lòng thử lại."
+        err.response?.data?.message || "Không thể tạo Sổ Tay. Vui lòng thử lại."
       );
     } finally {
       setLoading(false);
@@ -202,14 +201,14 @@ const NotebookCreate = () => {
         <button className="btn-back" onClick={handleCancel}>
           ← Quay lại
         </button>
-        <h1>Tạo Nhật Ký Mới</h1>
+        <h1>Tạo Sổ Tay Mới</h1>
       </div>
 
       <div className="form-card">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="notebook_name">
-              Tên Nhật Ký <span className="required">*</span>
+              Tên Sổ Tay <span className="required">*</span>
             </label>
             <input
               type="text"
@@ -429,7 +428,7 @@ const NotebookCreate = () => {
               Hủy
             </button>
             <button type="submit" className="btn btn-submit" disabled={loading}>
-              {loading ? "Đang tạo..." : "🌱 Tạo Nhật Ký"}
+              {loading ? "Đang tạo..." : "🌱 Tạo Sổ Tay"}
             </button>
           </div>
         </form>
@@ -439,7 +438,7 @@ const NotebookCreate = () => {
       <div className="info-card">
         <h3>💡 Gợi Ý</h3>
         <ul>
-          <li>Nhập tên dễ nhớ để quản lý nhiều nhật ký</li>
+          <li>Nhập tên dễ nhớ để quản lý nhiều Sổ Tay</li>
           <li>Bạn có thể thêm hình ảnh và ghi chú sau khi tạo</li>
         </ul>
       </div>

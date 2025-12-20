@@ -255,7 +255,7 @@ const WeatherPage = () => {
       setAdvice(res.data);
     } catch (err) {
       console.error(
-        "Lỗi lấy gợi ý chăm sóc cây:",
+        "Lỗi gợi ý chăm sóc cây:",
         err.response?.data || err.message
       );
       setAdviceError(
@@ -374,7 +374,7 @@ const WeatherPage = () => {
                 onClick={handleGetPlantAdvice}
                 disabled={adviceLoading}
               >
-                {adviceLoading ? "Đang gợi ý..." : "✨ Lấy gợi ý chăm sóc cây"}
+                {adviceLoading ? "Đang gợi ý..." : "✨ Gợi ý chăm sóc cây"}
               </button>
             </div>
           </div>
@@ -486,7 +486,7 @@ const WeatherPage = () => {
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <div>
                           <h5 className="mb-1 fw-bold d-flex align-items-center gap-1">
-                            🌿 Chất lượng không khí cho cây trồng
+                            🌿 CHẤT LƯỢNG KHÔNG KHÍ CHO CÂY TRỒNG
                           </h5>
                           <div className="text-muted small">
                             AQI càng thấp thì điều kiện không khí càng thuận lợi
@@ -629,7 +629,7 @@ const WeatherPage = () => {
                   {!adviceLoading && !advice && !adviceError && !hasRequestedAdvice && (
                     <p className="text-muted mb-0">
                       Nếu bạn muốn, hãy nhập tên cây và bấm{" "}
-                      <strong>“Lấy gợi ý chăm sóc cây”</strong>. Nếu chỉ xem thời
+                      <strong>“Gợi ý chăm sóc cây”</strong>. Nếu chỉ xem thời
                       tiết, bạn có thể bỏ qua phần này.
                     </p>
                   )}

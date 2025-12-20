@@ -50,10 +50,10 @@ export default function AdminExperts() {
         Array.isArray(data.items)
           ? data.items
           : Array.isArray(data.docs)
-          ? data.docs
-          : Array.isArray(res.data?.data)
-          ? res.data.data
-          : [];
+            ? data.docs
+            : Array.isArray(res.data?.data)
+              ? res.data.data
+              : [];
 
       const tot = data.total || data.meta?.total || docs.length;
       setItems(docs);
@@ -144,8 +144,8 @@ export default function AdminExperts() {
 
       <div className="card">
         <div className="card-body p-0">
-          <div className="table-responsive">
-            <table className="table table-sm table-hover mb-0">
+          <div className="admin-table-container">
+            <table className="admin-table has-dividers">
               <thead className="table-light">
                 <tr>
                   <th>STT</th>
@@ -255,9 +255,9 @@ export default function AdminExperts() {
                   </div>
 
                   <div className="field">
-  <label>SỐ ĐIỆN THOẠI</label>
-  <p>{detail?.phone_number || detail?.user?.phone_number || "—"}</p>
-</div>
+                    <label>SỐ ĐIỆN THOẠI</label>
+                    <p>{detail?.phone_number || detail?.user?.phone_number || "—"}</p>
+                  </div>
 
                   <div className="field full">
                     <label>GIỚI THIỆU</label>

@@ -18,7 +18,17 @@ const StageObservations = ({ notebookId }) => {
   const fetchNotebookInfo = async () => {
     try {
       const response = await notebookApi.getNotebookById(notebookId);
-      setNotebookInfo(response.data?.data || response.data);
+      const notebook = response.data?.data || response.data;
+      setNotebookInfo(notebook);
+
+      // Debug log for stage tracking
+      if (process.env.NODE_ENV !== "production") {
+        console.log("📘 Notebook info:", {
+          current_day: notebook.current_day,
+          current_stage: notebook.current_stage,
+          stages_tracking: notebook.stages_tracking,
+        });
+      }
     } catch (err) {
       setNotebookInfo(null);
     }
@@ -61,6 +71,7 @@ const StageObservations = ({ notebookId }) => {
         description: getField(o, "description", "desc") || "",
         value:
           getField(o, "value") === undefined ? false : getField(o, "value"),
+        observed_at: getField(o, "observed_at", "observedAt") || null,
         __raw: o,
       }));
 
@@ -155,43 +166,134 @@ const StageObservations = ({ notebookId }) => {
       </div>
     );
 
+  // Determine if observations should be enabled
+  // ✅ NEW LOGIC: Cho phép check khi currentDay >= stageEndDay (đã đến hoặc qua ngày cuối)
+  // Mỗi observation có thể check riêng lẻ - một khi đã check (value=true), hôm sau sẽ bị disabled
+  const currentDay = notebookInfo?.current_day || 0;
+  const currentStageNum = notebookInfo?.current_stage || 1;
+  const currentStageTracking = notebookInfo?.stages_tracking?.find(
+    (st) => st.stage_number === currentStageNum && st.is_current
+  );
+
+  // Get stage end day from template (via notebookInfo.template_id or fetch separately if needed)
+  // For now, assume backend getCurrentObservations returns stage info or we fetch template
+  // Simpler approach: check if template_id is populated and find stage day_end
+  let stageEndDay = null;
+  if (notebookInfo?.template_id?.stages) {
+    const templateStage = notebookInfo.template_id.stages.find(
+      (s) => s.stage_number === currentStageNum
+    );
+    stageEndDay = templateStage?.day_end;
+  }
+
+  // ✅ Enable observations when current_day >= stage_end_day (đã đến hoặc qua ngày cuối giai đoạn)
+  const hasReachedEndDay = stageEndDay && currentDay >= stageEndDay;
+  const observationsAvailable = hasReachedEndDay;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log("🔍 Observation enable check:", {
+      currentDay,
+      stageEndDay,
+      hasReachedEndDay,
+      observationsAvailable,
+    });
+  }
+
   return (
     <div className="stage-observations">
       <div className="observations-header">
         <h3>👁️ Quan sát giai đoạn</h3>
         <p className="observations-hint">
-          Đánh dấu các quan sát để theo dõi sự phát triển của cây
+          {observationsAvailable
+            ? "Đánh dấu các quan sát để theo dõi sự phát triển của cây. Bạn có thể thay đổi trong cùng ngày, nhưng sẽ bị khóa vào ngày hôm sau."
+            : `Quan sát sẽ được kích hoạt khi đến ngày cuối giai đoạn (ngày ${
+                stageEndDay || "..."
+              })${currentDay ? `. Hiện tại: ngày ${currentDay}` : ""}`}
         </p>
       </div>
 
       <div className="observations-list">
-        {observations.map((obs, index) => (
-          <div key={index} className="observation-item">
-            <div className="observation-content">
-              <h4>{obs.observation_name}</h4>
-              {obs.description && (
-                <p className="observation-description">{obs.description}</p>
-              )}
-            </div>
+        {observations.map((obs, index) => {
+          // ✅ Logic mới: Cho phép bỏ check trong cùng ngày, chỉ khóa khi qua ngày hôm sau
+          // - Nếu chưa đến ngày cuối giai đoạn: disabled
+          // - Nếu đã đến/qua ngày cuối: enabled
+          // - Nếu đã check VÀ qua ngày hôm sau (kể từ ngày check): disabled (bị khóa)
+          // - Nếu đã check NHƯNG còn trong cùng ngày check: vẫn enabled (cho phép bỏ check)
 
-            <div className="observation-toggle">
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={obs.value || false}
-                  onChange={(e) =>
-                    handleObservationChange(obs, e.target.checked)
-                  }
-                  disabled={saving}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-              <span className="toggle-label">
-                {obs.value ? "✓ Có" : "✗ Không"}
-              </span>
+          let canCheckObservation = observationsAvailable;
+
+          // Nếu đã có observed_at, kiểm tra xem đã qua ngày hôm sau chưa
+          if (obs.observed_at && obs.value === true) {
+            // Parse observed_at date (backend trả về ISO string hoặc Date object)
+            const observedDate = new Date(obs.observed_at);
+            // So sánh current_day với ngày check
+            // Nếu current_day > ngày check thì disable
+            // Backend có thể trả về observed_at là timestamp của ngày check
+            // Ta cần tính xem từ planted_date + current_day có lớn hơn observed_at không
+
+            // Lấy planted_date từ notebookInfo
+            const plantedDate = notebookInfo?.planted_date
+              ? new Date(notebookInfo.planted_date)
+              : null;
+
+            if (plantedDate) {
+              // Tính ngày hiện tại dựa trên planted_date + current_day
+              const currentDate = new Date(plantedDate);
+              currentDate.setDate(currentDate.getDate() + currentDay - 1);
+
+              // So sánh ngày (chỉ ngày, không tính giờ)
+              const observedDateOnly = new Date(
+                observedDate.getFullYear(),
+                observedDate.getMonth(),
+                observedDate.getDate()
+              );
+              const currentDateOnly = new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                currentDate.getDate()
+              );
+
+              // Nếu currentDate > observedDate (đã qua ngày hôm sau) → disable
+              if (currentDateOnly > observedDateOnly) {
+                canCheckObservation = false;
+              }
+              // Nếu còn cùng ngày check → vẫn enable (cho phép bỏ check)
+            }
+          }
+
+          return (
+            <div
+              key={index}
+              className={`observation-item ${
+                !canCheckObservation ? "dimmed" : ""
+              }`}
+            >
+              <div className="observation-content">
+                <h4>{obs.observation_name}</h4>
+                {obs.description && (
+                  <p className="observation-description">{obs.description}</p>
+                )}
+              </div>
+
+              <div className="observation-toggle">
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={obs.value || false}
+                    onChange={(e) =>
+                      handleObservationChange(obs, e.target.checked)
+                    }
+                    disabled={saving || !canCheckObservation}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+                <span className="toggle-label">
+                  {obs.value ? "✓ Có" : "✗ Không"}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {saving && (

@@ -5,53 +5,102 @@ import "./StreakPopup.css";
 export default function StreakPopup({ streak, onClose }) {
   if (!streak) return null;
 
-  const { current_streak, pointsAwarded, milestone, total_points, badgesAwarded } = streak;
+  const {
+    current_streak,
+    pointsAwarded,
+    milestone,
+    total_points,
+    badgesAwarded,
+  } = streak;
 
   return (
-    <PortalModal onClose={onClose} maxWidth={500} dialogClass="modal-dialog-centered">
-      <div className="modal-header streak-header">
-        <h5 className="modal-title streak-title">🌱 Chuỗi Siêng Năng</h5>
-        <button type="button" className="btn-close" aria-label="Close" onClick={onClose}></button>
-      </div>
-      <div className="modal-body text-center streak-body">
-        <p className="streak-main-text">Bạn đã đăng nhập liên tiếp <span className="streak-count-inline">{current_streak}</span> ngày 🎉</p>
-        {milestone && (
-          <div className="streak-milestone mb-3">
-            <strong>🏆 Đạt mốc: {milestone.replace(/_/g, " ")}</strong>
-          </div>
-        )}
-        {pointsAwarded > 0 && (
-          <div className="streak-points">✨ Bạn nhận được +{pointsAwarded} điểm!</div>
-        )}
+    <PortalModal
+      onClose={onClose}
+      maxWidth={550}
+      dialogClass="modal-dialog-centered"
+    >
+      <div className="streak-modal-wrapper">
+        <button
+          type="button"
+          className="streak-close-btn"
+          aria-label="Close"
+          onClick={onClose}
+        >
+          ×
+        </button>
 
-        {Array.isArray(badgesAwarded) && badgesAwarded.length > 0 && (
-          <div className="streak-badges mt-3">
-            <strong>🎖️ Bạn vừa nhận được danh hiệu:</strong>
-            <ul className="streak-badges-list">
-              {badgesAwarded.map((b) => (
-                <li key={b}>{
-                  // friendly label mapping
-                  ({
-                    "hat-giong": "Hạt Giống",
-                    "mam-non": "Mầm Non",
-                    "cay-con": "Cây Con",
-                    "re-ben": "Rễ Bền",
-                    "tan-la": "Tán Lá",
-                    "dom-nu": "Đơm Nụ",
-                    "ket-trai": "Kết Trái",
-                    "ket-trai-2": "Kết Trái",
-                    "co-thu": "Cổ Thụ",
-                    "coi-nguon": "Cội Nguồn",
-                  }[b] || b)
-                }</li>
-              ))}
-            </ul>
+        <div className="streak-celebration-icon">🎉</div>
+
+        <div className="streak-content">
+          <h2 className="streak-title-main">Chuỗi Siêng Năng!</h2>
+
+          <div className="streak-counter-card">
+            <div className="streak-counter-label">
+              Bạn đã đăng nhập liên tiếp
+            </div>
+            <div className="streak-counter-number">{current_streak}</div>
+            <div className="streak-counter-unit">ngày</div>
           </div>
-        )}
-        <div className="streak-total-points">Tổng điểm hiện tại: <strong>{total_points}</strong></div>
-      </div>
-      <div className="modal-footer streak-footer">
-        <button className="btn btn-sm streak-btn" onClick={onClose}>OK</button>
+
+          {milestone && (
+            <div className="streak-milestone-badge">
+              <span className="streak-milestone-icon">🏆</span>
+              <span className="streak-milestone-text">
+                Đạt mốc: {milestone.replace(/_/g, " ")}
+              </span>
+            </div>
+          )}
+
+          {pointsAwarded > 0 && (
+            <div className="streak-reward-card">
+              <div className="streak-reward-icon">✨</div>
+              <div className="streak-reward-text">
+                <span className="streak-reward-label">Phần thưởng</span>
+                <span className="streak-reward-value">
+                  +{pointsAwarded} điểm
+                </span>
+              </div>
+            </div>
+          )}
+
+          {Array.isArray(badgesAwarded) && badgesAwarded.length > 0 && (
+            <div className="streak-badges-section">
+              <div className="streak-badges-title">
+                <span className="streak-badges-icon">🎖️</span>
+                Danh hiệu mới
+              </div>
+              <div className="streak-badges-grid">
+                {badgesAwarded.map((b) => (
+                  <div key={b} className="streak-badge-item">
+                    {{
+                      "hat-giong": "Hạt Giống",
+                      "mam-non": "Mầm Non",
+                      "cay-con": "Cây Con",
+                      "re-ben": "Rễ Bền",
+                      "tan-la": "Tán Lá",
+                      "dom-nu": "Đơm Nụ",
+                      "ket-trai": "Kết Trái",
+                      "ket-trai-2": "Kết Trái",
+                      "co-thu": "Cổ Thụ",
+                      "coi-nguon": "Cội Nguồn",
+                    }[b] || b}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="streak-total-section">
+            <span className="streak-total-label">Tổng điểm</span>
+            <span className="streak-total-value">
+              {total_points.toLocaleString()}
+            </span>
+          </div>
+
+          <button className="streak-action-btn" onClick={onClose}>
+            Tiếp tục
+          </button>
+        </div>
       </div>
     </PortalModal>
   );

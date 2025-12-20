@@ -36,6 +36,27 @@
     font-weight: 500;
 }
 
+/* Small framed box for day counter */
+.timeline-day-frame {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: linear-gradient(180deg, #ffffff, #fbfffb);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(20, 40, 20, 0.04);
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+@media (max-width: 480px) {
+    .timeline-day-frame {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+}
+
 .progress-badge {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;

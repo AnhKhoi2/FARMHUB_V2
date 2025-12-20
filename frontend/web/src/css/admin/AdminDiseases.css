@@ -1,4 +1,7 @@
 /* Admin Diseases Page Styles */
+/* Import shared admin table styles */
+@import './AdminTable.css';
+
 .admin-diseases-page {
   background-color: #f8f9fa;
   min-height: calc(100vh - 60px);

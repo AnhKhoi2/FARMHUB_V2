@@ -14,6 +14,9 @@ const DEFAULT_LON = 105.7469;
 // API mới – lấy từ POST
 const API_LATEST_POSTS = "/api/posts/public";
 
+// Số card / 1 hàng (1 “slide”)
+const PAGE_SIZE = 3;
+
 const Home = () => {
   const user = useSelector((state) => state.auth.user);
   const navigate = useNavigate();
@@ -31,10 +34,25 @@ const Home = () => {
   const [latestPosts, setLatestPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState(null);
-  //guide
+
+  // Guide
   const [latestGuides, setLatestGuides] = useState([]);
   const [guidesLoading, setGuidesLoading] = useState(false);
   const [guidesError, setGuidesError] = useState(null);
+
+  // “Vị trí bắt đầu” hiện tại cho slider (carousel vòng tròn)
+  const [postStartIndex, setPostStartIndex] = useState(0);
+  const [guideStartIndex, setGuideStartIndex] = useState(0);
+
+  // Khi dữ liệu hướng dẫn thay đổi, reset về 0
+  useEffect(() => {
+    setGuideStartIndex(0);
+  }, [latestGuides.length]);
+
+  // reset postStartIndex khi tập posts thay đổi
+  useEffect(() => {
+    setPostStartIndex(0);
+  }, [latestPosts.length]);
 
   // Recent visited
   useEffect(() => {
@@ -113,61 +131,25 @@ const Home = () => {
     }
   }, []);
 
-  // ⭐ Lấy 3 bài post từ PostController
+  // ⭐ Lấy nhiều bài post mới nhất (tăng limit để có thể lấy 3 category khác nhau)
   useEffect(() => {
-    const fetchOnePerCategory = async () => {
-      // Use actual category labels used across the app. "Bán" posts are labeled
-      // under "Nông sản" in the category list, so request that label.
-      const groups = ["Trao đổi", "Cho tặng", "Thiết bị"];
-
+    const fetchLatestPosts = async () => {
       try {
         setPostsLoading(true);
         setPostsError(null);
 
-        const promises = groups.map((label) =>
-          axiosClient
-            .get(API_LATEST_POSTS, {
-              params: { page: 1, limit: 1, category: label },
-              headers: { Authorization: "" },
-            })
-            .then((res) => {
-              const raw = res.data;
-              const items = raw?.data?.items ?? raw?.items ?? raw?.data ?? [];
-              const first =
-                Array.isArray(items) && items.length ? items[0] : null;
-              if (first && !first.category) first.category = label;
-              return first;
-            })
-            .catch((e) => {
-              // Return null on failure for this category
-              console.warn(
-                `Failed fetching post for category ${label}:`,
-                e?.message || e
-              );
-              return null;
-            })
-        );
+        // tăng limit lên 50 để có nhiều biến thể category hơn
+        const res = await axiosClient.get(API_LATEST_POSTS, {
+          params: { page: 1, limit: 50 },
+          headers: { Authorization: "" }, // public
+        });
 
-        const results = await Promise.all(promises);
-        const items = results.filter(Boolean);
+        const raw = res.data;
+        const items = raw?.data?.items ?? raw?.items ?? raw?.data ?? [];
 
-        if (items.length === 0) {
-          // fallback to latest 3 posts if none found for the categories
-          const res = await axiosClient.get(API_LATEST_POSTS, {
-            params: { page: 1, limit: 3 },
-            headers: { Authorization: "" },
-          });
-          const raw = res.data;
-          const fallback = raw?.data?.items ?? raw?.items ?? raw?.data ?? [];
-          setLatestPosts(Array.isArray(fallback) ? fallback.slice(0, 3) : []);
-        } else {
-          setLatestPosts(items);
-        }
+        setLatestPosts(Array.isArray(items) ? items.slice(0, 50) : []);
       } catch (err) {
-        console.error(
-          "Error fetching posts by category:",
-          err?.response || err
-        );
+        console.error("Error fetching latest posts:", err?.response || err);
         setPostsError("Không tải được bài đăng.");
         setLatestPosts([]);
       } finally {
@@ -175,11 +157,12 @@ const Home = () => {
       }
     };
 
-    fetchOnePerCategory();
+    fetchLatestPosts();
   }, []);
-  // 3 bài hướng dẫn
+
+  // ⭐ Lấy tối đa 8 bài hướng dẫn
   useEffect(() => {
-    // If navigated here with a request to scroll to guides, do it.
+    // Scroll tới block hướng dẫn nếu được navigate với state
     try {
       const s =
         location?.state?.scrollTo ||
@@ -192,7 +175,9 @@ const Home = () => {
           });
         }, 80);
       }
-    } catch (e) {}
+    } catch (e) {
+      // ignore
+    }
 
     const fetchGuides = async () => {
       try {
@@ -200,12 +185,12 @@ const Home = () => {
         setGuidesError(null);
 
         const res = await axiosClient.get("/guides", {
-          params: { page: 1, limit: 3 },
+          params: { page: 1, limit: 8 },
           headers: { Authorization: "" }, // ép public
         });
 
         const items = res.data?.data || []; // backend trả thẳng array
-        setLatestGuides(items.slice(0, 3));
+        setLatestGuides(Array.isArray(items) ? items.slice(0, 8) : []);
       } catch (err) {
         console.error("Guides error:", err);
         setGuidesError("Không tải được hướng dẫn.");
@@ -215,7 +200,7 @@ const Home = () => {
     };
 
     fetchGuides();
-  }, []);
+  }, [location]);
 
   // Helpers
   const getShortDescription = (text, max = 100) => {
@@ -239,6 +224,83 @@ const Home = () => {
     if (!Array.isArray(images) || images.length === 0) return null;
     const img = images[0];
     return typeof img === "string" ? img : img.url || null;
+  };
+
+  // Chọn tối đa `PAGE_SIZE` posts từ các category khác nhau.
+  // Nếu không đủ category khác nhau, sẽ điền bằng posts còn lại.
+  const getDistinctCategoryPosts = (posts, count = PAGE_SIZE) => {
+    if (!Array.isArray(posts) || posts.length === 0) return [];
+    const seen = new Set();
+    const result = [];
+
+    for (const p of posts) {
+      const cat = p?.category || "__no_category__";
+      if (!seen.has(cat)) {
+        result.push(p);
+        seen.add(cat);
+        if (result.length === count) break;
+      }
+    }
+
+    if (result.length < count) {
+      for (const p of posts) {
+        if (!result.includes(p)) {
+          result.push(p);
+          if (result.length === count) break;
+        }
+      }
+    }
+
+    return result;
+  };
+
+  const totalPosts = latestPosts.length;
+
+  // Xoay mảng bắt đầu từ `postStartIndex` rồi chọn các post khác category
+  const rotatedPosts =
+    totalPosts > 0
+      ? latestPosts.slice(postStartIndex).concat(latestPosts.slice(0, postStartIndex))
+      : [];
+
+  const visiblePosts = getDistinctCategoryPosts(rotatedPosts, PAGE_SIZE);
+
+  const handlePostNext = () => {
+    if (totalPosts <= PAGE_SIZE) return;
+    setPostStartIndex((prev) => (prev + PAGE_SIZE) % totalPosts);
+  };
+
+  const handlePostPrev = () => {
+    if (totalPosts <= PAGE_SIZE) return;
+    setPostStartIndex((prev) => {
+      let next = prev - PAGE_SIZE;
+      while (next < 0) next += totalPosts;
+      return next % totalPosts;
+    });
+  };
+
+  // ====== SLIDER GUIDES – NỐI TIẾP VÒNG TRÒN ======
+  const totalGuides = latestGuides.length;
+
+  let visibleGuides = latestGuides;
+  if (totalGuides > PAGE_SIZE) {
+    visibleGuides = Array.from({ length: PAGE_SIZE }, (_, i) => {
+      const idx = (guideStartIndex + i) % totalGuides;
+      return latestGuides[idx];
+    });
+  }
+
+  const handleGuideNext = () => {
+    if (totalGuides <= PAGE_SIZE) return;
+    setGuideStartIndex((prev) => (prev + PAGE_SIZE) % totalGuides);
+  };
+
+  const handleGuidePrev = () => {
+    if (totalGuides <= PAGE_SIZE) return;
+    setGuideStartIndex((prev) => {
+      let next = prev - PAGE_SIZE;
+      while (next < 0) next += totalGuides;
+      return next % totalGuides;
+    });
   };
 
   return (
@@ -344,7 +406,7 @@ const Home = () => {
                     to="/farmer/notebooks"
                     className="btn btn-success btn-lg mt-3"
                   >
-                    Quản Lý Nhật Ký
+                    Quản Lý Sổ Tay
                   </Link>
                 </div>
               </div>
@@ -467,14 +529,14 @@ const Home = () => {
           </div>
         </section>
 
-        {/* ---------- LATEST POSTS ---------- */}
+        {/* ---------- LATEST POSTS + SLIDER VÒNG TRÒN ---------- */}
         <section className="container my-5 market-section">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div>
               <span className="text-success text-uppercase fw-semibold">
                 Rao vặt
               </span>
-              <h2 className="h3 fw-bold mb-0">Tin rao vặt mới nhất</h2>
+              <h2 className="h3 fw-bold mb-0">TIN RAO VẶT MỚI NHẤT</h2>
             </div>
           </div>
 
@@ -495,74 +557,125 @@ const Home = () => {
             <p className="text-danger">{postsError}</p>
           ) : latestPosts.length === 0 ? (
             <div className="market-empty text-muted">
-              Chưa có bài đăng nào.
+              Chưa có bài đăng nào.{" "}
               <Link to="/market">Đi đến chợ nông sản</Link>.
             </div>
           ) : (
-            <div className="row g-4">
-              {latestPosts.map((post) => {
-                const imgUrl = getFirstImage(post.images);
-                const locationText = getLocationText(post.location);
-                return (
-                  <div className="col-md-4" key={post._id}>
-                    <div
-                      className="card h-100 shadow-sm market-card"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => navigate(`/posts/${post._id}`)}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") navigate(`/posts/${post._id}`);
-                      }}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {imgUrl && (
-                        <div className="market-image-wrapper">
-                          <img
-                            src={imgUrl}
-                            className="market-image"
-                            alt={post.title}
-                          />
-                        </div>
-                      )}
+            <div className="position-relative">
+              {/* Nút trái/phải đặt 2 bên, không che card */}
+              {totalPosts > PAGE_SIZE && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-light shadow-sm d-none d-md-flex align-items-center justify-content-center"
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: 0,
+                      transform: "translate(-120%, -50%)",
+                      zIndex: 2,
+                      borderRadius: "50%",
+                      width: 40,
+                      height: 40,
+                      backgroundColor: "#D1EAD2",
+                      color: "black",
+                      border: "none",
+                    }}
+                    onClick={handlePostPrev}
+                    aria-label="Trước"
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-light shadow-sm d-none d-md-flex align-items-center justify-content-center"
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      right: 0,
+                      transform: "translate(120%, -50%)",
+                      zIndex: 2,
+                      borderRadius: "50%",
+                      width: 40,
+                      height: 40,
+                      backgroundColor: "#D1EAD2",
+                      color: "black",
+                      border: "none",
+                    }}
+                    onClick={handlePostNext}
+                    aria-label="Sau"
+                  >
+                    →
+                  </button>
+                </>
+              )}
 
-                      <div className="card-body d-flex flex-column">
-                        <h5 className="card-title fw-bold">{post.title}</h5>
-
-                        {post.category && (
-                          <div className="badge bg-light text-success border mb-2">
-                            {post.category}
+              <div className="row g-4">
+                {visiblePosts.map((post) => {
+                  const imgUrl = getFirstImage(post.images);
+                  const locationText = getLocationText(post.location);
+                  return (
+                    <div className="col-md-4" key={post._id}>
+                      <div
+                        className="card h-100 shadow-sm market-card"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => navigate(`/posts/${post._id}`)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") navigate(`/posts/${post._id}`);
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {imgUrl && (
+                          <div className="market-image-wrapper">
+                            <img
+                              src={imgUrl}
+                              className="market-image"
+                              alt={post.title}
+                            />
                           </div>
                         )}
 
-                        <p className="market-desc text-muted mb-3">
-                          {getShortDescription(post.description, 110)}
-                        </p>
+                        <div className="card-body d-flex flex-column">
+                          <h5 className="card-title fw-bold">{post.title}</h5>
 
-                        {post.price && (
-                          <div className="market-price">{post.price}</div>
-                        )}
-
-                        <div className="market-meta mt-auto">
-                          {locationText && (
-                            <div className="small text-muted">
-                              📍 {locationText}
+                          {post.category && (
+                            <div className="badge bg-light text-success border mb-2">
+                              {post.category}
                             </div>
                           )}
-                          {post.userId?.username && (
-                            <div className="small text-muted">
-                              👤 {post.userId.username}
-                            </div>
+
+                          <p className="market-desc text-muted mb-3">
+                            {getShortDescription(post.description, 110)}
+                          </p>
+
+                          {post.price && (
+                            <div className="market-price">{post.price}</div>
                           )}
+
+                          <div className="market-meta mt-auto">
+                            {locationText && (
+                              <div className="small text-muted">
+                                📍 {locationText}
+                              </div>
+                            )}
+                            {post.userId?.username && (
+                              <div className="small text-muted">
+                                👤 {post.userId.username}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </section>
-        {/* ---------- Guide ---------- */}
+
+        {/* ---------- GUIDE + SLIDER VÒNG TRÒN ---------- */}
         <section className="container my-5">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -577,42 +690,94 @@ const Home = () => {
             <p>Đang tải...</p>
           ) : guidesError ? (
             <p className="text-danger">{guidesError}</p>
+          ) : latestGuides.length === 0 ? (
+            <p className="text-muted">Chưa có hướng dẫn nào.</p>
           ) : (
-            <div className="row g-4" ref={guidesRef}>
-              {latestGuides.map((g) => (
-                <div className="col-md-4" key={g._id}>
-                  <div className="guide-card">
-                    {g.image ? (
-                      <img
-                        src={g.image}
-                        alt={(g.title || "").toUpperCase()}
-                        className="guide-image"
-                      />
-                    ) : (
-                      <div className="guide-image d-flex align-items-center justify-content-center text-muted">
-                        No Image
+            <div className="position-relative" ref={guidesRef}>
+              {latestGuides.length > PAGE_SIZE && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-light shadow-sm d-none d-md-flex align-items-center justify-content-center"
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: 0,
+                      transform: "translate(-120%, -50%)",
+                      zIndex: 2,
+                      borderRadius: "50%",
+                      width: 40,
+                      height: 40,
+                      backgroundColor: "#D1EAD2", // đổi màu nền
+                      color: "black", // đổi màu mũi tên
+                      border: "none",
+                    }}
+                    onClick={handleGuidePrev}
+                    aria-label="Trước"
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-light shadow-sm d-none d-md-flex align-items-center justify-content-center"
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      right: 0,
+                      transform: "translate(120%, -50%)",
+                      zIndex: 2,
+                      borderRadius: "50%",
+                      width: 40,
+                      height: 40,
+                      backgroundColor: "#D1EAD2", // đổi màu nền
+                      color: "black", // đổi màu mũi tên
+                      border: "none",
+                    }}
+                    onClick={handleGuideNext}
+                    aria-label="Sau"
+                  >
+                    →
+                  </button>
+                </>
+              )}
+
+              <div className="row g-4">
+                {visibleGuides.map((g) => (
+                  <div className="col-md-4" key={g._id}>
+                    <div className="guide-card">
+                      {g.image ? (
+                        <img
+                          src={g.image}
+                          alt={(g.title || "").toUpperCase()}
+                          className="guide-image"
+                        />
+                      ) : (
+                        <div className="guide-image d-flex align-items-center justify-content-center text-muted">
+                          No Image
+                        </div>
+                      )}
+
+                      <div className="guide-body">
+                        <h5 className="guide-title">
+                          {(g.title || "").toUpperCase()}
+                        </h5>
+                        <p className="guide-desc">
+                          {(g.summary || g.description?.slice(0, 120) || "") +
+                            "..."}
+                        </p>
+
+                        <Link
+                          to={`/guides/${g._id}`}
+                          state={{ fromHome: true }}
+                          className="btn btn-success guide-btn"
+                        >
+                          Xem chi tiết
+                        </Link>
                       </div>
-                    )}
-
-                    <div className="guide-body">
-                      <h5 className="guide-title">
-                        {(g.title || "").toUpperCase()}
-                      </h5>
-                      <p className="guide-desc">
-                        {g.summary || g.description?.slice(0, 120)}...
-                      </p>
-
-                      <Link
-                        to={`/guides/${g._id}`}
-                        state={{ fromHome: true }}
-                        className="btn btn-success guide-btn"
-                      >
-                        Xem chi tiết
-                      </Link>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </section>
@@ -623,7 +788,7 @@ const Home = () => {
             <span className="text-success text-uppercase fw-semibold">
               Dịch vụ
             </span>
-            <h2 className="display-5 fw-bold">Các dịch vụ của chúng tôi</h2>
+            <h4 className="display-5 fw-bold">Các dịch vụ của chúng tôi</h4>
           </div>
 
           <div className="row g-4">
@@ -632,7 +797,7 @@ const Home = () => {
               <Link to="/weather" className="text-decoration-none">
                 <div className="card h-100 shadow-sm hover-card text-center p-4">
                   <FaCloudSun size={64} className="text-success mb-3" />
-                  <h4 className="fw-bold">Thời tiết</h4>
+                  <h4 className="fw-bold">Thời Tiết</h4>
                   <p className="text-muted">
                     Dự báo thời tiết chuẩn cho cây trồng
                   </p>
@@ -645,18 +810,18 @@ const Home = () => {
               <Link to="/farmer/notebooks" className="text-decoration-none">
                 <div className="card h-100 shadow-sm hover-card text-center p-4">
                   <FaBook size={64} className="text-success mb-3" />
-                  <h4 className="fw-bold">Nhật ký làm vườn</h4>
+                  <h4 className="fw-bold">Sổ Tay Làm Vườn</h4>
                   <p className="text-muted">Theo dõi tiến trình trồng trọt</p>
                 </div>
               </Link>
             </div>
 
-            {/* CHUẨN ĐOÁN */}
+            {/* CHẨN ĐOÁN */}
             <div className="col-md-3">
               <Link to="/plant-diagnosis" className="text-decoration-none">
                 <div className="card h-100 shadow-sm hover-card text-center p-4">
                   <FaStethoscope size={64} className="text-success mb-3" />
-                  <h4 className="fw-bold">Chuẩn đoán</h4>
+                  <h4 className="fw-bold">Chẩn Đoán</h4>
                   <p className="text-muted">Sổ khám sức khỏe cây trồng</p>
                 </div>
               </Link>
@@ -667,7 +832,7 @@ const Home = () => {
               <Link to="/diseases" className="text-decoration-none">
                 <div className="card h-100 shadow-sm hover-card text-center p-4">
                   <FaBug size={64} className="text-success mb-3" />
-                  <h4 className="fw-bold">Bệnh cây trồng</h4>
+                  <h4 className="fw-bold">Bệnh Cây Trồng</h4>
                   <p className="text-muted">Thông tin bệnh & cách xử lý</p>
                 </div>
               </Link>

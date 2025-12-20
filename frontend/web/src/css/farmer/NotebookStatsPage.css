@@ -14,6 +14,16 @@
     padding: 0 16px;
 }
 
+.card-title.no-effect {
+    transition: none !important;
+    animation: none !important;
+}
+
+.card-title.no-effect:hover {
+    transform: none !important;
+    /* Ghi đè các thuộc tính khác nếu cần */
+}
+
 .stats-heading {
     margin-bottom: 24px;
     color: #154a2b;

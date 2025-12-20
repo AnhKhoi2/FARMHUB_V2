@@ -7,3 +7,15 @@
   border-radius: 8px;
   
 }
+.guide-title-bg {
+  display: inline-block;
+  background: #e8f5e9; /* xanh nhạt */
+  padding: 12px 18px;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+}
+
+.guide-title-bg:hover {
+  background: #c8e6c9; /* xanh đậm hơn khi hover */
+  transform: translateY(-2px);
+}

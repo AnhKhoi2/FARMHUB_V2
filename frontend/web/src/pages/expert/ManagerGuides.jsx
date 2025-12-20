@@ -33,6 +33,7 @@ import {
 import { ArrowLeftOutlined } from "@ant-design/icons";
 
 import HeaderExpert from "../../components/shared/HeaderExpert";
+import Footer from "../../components/shared/Footer";
 
 // ⬇️ Thêm import cho chat
 import ChatWidget from "./ChatWidget";
@@ -53,14 +54,14 @@ export default function ManagerGuides() {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(() => {
-    const p = parseInt(searchParams.get('page')) || location.state?.page || 1;
+    const p = parseInt(searchParams.get("page")) || location.state?.page || 1;
     return Number.isNaN(p) ? 1 : p;
   });
   const [limit, setLimit] = useState(15);
   const [total, setTotal] = useState(0);
   const [plantSearch, setPlantSearch] = useState("");
   const [category, setCategory] = useState(() => {
-    return searchParams.get('category') || location.state?.category || "";
+    return searchParams.get("category") || location.state?.category || "";
   });
   // availablePlantTags: array of { value: slug, label: displayName }
   const [availablePlantTags, setAvailablePlantTags] = useState([]);
@@ -76,7 +77,11 @@ export default function ManagerGuides() {
     try {
       const res = await axiosClient.get("/api/plant-groups");
       const data = res.data?.data || [];
-      console.log('[DEBUG] /api/plant-groups response count=', (data || []).length, data);
+      console.log(
+        "[DEBUG] /api/plant-groups response count=",
+        (data || []).length,
+        data
+      );
       // Normalize to { value: slugOrId, label: displayName }
       const items = data
         .map((d) => {
@@ -111,12 +116,15 @@ export default function ManagerGuides() {
     try {
       // decode possible URI-encoding and replace underscores/hyphens with spaces
       const dec = decodeURIComponent(String(s));
-      const cleaned = dec.replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim();
+      const cleaned = dec
+        .replace(/[_\-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
       return cleaned
         .toLowerCase()
-        .split(' ')
-        .map((w) => (w.length ? w[0].toUpperCase() + w.slice(1) : ''))
-        .join(' ');
+        .split(" ")
+        .map((w) => (w.length ? w[0].toUpperCase() + w.slice(1) : ""))
+        .join(" ");
     } catch (err) {
       return String(s);
     }
@@ -125,20 +133,31 @@ export default function ManagerGuides() {
   const selectedOption =
     Array.isArray(availablePlantTags) && availablePlantTags.length
       ? availablePlantTags.find((a) => a.value === category) ||
-        availablePlantTags.find((a) => String(a.label).toLowerCase() === String(category).toLowerCase())
+        availablePlantTags.find(
+          (a) =>
+            String(a.label).toLowerCase() === String(category).toLowerCase()
+        )
       : null;
 
-  const computedOptions = Array.isArray(availablePlantTags) ? [...availablePlantTags] : [];
+  const computedOptions = Array.isArray(availablePlantTags)
+    ? [...availablePlantTags]
+    : [];
   if (category && !selectedOption) {
     // Prefer a Vietnamese label from any loaded guide's plantTags if present.
     let friendly = null;
     try {
       if (Array.isArray(guides) && guides.length) {
         const guideMatch = guides.find((g) => {
-          const vals = [g.category, g.category_slug, g.plant_group].map((v) => String(v || ""));
+          const vals = [g.category, g.category_slug, g.plant_group].map((v) =>
+            String(v || "")
+          );
           return vals.includes(String(category));
         });
-        if (guideMatch && Array.isArray(guideMatch.plantTags) && guideMatch.plantTags[0]) {
+        if (
+          guideMatch &&
+          Array.isArray(guideMatch.plantTags) &&
+          guideMatch.plantTags[0]
+        ) {
           friendly = guideMatch.plantTags[0];
         }
       }
@@ -156,10 +175,14 @@ export default function ManagerGuides() {
   // If we're still hydrating an incoming category (from search params or location state),
   // avoid showing the raw slug — show empty until we've loaded plant groups/guides.
   const [initializingCategory, setInitializingCategory] = useState(() => {
-    return Boolean(searchParams.get('category') || location.state?.category);
+    return Boolean(searchParams.get("category") || location.state?.category);
   });
 
-  const selectValue = initializingCategory ? "" : (selectedOption ? selectedOption.value : category || "");
+  const selectValue = initializingCategory
+    ? ""
+    : selectedOption
+    ? selectedOption.value
+    : category || "";
 
   // Keep URL in sync when page/category change (so state survives reload/new tab)
   useEffect(() => {
@@ -174,15 +197,21 @@ export default function ManagerGuides() {
     // If navigation passed a state or query (category/page), load plant-groups and
     // guides first so we can compute a friendly label before setting `category`.
     (async () => {
-      const incomingCat = location.state?.category || searchParams.get('category');
-      const incomingPage = location.state?.page || Number(searchParams.get('page')) || undefined;
+      const incomingCat =
+        location.state?.category || searchParams.get("category");
+      const incomingPage =
+        location.state?.page || Number(searchParams.get("page")) || undefined;
       // show saved alert if navigation included a saved flag
       if (location.state?.saved) {
         setShowSavedAlert(true);
         // clear the flag after a short time so it doesn't persist across reloads
         setTimeout(() => setShowSavedAlert(false), 2000);
       }
-      if (typeof incomingCat !== 'undefined' && incomingCat !== null && incomingCat !== '') {
+      if (
+        typeof incomingCat !== "undefined" &&
+        incomingCat !== null &&
+        incomingCat !== ""
+      ) {
         try {
           await fetchPlantGroups();
           // fetch guides filtered by incomingCat so `guides` state contains entries
@@ -255,7 +284,9 @@ export default function ManagerGuides() {
     const filters = _filters || {};
     if (filters.category && filters.category.length) {
       // AntD passes an array of selected values; take first for single-select behavior
-      const sel = Array.isArray(filters.category) ? (filters.category[0] || "") : filters.category;
+      const sel = Array.isArray(filters.category)
+        ? filters.category[0] || ""
+        : filters.category;
       setCategory(sel);
       fetchGuides(current, pageSize, sel);
       return;
@@ -269,11 +300,14 @@ export default function ManagerGuides() {
     const qs = [];
     if (page && page !== 1) qs.push(`page=${page}`);
     if (category) qs.push(`category=${encodeURIComponent(category)}`);
-    return qs.length ? `?${qs.join('&')}` : '';
+    return qs.length ? `?${qs.join("&")}` : "";
   };
 
-  const onView = (id) => navigate(`/guides/${id}${currentSearch()}`);
-  const onEdit = (id) => navigate(`/managerguides/edit/${id}${currentSearch()}`);
+  // Open expert manager detail view instead of public guide detail
+  const onView = (id) =>
+    navigate(`/managerguides/detail/${id}${currentSearch()}`);
+  const onEdit = (id) =>
+    navigate(`/managerguides/edit/${id}${currentSearch()}`);
 
   const onDelete = async (id) => {
     try {
@@ -284,13 +318,17 @@ export default function ManagerGuides() {
 
       // Show undo arrow: remember last deleted guide id and title
       // Try to read the guide from current guides list to get title
-      const guide = guides.find((g) => (g._id || g.id) === id) || { _id: id, title: 'Hướng dẫn' };
+      const guide = guides.find((g) => (g._id || g.id) === id) || {
+        _id: id,
+        title: "Hướng dẫn",
+      };
       // clear any existing pending undo
-      if (lastDeleted && lastDeleted.timeoutId) clearTimeout(lastDeleted.timeoutId);
+      if (lastDeleted && lastDeleted.timeoutId)
+        clearTimeout(lastDeleted.timeoutId);
       const timeoutId = setTimeout(() => {
         setLastDeleted(null);
       }, 8000); // hide undo button after 8s
-      setLastDeleted({ id, title: guide.title || 'Hướng dẫn', timeoutId });
+      setLastDeleted({ id, title: guide.title || "Hướng dẫn", timeoutId });
     } catch (err) {
       console.error("delete", err);
       toast.error("Xóa không thành công");
@@ -301,14 +339,15 @@ export default function ManagerGuides() {
     if (!lastDeleted || !lastDeleted.id) return;
     try {
       await axiosClient.post(`/guides/${lastDeleted.id}/restore`);
-      toast.success('Hoàn tác xóa thành công');
+      toast.success("Hoàn tác xóa thành công");
       // refresh list
       fetchGuides(page, limit);
     } catch (e) {
-      console.error('restore', e);
-      toast.error('Hoàn tác thất bại');
+      console.error("restore", e);
+      toast.error("Hoàn tác thất bại");
     } finally {
-      if (lastDeleted && lastDeleted.timeoutId) clearTimeout(lastDeleted.timeoutId);
+      if (lastDeleted && lastDeleted.timeoutId)
+        clearTimeout(lastDeleted.timeoutId);
       setLastDeleted(null);
     }
   };
@@ -316,12 +355,7 @@ export default function ManagerGuides() {
   // custom text search filter
   const getColumnSearchProps =
     (dataIndex, placeholder = "Tìm kiếm...") =>
-    ({
-      setSelectedKeys,
-      selectedKeys,
-      confirm,
-      clearFilters,
-    }) => ({
+    ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => ({
       filterDropdown: () => (
         <div style={{ padding: 8 }}>
           <Input
@@ -404,23 +438,38 @@ export default function ManagerGuides() {
       title: "LOẠI CÂY",
       dataIndex: "category",
       key: "category",
-      filters: availablePlantTags.map((t) => ({ text: t.label, value: t.value })),
+      filters: availablePlantTags.map((t) => ({
+        text: t.label,
+        value: t.value,
+      })),
       // try matching by plantTags label OR by category slug/plant_group
       onFilter: (value, record) => {
         // empty value means "TẤT CẢ" — match all
         if (value === "") return true;
-        const label = (availablePlantTags.find((a) => a.value === value) || {}).label || value;
-        const byTags = Array.isArray(record.plantTags) && record.plantTags.includes(label);
-        const bySlug = (record.category_slug && record.category_slug === value) || (record.plant_group && record.plant_group === value);
+        const label =
+          (availablePlantTags.find((a) => a.value === value) || {}).label ||
+          value;
+        const byTags =
+          Array.isArray(record.plantTags) && record.plantTags.includes(label);
+        const bySlug =
+          (record.category_slug && record.category_slug === value) ||
+          (record.plant_group && record.plant_group === value);
         return byTags || bySlug;
       },
       render: (_cat, record) => {
         // Prefer the human-friendly label from computedOptions (which may include
         // the backend-provided label or a temporary formatted label derived from
         // the slug). Fall back to record.category or plantTags.
-        const val = record.category || record.category_slug || record.plant_group || "";
-        const opt = (computedOptions || []).find((a) => String(a.value) === String(val));
-        const display = (opt && opt.label) || record.category || (Array.isArray(record.plantTags) && record.plantTags[0]) || "Không có";
+        const val =
+          record.category || record.category_slug || record.plant_group || "";
+        const opt = (computedOptions || []).find(
+          (a) => String(a.value) === String(val)
+        );
+        const display =
+          (opt && opt.label) ||
+          record.category ||
+          (Array.isArray(record.plantTags) && record.plantTags[0]) ||
+          "Không có";
         return <Tag color="green">{display}</Tag>;
       },
     },
@@ -431,8 +480,7 @@ export default function ManagerGuides() {
       sorter: (a, b) =>
         new Date(a.createdAt || 0).getTime() -
         new Date(b.createdAt || 0).getTime(),
-      render: (val) =>
-        val ? new Date(val).toLocaleDateString("vi-VN") : "—",
+      render: (val) => (val ? new Date(val).toLocaleDateString("vi-VN") : "—"),
     },
     {
       title: "HÀNH ĐỘNG",
@@ -491,7 +539,7 @@ export default function ManagerGuides() {
                   >
                     LÀM MỚI
                   </Button>
-                  
+
                   <Button
                     shape="round"
                     icon={<DeleteOutlined />}
@@ -514,14 +562,15 @@ export default function ManagerGuides() {
             <Divider />
             {showSavedAlert && (
               <div style={{ marginBottom: 12 }}>
-                <Alert message="Lưu hướng dẫn thành công" type="success" showIcon />
+                <Alert
+                  message="Lưu hướng dẫn thành công"
+                  type="success"
+                  showIcon
+                />
               </div>
-            )} 
+            )}
 
-            <Space
-              style={{ marginBottom: 16, flexWrap: "wrap" }}
-              size="middle"
-            >
+            <Space style={{ marginBottom: 16, flexWrap: "wrap" }} size="middle">
               <Search
                 placeholder="Tìm theo tên cây hoặc tiêu đề"
                 onSearch={(v) => {
@@ -549,7 +598,7 @@ export default function ManagerGuides() {
                 showSearch
                 optionFilterProp="children"
                 dropdownMatchSelectWidth={false}
-                dropdownStyle={{ maxHeight: 300, overflow: 'auto' }}
+                dropdownStyle={{ maxHeight: 300, overflow: "auto" }}
                 placeholder="-- Lọc theo loại cây --"
               >
                 {computedOptions.map(({ value, label }) => (
@@ -584,10 +633,7 @@ export default function ManagerGuides() {
 
       {/* Nút chat nổi */}
       {!chatOpen && (
-        <button
-          className="floating-chat-btn"
-          onClick={() => setChatOpen(true)}
-        >
+        <button className="floating-chat-btn" onClick={() => setChatOpen(true)}>
           <MessageCircle size={26} />
         </button>
       )}
@@ -598,28 +644,30 @@ export default function ManagerGuides() {
           title={`Hoàn tác: ${lastDeleted.title}`}
           onClick={onUndoDelete}
           style={{
-            position: 'fixed',
+            position: "fixed",
             left: 16,
             bottom: 24,
             zIndex: 2000,
-            background: '#fff',
-            border: '1px solid rgba(0,0,0,0.12)',
+            background: "#fff",
+            border: "1px solid rgba(0,0,0,0.12)",
             borderRadius: 28,
             width: 56,
             height: 56,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            cursor: 'pointer'
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+            cursor: "pointer",
           }}
         >
-          <ArrowLeftOutlined style={{ fontSize: 20, color: '#1890ff' }} />
+          <ArrowLeftOutlined style={{ fontSize: 20, color: "#1890ff" }} />
         </button>
       )}
 
       {/* Chat widget */}
       <ChatWidget open={chatOpen} onClose={() => setChatOpen(false)} />
+
+      <Footer />
     </>
   );
 }

@@ -178,7 +178,8 @@
     background: rgba(46, 125, 50, 0.04);
     padding: 6px 10px;
     border-radius: 999px;
-    color: #5a6e58;
+    color: #ffffff;
+    /* changed to white per design request */
     font-weight: 600;
 }
 

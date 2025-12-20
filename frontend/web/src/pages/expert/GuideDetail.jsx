@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 import axiosClient from "../../api/shared/axiosClient";
+import Footer from "../../components/shared/Footer";
 import {
   Card,
   Button,
@@ -20,6 +26,7 @@ import {
 } from "@ant-design/icons";
 import placeholderImg from "../../assets/placeholder.svg";
 import DetailFooter from "../../components/shared/DetailFooter";
+import HeaderExpert from "../../components/shared/HeaderExpert";
 
 const { Title, Text } = Typography;
 
@@ -58,198 +65,235 @@ export default function GuideDetail() {
     );
 
   return (
-    <Flex vertical gap={20} style={{ padding: 24 }}>
-
-      {/* HEADER */}
-      <Flex justify="space-between" align="center">
+    <>
+      <HeaderExpert />
+      <Flex vertical gap={20} style={{ padding: 24 }}>
+        {/* HEADER */}
+        <Flex justify="space-between" align="center">
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => {
               // If current URL has search params, go back to manager list with those params
-              const qs = location.search || (searchParams.toString() ? `?${searchParams.toString()}` : '');
+              const qs =
+                location.search ||
+                (searchParams.toString() ? `?${searchParams.toString()}` : "");
               if (qs) {
                 navigate(`/managerguides${qs}`);
                 return;
               }
 
               // Prefer navigation state if present
-              if (location.state && (location.state.page || location.state.category)) {
-                navigate('/managerguides', { state: location.state });
+              if (
+                location.state &&
+                (location.state.page || location.state.category)
+              ) {
+                navigate("/managerguides", { state: location.state });
                 return;
               }
 
               // Otherwise, infer category from guide and go to page 1
-              const inferredCategory = guide?.plant_group || (Array.isArray(guide?.plantTags) && guide.plantTags[0]) || '';
+              const inferredCategory =
+                guide?.plant_group ||
+                (Array.isArray(guide?.plantTags) && guide.plantTags[0]) ||
+                "";
               const params = [];
-              if (inferredCategory) params.push(`category=${encodeURIComponent(inferredCategory)}`);
-              params.push('page=1');
-              navigate(`/managerguides?${params.join('&')}`);
+              if (inferredCategory)
+                params.push(`category=${encodeURIComponent(inferredCategory)}`);
+              params.push("page=1");
+              navigate(`/managerguides?${params.join("&")}`);
             }}
           >
             Quay lại
           </Button>
 
-        <Flex gap={10}>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/managerguides/edit/${guide._id}`, { state: location.state || {} })}
-          >
-            Chỉnh sửa
-          </Button>
+          <Flex gap={10}>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() =>
+                navigate(`/managerguides/edit/${guide._id}`, {
+                  state: location.state || {},
+                })
+              }
+            >
+              Chỉnh sửa
+            </Button>
 
-          <Button
-            icon={<UnorderedListOutlined />}
-            onClick={() => navigate("/managerguides", { state: location.state || {} })}
-          >
-            Danh sách
-          </Button>
-        </Flex>
-      </Flex>
-
-      {/* MAIN CARD */}
-      <Card bordered>
-
-        <Flex vertical gap={10}>
-          <Title level={2}>{(guide.title || "").toUpperCase()}</Title>
-
-          <Flex gap={8} wrap>
-            <Text>
-              Tác giả:{" "}
-              <b>{guide.expert_id?.username || "Không rõ"}</b>
-            </Text>
-            <Text type="secondary">•</Text>
-            <Text type="secondary">
-              {new Date(guide.createdAt).toLocaleString()}
-            </Text>
+            <Button
+              icon={<UnorderedListOutlined />}
+              onClick={() =>
+                navigate("/managerguides", { state: location.state || {} })
+              }
+            >
+              Danh sách
+            </Button>
           </Flex>
+        </Flex>
 
-          {/* TAGS */}
-          {guide.plantTags?.length > 0 && (
-            <Flex gap={6} wrap>
-              {guide.plantTags.map((t) => (
-                <Tag color="green" key={t}>
-                  {t}
-                </Tag>
-              ))}
+        {/* MAIN CARD */}
+        <Card bordered>
+          <Flex vertical gap={10}>
+            <Title level={2}>{(guide.title || "").toUpperCase()}</Title>
+
+            <Flex gap={8} wrap>
+              <Text>
+                Tác giả: <b>{guide.expert_id?.username || "Không rõ"}</b>
+              </Text>
+              <Text type="secondary">•</Text>
+              <Text type="secondary">
+                {new Date(guide.createdAt).toLocaleString()}
+              </Text>
             </Flex>
-          )}
 
-          <Divider />
+            {/* TAGS */}
+            {guide.plantTags?.length > 0 && (
+              <Flex gap={6} wrap>
+                {guide.plantTags.map((t) => (
+                  <Tag color="green" key={t}>
+                    {t}
+                  </Tag>
+                ))}
+              </Flex>
+            )}
 
-          {/* MAIN CONTENT */}
-          {guide.image && (
-            <img
-              src={guide.image}
-              alt="guide"
-              style={{
-                width: "100%",
-                borderRadius: 10,
-                marginBottom: 20,
+            <Divider />
+
+            {/* MAIN CONTENT */}
+            {guide.image && (
+              <img
+                src={guide.image}
+                alt="guide"
+                style={{
+                  width: "100%",
+                  borderRadius: 10,
+                  marginBottom: 20,
+                }}
+              />
+            )}
+
+            <div
+              dangerouslySetInnerHTML={{
+                __html: guide.content || guide.summary || "",
               }}
             />
-          )}
 
-          <div
-            dangerouslySetInnerHTML={{
-              __html: guide.content || guide.summary || "",
-            }}
-          />
+            <Divider />
 
-          <Divider />
+            {/* STEPS */}
+            {guide.steps?.length > 0 && (
+              <Flex vertical gap={16}>
+                <Title level={3}>CÁC BƯỚC THỰC HIỆN</Title>
 
-          {/* STEPS */}
-          {guide.steps?.length > 0 && (
-            <Flex vertical gap={16}>
-              <Title level={3}>CÁC BƯỚC THỰC HIỆN</Title>
-
-              <Row gutter={[16, 16]}>
-                {guide.steps.map((s, idx) => (
-                  <Col xs={24} sm={12} md={8} key={idx} style={{ display: "flex" }}>
-                    <Card
-                      hoverable
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                      }}
+                <Row gutter={[16, 16]}>
+                  {guide.steps.map((s, idx) => (
+                    <Col
+                      xs={24}
+                      sm={12}
+                      md={8}
+                      key={idx}
+                      style={{ display: "flex" }}
                     >
+                      <Card
+                        hoverable
+                        style={{
+                          flex: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Flex vertical gap={12} style={{ flex: 1 }}>
+                          <Title level={5}>{`BƯỚC ${idx + 1}`}</Title>
 
-                      <Flex vertical gap={12} style={{ flex: 1 }}>
-                        <Title level={5}>{`BƯỚC ${idx + 1}`}</Title>
+                          <img
+                            src={s.image || placeholderImg}
+                            style={{
+                              width: "100%",
+                              height: 160,
+                              objectFit: "cover",
+                              borderRadius: 8,
+                            }}
+                          />
 
-                        <img
-                          src={s.image || placeholderImg}
-                          style={{
-                            width: "100%",
-                            height: 160,
-                            objectFit: "cover",
-                            borderRadius: 8,
-                          }}
-                        />
+                          <Text strong>
+                            {(s.title || `BƯỚC ${idx + 1}`).toUpperCase()}
+                          </Text>
 
-                        <Text strong>
-                          {(s.title || `BƯỚC ${idx + 1}`).toUpperCase()}
-                        </Text>
-
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => {
-                            setActiveStep(s);
-                            setStepModalVisible(true);
-                          }}
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
                               setActiveStep(s);
                               setStepModalVisible(true);
-                            }
-                          }}
-                          style={{
-                            // clamp to single line with ellipsis
-                            display: "-webkit-box",
-                            WebkitLineClamp: 1,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            cursor: "pointer",
-                          }}
-                          dangerouslySetInnerHTML={{ __html: s.text || "" }}
-                        />
-                      </Flex>
-
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
-            </Flex>
-          )}
-        </Flex>
-      </Card>
-      {/* Step detail modal */}
-      <Modal
-        title={activeStep ? (<span style={{ fontWeight: 700 }}>{(activeStep.title || 'BƯỚC').toUpperCase()}</span>) : "CHI TIẾT BƯỚC"}
-        open={stepModalVisible}
-        onCancel={() => setStepModalVisible(false)}
-        footer={null}
-        width={720}
-      >
-        {activeStep ? (
-          <div>
-            {activeStep.image && (
-              <div style={{ marginBottom: 12 }}>
-                <img src={activeStep.image} alt={activeStep.title} style={{ width: "100%", borderRadius: 6 }} />
-              </div>
+                            }}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                setActiveStep(s);
+                                setStepModalVisible(true);
+                              }
+                            }}
+                            style={{
+                              // clamp to single line with ellipsis
+                              display: "-webkit-box",
+                              WebkitLineClamp: 1,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              cursor: "pointer",
+                            }}
+                            dangerouslySetInnerHTML={{ __html: s.text || "" }}
+                          />
+                        </Flex>
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
+              </Flex>
             )}
-            <div dangerouslySetInnerHTML={{ __html: activeStep.text || activeStep.description || "" }} />
-          </div>
-        ) : (
-          <p>Không có nội dung</p>
-        )}
-      </Modal>
-      {/* Detail-only footer */}
-      <DetailFooter />
-    </Flex>
+          </Flex>
+        </Card>
+        {/* Step detail modal */}
+        <Modal
+          title={
+            activeStep ? (
+              <span style={{ fontWeight: 700 }}>
+                {(activeStep.title || "BƯỚC").toUpperCase()}
+              </span>
+            ) : (
+              "CHI TIẾT BƯỚC"
+            )
+          }
+          open={stepModalVisible}
+          onCancel={() => setStepModalVisible(false)}
+          footer={null}
+          width={720}
+        >
+          {activeStep ? (
+            <div>
+              {activeStep.image && (
+                <div style={{ marginBottom: 12 }}>
+                  <img
+                    src={activeStep.image}
+                    alt={activeStep.title}
+                    style={{ width: "100%", borderRadius: 6 }}
+                  />
+                </div>
+              )}
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: activeStep.text || activeStep.description || "",
+                }}
+              />
+            </div>
+          ) : (
+            <p>Không có nội dung</p>
+          )}
+        </Modal>
+        {/* Detail-only footer */}
+        <DetailFooter />
+      </Flex>
+
+      <Footer />
+    </>
   );
 }
